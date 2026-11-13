@@ -1,0 +1,67 @@
+{
+  "observedAt": "2026-11-13T22:53:11.451667+00:00",
+  "currentDemoTree": "e3c8ebd2de9ebc3780052b5afc93ce61af9a6e2e",
+  "seedMarkers": {
+    "lumen-seed.done": {
+      "present": true,
+      "matchesCurrentDemoTree": false
+    },
+    "demo-seed.done": {
+      "present": true,
+      "matchesCurrentDemoTree": true
+    },
+    "portfolio-seed.done": {
+      "present": true,
+      "matchesCurrentDemoTree": false
+    }
+  },
+  "csrStudyMarkerPresent": true,
+  "nativeBrowser": {
+    "mode": "prepare",
+    "startedAt": "2026-11-13T22:48:11.019Z",
+    "finishedAt": "2026-11-13T22:52:26.690Z",
+    "outcome": "passed",
+    "steps": [
+      {
+        "name": "project: found or created through New project",
+        "outcome": "pass",
+        "ms": 17156
+      },
+      {
+        "name": "IND: the open IND's number and its sponsor, recorded (fictional; P-115)",
+        "outcome": "pass",
+        "ms": 153
+      },
+      {
+        "name": "Vault: upload the study files and the manifest (POST /api/vault/ingest)",
+        "outcome": "pass",
+        "ms": 2677
+      },
+      {
+        "name": "Vault: send, review-sign and approve each of the seven files (three people)",
+        "outcome": "pass",
+        "ms": 148995
+      },
+      {
+        "name": "Editor: New document \u2192 M5 lists the CSR once (F1)",
+        "outcome": "pass",
+        "ms": 17873
+      },
+      {
+        "name": "Editor: the CSR created from New document shows \"Build from the study\u2019s data\"",
+        "outcome": "pass",
+        "ms": 24898
+      },
+      {
+        "name": "Study data: manifest chosen, tables previewed, frozen in the document",
+        "outcome": "pass",
+        "ms": 36111
+      }
+    ],
+    "apiErrorCount": 0
+  },
+  "scope": "Existing preparation stopped at study-data freeze. No build/model generation, document scientific approval or dispatch was performed. Licensed data and raw browser details stay private/ignored.",
+  "verifierExitCode": 1,
+  "classification": "verifier marker-format assumption; not a seed or browser failure",
+  "detail": "The first probe compared every stamp with a bare demo tree SHA. Existing Lumen and portfolio stamps also bind the roster or author email. The later summary reads those exact formats from the existing startup functions."
+}

@@ -1,9 +1,11 @@
 # Codespaces demo and Copilot handoff
 
-F1 / W1 / D1–D2. Baseline `2a667bf51`, 2026-11-13. This continuation verifies and
-finishes the existing startup and operator handoff. Current measurements and
-publication receipts will be added as they complete; this initial inventory is
-not a passing test or demo-readiness claim.
+F1 / W1 / D1–D2, 2026-11-13. Fresh setup at `2a667bf51` passes; focused checks
+at merged `2973e971b` and the existing synthetic CSR editor rehearsal pass.
+Source and handoff publication is confirmed at `50019d14e`. Normal and cached
+startup pass after the managed-network recovery below. The app serves that
+published revision; live AnA remains unavailable without a provider. Failed
+attempts and limits are retained.
 
 ## What already exists
 
@@ -68,13 +70,14 @@ the later actual script execution, not either precondition failure.
 
 ## Initial startup and editor rehearsal
 
-The first `post-start.sh` launched the app at the measured baseline and
-completed the Lumen seed. Its tool session then became unaddressable while
-the Docker exec, startup shell and seed remained running. The Python receipt
+The first `post-start.sh` launched the app at the measured baseline. Its tool
+session became unaddressable while the Docker exec, startup shell and seed
+remained running. The Python receipt
 supervisor was absent, so no native completion exit or complete startup output
 was retained (`post-start-interrupted.json`). This attempt is not a passing
-full-start receipt. The other demo packs continue through their normal API
-path; a later ordinary start will be measured separately.
+full-start receipt. The orphaned startup continued, and all three actual
+Lumen/general/portfolio seed markers later completed through the normal API
+path. Later ordinary starts are measured separately.
 
 `runtime-role.json` queries with `APP_DATABASE_URL` taken privately from the
 actual running server process: role `app_service`, row security `on`, no
@@ -129,16 +132,102 @@ No live provider request was made by these fixture-based checks.
 The bounded browser rerun exits **0** in 22.8 seconds
 (`reviewer-browser-confirmed.json`). All functional checks still pass, with
 119/119 saved bodies, downloaded Word and PDF (167,567 bytes, 34 pages), matching
-delivered-byte hashes and draft notices, and a 200 scientific preview. It
+delivered-byte hashes and draft notices, and a 200 scientific preview. Downloaded
+working-copy binaries stay in private scratch; the packet retains metadata and
+inspection results. It
 retains **52 client-cancelled GETs**, zero transport failures, zero API HTTP
 errors and zero page errors (`reviewer-current-walk.json`). Required document
 reads were not cancelled. Screenshots include the existing editor at 1440px
 and review dialog at 390px. The current helper and receipt harness are hashed
 separately in the execution-input receipt. No approval was submitted.
 
-The app still served baseline `2a667bf51` during this content-identical editor
-rehearsal. A complete measured normal start and final published-HEAD runtime
-check remain pending; the bridge does not relabel the older process stamp.
+The app served baseline `2a667bf51` during this content-identical editor
+rehearsal. The later normal start and runtime check below verify published
+`50019d14e`; the bridge does not relabel the older process stamp.
+
+## Canonical publication
+
+The direct normal push to `concept2cure-v2` completed at
+`50019d14e50304d023b6e9e7c945456c74175979`. All push gates pass, including
+**89 Lint-job gates, zero red**. The normal typecheck gate explicitly skipped
+the 50 changed files because none can change a type; this is not a new compiler
+pass. A fresh authenticated fetch confirmed the same remote SHA, and the
+working tree was clean before retaining `publication.json`.
+
+The two operator-document holds are released. The existing canonical guide,
+devcontainer agent rules, playbook and tracked source/redacted evidence are
+available to Codespaces Copilot after its checkout refresh. Account sign-in
+and the later runtime stamp remain separate from a successful repository push.
+
+## Normal restart and managed-network recovery
+
+`post-start-confirmed.json` retains the first fully supervised normal restart:
+native exit 0 in 41.5 seconds, no source drift, and the old process correctly
+restarted for published `50019d14e`. This is **not** a passing complete study
+preparation: its output explicitly reports the CDISC download failure and
+`csr-study.done` was absent. All three demo seed stamps were already complete.
+
+`managed-network-probe.*` records direct Node fetch failing with `ECONNREFUSED`
+and the same public HEAD request returning 200 through the existing `undici`
+environment-proxy agent. Image Node 22.16.0 did not use this verifier's proxy
+automatically. The probe was first run through stdin; its diagnostic body is
+retained in `managed-network-probe.cjs`. No secret value is printed.
+
+The unchanged `scripts/cre/fetch-cdisc-pilot-adam.mjs` was then run with the
+explicit packet preload for that download process only
+(`cdisc-proxy-fetch.json`): native exit 0 in 8.0 seconds, **all 10 pinned file
+SHA-256 checks pass**, no named source/execution drift. Attribution and terms
+are retained in its log; licensed data remain outside Git. TLS and the trusted
+CA are retained. The preload is not installed in the product or normal startup.
+Both small diagnostic helpers pass scoped lint (`recovery-lint.json`).
+
+The next unmodified `post-start.sh` completes with native exit **0** in
+285.4 seconds (`post-start-recovered.json`), with no source/execution drift or
+failed preparation phase. Its native browser passes all **seven preparation
+steps**, zero API errors: New project, fictional IND context, Vault uploads,
+three-person review/approval of seven required files, the single CSR picker
+entry, the created document's study-data build controls, and clinical-table
+preview/freeze. It stops before model generation. `native-prepare-summary.json`
+retains only step names, timings, outcomes and marker matches; licensed data
+and raw browser details remain private/ignored.
+
+All three stamps match their actual current formats, and `csr-study.done`
+exists. The first verifier assumed all three stamps were bare tree hashes;
+the retained `native-prepare-marker-precondition.json` records that verifier
+error. The corrected check uses the existing tree/roster/email formats, with
+all matches true. No marker was changed by a verifier.
+
+`runtime-after-recovery.json` confirms `/api/version` returns published
+`50019d14e`. Database, schema and storage are `ok`; `/readyz` remains **503**
+with only `ana` failed, `anaState: no_provider`. This is a successful local
+manual-workflow rehearsal, not a passing live-provider readiness check.
+
+A subsequent unchanged cached start exits **0** in **5.9 seconds**
+(`post-start-cached.json`), retaining the already-running app and all prepared
+records with no source/execution drift. It repeats no demo seed or CDISC
+preparation. The operator can now follow the published-HEAD update procedure
+for the final documentation publication.
+
+## Later canonical checkout repair
+
+Canonical `1cddec661` then added a licensing checkout-response/free-activation
+repair, its existing test updates and evidence. `final-source-bridge.json`
+checks all prior measured inputs: only the licensing surface and its test
+change; the other **12,720** measured inputs, including editor, backend,
+exports, lifecycle scripts and demos, remain byte-identical. The prior CSR and
+CDISC observations retain their original source/runtime stamps.
+
+The three existing licensing suites pass **31/31**, and scoped lint exits 0
+with only the three existing surface warnings (`final-licensing-checks.json`,
+`final-licensing-lint.json`). Their eight focused inputs and actual executable
+files are pinned separately; no source/execution drift is reported. These
+component tests simulate billing responses and establish no live payment
+acceptance. The incoming owner's broader checks remain in
+`../2026-11-13-self-service-checkout/README.md`.
+
+Final publication follows the normal hooks. Afterwards the existing startup
+will update the app to that published documentation revision, and the
+operator's version/readiness procedure will be checked again.
 
 This local image/browser rehearsal does not exercise GitHub-hosted creation,
 VS Code extension sign-in, a live AnA turn, model qualification, real scientific

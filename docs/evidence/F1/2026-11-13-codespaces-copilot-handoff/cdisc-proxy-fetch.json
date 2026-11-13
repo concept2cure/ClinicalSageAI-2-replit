@@ -1,0 +1,30 @@
+{
+  "startedAt": "2026-11-13T22:47:14.861425+00:00",
+  "elapsedSeconds": 7.979,
+  "argv": [
+    "docker",
+    "--host=unix:///var/run/docker.sock",
+    "exec",
+    "c2c-codespaces-handoff-20261113",
+    "node",
+    "--require",
+    "./docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/managed-proxy.cjs",
+    "scripts/cre/fetch-cdisc-pilot-adam.mjs",
+    "/root/.concept2cure-codespace/cdisc-pilot"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "merged-inputs.json",
+  "inputCount": 12722,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/managed-proxy.cjs": "42673e1f20663d23fdf817dd0bc5dbd2820a2525e792495e80dfacaba18ac3b2",
+    "scripts/cre/fetch-cdisc-pilot-adam.mjs": "3cc918a83f73250306165776298c192f1b3f2bb4812da2166780d67126aa4c38"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "cdisc-proxy-fetch.txt.gz",
+  "outputSha256": "b12eeb86e2dd8bb7501b83a53673bb6633c73c5d989c89187c8e3f0a1cfe6cdd",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}
