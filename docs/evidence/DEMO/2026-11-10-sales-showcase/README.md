@@ -116,6 +116,11 @@ requires an actual completed provider receipt. The combined checkout passes **71
 checks, **49/49** focused demo regressions and **31/31** verifier checks. These test fixtures establish control
 behavior; they do not establish live provider generation. Their original source/evidence packets are preserved at
 `docs/evidence/F1/2026-11-13-codespaces-demo-recovery/` and `docs/evidence/F1/2026-11-13-openai-ana-verifier/`.
+The subsequent `b0300fe5c` integration also preserves its existing document-runtime and portfolio handover repairs.
+The latest combined startup suite passes **81/81**, superseding the earlier 71-case result; portfolio checks pass
+**46/46**, and the changed validation harness's explicit-identity checks pass **3/3**. Independent source reviews
+found no blocking interaction. These overlapping fixture sets are not added together. Actual default startup and
+report-scope acceptance follow at the merged revision; no earlier runtime observation is relabelled as that check.
 
 Both full golden journeys now pass across focused strict-policy browser runs. The governed-record journey proves
 canonical project creation, source/provenance links, saved edits, stale-version refusal, a pre-review export 403,
