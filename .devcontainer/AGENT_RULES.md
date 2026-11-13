@@ -16,3 +16,8 @@
 - Use GitHub Codespaces for development to ensure a consistent development environment.
 - For local editor human testing, follow [the Codespaces handoff](../docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md); no deployment environment is required.
 - Adhere to license agreements when using third-party libraries or resources.
+
+## 4. Copilot and the running Codespace
+
+- Follow the [current Copilot playbook](../docs/getting-started/CODESPACE_AGENT_PLAYBOOK.md) for the governing roadmap, ownership, canonical branch and continuation workflow.
+- Use [Update the Codespace and Copilot checkout](../docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md#update-the-codespace-and-copilot-checkout) to verify the published checkout, running commit and component readiness. Record actual outcomes and keep secret values out of chat, Git and evidence.
