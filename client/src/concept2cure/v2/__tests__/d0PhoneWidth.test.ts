@@ -106,10 +106,20 @@ describe('fix 3: at phone width a table scrolls inside its card or section, neve
   const scrollsTable = (selector: string, body: string) =>
     subjects(selector).some((s) => /(^|[\s>])\.reg-tbl$/.test(s)) && /(^|;)\s*overflow(-x)?\s*:/.test(body);
 
-  it('one rule, at ≤640px, scrolls a table that is a direct child of a card, a card body or a work area’s section', () => {
+  /* D0's rule is for a phone. CMC's registers are wider than the page column at a laptop's width too
+     (Materials pushed the page 108 px sideways at 1440, Stability 120 px; P-122, D5.md §A.3), so CMC
+     has one named exception at every width, kept here beside D0's rule and nowhere else. `display:
+     block` changes how a table that fits fills its card, so D0's rule is not widened to every work
+     area: a second exception is a D0 decision, named here, never a copy in a work area's sheet. */
+  it('two rules scroll a table: D0’s at ≤640px, and CMC’s named exception at every width', () => {
     const scroll = APP.filter((r) => scrollsTable(r.selector, r.body));
-    expect(scroll.map(where)).toHaveLength(1);
-    const [rule] = scroll;
+    expect(scroll.map(where)).toHaveLength(2);
+    const everyWidth = scroll.filter((r) => r.media === null);
+    expect(everyWidth.map(where)).toHaveLength(1);
+    expect(subjects(everyWidth[0].selector).sort()).toEqual(['[data-work-area="cmc"] .pj-card-b > .reg-tbl', '[data-work-area="cmc"] .pj-sec > .reg-tbl']);
+    expect(decl(everyWidth[0].body, 'display')).toBe('block');
+    expect(decl(everyWidth[0].body, 'overflow-x')).toBe('auto');
+    const [rule] = scroll.filter((r) => r.media !== null);
     expect(at640(rule)).toBe(true);
     expect(decl(rule.body, 'display')).toBe('block');
     expect(decl(rule.body, 'overflow-x')).toBe('auto');

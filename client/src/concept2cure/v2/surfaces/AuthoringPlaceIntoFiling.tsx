@@ -116,8 +116,16 @@ export const IDENTITY_STATEMENT =
  * and the dialog prefilled the OPEN section's code. A Clinical Overview placed
  * at 2.5.1 filed 2.5.2 … 2.5.8 inside the 2.5.1 leaf.
  */
+/** A section's CTD node. A template's working heading is stored as "<node>:work:<n>"
+ *  (ind-template-outlines-m1.ts: "Working preparation heading, not an additional CTD node"), so it is read
+ *  as the node it prepares. Read as a code of its own it is not CTD, and no document made from such a
+ *  template could be placed from the editor (S12's sweep, 2026-11-09). */
+const WORKING_HEADING = /:work:\d+$/i;
+export const filingNodeOf = (code: string | null | undefined): string | null =>
+  normalizeCtdCode(String(code ?? '').trim().replace(WORKING_HEADING, ''));
+
 export function documentFilingCode(sectionCodes: ReadonlyArray<string | null | undefined>): string | null {
-  const codes = sectionCodes.map((c) => normalizeCtdCode(c)).filter((c): c is string => c !== null);
+  const codes = sectionCodes.map((c) => filingNodeOf(c)).filter((c): c is string => c !== null);
   if (codes.length === 0 || codes.length !== sectionCodes.length) return null;
   let common = codes[0].split('.');
   for (const code of codes.slice(1)) {
@@ -138,7 +146,7 @@ export function ownSectionRefusal(canonical: string | null, sectionCodes: Readon
   if (!canonical || !sectionCodes || sectionCodes.length < 2) return null;
   const own = documentFilingCode(sectionCodes);
   if (canonical === own) return null;
-  if (!sectionCodes.some((c) => normalizeCtdCode(c) === canonical)) return null;
+  if (!sectionCodes.some((c) => filingNodeOf(c) === canonical)) return null;
   return (
     `${canonical} is one section of this document. Placement files the whole saved document ` +
     `(${sectionCodes.length} sections) as one leaf, so it is filed at the document’s own code` +
@@ -246,7 +254,9 @@ function AuthoringPlaceIntoFilingForDocument({
        it: for a document whose sections share no code (a 510(k) Summary's
        1 … 9) it is one of its own sections, and prefilling it showed the
        publisher a refusal of a value they never typed (J4 human test, 2026-11-06). */
-    const fallback = activeSectionCode && !ownSectionRefusal(judgeSectionCode(activeSectionCode).canonical, sectionCodes) ? activeSectionCode : '';
+    // A working heading's key is never offered: its node is (the key itself is not a CTD code).
+    const activeNode = activeSectionCode ? activeSectionCode.trim().replace(WORKING_HEADING, '') : '';
+    const fallback = activeNode && !ownSectionRefusal(judgeSectionCode(activeNode).canonical, sectionCodes) ? activeNode : '';
     setSection(ownCode ?? fallback);
     setOp('new');
     target.load();

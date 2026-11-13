@@ -1,0 +1,22 @@
+{
+ "settled": {
+  "reads": 3,
+  "title": null,
+  "sections": 105,
+  "loading": []
+ },
+ "during": {
+  "readsSince": 0,
+  "title": null,
+  "sections": 105,
+  "loading": []
+ },
+ "after": {
+  "readsSince": 0,
+  "repeated": [],
+  "title": null,
+  "sections": 105,
+  "loading": []
+ },
+ "apiFailures": []
+}

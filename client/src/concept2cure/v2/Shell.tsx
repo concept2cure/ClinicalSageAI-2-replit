@@ -1046,9 +1046,14 @@ function projectItems(read: PaletteProjectsRead, term: string): CmdKItem[] {
     const label = read.state === 'reading' ? 'Reading projects…' : 'Projects could not be read, so none are listed here.';
     return [header, { id: '_note_projects', kind: 'note', label }];
   }
-  const hits = paletteProjectResults(read.projects, term);
+  const { hits, more } = paletteProjectResults(read.projects, term);
   if (!hits.length) return [];
-  return [header, ...hits.map((p): CmdKItem => ({ id: `project:${p.id}`, kind: 'project', label: p.title, hint: p.code ?? 'Project', icon: 'folder', project: p }))];
+  const rows = hits.map((p): CmdKItem => ({ id: `project:${p.id}`, kind: 'project', label: p.title, hint: p.code ?? 'Project', icon: 'folder', project: p }));
+  // A cut list says so: the project a person typed must never be the one left out without a word.
+  const rest: CmdKItem[] = more > 0
+    ? [{ id: '_note_projects_more', kind: 'note', label: `${more} more ${more === 1 ? 'project matches' : 'projects match'}. Keep typing to narrow.` }]
+    : [];
+  return [header, ...rows, ...rest];
 }
 
 /**

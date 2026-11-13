@@ -51,6 +51,31 @@ describe('complete citation catalogue reads', () => {
     expect(apiRequest.mock.calls.map(([, url]) => new URL(url, 'https://example.test').searchParams.get('offset'))).toEqual(['0', '200', '0', '200']);
   });
 
+  /* A save that lands inside a long catalogue read makes the server's closing check refuse the read: 503
+     SOURCE_READ_ACCESS_CHANGED. Nothing was wrong with the request, so the reader reads once more before it
+     says anything (the Quality lane's walk, 2026-11-12: the editor opened a new document on an error). */
+  const accessChanged = () => ({ ok: false, status: 503, json: async () => ({ success: false, error: { code: 'SOURCE_READ_ACCESS_CHANGED', message: 'Current source access changed during the read.' } }) });
+
+  it('reads once more, without a word, when source access changed during the read', async () => {
+    let asked = 0;
+    apiRequest.mockImplementation(async () => (asked++ === 0 ? accessChanged() : ok(page(0, [1, 2], 2))));
+    const states: string[] = [];
+    const { result } = renderHook(() => { const read = useProjectSourceCatalog(programId); states.push(read.state); return read; });
+    await waitFor(() => expect(result.current.state).toBe('ready'));
+    expect(result.current.sources).toHaveLength(2);
+    expect(states, 'the first refusal was shown').not.toContain('error');
+    expect(apiRequest).toHaveBeenCalledTimes(2);
+  });
+
+  it('says so, with a retry, when access changed during the second read too', async () => {
+    apiRequest.mockImplementation(async () => accessChanged());
+    const { result } = renderHook(() => useProjectSourceCatalog(programId));
+    await waitFor(() => expect(result.current.state).toBe('error'));
+    expect(apiRequest).toHaveBeenCalledTimes(2);
+    expect(result.current.retryable).toBe(true);
+    expect(result.current.sources).toEqual([]);
+  });
+
   it('refuses a nonprogressing empty page instead of looping or claiming completion', () => {
     expect(parseProjectSourcePage(page(0, [], 201), { programId, offset: 0, limit: 200 }).ok).toBe(false);
   });
