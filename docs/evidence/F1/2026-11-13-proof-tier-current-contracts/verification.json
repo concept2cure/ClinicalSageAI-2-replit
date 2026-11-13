@@ -43,7 +43,20 @@
   },
   "fullProofTier": {
     "command": "npm run test:proof-tier",
-    "status": "running"
+    "status": "passed",
+    "exitCode": 0,
+    "testFilesPassed": 143,
+    "testsPassed": 1813,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "durationSeconds": 1039.81,
+    "nodeMajor": 22,
+    "nodeHeapLimitMb": 4096,
+    "sourceCommit": "661ec71833d16fb2e00d67f2fa959581b173ebb9",
+    "sourceHashesMatchPublishedCommit": true,
+    "completedAt": "2026-11-13T21:48:03.866107+00:00",
+    "localLogSha256": "0f049f19b2fca933c2468395f2694f14154364438e395fb43c4632b5ccd892b3",
+    "rawFixtureLogCommitted": false
   },
   "fullCompilerAndBuild": "owned by root; not claimed here"
 }
