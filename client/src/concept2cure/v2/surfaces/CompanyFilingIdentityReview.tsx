@@ -18,12 +18,15 @@ function valid(value: unknown, sequenceId: number, variantId?: string): value is
     && (data.variantId ?? null) === (variantId ?? null);
 }
 
+/* The stored keys drew as row headers ('name', 'address') in a table with no layout (demo walk 3.u12, 2026-11-12). */
+const FIELD_LABEL: Record<string, string> = { name: 'Name', address: 'Address' };
+
 function IdentityFacts({ data }: { data: IdentityReview }) {
   return <>
       <p>Applicant of record: {data.filing.applicantName || 'Missing'} · Agency application number: {data.filing.applicationNumber || 'Not recorded'}</p>
       <p role="status">{data.status === 'consistent' ? 'The company name and address agree with the recorded filing.' : data.status === 'reviewed_difference' ? 'A role difference has been reviewed for this exact company and filing revision.' : data.status === 'unresolved' ? 'Identity is incomplete. Complete the missing company or filing facts before recording a role difference.' : 'The letterhead differs from the recorded filing identity and needs review.'}</p>
-      {data.differences.length > 0 && <table><caption>Identity differences for this sequence</caption><thead><tr><th scope="col">Field</th><th scope="col">Company presentation</th><th scope="col">Filing record</th></tr></thead>
-        <tbody>{data.differences.map(difference => <tr key={difference.field}><th scope="row">{difference.field}</th><td>{difference.companyValue || 'Missing'}</td><td>{difference.filingValue || 'Missing'}</td></tr>)}</tbody></table>}
+      {data.differences.length > 0 && <div className="company-revision-comparison"><table><caption>Identity differences for this sequence</caption><thead><tr><th scope="col">Field</th><th scope="col">Company presentation</th><th scope="col">Filing record</th></tr></thead>
+        <tbody>{data.differences.map(difference => <tr key={difference.field}><th scope="row">{FIELD_LABEL[difference.field] ?? difference.field}</th><td>{difference.companyValue || 'Missing'}</td><td>{difference.filingValue || 'Missing'}</td></tr>)}</tbody></table></div>}
       <p className="company-hint">{data.explanation}</p>
       {data.review && <p>Reviewed company role: {data.review.company_role.replaceAll('_', ' ')} · {data.review.reason}</p>}
   </>;

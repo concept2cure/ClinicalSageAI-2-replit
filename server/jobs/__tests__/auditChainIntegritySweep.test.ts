@@ -44,6 +44,7 @@ vi.mock('../../services/audit/chain-anchor.js', async (importOriginal) => ({
 }));
 
 import { startAuditChainIntegritySchedule, runAuditChainIntegrityCheck } from '../auditChainIntegritySweep';
+import { chainRows, soundChain } from '../../services/audit/__tests__/_audit-event-chain-fixtures';
 
 describe('startAuditChainIntegritySchedule gating (on-by-default)', () => {
   const original = { ...process.env };
@@ -149,14 +150,8 @@ function answerQueries(overrides: Partial<Record<'regclass' | 'audit_events' | '
       return typeof regclass === 'function' ? regclass(params) : regclass ?? { rows: [{ present: true }] };
     }
     if (sql.includes('FROM audit_events')) {
-      return (
-        overrides.audit_events ?? {
-          rows: [
-            { id: 1, organization_id: 1, sequence_number: 1, record_hash: 'h1', previous_hash: null },
-            { id: 2, organization_id: 1, sequence_number: 2, record_hash: 'h2', previous_hash: 'h1' },
-          ],
-        }
-      );
+      // Hashed as the trigger hashes them: the walk re-computes each row, so made-up hashes would read as altered.
+      return overrides.audit_events ?? { rows: soundChain(1, 2, 1) };
     }
     if (sql.includes('FROM audit.tamper_proof_log')) {
       return overrides.tamper_proof_log ?? { rows: [{ sequence_number: 1 }, { sequence_number: 2 }] };
@@ -276,12 +271,7 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
 
   it('a broken audit_events link raises the alert path with the first broken id', async () => {
     answerQueries({
-      audit_events: {
-        rows: [
-          { id: 1, organization_id: 1, sequence_number: 1, record_hash: 'h1', previous_hash: null },
-          { id: 2, organization_id: 1, sequence_number: 2, record_hash: 'h2', previous_hash: 'TAMPERED' },
-        ],
-      },
+      audit_events: { rows: chainRows([{ id: 1, org: 1, seq: 1 }, { id: 2, org: 1, seq: 2, prev: 'TAMPERED' }]) },
     });
     const result = await runAuditChainIntegrityCheck();
     expect(result.ok).toBe(false);
@@ -391,8 +381,10 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
     answerQueries({
       audit_events: {
         rows: [
-          { id: 1, organization_id: 1, sequence_number: 1, record_hash: null, previous_hash: null },
-          { id: 2, organization_id: 1, sequence_number: 2, record_hash: null, previous_hash: null },
+          ...chainRows([
+            { id: 1, org: 1, seq: 1, hash: null },
+            { id: 2, org: 1, seq: 2, hash: null, prev: null },
+          ]),
         ],
       },
     });

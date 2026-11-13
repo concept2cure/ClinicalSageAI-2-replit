@@ -101,7 +101,16 @@ export interface LinkageSnapshot {
   status: 'intact' | 'broken' | 'unverified' | 'unavailable';
   totalEntries: number;
   hashedEntries?: number;
+  /**
+   * Rows whose hash RE-DERIVED from the fields the chain covers. Absent on a
+   * snapshot that only compared stored pointers; the verdict then says so
+   * instead of claiming a re-computation (HS-1008-7).
+   */
+  verifiedEntries?: number;
+  /** Every break, of either kind; `pointerBreaks` and `contentBreaks` say which. */
   brokenLinks: number;
+  pointerBreaks?: number;
+  contentBreaks?: number;
   /**
    * Rows whose `previous_hash` is NULL although their predecessor was hashed —
    * so the row cannot be placed in the chain, and the link through it was not

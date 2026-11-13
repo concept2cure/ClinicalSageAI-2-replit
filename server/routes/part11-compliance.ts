@@ -33,6 +33,13 @@ import { VerificationUnavailableError, describeFailure } from '../lib/verificati
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { approvalShareJoin } from '../services/review/approval-share';
+import {
+  AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL,
+  auditEventChainVerdict,
+  describeAuditEventChain,
+  walkAuditEventChain,
+  type AuditEventChainRow,
+} from '../services/audit/audit-event-chain';
 
 /**
  * The request-scoped, tenant-pinned SQL client.
@@ -839,20 +846,13 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
   const pool: SqlClient = requestSql(req);
 
   try {
-    const orgFilter = `WHERE organization_id = $1`;
-    const params = [orgId];
 
-    // Fetch all audit_events rows in chain order. `timestamp_text` is the
-    // timestamp as the database renders it as text: exactly what the hash-chain
+    // Fetch all audit_events rows in chain order, with the columns the one walk
+    // of this chain reads (services/audit/audit-event-chain.ts). `timestamp_text`
+    // is the timestamp as the database renders it: exactly what the hash-chain
     // trigger hashed (`NEW.timestamp::text`, db/migrations/20260222_audit_events_hash_chain.sql).
-    const { rows } = await pool.query(
-      `SELECT id, organization_id, sequence_number, event_type, entity_type,
-              entity_id, user_id, user_name, timestamp, "timestamp"::text AS timestamp_text, reason,
-              record_hash, previous_hash
-       FROM audit_events ${orgFilter}
-       ORDER BY organization_id, sequence_number ASC`,
-      params
-    );
+    // One organisation's chain, always: the statement binds it, and has no other form.
+    const { rows } = await pool.query(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, [orgId]);
 
     /* No rows means nothing was re-computed, so there is no verdict to give.
        This used to answer `integrityValid: true` — a pass over zero entries —
@@ -878,101 +878,54 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
       });
     }
 
-    // Walk the chain and recompute hashes
-    const brokenLinks: Array<{ id: number; sequenceNumber: number; orgId: number; expected: string; actual: string }> = [];
-    const prevHashByOrg: Record<number, string> = {};
-    let totalVerified = 0;
-    // Rows carrying no record_hash at all. These are NOT verifiable, and counting
-    // them as verified is what let an unhashed table report a fully intact chain.
-    let unhashedEntries = 0;
+    /* ONE WALK, SHARED. This route's loop was the only walk of this chain that
+       re-derived a row's hash; the signed export, the monitor, the per-organisation
+       verdict job and the tenant attestation compared stored pointers only, so
+       five readers could give different verdicts for the same rows. They all
+       call services/audit/audit-event-chain.ts now.
 
-    for (const row of rows) {
-      const oid = row.organization_id;
-      const prevHash = prevHashByOrg[oid] || null;
-
-      // Verify previous_hash pointer
-      if (row.previous_hash !== prevHash && row.previous_hash !== null && prevHash !== null) {
-        brokenLinks.push({
-          id: row.id,
-          sequenceNumber: row.sequence_number,
-          orgId: oid,
-          expected: prevHash || '(genesis)',
-          actual: row.previous_hash || '(null)',
-        });
-      }
-
-      // A row with no record_hash was never hashed — the hash-chain trigger
-      // (db/migrations/20260222_audit_events_hash_chain.sql) is not in
-      // C2C_MIGRATION_FILES, so on a canonically-provisioned database every row
-      // is NULL. Such a row cannot be verified and must not be counted as
-      // verified: the truthiness guard below used to skip it silently, leaving
-      // brokenLinks empty and reporting "intact / integrityValid: true" over a
-      // chain in which nothing was checked.
-      if (!row.record_hash) {
-        unhashedEntries++;
-        prevHashByOrg[oid] = row.record_hash;
-        continue;
-      }
-
-      // Recompute record_hash from exactly the input the DB trigger hashed.
-      //
-      // AUD-02 (client administration walk, 2026-11-10): this used to rebuild
-      // the timestamp in JavaScript, as an ISO string cut to milliseconds with
-      // "+00" appended, and then as String(Date). The trigger hashes
-      // `timestamp::text`; audit_events.timestamp is `timestamp without time
-      // zone` (0000_sweet_joseph.sql) and NOW() writes microseconds, so neither
-      // guess was ever the trigger's input. Every row the trigger hashed read as
-      // a broken link: three signed exports in a new organisation showed "3
-      // broken links over 3 entries" over a sound chain. The database's own text
-      // is used now, and nothing else: there is one preimage, so a changed field
-      // still breaks the link (part11-chain-trigger-written.pglite.test.ts).
-      const payload =
-        (row.sequence_number ?? '') + '|' +
-        (row.event_type ?? '') + '|' +
-        (row.entity_type ?? '') + '|' +
-        (row.entity_id ?? '') + '|' +
-        (row.user_id ?? '') + '|' +
-        (row.user_name ?? '') + '|' +
-        (row.timestamp_text ?? '') + '|' +
-        (row.reason ?? '') + '|' +
-        (row.previous_hash ?? 'GENESIS');
-
-      const expectedHash = computeHash(payload);
-
-      if (row.record_hash !== expectedHash) {
-        brokenLinks.push({
-          id: row.id,
-          sequenceNumber: row.sequence_number,
-          orgId: oid,
-          expected: expectedHash.substring(0, 16) + '...',
-          actual: (row.record_hash || '(null)').substring(0, 16) + '...',
-        });
-      }
-
-      prevHashByOrg[oid] = row.record_hash;
-      totalVerified++;
-    }
+       Two defects of the loop went with it. `totalVerified++` ran at the end of
+       the body for every hashed row, so a row whose hash did NOT re-derive still
+       counted toward `verifiedEntries`. And the pointer comparison was skipped
+       when a row's previous_hash was null, so an entry removed and its
+       successor's pointer blanked was a pointer nobody compared. The preimage
+       is unchanged: the database's own timestamp text (AUD-02, 2026-11-10;
+       part11-chain-trigger-written.pglite.test.ts). */
+    const walk = walkAuditEventChain(rows as AuditEventChainRow[]);
+    const verdict = auditEventChainVerdict(walk);
 
     // Precedence: a positive finding of tampering outranks "cannot tell". Only a
     // chain in which EVERY row was actually re-computed may be called intact.
-    const anyBroken = brokenLinks.length > 0;
-    const anyUnhashed = unhashedEntries > 0;
-    const chainStatus = anyBroken ? 'broken' : anyUnhashed ? 'unverifiable' : 'intact';
+    const chainStatus = verdict === 'broken' ? 'broken' : verdict === 'intact' ? 'intact' : 'unverifiable';
     // null = "not verified, and not known to be intact" — the third state the
-    // Part 11 console already renders as "Not verifiable". Reporting `true` here
-    // over unhashed rows asserted tamper-evidence that was never established.
-    const integrityValid = anyBroken ? false : anyUnhashed ? null : true;
+    // audit trail's chain banner renders as "not verifiable". Reporting `true`
+    // here over unhashed rows asserted tamper-evidence that was never established.
+    const integrityValid = verdict === 'broken' ? false : verdict === 'intact' ? true : null;
+    // One sentence, generated beside the walk, so the claim cannot outrun it.
+    const chainDetail = describeAuditEventChain(walk);
 
     res.json({
       success: true,
       data: {
         chainStatus,
         integrityValid,
-        totalEntries: rows.length,
-        verifiedEntries: totalVerified,
-        unhashedEntries,
-        brokenLinks: brokenLinks.length,
-        brokenLinkDetails: brokenLinks.slice(0, 20), // First 20 for diagnostics
+        totalEntries: walk.rowsSeen,
+        // Rows whose hash RE-DERIVED, not rows that carried one.
+        verifiedEntries: walk.verifiedRows,
+        hashedEntries: walk.hashedRows,
+        unhashedEntries: walk.unhashedRows,
+        unlinkedEntries: walk.unlinkedRows,
+        brokenLinks: walk.breaks.length,
+        pointerBreaks: walk.breaks.filter((b) => b.kind === 'pointer').length,
+        contentBreaks: walk.breaks.filter((b) => b.kind === 'content').length,
+        brokenLinkDetails: walk.breaks.slice(0, 20).map((b) => ({
+          id: b.id,
+          sequenceNumber: b.sequenceNumber,
+          orgId: b.organizationId,
+          kind: b.kind,
+          expected: b.expected.substring(0, 16) + '...',
+          actual: b.actual.substring(0, 16) + '...',
+        })), // First 20 for diagnostics
         // No fallback: a hash that appears in no row must not be presented as the
         // chain's last hash.
         lastHash: rows[rows.length - 1]?.record_hash ?? null,
@@ -982,12 +935,16 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
         genesisHash: computeHash('GENESIS_BLOCK_TRIALSAGE'),
         compliance: {
           '§11.10(e)': 'Audit trail preserves complete change history with computer-generated timestamps',
-          tamperEvident: anyUnhashed
-            ? `${unhashedEntries} of ${rows.length} entry(ies) carry no record_hash, so cryptographic linkage could NOT be verified for them.`
-            : 'Each entry is cryptographically linked to its predecessor via SHA-256 hash chain',
-          verificationMethod: anyUnhashed
-            ? `Re-computation attempted over ${rows.length} entry(ies); ${totalVerified} carried a record_hash and were re-computed, ${unhashedEntries} were unhashed and could not be verified.`
-            : 'Full re-computation of SHA-256 hash chain from database records',
+          // What the walk found, in the walk's own sentence: it says what the
+          // hash covers and that the before and after values are not part of it.
+          tamperEvident: chainDetail,
+          // "Full" only when every entry was re-computed; otherwise the count
+          // that could not be is stated (part11-chain-unhashed-honesty.test.ts).
+          verificationMethod: walk.unhashedRows > 0
+            ? `Re-computation attempted over ${walk.rowsSeen} ${walk.rowsSeen === 1 ? 'entry' : 'entries'}; ` +
+              `${walk.verifiedRows} re-computed and matched, ${walk.unhashedRows} carried no hash and could not be verified.`
+            : `Full re-computation of each entry's SHA-256 hash from the fields the chain covers, compared with ` +
+              `the stored hash, and each entry's predecessor hash compared with the entry before it.`,
         },
       },
     });

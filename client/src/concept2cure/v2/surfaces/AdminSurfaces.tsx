@@ -566,8 +566,14 @@ export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
           HEAD {entries[0]?.hash}
         </span>
       </div>
-      {/* The second verdict: the audit_events chain, which the one above does not cover. */}
-      <AuditEventChainBanner read={eventChain.read} onRetry={eventChain.retry} />
+      {/* The second verdict: the audit_events chain, which the one above does not cover.
+          An entry it names opens in the table below when it is among those loaded. */}
+      <AuditEventChainBanner
+        read={eventChain.read}
+        onRetry={eventChain.retry}
+        isLoaded={(id) => entries.some((e) => e.id === id)}
+        onOpenEntry={setSel}
+      />
 
       {windowCut && (
         <p role="status" data-testid="audit-window-note" className="muted" style={{ fontSize: 12.5, margin: '0 0 12px' }}>
