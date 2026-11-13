@@ -3526,3 +3526,66 @@ separate decision under the working agreement.
 briefing), and each producing area's own package. The rail entry in `registryModel.ts` is in no scoped package and
 is carried by R1.
 
+
+### P-132 — A personal rule a turn cannot protect is left out of that turn, and the turn says so
+
+**The question.** P-104 (2026-11-06) made a person's private rules and saved personal profile owner-private: their
+text reaches a model only through the protected path, which needs owner-private capture (the tenant's key) and a model
+that may receive owner-private context. That is Tier 3, which only a self-hosted model may receive, and no local model
+has passed PQ (plan §1d). So no deployment has the protected path today. Walked in the running app on 2026-11-12
+(`docs/evidence/SPINE/S4/2026-11-12-personal-rule-stops-turns/`): once a person saves one personal rule in "What AnA
+remembers", every new conversation they start fails with "AnA couldn't complete this request", until they revoke it.
+Nothing on the screen says the rule is the cause. Session `01KZK3…` asked the founder what a turn should do with a
+private rule it cannot protect.
+
+**The founder's answer, 2026-11-13.** Of four choices, the founder chose **"Leave it out, say so"**: *"The turn answers
+on Claude without the person's rules and says in the conversation that their personal rules were not applied. The rule
+never leaves the platform, and AnA keeps working."* Not chosen: block saving a rule; keep the pause and explain it;
+send the rule to Claude.
+
+**The decision.**
+
+1. **A turn uses a person's private rules, and their saved personal profile, only when the protected path can serve
+   it:** owner-private capture is available, and the model that will serve the turn may receive owner-private context.
+2. **Otherwise they are left out of that turn.** Their text is not read into the turn, nothing of it is sent to any
+   model, and the turn is not marked owner-private on their account. AnA answers.
+3. **The conversation says so, once per turn**, in plain words: the person's personal rules were not applied to this
+   answer, and why.
+4. **The rules stay as they are** in the person's ledger, with their history. "What AnA remembers" says what happens
+   to them now, in place of "AnA pauses if privacy or model approval cannot be verified".
+5. **An approval rule is not an instruction to a model.** A personal rule at the level "Require my approval" is
+   enforced by the recorded controls whether or not its text is in the turn, as before.
+6. **Unchanged:** a conversation that is already owner-private (its earlier turns were captured under the protected
+   path) keeps its protection, and P-104's rule that private context never reaches a model it may not reach.
+7. **Nothing is added:** no screen, route, table, service or AnA tool. The mechanism is S4's
+   (`server/routes/ana-ri/stream.ts`, `server/services/ana-context-router.ts`).
+
+### P-133 — Offboarding erases members' private AnA profiles through the purge's own door; the export leaves them out and says so
+
+**The question.** P-58 (D6) says an organization's offboarding export returns every row the purge will erase, and then
+the purge erases. P-104 (2026-11-06) says a member's private AnA profile admits only its owner, "even inside the tenant
+or system scope", and `fd04214563` enforced that with a restrictive row policy on `ana_relational_profiles` and
+`user_intelligence_profiles`. So the export, which runs in the organization's scope, leaves those rows out, and the
+purge cannot delete them: the `projects` delete then fails on their foreign key and the whole erasure rolls back.
+`tests/db/tenant-purge-blocking-keys.dbtest.ts` has been red since, 3 of 6 (`COORDINATION.md`, the note to the founder
+and the D6 offboarding owner). `user_intelligence_profiles` is not in the purge's list at all.
+
+**The founder's answer, 2026-11-13.** Of three choices, the founder chose **"Erase, don't export"**: *"The purge erases
+private profiles through its own narrow door; the organization's export leaves them out and says so. P-104's privacy
+holds, and P-58 gets one named exception."* Not chosen: export them to the organization; let each member take theirs.
+
+**The decision.**
+
+1. **The offboarding export does not return a member's private AnA profiles** (`ana_relational_profiles`,
+   `user_intelligence_profiles`). It says so: the export names both tables as withheld under P-104, with their row
+   counts, so the organization knows what was not returned and why. This is P-58's one named exception.
+2. **The purge erases them through a door of its own,** in the pattern of `server/services/tenant/purge-held-doors.ts`:
+   SECURITY DEFINER, owned by the `tenant_record_purger` role, on the SECURITY DEFINER allowlist with its review, and
+   refused unless the session is in the platform scope, the organization is pending deletion and no legal hold is
+   active. The owner boundary is amended in place in both creating migrations so that role may delete (RULE 1).
+3. **`user_intelligence_profiles` joins the purge's list.**
+4. **Nothing else changes.** Inside a live tenant the owner boundary still admits only the owner, and the export of a
+   live tenant leaves the rows out as it does today.
+5. **Added:** one database function (the door). No table, screen, route, service or AnA tool. The files are D6's
+   (`tenant-offboarding.ts`, `purge-referrers.ts`, `purge-held-doors.ts`, `tenant-full-export.service.ts`) and the
+   epic's two migrations (`0013_ana_intelligence_system.sql`, `20260612_ana_relational_external_intel.sql`).
