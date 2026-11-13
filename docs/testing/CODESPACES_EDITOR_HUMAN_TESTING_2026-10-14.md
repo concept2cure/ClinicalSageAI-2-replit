@@ -151,8 +151,9 @@ What the setup did, and where to look when something is wrong:
 - **With `ANTHROPIC_API_KEY`** the start-up names what the key can do, using a model list that costs nothing:
   `ANTHROPIC_API_KEY: key accepted; drafting models available: claude-opus-5-5, …`, or `BLOCKED` with the reason
   (an invalid key, billing, or a key that can see none of the approved drafting models).
-- **Without `ANTHROPIC_API_KEY`** the app runs and `/readyz` answers 503 with
-  only `ana` down (`anaState: no_provider`); the start-up box says so. AnA cannot draft. The CSR build then
+- **Without a drafting provider** the app runs and `/readyz` reports why AnA is unavailable:
+  `anaState: no_provider` when no provider is enabled, or `no_high_risk_model` with OpenAI alone.
+  Read the actual state and other dependency checks; the start-up box also reports them. AnA cannot draft. The CSR build then
   ends refused (demo replies are not saved as drafts). That is how it is designed.
 
 ## Prepare the local Codespace

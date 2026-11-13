@@ -103,12 +103,29 @@ previews frozen into the document. Demo/Lumen cache and CSR-ready markers are pr
 For the golden browser journeys only, that second startup supplied the existing CI launcher's
 `EXPORT_REVIEW_GATE=enforce` in the process environment. This preserves the pre-review 403 assertion. Ordinary
 development Codespaces permit a labelled uncontrolled DRAFT preview; production enforces the review gate. The
-final regular startup uses the ordinary default, and no product export policy is amended for a test.
+final regular startup must restore the ordinary default, and no product export policy is amended for a test.
 
 This rehearsal uses the configured official-image filesystem locally; it is not a claim that this session created
 a hosted GitHub Codespace. No provider key, paid model call, real client credential, agency submission, model PQ
 pass or scientific approval was exercised. The attached architecture is already mapped in the current plan's
 Anna epic (P-104/P-105); its remaining model qualification gates (P-118) stay pending.
+
+The canonical `cd5f9c95a` changes are also integrated: the existing CSR browser bootstrap now repairs incomplete
+Chromium installations, Lumen report selection verifies LMN-201's canonical project scope, and the AnA verifier
+requires an actual completed provider receipt. The combined checkout passes **71/71** `codespaces:doctor:test`
+checks, **49/49** focused demo regressions and **31/31** verifier checks. These test fixtures establish control
+behavior; they do not establish live provider generation. Their original source/evidence packets are preserved at
+`docs/evidence/F1/2026-11-13-codespaces-demo-recovery/` and `docs/evidence/F1/2026-11-13-openai-ana-verifier/`.
+
+Both full golden journeys now pass across focused strict-policy browser runs. The governed-record journey proves
+canonical project creation, source/provenance links, saved edits, stale-version refusal, a pre-review export 403,
+independent reviewer assignment/decision and a review-bound DOCX still marked draft and not agency validated.
+The first-session UI journey proves IND creation, source upload, assignment, the exact neutral AnA request and
+same-document return, a reasoned saved revision, review to a second person with a required future deadline, and
+that person's real Home task. Its actual review POST answers 200 and records the selected UTC due day on one route
+task. Current toolbar/receipt selectors and the required due field replace stale test assumptions; no review gate
+is weakened. The first journey passed twice unchanged; the final second-only run passes in 24.2 seconds. All
+browser workers are closed. The prepared AnA send was deliberately aborted before provider transport.
 
 ## Before the room
 
