@@ -16,6 +16,11 @@ import {
   summarizeChainLinkage,
   type AuditEventChainRow,
 } from '../services/audit/chainIntegrityMonitor.js';
+import {
+  AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL,
+  auditEventChainGapReason,
+  describeAuditEventChain,
+} from '../services/audit/audit-event-chain.js';
 import type {
   AuditChainCheckResult,
   AuditStoreName,
@@ -152,14 +157,8 @@ const NO_AUDIT_EVENTS = 'no entries: there is no chain to verify';
 /** audit_events: one organisation's linkage (the monitor's walk); null when it has no row. */
 async function verifyAuditEventsLinkage(client: PoolClient, organizationId: number): Promise<AuditStoreVerdict | null> {
   const verdict = await guarded('audit_events.linkage', async () => {
-    const { rows } = await client.query(
-      `SELECT id, organization_id, sequence_number, record_hash, previous_hash
-         FROM audit_events
-        WHERE organization_id = $1
-        ORDER BY organization_id, sequence_number ASC`,
-      [organizationId],
-    );
-    const { broken, hashedEntries, unhashedEntries } = summarizeChainLinkage(
+    const { rows } = await client.query(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, [organizationId]);
+    const { broken, walk } = summarizeChainLinkage(
       rows as unknown as AuditEventChainRow[],
     );
     const rowsChecked = rows.length;
@@ -169,31 +168,17 @@ async function verifyAuditEventsLinkage(client: PoolClient, organizationId: numb
         status: 'broken',
         rowsChecked,
         firstFailure: String(broken[0].id),
-        reason: `${broken.length} broken link(s)`,
+        // The walk's own sentence: an altered entry and a broken link are
+        // different findings, and this used to call both "broken link(s)".
+        reason: describeAuditEventChain(walk),
       };
     }
     // Precedence as the monitor applies it: a break outranks "cannot tell",
     // and "cannot tell" outranks ok. Only a chain in which EVERY row carried a
-    // record_hash may be called verified (WO-16C finding 72).
-    if (rowsChecked === 0) {
-      return { store: 'audit_events.linkage', status: 'unverifiable', rowsChecked, reason: NO_AUDIT_EVENTS };
-    }
-    if (hashedEntries === 0) {
-      return {
-        store: 'audit_events.linkage',
-        status: 'unverifiable',
-        rowsChecked,
-        reason: 'no row carries a record_hash: the chain has never been hashed, so no link could be checked',
-      };
-    }
-    if (unhashedEntries > 0) {
-      return {
-        store: 'audit_events.linkage',
-        status: 'unverifiable',
-        rowsChecked,
-        reason: `${unhashedEntries} of ${rowsChecked} rows carry no record_hash; the links through them could not be checked`,
-      };
-    }
+    // record_hash, was placed and re-computed may be called verified (WO-16C
+    // finding 72). The reason is the one the monitor and the signed export give.
+    const gap = auditEventChainGapReason(walk);
+    if (gap) return { store: 'audit_events.linkage', status: 'unverifiable', rowsChecked, reason: gap };
     return { store: 'audit_events.linkage', status: 'ok', rowsChecked };
   });
   // An organisation with no audit_events row has no chain: it neither passes nor fails the store.

@@ -24,8 +24,8 @@
  * ── THE DISTINCTION THIS SCREEN EXISTS TO HOLD ──────────────────────────────
  * The verdict has four values and the service's own interface says it outright:
  * UNVERIFIABLE is "NOT a synonym for INTACT". It means rows exist that carry no
- * hash, so there is nothing to check — the absence of evidence, not evidence of
- * integrity. Rows written before the hash-chain trigger was applied can never
+ * hash, or that name no predecessor although one was hashed, so there is nothing
+ * to check them against — the absence of evidence, not evidence of integrity. Rows written before the hash-chain trigger was applied can never
  * honestly be given one (hashing history after the fact produces a chain that
  * is self-consistent and proves nothing about the period it claims to cover),
  * so a tenant with history predating the chain has a period nobody can attest
@@ -102,9 +102,13 @@ export const ATTESTATION_VERDICT: Readonly<
   },
   UNVERIFIABLE: {
     label: 'Not verifiable',
+    // Two causes reach this verdict: entries with no hash, and (2026-11-12) an
+    // entry that names no entry before it although one was recorded. Naming
+    // only the first read, for the second, as "some carry no hash" above
+    // "all N entries are hashed". The server's own sentence gives the cause.
     meaning:
-      'Audit entries exist but some or all carry no hash, so there is nothing to check them against. This ' +
-      'is not a statement that the trail is intact.',
+      'Audit entries exist, but some could not be checked: an entry carries no hash, or names no entry ' +
+      'before it although one was recorded. This is not a statement that the trail is intact.',
     assuring: false,
   },
 };

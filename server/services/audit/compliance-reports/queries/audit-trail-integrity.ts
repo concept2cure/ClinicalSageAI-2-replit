@@ -21,6 +21,7 @@
  * @module server/services/audit/compliance-reports/queries/audit-trail-integrity
  */
 import { NO_CHAINED_ROWS_REASON } from '../../audited-export';
+import { describeAuditEventBreaks, describeAuditEventChain } from '../../audit-event-chain';
 import type {
   ChainSummary,
   LinkageSnapshot,
@@ -107,35 +108,52 @@ function chainVerdict(walk: TenantChainWalk | undefined): VerdictRow {
   };
 }
 
+/* HS-1008-7 (honest-state review 2026-10-08), closed in two steps. This verdict
+   read "every row carries a hash linked to its predecessor" over a check that
+   compared stored pointers and re-derived nothing. First the sentence was cut
+   down to the check. Now the check is the one walk of this chain
+   (services/audit/audit-event-chain.ts), which re-computes every entry's hash
+   as well, so the sentence is the walk's own: it says what was re-computed, and
+   that the before and after values are not part of the hash.
+
+   A snapshot with no re-derived count compared pointers only (a caller that
+   predates the walk), and is still described as that. */
+function intactLinkageDetail(s: LinkageSnapshot): string {
+  if (typeof s.verifiedEntries !== 'number') {
+    return (
+      `All ${s.totalEntries} entries carry a hash and each names the entry before it. ` +
+      `No hash was re-computed, so this verifies the chain's links and not the entries' contents.`
+    );
+  }
+  return describeAuditEventChain({
+    rowsSeen: s.totalEntries,
+    hashedRows: s.hashedEntries ?? s.totalEntries,
+    verifiedRows: s.verifiedEntries,
+    unhashedRows: 0,
+    unlinkedRows: 0,
+    breaks: [],
+  });
+}
+
+/** Which kind of break, now that both are checked, in the walk's own words. */
+function brokenLinkageDetail(s: LinkageSnapshot): string {
+  const content = s.contentBreaks ?? 0;
+  const pointer = s.pointerBreaks ?? Math.max(0, s.brokenLinks - content);
+  return content + pointer > 0 ? describeAuditEventBreaks(content, pointer) : `${s.brokenLinks} break(s) found.`;
+}
+
 function linkageVerdict(s: LinkageSnapshot): VerdictRow {
-  const base = { check: 'audit_events linkage', store: 'audit_events', rows_checked: s.hashedEntries ?? null };
+  const base = { check: 'audit_events linkage', store: 'audit_events', rows_checked: s.verifiedEntries ?? s.hashedEntries ?? null };
   switch (s.status) {
     case 'intact':
-      /* THE SENTENCE WAS STRONGER THAN THE CHECK, and it is regulator-facing
-         (HS-1008-7, honest-state review 2026-10-08). "Carries a hash linked to
-         its predecessor" reads as the cryptographic linkage the sibling
-         audit_logs verdict above genuinely verifies ("re-derives from its
-         predecessor" — a chain walk that recomputes). This check compares
-         stored pointers and never recomputes `record_hash` from the row's
-         content, so a row whose content was altered while its pointers were
-         kept consistent passes it. It now says which of the two it did.
-
-         The full re-derivation exists in this repository, over the same table,
-         in routes/part11-compliance.ts — whose own wording ("Full re-computation
-         of SHA-256 hash chain from database records") is accurate. Until this
-         check is migrated onto it, the report states what this check verified. */
-      return {
-        ...base,
-        verdict: 'intact',
-        detail:
-          `All ${s.totalEntries} rows carry a record_hash and each previous_hash matches its ` +
-          `predecessor. Row content is not re-derived, so this verifies the chain's links and ` +
-          `not the rows' contents.`,
-      };
+      return { ...base, verdict: 'intact', detail: intactLinkageDetail(s) };
     case 'broken':
-      return { ...base, verdict: 'broken', detail: `${s.brokenLinks} link(s) do not match their predecessor.` };
-    case 'unverified':
-      return { ...base, verdict: 'not verified', detail: `Nothing could be verified: ${s.reason ?? 'no hashed rows'}.` };
+      return { ...base, verdict: 'broken', detail: brokenLinkageDetail(s) };
+    case 'unverified': {
+      // The walk's reason is already a sentence; the older reasons are a clause.
+      const reason = s.reason ?? 'no hashed rows';
+      return { ...base, verdict: 'not verified', detail: reason.endsWith('.') ? reason : `Nothing could be verified: ${reason}.` };
+    }
     default:
       // The query did not run. Its failure text is for the operator's log, not the report.
       return { ...base, verdict: 'not verified', rows_checked: null, detail: 'The linkage check could not be run when this report was generated.' };

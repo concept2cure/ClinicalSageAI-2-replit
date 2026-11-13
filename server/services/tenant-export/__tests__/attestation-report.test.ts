@@ -88,6 +88,66 @@ describe('generateAttestation', () => {
     expect(report.brokenLinkSamples[0].id).toBe('b');
   });
 
+  /* The declared method says every entry's stored previous_hash IS the prior
+     entry's stored record_hash. The loop skipped the comparison whenever
+     previous_hash was null, so an entry naming no predecessor after a hashed
+     one passed — and with it the one edit that hides a removal from a link
+     check: delete an entry, blank its successor's pointer. INTACT went out,
+     under the HMAC signature, over a chain with an entry missing. */
+  it('does not attest INTACT when a removal is hidden by blanking the successor\'s pointer', async () => {
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        [
+          'audit_events',
+          [
+            { id: 'a', sequence_number: 1, record_hash: 'h1', previous_hash: null, timestamp: '2026-01-01T00:00:00Z' },
+            // sequence 2 removed; its successor's pointer blanked to hide it.
+            { id: 'c', sequence_number: 3, record_hash: 'h3', previous_hash: null, timestamp: '2026-01-03T00:00:00Z' },
+          ],
+        ],
+      ]),
+    );
+    const report = await generateAttestation(c, ORG.id);
+    expect(report.attestation, 'a blanked pointer hid a removed entry').not.toBe('INTACT');
+    expect(report.attestation).toBe('UNVERIFIABLE');
+    expect(report.unverifiableReason).toMatch(/audit entries names no entry before it although one was recorded, so that link could not be checked\./);
+    expect(verifyAttestationSignature(report)).toBe(true);
+  });
+
+  it('still attests INTACT for a chain whose first entry names no predecessor', async () => {
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        [
+          'audit_events',
+          [
+            { id: 'a', sequence_number: 1, record_hash: 'h1', previous_hash: null, timestamp: '2026-01-01T00:00:00Z' },
+            { id: 'b', sequence_number: 2, record_hash: 'h2', previous_hash: 'h1', timestamp: '2026-01-02T00:00:00Z' },
+          ],
+        ],
+      ]),
+    );
+    expect((await generateAttestation(c, ORG.id)).attestation).toBe('INTACT');
+  });
+
+  it('a found mismatch outranks a link that could not be compared', async () => {
+    const c = client(
+      new Map<string, any[]>([
+        ['organizations', [ORG]],
+        [
+          'audit_events',
+          [
+            { id: 'a', sequence_number: 1, record_hash: 'h1', previous_hash: null, timestamp: '2026-01-01T00:00:00Z' },
+            { id: 'b', sequence_number: 2, record_hash: 'h2', previous_hash: null, timestamp: '2026-01-02T00:00:00Z' },
+            { id: 'c', sequence_number: 3, record_hash: 'h3', previous_hash: 'WRONG', timestamp: '2026-01-03T00:00:00Z' },
+          ],
+        ],
+      ]),
+    );
+    expect((await generateAttestation(c, ORG.id)).attestation).toBe('BROKEN');
+  });
+
   it('produces a verifiable HMAC signature', async () => {
     const c = client(
       new Map<string, any[]>([
