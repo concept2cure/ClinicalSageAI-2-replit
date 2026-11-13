@@ -2072,13 +2072,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
          written. The editor shows it beside the section and says "revision N recorded"; without it
          the count stayed at its old value until a reload, and the confirmation fell back to "open
          History to confirm" (S12's sweep, 2026-11-09, findings 14 and 26). */
-      if (content !== undefined && result.rows[0]) {
-        const counted = await client.query(
-          'SELECT COUNT(*)::int AS revision_count FROM doc_revisions WHERE section_id = $1 AND tenant_id = $2',
-          [sectionId, tenantId],
-        );
-        result.rows[0] = { ...result.rows[0], revision_count: counted.rows[0]?.revision_count ?? null };
-      }
+      if (content !== undefined) result.rows[0] = await withRevisionCount(client, result.rows[0], sectionId, tenantId);
 
       await client.query('COMMIT');
     } catch (err) {
@@ -2217,6 +2211,19 @@ router.get('/sections/:sectionId/history/verify', async (req: Request, res: Resp
 });
 
 // POST /api/authoring/sections/:sectionId/revert - Revert to specific revision
+/**
+ * A written section row with how many revisions the section has now, read on the writer's transaction so it counts
+ * the one just written (S12 sweep, findings 14 and 26). No row: nothing to count.
+ */
+async function withRevisionCount<T extends Record<string, unknown> | undefined>(
+  client: { query: (sql: string, params: unknown[]) => Promise<{ rows: Array<{ revision_count?: number }> }> },
+  row: T, sectionId: string, tenantId: unknown): Promise<T> {
+  if (!row) return row;
+  const counted = await client.query(
+    'SELECT COUNT(*)::int AS revision_count FROM doc_revisions WHERE section_id = $1 AND tenant_id = $2', [sectionId, tenantId]);
+  return { ...row, revision_count: counted.rows[0]?.revision_count ?? null };
+}
+
 router.post('/sections/:sectionId/revert', async (req: Request, res: Response) => {
   try {
     const { sectionId } = req.params;
@@ -2373,6 +2380,8 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
         client,
       );
 
+      // The count beside the section, as the save answers it (finding 14): the revert mints a revision too.
+      result.rows[0] = await withRevisionCount(client, result.rows[0], sectionId, tenantId);
       await client.query('COMMIT');
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});

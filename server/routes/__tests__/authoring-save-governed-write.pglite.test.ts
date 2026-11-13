@@ -480,6 +480,20 @@ describe('a save says how many revisions the section has, and its history says w
     expect(history.body.revisions.map((r: { reason: string | null }) => r.reason))
       .toEqual(['Efficacy overview shortened after review', REASON]);
   }, T);
+
+  // The revert mints a revision too, and its reply was the bare row, so the count stayed stale until a reload.
+  it('a revert says the count as well, the restored version included', async () => {
+    const first = await save([]);
+    const again = await author(request(app).patch(`/api/authoring/sections/${first.sectionId}`))
+      .send({ content: `<p>${OWN_WORDS}</p>`, changeReason: 'Efficacy overview shortened after review' });
+    expect(again.body.section.revision_count).toBe(2);
+    const oldest = (await jdb.pool.query(
+      'SELECT id FROM doc_revisions WHERE section_id = $1 ORDER BY created_at, id LIMIT 1', [first.sectionId])).rows[0].id;
+    const reverted = await author(request(app).post(`/api/authoring/sections/${first.sectionId}/revert`))
+      .send({ rev_id: oldest, changeReason: 'Restored the version the reviewer approved' });
+    expect(reverted.status, JSON.stringify(reverted.body)).toBe(200);
+    expect(reverted.body.section.revision_count).toBe(3);
+  }, T);
 });
 
 describe('§14.3.3 of an imported CSR, held by reference, is not saved over (2026-10-30, SYNTHETIC)', () => {
