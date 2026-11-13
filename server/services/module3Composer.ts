@@ -2005,6 +2005,18 @@ function rawMaterialOriginSentence(rows: Array<Record<string, any>>): string {
   );
 }
 
+/* §3.2.S.2.1 Manufacturer(s), from the drug substance's own record. The
+   manufacturer was printed only in §3.2.S.1 and the site nowhere in the
+   substance sections, while the US IND regional leaf cross-referenced the
+   manufacturer's name and address to §3.2.S.2.1 (us-ind-regional.ts). */
+function substanceManufacturerTables(sources: CanonicalSource[]): GeneratedTable[] {
+  const own = sources.filter((s) => s.sourceType === 'drug_substance');
+  const manufacturer = val(own, 'manufacturer');
+  const site = val(own, 'manufacturingSite');
+  if (!manufacturer && !site) return [];
+  return [kvTable('Manufacturer(s)', { Manufacturer: manufacturer, 'Manufacturing Site': site })];
+}
+
 function rawMaterialRendering(
   sources: CanonicalSource[],
 ): { tables: GeneratedTable[]; narrative: string } {
@@ -2551,6 +2563,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     const pvCriteria = val(m, 'acceptanceCriteria');
     const pvBatches = val(m, 'consecutiveBatches');
     const tables: GeneratedTable[] = [];
+    tables.push(...substanceManufacturerTables(m));
     tables.push(kvTable('Manufacturing Process Summary', { 'Synthetic Route': route, 'Process Description': desc, 'In-Process Controls': controls }));
     /* §3.2.S.2.2 proper: the ordered unit operations, their critical parameters
        and the equipment, from the manufacturing process register. Until that
