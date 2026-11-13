@@ -1,0 +1,55 @@
+{
+ "projectsListed": [
+  "LMN-401 | [Demo · Lumen] LMN-401 — antibody cocktail for tra",
+  "LMN-301 | [Demo · Lumen] LMN-301 — intranasal biologic for v",
+  "LMN-801 | [Demo · Lumen] LMN-801 — oral hormone protein for ",
+  "LMN-201 | [Demo · Lumen] LMN-201 — prevention of recurrent C",
+  "NEUR | [Demo · MDX] NeuroPanel-Dx 510(k)",
+  "C2C-101 | [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaqu",
+  "BX-401 | BX-401 Oncology IND"
+ ],
+ "searchLmn": [
+  "## Projects",
+  "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)LMN-401",
+  "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)LMN-301",
+  "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)LMN-801",
+  "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)LMN-201",
+  "Ask AnA: \"lmn\""
+ ],
+ "searchOldestCode": {
+  "term": "BX-401",
+  "rows": [
+   "## Projects",
+   "BX-401 Oncology INDBX-401",
+   "Ask AnA: \"BX-401\""
+  ]
+ },
+ "sources": {
+  "asked": 3,
+  "forcedRefusals": 2,
+  "said": []
+ },
+ "place": {
+  "sectionCode": "1.20",
+  "notCtd": false,
+  "oneSection": false,
+  "filesAs": "Files as 1"
+ },
+ "cmc": {
+  "workArea": true,
+  "tables": 1,
+  "first": [
+   {
+    "display": "block",
+    "overflowX": "auto",
+    "scroll": 1040,
+    "box": 1040
+   }
+  ],
+  "pageSideways": false
+ },
+ "apiFailures": [
+  "503 GET /api/c2c/projects/e00d4d40-5378-41dc-b85e-e49662afe6a6/sources?limit=200&offset=0",
+  "503 GET /api/c2c/projects/e00d4d40-5378-41dc-b85e-e49662afe6a6/sources?limit=200&offset=0"
+ ]
+}

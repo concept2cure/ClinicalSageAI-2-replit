@@ -10,11 +10,20 @@ export function changedSectionCodes(before: readonly SectionRow[], next: readonl
   return next.filter(x => !was.has(x.id) || was.get(x.id) !== (x.content ?? '')).map(x => x.code);
 }
 
-/** Keep one account/session owner across ordinary bearer refreshes. */
+/** What decides which documents an account may read: the person, the organisation, the roles and the
+ * permissions. A re-read of the same account (authService.refreshUser, as the account panel does)
+ * hands back a new object, so the account is compared by these and never by object identity: that
+ * re-read used to retire every governed read in the editor (2026-11-09). */
+function accessKey(user: AuthUser | null): string {
+  if (!user) return '';
+  return JSON.stringify([String(user.id), String(user.organizationId), [...(user.roles ?? [])].sort(), [...(user.permissions ?? [])].sort()]);
+}
+
+/** Keep one account/session owner across ordinary bearer refreshes and re-reads of the same account. */
 export function captureAuthoringSession() {
-  const account = authService.getUser();
+  const access = accessKey(authService.getUser());
   const guard = authService.captureSessionReadGuard();
-  return { sameRevision: () => guard.sameRevision() && authService.getUser() === account };
+  return { sameRevision: () => guard.sameRevision() && accessKey(authService.getUser()) === access };
 }
 
 type AuthoringReadSession = { actor: string; key: number; sameRevision: () => boolean };
@@ -25,9 +34,9 @@ type AuthoringReadSession = { actor: string; key: number; sameRevision: () => bo
 function mintAuthoringReadSession(actor: string, key: number): { session: AuthoringReadSession; held: () => boolean } {
   const guard = captureAuthoringSession();
   if (guard.sameRevision()) return { session: { actor, key, sameRevision: guard.sameRevision }, held: () => false };
-  const account = authService.getUser();
+  const access = accessKey(authService.getUser());
   return { session: { actor, key, sameRevision: () => false },
-    held: () => authService.getUser() === account && !authService.captureSessionReadGuard().sameRevision() };
+    held: () => accessKey(authService.getUser()) === access && !authService.captureSessionReadGuard().sameRevision() };
 }
 
 /** Shared by the existing canvas and workbench; session revision survives ordinary bearer refresh.

@@ -1,0 +1,18 @@
+{
+ "url": "/concept2cure/quality?program=e00d4d40-5378-41dc-b85e-e49662afe6a6",
+ "said": [
+  "Attribution highlighting is paused while you edit — it describes the text as last saved.",
+  "Section saved (qms-purpose) — open History to confirm the revision."
+ ],
+ "saves": [
+  {
+   "status": 200,
+   "filing": {
+    "committed": false,
+    "reason": "This is a controlled document in the Quality register. It is approved and released there, and is not part of a filing.",
+    "outsideFiling": "controlled-document"
+   }
+  }
+ ],
+ "apiFailures": []
+}
