@@ -106,9 +106,39 @@ scope. The bounded observer now records every failure's method and
 classification. Only exact GET/`net::ERR_ABORTED` outside required document and
 section reads is classified as a client cancellation. Required-read aborts,
 all write aborts, other transport errors, HTTP errors, page errors and the
-existing data/export/preview assertions still fail the run. The classified
-browser rerun, merged-source checks, complete normal start and publication are
-pending until their actual receipts are appended.
+existing data/export/preview assertions still fail the run.
+
+## Integrated verification
+
+Canonical changes through `422110a41` were merged at `2973e971b`. The two
+coordination entries were preserved, and the guide's repeated update commands
+now point to one detailed procedure. It checks local work, published HEAD,
+the running `/api/version` and `/readyz` separately. The existing playbook and
+devcontainer open-file discovery are retained.
+
+`source-bridge.json` and the named input manifests bind this integration: all
+client, server, shared, migration, demo, package and lifecycle-script objects
+are unchanged from the fresh-setup baseline. The devcontainer runtime settings
+are unchanged; only its open-file list adds the existing playbook. The changed
+diagnostic/verifier scripts pass the existing five Node suites: **173/173**,
+zero failed/cancelled/skipped, native exit 0 (`merged-checks.json`). Scoped lint
+of those six scripts and the browser helper exits 0 (`merged-lint.json`). Both
+runs retain 12,722 named input hashes and report no source or execution drift.
+No live provider request was made by these fixture-based checks.
+
+The bounded browser rerun exits **0** in 22.8 seconds
+(`reviewer-browser-confirmed.json`). All functional checks still pass, with
+119/119 saved bodies, downloaded Word and PDF (167,567 bytes, 34 pages), matching
+delivered-byte hashes and draft notices, and a 200 scientific preview. It
+retains **52 client-cancelled GETs**, zero transport failures, zero API HTTP
+errors and zero page errors (`reviewer-current-walk.json`). Required document
+reads were not cancelled. Screenshots include the existing editor at 1440px
+and review dialog at 390px. The current helper and receipt harness are hashed
+separately in the execution-input receipt. No approval was submitted.
+
+The app still served baseline `2a667bf51` during this content-identical editor
+rehearsal. A complete measured normal start and final published-HEAD runtime
+check remain pending; the bridge does not relabel the older process stamp.
 
 This local image/browser rehearsal does not exercise GitHub-hosted creation,
 VS Code extension sign-in, a live AnA turn, model qualification, real scientific

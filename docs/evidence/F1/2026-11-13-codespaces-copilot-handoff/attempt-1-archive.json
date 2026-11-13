@@ -40,5 +40,5 @@
       "sha256": "1b70452a19caef91a56d16a7cebb20f23f263fba4e14800735efaad06d029441"
     }
   },
-  "reason": "Functional steps completed; initial observer treated client GET net::ERR_ABORTED cancellations as transport failures. Native exit1 is retained, not recast as a passing run."
+  "reason": "Functional steps completed; initial observer treated net::ERR_ABORTED cancellations as transport failures and did not capture HTTP methods. Native exit1 is retained, not recast as a passing run."
 }

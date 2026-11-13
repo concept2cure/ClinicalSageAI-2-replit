@@ -30,6 +30,12 @@ expected = json.loads(manifest.read_text())['files']
 def hashes():
     return {name: hashlib.sha256((repo / name).read_bytes()).hexdigest() for name in expected}
 before = hashes()
+execution_paths = [Path(__file__).resolve()]
+for argument in command:
+    candidate = (repo / argument).resolve()
+    if candidate.suffix in {'.cjs', '.js', '.mjs', '.py', '.sh', '.json'} and candidate.is_file() and candidate.is_relative_to(repo):
+        execution_paths.append(candidate)
+execution_before = {str(path.relative_to(repo)): hashlib.sha256(path.read_bytes()).hexdigest() for path in execution_paths}
 started = datetime.datetime.now(datetime.timezone.utc).isoformat()
 clock = time.monotonic()
 result = subprocess.run(command, cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -47,8 +53,10 @@ output = label + '.txt.gz'
 (packet / output).write_bytes(compressed)
 after = hashes()
 drift = [name for name, value in expected.items() if before[name] != value or after[name] != value]
+execution_drift = [name for name, value in execution_before.items() if hashlib.sha256((repo / name).read_bytes()).hexdigest() != value]
 receipt = {'startedAt': started, 'elapsedSeconds': round(time.monotonic() - clock, 3), 'argv': command,
     'exitCode': result.returncode, 'sourceDrift': drift, 'inputs': manifest.name, 'inputCount': len(expected),
+    'executionInputs': execution_before, 'executionInputDrift': execution_drift,
     'harnessSha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     'output': output, 'outputSha256': hashlib.sha256(compressed).hexdigest(),
     'rawLogRetainedPrivately': True, 'outputRedacted': text.encode() != raw}
@@ -56,4 +64,4 @@ receipt = {'startedAt': started, 'elapsedSeconds': round(time.monotonic() - cloc
 print(json.dumps(receipt))
 if result.returncode:
     print('\n'.join(text.splitlines()[-18:]))
-sys.exit(result.returncode or bool(drift))
+sys.exit(result.returncode or bool(drift) or bool(execution_drift))
