@@ -89,8 +89,17 @@ export function useImpurityAssessments(projectId: string | undefined) {
   const read = useLiveData<ImpurityAssessmentRow[]>(
     '/api/cmc/impurity-profiles/assessment' + (projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''),
   );
-  const byId = React.useMemo(() => new Map((read.data ?? []).map((r) => [r.id, r])), [read.data]);
-  return { byId, loading: read.loading, error: read.error ?? null };
+  /* A payload that is not a list is a failed read, never an empty register:
+     `read.data ?? []` threw on one (an unhandled TypeError out of the memo), and
+     treating it as "no rows" would print "not assessed" on every impurity. */
+  const rows = Array.isArray(read.data) ? read.data : null;
+  const byId = React.useMemo(() => new Map((rows ?? []).map((r) => [r.id, r])), [rows]);
+  const malformed = !read.loading && !read.error && read.data != null && rows === null;
+  return {
+    byId,
+    loading: read.loading,
+    error: read.error ?? (malformed ? 'The assessments read did not return a list of impurities.' : null),
+  };
 }
 
 /** The "Against the guideline" cell for one impurity. */
