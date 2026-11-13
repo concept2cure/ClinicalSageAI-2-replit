@@ -23,6 +23,7 @@ import { PV_DOC_FRAMEWORKS } from '../data/postmarket-docs';
 import { usePostmarket } from '../hooks/usePostmarket';
 import { useTriageQueue, type TriageItem } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
+import { assessmentState, mayReassure } from '../../v2/assessmentState';
 import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 import type { Program } from '../data/programs';
@@ -162,6 +163,27 @@ export function PostmarketSurface({
   const overdueCapas = openCapas ? openCapas.filter((t) => t.overdue).length : null;
   const pmsEntries = keyed && (live.pmsPlan.status === 'ready' || live.pmsPlan.status === 'empty') ? readyRows(live.pmsPlan).length : null;
   const signalsRead = keyed && (live.signals.status === 'ready' || live.signals.status === 'empty');
+  /* The four-state discriminator (v2/assessmentState.ts) is what may select the
+     reassuring copy on the triage queue, the same way the device surface selects
+     "Nothing is blocking" (EngineeringSurface.tsx).
+
+     The queue being empty is not the same fact as the queue being clear. Today
+     the copy below happens to be honest, but only because of two invariants a
+     long way from it: DataGate renders its children on `ready`, and `ready`
+     means "succeeded with real tenant data" ('empty' is its own status in
+     lib/dataState.ts); and `surveillance === 'unkeyed'` short-circuits to
+     NotKeyedNote before the gate is reached. Either of those moving — a read
+     that marks an empty array 'ready', or the unkeyed branch folded into the
+     gate — turns "no signal is waiting" into a claim over records that were
+     never read for this project, with nothing failing. Making the condition say
+     so is the repair; the rendered words do not change while both hold. */
+  const triageVerdict = assessmentState({
+    loading: live.signals.status === 'loading',
+    unreadable: live.signals.status === 'error',
+    scopeExists: keyed,
+    findingCount: triageQueue.length,
+    assessmentRan: signalsRead,
+  });
   /* The PMS plan and open-signals cards say why they hold no figure. */
   const notYetRead = surveillance === 'unkeyed' ? 'Not read for this project yet' : live.error ? 'Could not be read' : 'Not yet read';
   const openSignals = signals.filter((s) => s.state !== 'closed-trend');
@@ -406,7 +428,9 @@ export function PostmarketSurface({
           emptyHint="Signals appear here as complaints, MDR events and CAPAs are recorded for this project."
         >
         {() => triageQueue.length === 0 ? (
-          <p className="eng-trace-summary" data-testid="pm-signals-none">No critical or under-review signal is waiting for an MDR or CAPA.</p>
+          <p className="eng-trace-summary" data-testid="pm-signals-none">{mayReassure(triageVerdict)
+            ? 'No critical or under-review signal is waiting for an MDR or CAPA.'
+            : 'No critical or under-review signal in the signals read for this project.'}</p>
         ) : (
         <div className="eng-blockers-feed">
           {triageQueue.map((s) => (
