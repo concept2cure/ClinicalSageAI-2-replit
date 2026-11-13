@@ -2220,10 +2220,16 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
           "Long-term" and "Accelerated" were classification counts nobody acts
           on, and the register below answers them better. Out-of-limits keeps
           the error colour, with the word beside it. */}
+      {/* Stated only over a read that resolved (`readCount`): a failed read
+          said "0 active studies · 0 outside limits" above its own error. */}
       <p className="sec-sub" data-testid="cmc-stability-counts">
-        {active} active {active === 1 ? 'study' : 'studies'}
-        {' · '}<span data-tone={oos.length ? 'err' : undefined}>{oos.length} outside limits</span>
-        {notAssessed.length > 0 && <>{' · '}{notAssessed.length} not assessed</>}
+        {live.loading || live.error ? readCount(live, '', 'stability studies') : (
+          <>
+            {active} active {active === 1 ? 'study' : 'studies'}
+            {' · '}<span data-tone={oos.length ? 'err' : undefined}>{oos.length} outside limits</span>
+            {notAssessed.length > 0 && <>{' · '}{notAssessed.length} not assessed</>}
+          </>
+        )}
       </p>
       {oos.length > 0 && (
         <div className="pj-con" style={{ marginBottom: 14 }}>
@@ -2818,11 +2824,18 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       {/* Four tiles → the view's grey line (D5 §A.4.11). Same four reads;
           pending release and open deviations keep their warning colour,
           because those two are what hold a batch. */}
+      {/* Stated only over a read that resolved, and a yield only over batches:
+          a failed read said "0 batches · … · average yield 0%", a yield nobody
+          measured. */}
       <p className="sec-sub" data-testid="cmc-batch-counts">
-        {rows.length} {rows.length === 1 ? 'batch' : 'batches'}
-        {' · '}<span data-tone={pending ? 'warn' : undefined}>{pending} pending release</span>
-        {' · '}<span data-tone={devs ? 'warn' : undefined}>{devs} open {devs === 1 ? 'deviation' : 'deviations'}</span>
-        {' · '}average yield {avgY}%
+        {live.loading || live.error ? readCount(live, '', 'batch records') : (
+          <>
+            {rows.length} {rows.length === 1 ? 'batch' : 'batches'}
+            {' · '}<span data-tone={pending ? 'warn' : undefined}>{pending} pending release</span>
+            {' · '}<span data-tone={devs ? 'warn' : undefined}>{devs} open {devs === 1 ? 'deviation' : 'deviations'}</span>
+            {' · '}average yield {rows.length ? `${avgY}%` : '—'}
+          </>
+        )}
       </p>
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Batch disposition</span><span className="s">released over the batch’s recorded, reviewed QC results — open deviations closed first</span></div>

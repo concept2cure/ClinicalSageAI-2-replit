@@ -118,3 +118,55 @@ describe('Approvals & audit — the counts line', () => {
     expect(line()).not.toContain('still open');
   });
 });
+
+/* The same rule on the two other tabs that print a count line. On a failed
+   read the Stability tab said "0 active studies · 0 outside limits" and the
+   Batch tab "0 batches · 0 pending release · 0 open deviations · average
+   yield 0%": three zeros nobody counted and a yield nobody measured. */
+describe('Stability and Batch records — the counts lines', () => {
+  const STABILITY = `/api/cmc/stability-studies?projectId=${PROJECT}`;
+  const BATCHES = `/api/cmc/batch-records/${PROJECT}`;
+  function wireTab(url: string, answer: () => Response | Promise<Response>) {
+    apiRequest.mockImplementation(async (method: string, u: string) =>
+      (method === 'GET' && u === url ? answer() : res({ success: true, data: [] })));
+  }
+  function openTab(name: string) {
+    render(
+      <CmcModule
+        surface={{ id: 'cmc', label: 'CMC' } as unknown as SurfaceViewProps['surface']}
+        onAsk={vi.fn()}
+        onNav={vi.fn()}
+        segment="biotech"
+      />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name }));
+  }
+  const text = (id: string) => screen.getByTestId(id).textContent ?? '';
+
+  it('Stability states no count over a failed read', async () => {
+    wireTab(STABILITY, failed);
+    openTab('Stability');
+    await waitFor(() => expect(text('cmc-stability-counts')).toBe('stability studies not read'));
+  });
+
+  it('Stability states true zeros over a read that resolved empty', async () => {
+    wireTab(STABILITY, () => res({ success: true, data: [] }));
+    openTab('Stability');
+    await waitFor(() => expect(text('cmc-stability-counts')).toContain('0 active studies'));
+    expect(text('cmc-stability-counts')).toContain('0 outside limits');
+  });
+
+  it('Batch records states no count, and no yield, over a failed read', async () => {
+    wireTab(BATCHES, failed);
+    openTab('Batch records');
+    await waitFor(() => expect(text('cmc-batch-counts')).toBe('batch records not read'));
+  });
+
+  it('Batch records prints no average yield over zero batches', async () => {
+    wireTab(BATCHES, () => res({ success: true, data: [] }));
+    openTab('Batch records');
+    await waitFor(() => expect(text('cmc-batch-counts')).toContain('0 batches'));
+    expect(text('cmc-batch-counts')).toContain('average yield —');
+    expect(text('cmc-batch-counts')).not.toContain('0%');
+  });
+});

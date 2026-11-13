@@ -67,3 +67,25 @@ was the accelerated study with its status set to `COMPLETED` in the local databa
 Screenshots: `audit-counts-contradictions-read-failed.png`, `closed-out-study-row.png`.
 
 Lint: `CmcModule.tsx` 14 warnings before and after; `cmcShared.tsx` 0 and 0.
+
+## 2026-11-13: the same rule on the Stability and Batch records count lines
+
+Same file, same helper (`readCount`). On a failed read the Stability tab said
+`0 active studies · 0 outside limits` and the Batch tab
+`0 batches · 0 pending release · 0 open deviations · average yield 0%` (a yield nobody measured), each above its
+own "Couldn't load" state. Both lines are now stated only over a read that resolved, and the yield is a dash over
+zero batches. The Batch line sits directly above the batch rows another lane holds; only the `<p>` is changed.
+
+Red first: 3 of 4 new cases in `cmcAuditCountsHonesty.test.tsx` failed
+(`expected '0 active studies · 0 outside limits' to be 'stability studies not read'`), then 10 passed.
+
+In the running app on C2C-201:
+
+```
+STABILITY healthy: 3 active studies · 1 outside limits
+BATCH healthy    : 3 batches · 2 pending release · 1 open deviation · average yield 88%
+STABILITY failed : stability studies not read
+BATCH failed     : batch records not read
+```
+
+Screenshots: `stability-counts-read-failed.png`, `batch-counts-read-failed.png`.

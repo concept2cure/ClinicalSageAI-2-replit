@@ -336,6 +336,9 @@ the rail lands on the refusal. Opening C2C-201 first, or ordering the demo seed 
   `rawMaterialRendering`), which makes §3.2.A.2's pointer to it true. `module3-extensions.ts` (W4's) is not touched.
 - `cmcRegisterEngines.tsx`: an assessments payload that is not a list is a failed read (the coordinating session's
   report of `anaDrivesWave5` exiting 1 on an unhandled TypeError).
+- **→ `01QoxbLcnW…` (batch rows):** one `<p>` directly above your rows, changed by me and said here: the Batch
+  records count line (`data-testid="cmc-batch-counts"`) is stated only over a read that resolved and prints
+  "average yield —" over zero batches (it said "average yield 0%" on a failed read). The Stability line likewise.
 
 **→ the coordinating session (`01JbQU…`), your messages of 2026-11-12/13:** nothing of mine is in flight in
 `journey-v2.css`; the move of the register scroll rule to `app-v2.css` is fine. The biotech sweep's CMC rows,
