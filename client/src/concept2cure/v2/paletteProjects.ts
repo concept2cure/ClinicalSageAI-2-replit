@@ -52,20 +52,40 @@ export function usePaletteProjects(open: boolean): PaletteProjectsRead {
   }, [open, loading, error, data]);
 }
 
-/** Open a project found in the palette on its page, as Projects and Home open one. */
 /** A listed project as the shell's open project (shellProject.ts ShellProject). */
 export function shellProjectOfPalette(p: PaletteProject): ShellProject & { title: string } {
   return { id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}),
     ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) };
 }
 
+/** Open a project found in the palette on its page, as Projects and Home open one. */
 export function openPaletteProject(p: PaletteProject, onNav: (id: string) => void): void {
   openProjectHome(shellProjectOfPalette(p), onNav);
 }
 
-/** Projects whose title or code contains the search, in the list's order. */
-export function paletteProjectResults(projects: readonly PaletteProject[], term: string): PaletteProject[] {
+/** What a search lists: the projects shown, and how many others match and are not shown. */
+export interface PaletteProjectHits { hits: PaletteProject[]; more: number }
+
+/**
+ * Projects whose title or code contains the search. A project whose code or title is exactly the search
+ * comes first, then one whose code or title starts with it, then the rest, each group in the list's order
+ * (newest-updated first). Only SHOWN are listed, and `more` counts the others, so a cut is never silent:
+ * "C2C-101" listed eight newer projects whose codes contained it and dropped C2C-101 itself (S12's sweep,
+ * 2026-11-09).
+ */
+export function paletteProjectResults(projects: readonly PaletteProject[], term: string): PaletteProjectHits {
   const t = term.trim().toLowerCase();
-  if (!t) return [];
-  return projects.filter((p) => p.title.toLowerCase().includes(t) || (p.code ?? '').toLowerCase().includes(t)).slice(0, SHOWN);
+  if (!t) return { hits: [], more: 0 };
+  const rank = (p: PaletteProject): number => {
+    const code = (p.code ?? '').toLowerCase();
+    const title = p.title.toLowerCase();
+    if (code === t || title === t) return 0;
+    return code.startsWith(t) || title.startsWith(t) ? 1 : 2;
+  };
+  const matches = projects
+    .filter((p) => p.title.toLowerCase().includes(t) || (p.code ?? '').toLowerCase().includes(t))
+    .map((p, index) => ({ p, index, rank: rank(p) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map((m) => m.p);
+  return { hits: matches.slice(0, SHOWN), more: Math.max(0, matches.length - SHOWN) };
 }

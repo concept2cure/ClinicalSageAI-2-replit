@@ -417,6 +417,13 @@
   .c2c-v2 :is(.pj-card, .pj-card-b, .reg-card) > .reg-tbl,
   .c2c-v2 [data-work-area] .pj-sec > .reg-tbl { display: block; overflow-x: auto; }
 }
+/* The one named exception, at every width: CMC / Module 3's registers. The page column is 1,040 px
+   at 1440, and with the registers filled Materials pushed the page 108 px sideways and Stability
+   120 px, with their row actions out of reach (P-122; D5.md §A.3; CMC's rule, moved here unchanged
+   from journey-v2.css). It is not widened to every work area: `display: block` changes how a table
+   that fits fills its card. Another work area's exception is named here too, never copied into its
+   own sheet (d0PhoneWidth.test.ts). */
+.c2c-v2 [data-work-area="cmc"] :is(.pj-sec, .pj-card-b) > .reg-tbl { display: block; overflow-x: auto; }
 
 /* The empty state (dataConnect EmptyState, 579 renders): no box. One sentence,
    an optional hint, one ghost action and the regulation line. */

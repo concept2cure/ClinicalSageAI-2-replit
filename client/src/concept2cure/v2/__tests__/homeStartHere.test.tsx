@@ -52,18 +52,32 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   __resetSurfaceActionBus();
   delete window.C2C_CONVO;
   delete window.C2C_PROJECT;
 });
 
 describe('Home, in the order a client reads it', () => {
-  it('Ask AnA first, then your projects and your open items; no conversation list', async () => {
+  /* Since P-127 §3.6 (75624cff54, 2026-11-12) a member who has not opened the getting-started course is
+     offered it between the composer and the projects, as "Get started", until they open it (HomeSetup.tsx).
+     This case pinned three sections and was red on trunk from that commit. */
+  it('Ask AnA first, then the getting-started course, your projects and your open items; no conversation list', async () => {
     render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biopharma" />);
     await screen.findByTestId('home-projects');
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(headings).toEqual(['Ask AnA', 'Your projects', 'Your open items']);
+    expect(headings).toEqual(['Ask AnA', 'Get started', 'Your projects', 'Your open items']);
     expect(screen.queryByTestId('home-conversations')).toBeNull();
+  });
+
+  it('once the course has been opened, Home is Ask AnA, your projects and your open items', async () => {
+    const first = render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biopharma" />);
+    await screen.findByTestId('home-projects');
+    fireEvent.click(within(screen.getByTestId('home-getting-started')).getByRole('button'));
+    first.unmount();
+    render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biopharma" />);
+    await screen.findByTestId('home-projects');
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual(['Ask AnA', 'Your projects', 'Your open items']);
   });
 
   it('lists five projects and names how many there are in all', async () => {

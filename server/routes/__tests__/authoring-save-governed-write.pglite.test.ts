@@ -198,6 +198,8 @@ beforeAll(async () => {
       'db/migrations/20260803_document_span_lineage.sql',
       'migrations/20260907_span_lineage_accepted_machine_draft.sql',
       'migrations/20260908_span_lineage_machine_draft.sql',
+      // The history read names each revision's author through public.actor_name.
+      'migrations/20260929_actor_names.sql',
     ],
   });
   h.db = jdb.db;
@@ -459,6 +461,24 @@ describe('the saver is told what was not credited', () => {
     const turn = await servedTurn(ANA_WORDS, [OPUS]);
     const saved = await save([{ authorId: 'ana', text: ANA_WORDS, turnRecordId: turn }], { authors: [{ id: 'ana' }] });
     expect(saved.body.machineText).toEqual({ credited: 1, refused: [] });
+  }, T);
+});
+
+/* S12's biotech sweep, 2026-11-09, findings 24, 14 and 26. The Versions rail gave every card the label
+   "edited" and no reason, and the count beside a section stayed at its old value until a reload: the save
+   answered the section row alone, and the history read left the reason in the audit trail. */
+describe('a save says how many revisions the section has, and its history says why each was made', () => {
+  it('the reply carries the count, and each revision carries the reason given for it', async () => {
+    const first = await save([]);
+    expect(first.status).toBe(200);
+    expect(first.body.section.revision_count).toBe(1);
+    const again = await author(request(app).patch(`/api/authoring/sections/${first.sectionId}`))
+      .send({ content: `<p>${OWN_WORDS}</p>`, changeReason: 'Efficacy overview shortened after review' });
+    expect(again.body.section.revision_count).toBe(2);
+    const history = await author(request(app).get(`/api/authoring/sections/${first.sectionId}/history`));
+    expect(history.status).toBe(200);
+    expect(history.body.revisions.map((r: { reason: string | null }) => r.reason))
+      .toEqual(['Efficacy overview shortened after review', REASON]);
   }, T);
 });
 

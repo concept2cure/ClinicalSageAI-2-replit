@@ -1,0 +1,16 @@
+      Tests  7 failed | 70 passed (77)
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > a document of working headings is filed at the node they prepare > accepts that code, and still refuses a different section of the same document
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > a document of working headings is filed at the node they prepare > prefills the node, not the open heading’s key, and does not refuse it
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > a document of working headings is filed at the node they prepare > reads the document’s own code through its working headings
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringPlaceIntoFiling.test.tsx > a document of working headings is filed at the node they prepare > with no code of the document’s own, offers the open heading’s node and never its key
+ FAIL  client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx > ⌘K finds a project > lists the project whose code is exactly the search first, and says how many more match
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > reads once more, without a word, when source access changed during the read
+ FAIL  client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx > complete citation catalogue reads > says so, with a retry, when access changed during the second read too
+ Test Files  3 failed (3)
+AssertionError: expected "vi.fn()" to be called 2 times, but got 1 times
+AssertionError: expected '1.20 is one section of this document.…' to be null
+AssertionError: expected '1.20:work:1' not to match /:work:/
+AssertionError: expected '1.20:work:1' to be '1.20' // Object.is equality
+AssertionError: expected 'error' to be 'ready' // Object.is equality
+AssertionError: expected null to be '1.20' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
