@@ -95,6 +95,14 @@ export type { EnforcementMode } from '../services/entitlements/enforcement-mode.
 // launch-scope API verdict also reads; re-exported so importers are unchanged.
 export { NEVER_GATED, buildPrefixMap, modulesForPath };
 
+/** Ids collapsed to `:id`, so the bounded report holds one row per route an
+ *  operator must decide on, not one per record somebody opened. Both
+ *  recorders use it; the module gate kept raw ids until 2026-11-12, so every
+ *  project or charter opened under 'enforce' added a row. */
+export function collapseIds(pathname: string): string {
+  return pathname.replace(/\/(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?=\/|$)/gi, '/:id');
+}
+
 const LAUNCH_SCOPE_REFUSAL = {
   error: { code: 'LAUNCH_SCOPE', message: 'This part of the product is not in this release.' },
 } as const;
@@ -126,7 +134,7 @@ function refusedByLaunchScope(
   recordObservation({
     // Ids collapsed to `:id`, so the bounded report holds one row per route an
     // operator must decide on, not one per record somebody opened.
-    path: pathname.replace(/\/(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?=\/|$)/gi, '/:id'),
+    path: collapseIds(pathname),
     organizationId: orgId == null ? 0 : Number(orgId),
     modules: ['launch-scope:unattributed'],
     reasons: ['No surface, platform or infrastructure entry claims this path, so it is outside the launch scope as registered.'],
@@ -241,7 +249,7 @@ export function moduleEntitlementGate(
     // still needs to see what is being refused — that is when a wrong packaging
     // decision surfaces as a support ticket, and the console is where they look.
     recordObservation({
-      path: pathname,
+      path: collapseIds(pathname),
       organizationId: Number(orgId),
       modules: [...modules],
       reasons,

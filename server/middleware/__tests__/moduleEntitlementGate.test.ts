@@ -28,6 +28,7 @@ import {
 import {
   NEVER_GATED,
   buildPrefixMap,
+  collapseIds,
   moduleEntitlementGate,
   modulesForPath,
 } from '../moduleEntitlementGate';
@@ -251,6 +252,13 @@ describe('the gate', () => {
     const res2 = resSpy();
     await gate(reqFor('/api/tenant-users/12'), res2, next2);
     expect(res2.statusCode).toBe(403);
+  });
+
+  // The module gate recorded raw ids, so every record opened added a row.
+  it('collapses record ids in what it records', () => {
+    expect(collapseIds('/api/concept2cure/projects/10/tasks')).toBe('/api/concept2cure/projects/:id/tasks');
+    expect(collapseIds('/api/charters/by-project/b3669da4-aa17-42df-a2dd-de8bdd01c6da/objectives')).toBe('/api/charters/by-project/:id/objectives');
+    expect(collapseIds('/api/cmc/module3-board')).toBe('/api/cmc/module3-board');
   });
 
   it('never denies a protected path', async () => {

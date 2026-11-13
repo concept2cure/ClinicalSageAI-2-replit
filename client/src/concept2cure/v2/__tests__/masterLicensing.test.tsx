@@ -584,6 +584,23 @@ describe('Master Licensing — enforcement report', () => {
     expect(document.body.textContent).toMatch(/Refused/);
   });
 
+  // After a switch the list holds both kinds; the mode-only sentence called
+  // requests served while observing "actually refused" (2026-11-12).
+  it('does not call a request served while observing refused, after the switch', async () => {
+    await openEnforcement({
+      ...REPORT,
+      mode: 'enforce',
+      observations: [
+        { ...REPORT.observations[0], enforced: true },
+        { ...REPORT.observations[0], path: '/api/pv/other', enforced: false },
+      ],
+    });
+    const card = await screen.findByTestId('ml-enf-observed');
+    expect(card.textContent).not.toMatch(/Everything below was actually refused/);
+    expect(card.textContent).toMatch(/Each row says whether it was refused, or served/);
+    expect(document.body.textContent).toMatch(/Served/);
+  });
+
   it('always states the per-server caveat, so the report is not read as a total', async () => {
     await openEnforcement(REPORT);
     await screen.findByTestId('ml-enf-observed');

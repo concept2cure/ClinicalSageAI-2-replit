@@ -166,6 +166,24 @@ function verdictText(m: TenantModule): string {
   }
 }
 
+/**
+ * What the report's rows are, said from the rows rather than from the mode.
+ * Each row records whether it was refused or served; a switch between modes
+ * leaves both kinds on the list, and the old mode-only sentence then called
+ * requests served while observing "actually refused" (running app, 2026-11-12).
+ */
+export function reportSentence(mode: string, rows: ReadonlyArray<{ enforced: boolean }>): string {
+  const refused = rows.filter((r) => r.enforced).length;
+  const lead = mode === 'enforce' ? 'Enforcement is on.' : 'Enforcement is observing only.';
+  if (refused > 0 && refused < rows.length) {
+    return `${lead} Each row says whether it was refused, or served while enforcement was only observing.`;
+  }
+  if (rows.length > 0 && refused === rows.length) return `${lead} Everything below was actually refused.`;
+  return mode === 'enforce'
+    ? `${lead} Everything below was served, recorded while enforcement was only observing.`
+    : 'Enforcement is observing only — everything below was served. This is what switching it on would cost.';
+}
+
 /* ── Enforcement report ─────────────────────────────────────────────────────
    What route-level enforcement is refusing, or would refuse if it were on.
 
@@ -732,9 +750,7 @@ export function MasterLicensing() {
           facts.truncated = enf.data.truncated;
           summary =
             `Platform licensing, Enforcement tab — mode "${enf.data.mode}"` +
-            (enf.data.mode === 'enforce'
-              ? ' (everything recorded was actually refused)'
-              : ' (observing only — everything recorded was served)') +
+            ` (${reportSentence(enf.data.mode, enf.data.observations)})` +
             `, recorded since ${whenText(enf.data.observingSince)}: ` +
             `${enf.data.observations.length} observation(s) across ${enf.data.organizationsAffected} workspace(s) and ${enf.data.modulesAffected.length} module(s)` +
             (enf.data.truncated ? '; the record is truncated at capacity, older entries dropped' : '') +
@@ -1377,9 +1393,9 @@ export function MasterLicensing() {
                     <div className="ml-enf-h">Nothing recorded on this server yet</div>
                     <p className="ml-enf-body">
                       No request has been refused, or would have been refused, since this server
-                      last restarted. That is not the same as knowing nothing would be refused —
-                      a quiet period and a clean one look identical from here, and the record
-                      starts empty after every restart.
+                      last restarted or its record was last cleared. That is not the same as
+                      knowing nothing would be refused — a quiet period and a clean one look
+                      identical from here, and the record starts empty after every restart.
                     </p>
                     <p className="ml-enf-body">
                       Leave observation running across a period that covers real use before
@@ -1397,9 +1413,7 @@ export function MasterLicensing() {
                         : 'Requests that would be refused'}
                     </div>
                     <p className="ml-enf-body">
-                      {enf.data.mode === 'enforce'
-                        ? 'Enforcement is on. Everything below was actually refused.'
-                        : 'Enforcement is observing only — everything below was served. This is what switching it on would cost.'}
+                      {reportSentence(enf.data.mode, enf.data.observations)}
                       {' '}Recorded since {whenText(enf.data.observingSince)}.
                     </p>
                   </div>
