@@ -30,19 +30,17 @@ import { LicensingInvoices, invoiceContext, useInvoices } from './LicensingInvoi
 
 /* -- Inline helpers -- */
 
-function money(n: number | null): string {
-  return n == null ? 'Custom' : '$' + n.toLocaleString();
-}
+function money(n: number | null): string { return n == null ? 'Custom' : '$' + n.toLocaleString(); }
 
-function lim(n: number): string | number {
-  return n === -1 ? 'Unlimited' : n;
-}
+function lim(n: number): string | number { return n === -1 ? 'Unlimited' : n; }
 
 /* -- Billing API helper (mirrors kit runtime setup) -- */
 
+interface CheckoutResult { checkoutUrl?: string; sessionId?: string }
+
 interface BillingApi {
-  checkout(body: Record<string, unknown>): Promise<DataResult<{ checkoutUrl?: string }>>;
-  dtcCheckout(body: Record<string, unknown>): Promise<DataResult<{ checkoutUrl?: string }>>;
+  checkout(body: Record<string, unknown>): Promise<DataResult<CheckoutResult>>;
+  dtcCheckout(body: Record<string, unknown>): Promise<DataResult<CheckoutResult>>;
   portal(returnUrl: string): Promise<DataResult<{ portalUrl?: string }>>;
 }
 
@@ -62,15 +60,14 @@ interface BillingApi {
 // "Checkout started". The user was told their checkout had begun when the server
 // had refused it.
 const billing: BillingApi = {
-  checkout(body) {
-    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/checkout', body);
+  checkout(body) { return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/checkout', body); },
+  async dtcCheckout(body) {
+    // The DTC route returns { sessionId, url }, unlike /checkout's checkoutUrl.
+    // Normalize the handoff here, retaining "free" as activation, not payment.
+    const result = await liveMutateOrNull<{ url?: string; sessionId?: string }>('POST', '/api/billing/dtc-checkout', body);
+    return { ...result, data: result.data ? { checkoutUrl: result.data.url, sessionId: result.data.sessionId } : null };
   },
-  dtcCheckout(body) {
-    return liveMutateOrNull<{ checkoutUrl?: string }>('POST', '/api/billing/dtc-checkout', body);
-  },
-  portal(returnUrl) {
-    return liveMutateOrNull<{ portalUrl?: string }>('POST', '/api/billing/portal', { returnUrl });
-  },
+  portal(returnUrl) { return liveMutateOrNull<{ portalUrl?: string }>('POST', '/api/billing/portal', { returnUrl }); },
 };
 
 /**
@@ -107,6 +104,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   const [arch, setArch] = useState('virtual_biotech');
   const [seats, setSeats] = useState(5);
   const [toast, fireToast] = useToast();
+  const [statusRevision, setStatusRevision] = useState(0);
 
   // Per-org subscription STATUS is real persisted data: GET /api/billing/status
   // reads the organizations row (server getSubscriptionStatus) and reconciles
@@ -120,7 +118,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
      common case. */
   const [unlock] = useState<UnlockIntent | null>(() => takeUnlockIntent());
 
-  const statusState = useLiveData<BillingStatus>('/api/billing/status');
+  const statusState = useLiveData<BillingStatus>('/api/billing/status', [statusRevision]);
   const status = statusState.data;
 
   /* Billing administration: the permission the session derives from the
@@ -161,7 +159,13 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
        check could not see simply could not buy anything and was never told.
        The request now goes out; if it is refused, the refusal is what is shown. */
     (model === 'dtc' ? billing.dtcCheckout(body) : billing.checkout(body)).then((r) => {
-      if (r.data?.checkoutUrl) {
+      if (!r.error && r.data?.sessionId === 'free') {
+        if (tier === 'free') {
+          setStatusRevision((revision) => revision + 1);
+          fireToast('Free subscription activated', 'ok');
+          return;
+        }
+      } else if (!r.error && tier !== 'free' && typeof r.data?.checkoutUrl === 'string' && r.data.checkoutUrl.trim()) {
         window.open(r.data.checkoutUrl, '_blank');
         return;
       }
