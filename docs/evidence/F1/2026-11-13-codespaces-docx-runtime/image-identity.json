@@ -40,5 +40,13 @@
     "verifiedDocxInterpreterPresent": true
   },
   "liveProviderCalls": 0,
-  "actualGitHubCodespace": "NOT_EXECUTED"
+  "actualGitHubCodespace": "NOT_EXECUTED",
+  "finalPostStart": {
+    "exitCode": 0,
+    "cachedGeneralSeed": true,
+    "portfolioHelper": "success marker and zero-created rerun verified",
+    "cdisc": "source files approved by three real demo identities; study data frozen; no model build"
+  },
+  "canonicalIntegration": "502ae524f969d44c2059f3f3b40345e79154e62b merged; copied its existing Show all walkthrough fix into the image rehearsal",
+  "testHostNetworkWorkaround": "Node22.16 native fetch did not use this cloud host proxy; CDISC fetch used an ephemeral Undici EnvHttpProxyAgent preload, preserved CA validation, and verified all ten canonical file hashes. No product proxy setting changed."
 }

@@ -47,7 +47,9 @@ The Codespace now sets itself up. Opening one installs everything, creates a
 local PostgreSQL 16 database, seeds the demo projects and the CSR study, starts
 the app on port 5000 in development mode and opens it in your browser.
 
-1. **Add your model keys as Codespaces secrets, once.** On GitHub: your
+1. **For live AnA, add your model keys as Codespaces secrets, once.** Prepared
+   synthetic reports, Vault files and the internal handover can be shown without
+   model keys. On GitHub: your
    repository → **Settings** → **Secrets and variables** → **Codespaces** →
    **New repository secret**. Add **both** keys:
    - `ANTHROPIC_API_KEY`: AnA drafts regulatory documents with an approved
@@ -67,13 +69,14 @@ the app on port 5000 in development mode and opens it in your browser.
 2. **Create the Codespace on `concept2cure-v2`.** Repository page → **Code** →
    **Codespaces** → **…** → **New with options** → branch `concept2cure-v2` →
    machine type with 4 cores and 16 GB or more → **Create codespace**.
-3. **Wait.** The first creation takes about 15–25 minutes: `npm ci`, the
+3. **Wait.** Allow about 30–45 minutes for the first creation, depending on the
+   machine and package mirrors: `npm ci`, the
    PostgreSQL install, the database provisioning (every migration), the first
    client compile, then the demo seed. The terminal ends with a box that says
    `Concept2Cure is running: https://…-5000.app.github.dev`. That page opens by
    itself. If it does not, open **Ports** and click the globe beside port 5000.
-   Keep the port **Private**. A restart takes a minute or two, and it applies
-   any new migrations first.
+   Keep the port **Private**. A cached restart is quicker; new migrations or
+   changed demo seeds take longer.
 4. **Choose the account and person, then sign in.** Under **Dev only**, use
    **Sign in as** to choose a demo person, then press **Demo access**. The
    choices are grouped by account and labelled with their scenario roles.
@@ -108,7 +111,7 @@ the app on port 5000 in development mode and opens it in your browser.
    a Word example report, PDF, synthetic study data and a checksum inventory.
    The project stays visible in the active list for presentation; its internal
    delivery task is completed after verifying the saved files.
-   Use the existing folder download to collect the four files. This is a completed
+   Use **Export Completed internal handover · SYNTHETIC** to collect the four files. This is a completed
    internal demonstration handover. Its reference files are unapproved examples,
    separate from the native CSR's scientific review, signatures and regulatory filing.
 
