@@ -50,6 +50,43 @@ grant migration, real agency acceptance, live-provider qualification or complete
 filing/signature ceremony and comment-only index scopes stay intact. Only executed red/green, compiler, lint,
 publication and runtime results will be recorded as passing.
 
+### Executed continued-control results
+
+- Peer lifecycle: **eight** actual PGlite cases fail before the locked recipient check; completed, incomplete,
+  cancelled and failed recipients refuse for both parent and child senders. Active assigned/started/checking/
+  waiting/held recipients and historical successful retries remain valid. Three separate caller-mutation cases
+  fail before the entry snapshot. A real private-preparation pause/recipient-stop case also fails when a private
+  exact-source test override removes only the lifecycle predicate. Final normal execution passes **98/98 across
+  three existing suites**, including actual owner decryption, original intent replay, a real refusal receipt and
+  no successful message/worker/projection advance. The related lost-COMMIT case moves unchanged between the two
+  existing test homes; its assertions and both file ceilings are retained.
+- Gateway custody: **four** original behavioral regressions fail with the real PGlite account/member/audit
+  stores, actual archive and only the FDA adapter stubbed. Final integration passes **205/205 across 19 existing
+  suites**. The primary39 cases exercise actual chained audit, canonical signing standing, archive/audit-time
+  revocation and rotation, failed audit, safe matching actors, detached request/bundle/receipt facts and exact
+  content-free attribution. A historical platform default records null account references; an unknown direct-use
+  authorization kind records no use. No grant or immutable credential revision is invented.
+- The stricter admission exposes older positive test premises. Nine existing compatibility fixture files gain
+  explicit valid actors/current signing-role and durable-audit outcomes while retaining their original refusal,
+  signature, qualification, package and account-freshness assertions. One existing staging round-trip fixture
+  needs its already-supported `skipPdfaConversion` option: installed Ghostscript otherwise adds source-only MD5
+  provenance that the ZIP reader correctly cannot recover. A private overlay of the original gateway, index and
+  original fixture reproduces that same baseline failure. Exact JSON/key-order equality and all unrecoverable
+  source-proof controls remain. This is a deterministic test premise, not a production PDF/A policy change.
+
+Earlier component counts overlap these totals and are not added. Changed peer/source/test lint reports zero
+errors and no warning growth; the untouched pre-transmit test retains its existing single warning. Independent
+source review closes every raised finding. The gateway actor/bundle/metadata and actual retained receipt are
+detached before the relevant awaits; credential-use admission requires the actual persisted chained audit and a
+fresh current-person/account check afterward. Audit fields name actual account/last-change/package references,
+never a secret, operator free-text reason or private account fingerprint.
+
+All source is committed and frozen before integration/publication. Every normal push gate, including full
+TypeScript against baseline zero, remains required. Holds release with canonical publication of this entry.
+The final ordinary cached Codespace-image start must serve the published SHA and preserve the existing seven
+demo cache files. This component evidence does not qualify a provider, final agency wire, credential-grant
+migration, private human-signature issuer or the full v0.5 architecture.
+
 ## 2026-11-13 F1 continuation — current activity and unreadable credential custody
 
 The founder asked to continue the whole existing implementation after the Codespace demo publication. This

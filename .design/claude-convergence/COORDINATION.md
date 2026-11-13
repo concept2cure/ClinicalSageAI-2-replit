@@ -1825,6 +1825,10 @@ exploit is claimed. This remains inside `turn-plan.ts`'s message method and its 
 home; the existing `turn-plan-and-context.test.ts` is also reserved for a private-text race/snapshot control if its
 fixture supports one without changing production source or policy elsewhere.
 
+The two reserved coordinator test homes may relocate the existing lost-COMMIT/idempotence case unchanged
+between them, using the same canonical fixture and preserving every assertion, to keep the added private
+preparation/recipient-stop control readable within both existing code-line ceilings. No new fixture or file.
+
 `submission-gateways/gateway-accounts.ts` and `index.ts` already bind encrypted account authority across archive,
 but lack the roadmap's per-use credential event and fresh initiating-person check there. Reuse unchanged
 `part11/signing-authority-gate.ts` policy and `audit/audit-write-outcome.ts`; record actual account ID/last-change
@@ -1852,3 +1856,22 @@ audit fixture outcomes may be reconciled where the tightened checkpoint actually
 exemptions or mocking away account freshness are not allowed. Primary PGlite custody tests must keep the real
 current-signing policy, account store and chained audit. The gateway owner allocates these disjoint fixtures to
 a helper after its interface is stable; root remains the sole Git/compiler owner.
+
+Further existing gateway regression homes named before any compatibility edit: `pdfa-requirement.test.ts`,
+`sent-record-rederive.test.ts`, `gateway-qualification.test.ts`, `health-canada-gateway.test.ts`,
+`pmda-gateway-unverified.test.ts`, and `governed-transmit-signature.test.ts`,
+`governed-transmit-pretransmit-record.test.ts`, `governed-transmit-leaf-manifest.test.ts`,
+`governed-transmit-independence.test.ts`, `governed-transmit-unapproved.test.ts` in the same existing test folder.
+Only reproduced fixture incompatibilities from the stricter checkpoint may be reconciled; signing, independence,
+package, qualification and before-wire refusal assertions remain. The gateway owner runs the integrated suites
+after source freeze and assigns any failing disjoint fixture to the compatibility helper.
+
+**Implementation completion:** all assigned source and test workers are frozen and closed. Final peer suites
+pass98/98, with eight lifecycle RED cases, three snapshot RED cases and the private prepare/stop race RED under
+an exact-source one-predicate removal. Final gateway integration passes205/205 across19 suites, including the
+primary39 actual account/member/chained-audit cases. Nine existing compatibility fixtures are reconciled without
+weakening refusal/freshness/qualification assertions; the deterministic PDF round-trip fixture's original host
+dependency is reproduced against original source. No lint errors or warning growth; independent review closes
+all findings. Existing evidence above records exact scope and limits. Root retains normal integration/Git and
+the sole full compiler; the rehearsal agent is runtime/scratch-only. **All source, test and evidence holds in this
+continuation release with canonical publication of this completion.** No other lane is paused or declared accepted.
