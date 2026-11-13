@@ -20,16 +20,19 @@
  *     "no risk"; a failed read is said, never shown as an empty answer;
  *   - the browser counts nothing: the one figure shown is Sentinel's own total.
  *
- * F1, 2026-11-12: each row names its project and opens it. The rows carry the
- * numeric id of a project; the project list carries it as `project_id`. Pinned:
- *   - the names come from the whole list, read only when the person asks, not
- *     from the filtered page Projects shows;
- *   - a row opens its project through the one opener Projects has, by the
- *     program's id, never by the number;
- *   - a finding about several projects names each, and never by the label the
- *     engine stored beside an id;
- *   - a row whose project the list does not hold gets no name and no reason;
- *   - a failed read of the list is said once, and the three answers still stand.
+ * F1, 2026-11-12 and -13: each row names its project and opens it. Every row of
+ * the three reads carries the project it was recorded on and that project's
+ * filing project, with the program a card on Projects opens (`project`; a
+ * finding about several projects carries `projects`). The server resolves them
+ * and names a filing project only when the person can open it. Pinned:
+ *   - a row ends with its filing project's name as a link, which opens it by
+ *     the program's id;
+ *   - a row recorded on a work area inside a project says the work area too;
+ *   - a finding about several projects names each filing project once;
+ *   - a project the person cannot open, or one with no program, is named in
+ *     words with no link; a row with no project says nothing;
+ *   - the names are the rows' own: no other read is made, and a label an
+ *     engine stored beside an id is never shown.
  */
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -51,17 +54,14 @@ vi.mock('@/utils/authToken', async (importOriginal) => ({
 }));
 
 import { Projects } from '../surfaces/Projects';
-import { PALETTE_PROJECTS_URL } from '../paletteProjects';
 import { clearShellProject, readShellProject } from '../shellProject';
 
 const ok = (body: unknown, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body }) as never;
 const onNav = vi.fn();
 const props = () =>
   ({ surface: { id: 'projects', label: 'Projects' } as never, onAsk: vi.fn(), onNav, segment: 'biopharma' });
-/** `id` is the program's; `project_id` is the number the risk rows carry. */
-const ROW = { id: 'p-1', project_id: 1, title: 'RR5 acceptance IND (synthetic)', ws: 'Biotech', code: 'RAIS', stage: 'Planning', readiness: null,
+const ROW = { id: 'p-1', title: 'RR5 acceptance IND (synthetic)', ws: 'Biotech', code: 'RAIS', stage: 'Planning', readiness: null,
   status: 'active', lead: 'Rae Okafor', due: '—', due_date: null, activity: 'Updated Oct 30' };
-const OTHER = { ...ROW, id: 'p-2', project_id: 2, title: 'Vorelinib NDA', code: 'VOR' };
 const FINDINGS = {
   findings: [
     { finding_id: 'f-1', project_id: 1, analyzer_type: 'deadline_risk', severity: 'high', status: 'open',
@@ -74,9 +74,6 @@ const FINDINGS = {
 let findings: () => unknown;
 let blockers: () => unknown;
 let dueSoon: () => unknown;
-/** The whole list, which the answer reads for its rows' names. */
-let projectNames: () => unknown;
-const listReads = () => apiRequest.mock.calls.map(([, u]) => String(u)).filter((u) => u === PALETTE_PROJECTS_URL);
 const riskReads = () => apiRequest.mock.calls.map(([, u]) => String(u))
   .filter((u) => u.startsWith('/api/sentinel/') || u.startsWith('/api/submission-ops/'));
 
@@ -85,14 +82,12 @@ beforeEach(() => {
   findings = () => ok(FINDINGS);
   blockers = () => ok({ data: [] });
   dueSoon = () => ok({ data: { canonicalTasks: [] }, source: 'c2c_project_work_items' });
-  projectNames = () => ok({ data: [ROW, OTHER], meta: { count: 2, hasMore: false } });
   onNav.mockReset();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
     if (url.startsWith('/api/sentinel/findings')) return findings();
     if (url.startsWith('/api/submission-ops/blockers')) return blockers();
     if (url.startsWith('/api/submission-ops/due-soon')) return dueSoon();
-    if (url === PALETTE_PROJECTS_URL) return projectNames();
     if (url === '/api/c2c/projects') return ok({ data: [ROW], meta: { counts: { total: 1, filingWithin60Days: 0, byWorkstream: {}, byPathway: {} } } });
     return ok({ data: [] });
   });
@@ -103,7 +98,6 @@ async function ask() {
   render(<Projects {...props()} />);
   await screen.findByText('RR5 acceptance IND (synthetic)');
   expect(riskReads(), 'nothing is read before the person asks').toEqual([]);
-  expect(listReads(), 'the whole list is not read before the person asks').toEqual([]);
   const button = screen.getByRole('button', { name: 'Which projects are at risk this week?' });
   fireEvent.click(button);
   expect(button.getAttribute('aria-expanded')).toBe('true');
@@ -167,88 +161,103 @@ describe('Projects: which projects are at risk this week, answered by the server
   });
 });
 
+/* The server's shape (server/services/c2c/program-project-anchor.ts NamedProject): the project a row was recorded
+   on, and its filing project with the program a card opens. */
+const RR5 = { id: 1, name: 'RR5 acceptance IND (synthetic)', root: { id: 1, name: 'RR5 acceptance IND (synthetic)', programId: 'p-1' } };
+const VOR = { id: 2, name: 'Vorelinib NDA', root: { id: 2, name: 'Vorelinib NDA', programId: 'p-2' } };
+/** A work area inside Vorelinib NDA: not a card on Projects. */
+const VOR_CMC = { id: 21, name: 'CMC', root: VOR.root };
+const VOR_STATS = { id: 22, name: 'Biostatistics', root: VOR.root };
 const BLOCKER = { blockerId: 'b-1', projectId: 1, severity: 'critical', title: 'Stability data missing for 3.2.P.8',
-  nextAction: 'Request the 6-month pull', ownerName: 'Lee Park', dueAt: '2026-11-14T00:00:00.000Z', status: 'open' };
-const DUE = { work_item_id: 'w-1', project_id: 2, title: 'Draft the cover letter', owner_name: 'Rae Okafor', status: 'open',
-  due_at: '2026-11-12T00:00:00.000Z' };
+  nextAction: 'Request the 6-month pull', ownerName: 'Lee Park', dueAt: '2026-11-14T00:00:00.000Z', status: 'open', project: RR5 };
+const DUE = { work_item_id: 'w-1', project_id: 21, title: 'Draft the cover letter', owner_name: 'Rae Okafor', status: 'open',
+  due_at: '2026-11-12T00:00:00.000Z', project: VOR_CMC };
 const rowOf = async (panel: HTMLElement, list: string, text: string) => {
   const items = within(await within(panel).findByRole('list', { name: list })).getAllByRole('listitem');
   const row = items.find((li) => li.textContent?.includes(text));
   if (!row) throw new Error(`no row holding "${text}" in ${list}`);
   return row;
 };
+/** The last line of a row: where its projects are said. */
+const projectLine = (row: HTMLElement) => row.querySelector(':scope > span:last-child')?.textContent ?? '';
 
-describe('Projects: each at-risk row names its project and opens it (F1, 2026-11-12)', () => {
+describe('Projects: each at-risk row names its project and opens it (F1)', () => {
   beforeEach(() => {
+    findings = () => ok({ ...FINDINGS, findings: FINDINGS.findings.map((f) => ({ ...f, project: RR5, projects: [RR5] })) });
     blockers = () => ok({ data: [BLOCKER] });
     dueSoon = () => ok({ data: { canonicalTasks: [DUE] }, source: 'c2c_project_work_items' });
   });
 
-  it('reads the names from the whole list, once the person asks', async () => {
-    await ask();
-    await waitFor(() => expect(listReads()).toEqual([PALETTE_PROJECTS_URL]));
-  });
-
-  it('names the project of a finding, a blocker and a due item', async () => {
+  it('names the filing project of a finding, a blocker and a due item, and makes no other read for it', async () => {
     const panel = await ask();
     const finding = await rowOf(panel, 'Risks Sentinel found', '11 overdue tasks');
-    expect(await within(finding).findByRole('button', { name: 'Open RR5 acceptance IND (synthetic)' })).toBeTruthy();
+    expect(within(finding).getByRole('button', { name: 'Open RR5 acceptance IND (synthetic)' }).textContent).toBe('RR5 acceptance IND (synthetic)');
     const blocker = await rowOf(panel, 'Blockers', 'Stability data missing');
-    expect(within(blocker).getByRole('button', { name: 'Open RR5 acceptance IND (synthetic)' }).textContent).toBe('RR5 acceptance IND (synthetic)');
+    expect(within(blocker).getByRole('button', { name: 'Open RR5 acceptance IND (synthetic)' })).toBeTruthy();
     const dueRow = await rowOf(panel, 'Due or overdue in the next 7 days', 'Draft the cover letter');
     expect(within(dueRow).getByRole('button', { name: 'Open Vorelinib NDA' })).toBeTruthy();
+    // The project list is read once, by Projects itself; the answer reads only its three engines.
+    const reads = apiRequest.mock.calls.map(([, u]) => String(u));
+    expect(reads.filter((u) => u.startsWith('/api/c2c/projects'))).toEqual(['/api/c2c/projects']);
+    expect(riskReads()).toHaveLength(3);
   });
 
-  it('opens the project from its row, by the program’s id and never by the number', async () => {
+  it('opens the filing project from its row, by the program’s id', async () => {
     const panel = await ask();
     const dueRow = await rowOf(panel, 'Due or overdue in the next 7 days', 'Draft the cover letter');
-    fireEvent.click(await within(dueRow).findByRole('button', { name: 'Open Vorelinib NDA' }));
+    fireEvent.click(within(dueRow).getByRole('button', { name: 'Open Vorelinib NDA' }));
     expect(onNav).toHaveBeenCalledWith('project-home');
-    expect(readShellProject()).toMatchObject({ id: 'p-2', title: 'Vorelinib NDA', code: 'VOR' });
+    expect(readShellProject()).toMatchObject({ id: 'p-2', title: 'Vorelinib NDA' });
   });
 
-  it('names every project a cross-project finding is about, and never the label stored beside an id', async () => {
+  it('says the work area a row was recorded on, beside its filing project', async () => {
+    const panel = await ask();
+    const dueRow = await rowOf(panel, 'Due or overdue in the next 7 days', 'Draft the cover letter');
+    expect(projectLine(dueRow)).toBe('Vorelinib NDA (CMC)');
+    const blocker = await rowOf(panel, 'Blockers', 'Stability data missing');
+    expect(projectLine(blocker)).toBe('RR5 acceptance IND (synthetic)');
+  });
+
+  it('names each filing project of a cross-project finding once, and never a label stored beside an id', async () => {
     findings = () => ok({ findings: [{ finding_id: 'f-9', project_id: 1, analyzer_type: 'cross_project', severity: 'medium', status: 'open',
       title: 'Lee Park is spread across 4 active projects', summary: 'Resource over-allocation: 9 open tasks across 4 projects.',
-      // The engine paired these labels with the wrong ids; the list's own names are the ones shown.
-      affected_items: [{ type: 'project', id: 1, label: 'Vorelinib NDA' }, { type: 'project', id: 2, label: 'RR5 acceptance IND (synthetic)' },
-        { type: 'task', id: 2, label: 'a task, not a project' }],
-      created_at: '2026-11-10T11:15:43.564Z' }], total: 1 });
+      // Labels on the wrong ids, as the engine stored them until 2026-11-12: never shown.
+      affected_items: [{ type: 'project', id: 1, label: 'A stored label that is wrong' }, { type: 'project', id: 21, label: 'Another wrong label' }],
+      project: RR5, projects: [RR5, VOR_CMC, VOR_STATS, VOR], created_at: '2026-11-10T11:15:43.564Z' }], total: 1 });
     const panel = await ask();
     const row = await rowOf(panel, 'Risks Sentinel found', 'spread across 4 active projects');
-    const names = (await within(row).findAllByRole('button')).map((b) => b.textContent);
-    expect(names).toEqual(['RR5 acceptance IND (synthetic)', 'Vorelinib NDA']);
-    fireEvent.click(within(row).getByRole('button', { name: 'Open Vorelinib NDA' }));
-    expect(readShellProject()).toMatchObject({ id: 'p-2' });
+    expect(within(row).getAllByRole('button').map((b) => b.textContent)).toEqual(['RR5 acceptance IND (synthetic)', 'Vorelinib NDA']);
+    expect(projectLine(row)).toBe('RR5 acceptance IND (synthetic) · Vorelinib NDA (CMC, Biostatistics)');
+    expect(row.textContent).not.toMatch(/stored label|wrong label/);
   });
 
-  it('gives a row whose project the list does not hold no name and no reason', async () => {
-    blockers = () => ok({ data: [BLOCKER, { ...BLOCKER, blockerId: 'b-2', projectId: 99, title: 'Device master record not located' }] });
+  it('names a project the person cannot open, or one with no program, in words with no link', async () => {
+    blockers = () => ok({ data: [
+      { ...BLOCKER, blockerId: 'b-2', title: 'Method transfer report overdue', project: { id: 31, name: 'Quality', root: null } },
+      { ...BLOCKER, blockerId: 'b-3', title: 'Vendor audit not scheduled', project: { id: 40, name: 'Vendor oversight', root: { id: 40, name: 'Vendor oversight', programId: null } } },
+    ] });
     const panel = await ask();
-    const known = await rowOf(panel, 'Blockers', 'Stability data missing');
-    await within(known).findByRole('button', { name: 'Open RR5 acceptance IND (synthetic)' });
-    const unknown = await rowOf(panel, 'Blockers', 'Device master record not located');
-    expect(within(unknown).queryByRole('button')).toBeNull();
-    expect(unknown.textContent).toBe('Critical · Device master record not locatedNext: Request the 6-month pull · Lee Park · Due Nov 14');
+    const workOnly = await rowOf(panel, 'Blockers', 'Method transfer report overdue');
+    expect(within(workOnly).queryByRole('button')).toBeNull();
+    expect(projectLine(workOnly)).toBe('Quality');
+    const noProgram = await rowOf(panel, 'Blockers', 'Vendor audit not scheduled');
+    expect(within(noProgram).queryByRole('button')).toBeNull();
+    expect(projectLine(noProgram)).toBe('Vendor oversight');
   });
 
-  it('says a failed read of the project list once, and still gives the three answers', async () => {
-    projectNames = () => ok({ error: 'down' }, 500);
+  it('says nothing about the project of a row that carries none, or carries something that is not one', async () => {
+    blockers = () => ok({ data: [
+      { ...BLOCKER, blockerId: 'b-4', title: 'Device master record not located', project: null },
+      { ...BLOCKER, blockerId: 'b-5', title: 'Label copy not received', project: { id: 'x', name: 'A name with no project number' } },
+      { ...BLOCKER, blockerId: 'b-6', title: 'An older server’s row', project: undefined },
+      { ...BLOCKER, blockerId: 'b-7', title: 'Batch record review open', project: { id: 7, name: '   ' } },
+    ] });
     const panel = await ask();
-    expect(await within(panel).findByText(/The project list could not be read, so the rows below do not name their projects/)).toBeTruthy();
-    const blocker = await rowOf(panel, 'Blockers', 'Stability data missing');
-    expect(within(blocker).queryByRole('button')).toBeNull();
-    expect(within(panel).getAllByRole('alert')).toHaveLength(1);
-    expect(await rowOf(panel, 'Risks Sentinel found', '11 overdue tasks')).toBeTruthy();
-  });
-
-  it('does not make a card with no project number, or a number with no card, into a name', async () => {
-    // An older server's card carries no project_id: it names nothing, and the read is not a failure.
-    projectNames = () => ok({ data: [{ ...ROW, project_id: undefined }, { ...OTHER, project_id: '2' }], meta: { count: 2 } });
-    const panel = await ask();
-    const blocker = await rowOf(panel, 'Blockers', 'Stability data missing');
-    await waitFor(() => expect(listReads()).toHaveLength(1));
-    expect(within(blocker).queryByRole('button')).toBeNull();
+    for (const title of ['Device master record not located', 'Label copy not received', 'An older server’s row', 'Batch record review open']) {
+      const row = await rowOf(panel, 'Blockers', title);
+      expect(within(row).queryByRole('button')).toBeNull();
+      expect(row.textContent).toBe(`Critical · ${title}Next: Request the 6-month pull · Lee Park · Due Nov 14`);
+    }
     expect(within(panel).queryByRole('alert')).toBeNull();
   });
 });

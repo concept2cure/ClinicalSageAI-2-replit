@@ -106,6 +106,19 @@ export function overAllocationProjects(raw: unknown): Array<{ id: number; name: 
   return pairs.sort((a, b) => a.id - b.id);
 }
 
+/**
+ * The projects a stored finding names: its own, then each project among its affected items, once each. A finding with
+ * no project of its own keeps not-a-number in first place on purpose: a caller that asks "can this person open every
+ * project it names?" must not read such a finding as one it can.
+ */
+export function findingNamedProjectIds(finding: { project_id?: unknown; affected_items?: unknown }): number[] {
+  const items: unknown[] = Array.isArray(finding.affected_items) ? finding.affected_items : [];
+  const named = items
+    .filter((item): item is { type: string; id: unknown } => !!item && typeof item === 'object' && (item as { type?: unknown }).type === 'project')
+    .map((item) => Number(item.id));
+  return [...new Set([finding.project_id === null || finding.project_id === undefined ? NaN : Number(finding.project_id), ...named])];
+}
+
 function normalizeConfig(
   organizationId: number,
   stored: Partial<SentinelConfig> | null | undefined
@@ -787,11 +800,7 @@ export class AISentinel {
       [findingId, organizationId]
     );
     if (!rows[0]) return null;
-    const items: unknown[] = Array.isArray(rows[0].affected_items) ? rows[0].affected_items : [];
-    const named = items
-      .filter((item): item is { type: string; id: unknown } => !!item && typeof item === 'object' && (item as { type?: unknown }).type === 'project')
-      .map((item) => Number(item.id));
-    return [...new Set([rows[0].project_id === null ? NaN : Number(rows[0].project_id), ...named])];
+    return findingNamedProjectIds(rows[0]);
   }
 
   async updateFindingStatus(

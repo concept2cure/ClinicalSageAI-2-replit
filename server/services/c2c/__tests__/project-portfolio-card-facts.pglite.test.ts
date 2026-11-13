@@ -125,22 +125,6 @@ describe('the portfolio card carries the project’s description and filing', ()
     expect(created).toHaveProperty('indication', null);
   });
 
-  /* F1, 2026-11-12. `id` is the program's uuid. Sentinel's findings, the blockers and the work due carry the
-     numeric id of the project row instead, so the Projects screen could not say which project an at-risk row
-     belongs to. The card carries that number too, from the join the card already makes. */
-  it('carries the anchor project’s numeric id, in the list and in the creator’s 201', async () => {
-    const cards = await listCards();
-    for (const anchor of anchors) {
-      const card = cards.find(row => row.id === anchor.programId)!;
-      expect(card.project_id, `the list card of ${anchor.programId}`).toBe(anchor.projectId);
-      expect(typeof card.project_id).toBe('number');
-      expect(card.id, 'the card’s id stays the program’s').toBe(anchor.programId);
-    }
-    expect((await createdCard(K510)).project_id).toBe(102);
-    // One projection for both statements: the 201 card and the list card keep the same keys.
-    expect(Object.keys(await createdCard(IND)).sort()).toEqual(Object.keys(cards.find(row => row.id === IND)!).sort());
-  });
-
   it('is additive: every key the card carried before is still there, with its value', async () => {
     const card = (await listCards()).find(row => row.id === IND)!;
     for (const key of PRIOR_KEYS) expect(card).toHaveProperty(key);

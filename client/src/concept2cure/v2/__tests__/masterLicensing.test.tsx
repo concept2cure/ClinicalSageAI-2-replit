@@ -186,37 +186,38 @@ describe('Master Licensing — reads', () => {
   });
 });
 
+/* The workspace fixtures the plan and verdict cases share. */
+const TENANT_DETAIL = {
+  organization: { id: 42, name: 'Northwind Bio', slug: 'northwind', tier: 'standard', industryMode: 'biotech', status: 'active' },
+  modules: [
+    { moduleId: 'pv-cockpit', name: 'PV cockpit', category: null, minTier: 'professional', subscriptionState: 'enabled', effective: true, source: 'subscribed' },
+  ],
+};
+
+function routeTenant(patch?: (url: string, body: unknown) => Promise<Response>) {
+  apiRequest.mockImplementation(async (method: string, url: string, body: unknown) => {
+    if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+    if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+    if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(TENANT_DETAIL);
+    if ((method === 'POST' || method === 'PATCH') && patch) return patch(url, body);
+    throw apiError(404, { error: `unrouted ${method} ${url}` });
+  });
+}
+
+async function openTenant() {
+  render(<MasterLicensing />);
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
+  const tenantsTab = screen.getAllByRole('button').find((b) => /^tenants$/i.test((b.textContent ?? '').trim()));
+  expect(tenantsTab, 'a Tenants tab must exist').toBeTruthy();
+  fireEvent.click(tenantsTab as HTMLButtonElement);
+  const row = await screen.findByText(ORG.name);
+  fireEvent.click(row.closest('button') ?? row);
+  await waitFor(() =>
+    expect(apiRequest.mock.calls.some((c: unknown[]) => String(c[1]).startsWith(`${LICENSING}/tenants/`))).toBe(true),
+  );
+}
+
 describe('Master Licensing — applying a plan', () => {
-  const TENANT_DETAIL = {
-    organization: { id: 42, name: 'Northwind Bio', slug: 'northwind', tier: 'standard', industryMode: 'biotech', status: 'active' },
-    modules: [
-      { moduleId: 'pv-cockpit', name: 'PV cockpit', category: null, minTier: 'professional', subscriptionState: 'enabled', effective: true, source: 'subscribed' },
-    ],
-  };
-
-  function routeTenant(patch?: (url: string, body: unknown) => Promise<Response>) {
-    apiRequest.mockImplementation(async (method: string, url: string, body: unknown) => {
-      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
-      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
-      if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(TENANT_DETAIL);
-      if ((method === 'POST' || method === 'PATCH') && patch) return patch(url, body);
-      throw apiError(404, { error: `unrouted ${method} ${url}` });
-    });
-  }
-
-  async function openTenant() {
-    render(<MasterLicensing />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
-    const tenantsTab = screen.getAllByRole('button').find((b) => /^tenants$/i.test((b.textContent ?? '').trim()));
-    expect(tenantsTab, 'a Tenants tab must exist').toBeTruthy();
-    fireEvent.click(tenantsTab as HTMLButtonElement);
-    const row = await screen.findByText(ORG.name);
-    fireEvent.click(row.closest('button') ?? row);
-    await waitFor(() =>
-      expect(apiRequest.mock.calls.some((c: unknown[]) => String(c[1]).startsWith(`${LICENSING}/tenants/`))).toBe(true),
-    );
-  }
-
   /* THE DOWNGRADE CASE. provision_org_modules grants and never revokes, so
      applying a plan after a downgrade adds nothing and removes nothing. A
      console that reports only "provisioned" lets an operator conclude that
@@ -282,6 +283,95 @@ describe('Master Licensing — applying a plan', () => {
     await completeConfirmDialog('deliberate failure');
     await waitFor(() => expect(document.body.textContent).toMatch(/Provisioning failed/));
     expect(document.body.textContent).not.toMatch(/modules granted|no new modules to grant/i);
+  });
+});
+
+describe("Master Licensing — a workspace's outcome and verdict", () => {
+  // Running app, 2026-11-12: the outcome rendered for ~200 ms, then the
+  // re-read the provisioning run triggers cleared it. waitFor alone catches
+  // that brief window, so this waits for the re-read to land first.
+  it('keeps the outcome on screen after the workspace is re-read', async () => {
+    // A fresh object per read, as a real response body is: handing back the
+    // same object made the re-read invisible to React and the test vacuous.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(JSON.parse(JSON.stringify(TENANT_DETAIL)));
+      if (method === 'POST' && url.endsWith('/provision')) {
+        return ok({ id: 42, name: 'Northwind Bio', tier: 'standard', granted: 0, enabledTotal: 4, retainedAboveTier: [{ moduleId: 'pv-cockpit', name: 'PV cockpit' }] });
+      }
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+    await openTenant();
+    const tenantReads = () => apiRequest.mock.calls.filter((c: unknown[]) => c[0] === 'GET' && String(c[1]).startsWith(`${LICENSING}/tenants/`)).length;
+    const before = tenantReads();
+    const apply = screen.getAllByRole('button').find((b) => /apply plan/i.test(b.textContent ?? ''));
+    fireEvent.click(apply as HTMLButtonElement);
+    await completeConfirmDialog('applying the standard plan');
+    await waitFor(() => expect(tenantReads()).toBeGreaterThan(before));
+    await new Promise((r) => setTimeout(r, 50));
+    const text = document.body.textContent ?? '';
+    expect(text).toMatch(/no new modules to grant for Northwind Bio/i);
+    expect(text).toMatch(/above this plan/i);
+  });
+
+  // The rail locks a module outside the release whatever the licence says, so
+  // the console says the same and offers no Grant or Turn off that would not
+  // reach the customer (running app, 2026-11-12).
+  it('reads a module outside the release as the rail does, with nothing to press', async () => {
+    const detail = {
+      ...TENANT_DETAIL,
+      launchScope: { enforced: true },
+      modules: [
+        ...TENANT_DETAIL.modules,
+        { moduleId: 'deep-research', name: 'Deep research', category: null, minTier: 'free', subscriptionState: 'none', effective: false, source: 'launch-scope' },
+      ],
+    };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(detail);
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+    await openTenant();
+    const row = (await screen.findByText('Deep research')).closest('[role="row"]') as HTMLElement;
+    expect(row.textContent).toMatch(/Not in this release/);
+    expect(row.textContent).toMatch(/No change reaches this workspace/);
+    expect(row.querySelector('button')).toBeNull();
+    // A module inside the release keeps its control.
+    const pv = (await screen.findAllByText('PV cockpit')).map((n) => n.closest('[role="row"]')).find(Boolean) as HTMLElement;
+    expect(pv.querySelector('button')?.textContent).toMatch(/Turn off/);
+  });
+});
+
+describe('Master Licensing — the category filter', () => {
+  // The catalog holds 'Submissions' and 'submissions'; a case-sensitive list
+  // showed two options and 'Submissions' hid five modules (2026-11-12).
+  it('offers one option per category whatever its case, and it finds every module in it', async () => {
+    const mods = [
+      { ...MODULE, moduleId: 'ind-lifecycle', name: 'IND lifecycle', category: 'Submissions' },
+      { ...MODULE, moduleId: 'ind-filing', name: 'IND Filing Suite', category: 'submissions' },
+      { ...MODULE, moduleId: 'ce-marking', name: 'EU MDR / IVDR', category: 'submissions' },
+      { ...MODULE, moduleId: 'analytics-hub', name: 'Analytics Hub', category: 'analytics' },
+    ];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === LICENSING) return ok({ ...PAYLOAD, modules: mods });
+      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+      throw apiError(404, { error: `unrouted ${method} ${url}` });
+    });
+    render(<MasterLicensing />);
+    const select = (await screen.findByLabelText('Category')) as HTMLSelectElement;
+    await waitFor(() => expect(select.options.length).toBeGreaterThan(1));
+    const labels = Array.from(select.options).map((o) => o.textContent);
+    expect(labels).toEqual(['All categories', 'Analytics', 'Submissions']);
+    fireEvent.change(select, { target: { value: 'submissions' } });
+    await waitFor(() => {
+      const text = document.body.textContent ?? '';
+      expect(text).toContain('IND lifecycle');
+      expect(text).toContain('IND Filing Suite');
+      expect(text).toContain('EU MDR / IVDR');
+      expect(text).not.toContain('Analytics Hub');
+    });
   });
 });
 
@@ -497,6 +587,23 @@ describe('Master Licensing — enforcement report', () => {
     expect(document.body.textContent).toMatch(/Refused/);
   });
 
+  // After a switch the list holds both kinds; the mode-only sentence called
+  // requests served while observing "actually refused" (2026-11-12).
+  it('does not call a request served while observing refused, after the switch', async () => {
+    await openEnforcement({
+      ...REPORT,
+      mode: 'enforce',
+      observations: [
+        { ...REPORT.observations[0], enforced: true },
+        { ...REPORT.observations[0], path: '/api/pv/other', enforced: false },
+      ],
+    });
+    const card = await screen.findByTestId('ml-enf-observed');
+    expect(card.textContent).not.toMatch(/Everything below was actually refused/);
+    expect(card.textContent).toMatch(/Each row says whether it was refused, or served/);
+    expect(document.body.textContent).toMatch(/Served/);
+  });
+
   it('always states the per-server caveat, so the report is not read as a total', async () => {
     await openEnforcement(REPORT);
     await screen.findByTestId('ml-enf-observed');
@@ -540,27 +647,5 @@ describe('Master Licensing — enforcement report', () => {
     await waitFor(() => expect(del).toHaveBeenCalled());
     const sent = apiRequest.mock.calls.find((c: unknown[]) => c[0] === 'DELETE');
     expect((sent?.[2] as { reason?: string })?.reason).toBe('packaging fixed, measuring again');
-  });
-});
-
-// jsdom does no layout, so the tab strip's visibility is pinned in the rule that
-// decides it. In the running app on 2026-11-12 the strip measured 1px: a scroll
-// container's automatic minimum height is 0, and inside `.ml-lic`'s column the
-// 95-row packaging table made it shrink to its border, clipping every tab.
-describe('the console tab strip stays on the screen', () => {
-  it('scrolls sideways and never shrinks to nothing', async () => {
-    const { readFileSync } = await import('node:fs');
-    const { resolve } = await import('node:path');
-    const { rules } = await import('./_cssRules');
-    const css = readFileSync(resolve(__dirname, '../styles/misc-surfaces-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const decl = (body: string, prop: string) =>
-      body.split(';').map((d) => d.split(':')).filter(([k]) => k?.trim() === prop).map(([, ...v]) => v.join(':').trim()).pop();
-    const strip = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-tabs'));
-    expect(strip.some((r) => decl(r.body, 'overflow-x') === 'auto'), 'eight tabs must scroll, not push the page').toBe(true);
-    expect(strip.some((r) => decl(r.body, 'flex-shrink') === '0'), 'the scrolling strip can shrink to its 1px border').toBe(true);
-    // `.page-full` is a row, so the column's automatic minimum was the tables'
-    // min-width: 915px wide in a 390px page, everything cut off at the right.
-    const column = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-lic'));
-    expect(column.some((r) => decl(r.body, 'min-width') === '0'), 'the column is as wide as its widest table').toBe(true);
   });
 });

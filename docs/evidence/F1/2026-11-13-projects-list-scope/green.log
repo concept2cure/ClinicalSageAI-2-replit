@@ -1,0 +1,256 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET /api/projects lists the projects the person can open > when what the person can open cannot be read, that is an error, never an empty list
+{
+  "timestamp": "2026-11-13T00:27:09.522Z",
+  "level": "error",
+  "message": "[projects-management] Project access could not be read",
+  "context": {
+    "err": "relation unreadable"
+  }
+}
+
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET /api/projects lists the projects the person can open > a member who is not on a private project does not receive it; its owner does 41ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET /api/projects lists the projects the person can open > the client workspace a caller names only narrows the list; leaving it off, or naming another sponsor's, opens nothing more 25ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET /api/projects lists the projects the person can open > answers the fields its callers read, and no other column of the row 6ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET /api/projects lists the projects the person can open > never lists another organisation's project 6ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET /api/projects lists the projects the person can open > a session with no user is refused, not answered with a list 5ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET /api/projects lists the projects the person can open > when what the person can open cannot be read, that is an error, never an empty list 6ms
+stderr | server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET, PATCH and DELETE /api/projects/:projectId admit the project the same way > a member who can read an open project but is not on its team cannot change it; its owner can
+{
+  "timestamp": "2026-11-13T00:27:09.581Z",
+  "level": "error",
+  "message": "[projects-management] Audit trail creation failed (non-blocking):",
+  "context": {
+    "query": "insert into \"audit_events\" (\"id\", \"organization_id\", \"event_type\", \"entity_type\", \"entity_id\", \"user_id\", \"user_name\", \"user_role\", \"session_id\", \"ip_address\", \"user_agent\", \"timestamp\", \"timestamp_utc\", \"old_values\", \"new_values\", \"changed_fields\", \"reason\", \"comments\", \"requires_signature\", \"signature_status\", \"signed_by\", \"signed_date\", \"signature_meaning\", \"application_version\", \"system_version\", \"regulatory_significant\", \"gxp_relevant\", \"record_hash\", \"previous_hash\", \"sequence_number\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, default, default, default, default, default, default, $18, $19, default, default, default, $20, default, default)",
+    "params": [
+      1,
+      "project_update",
+      "project",
+      10,
+      null,
+      "system",
+      "member",
+      "127.0.0.xxx",
+      null,
+      "2026-11-13T00:27:09.579Z",
+      "2026-11-13T00:27:09.579Z",
+      "{\"id\":10,\"organizationId\":1,\"clientWorkspaceId\":101,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Sponsor A IND\",\"code\":\"A-101\",\"description\":\"Open to the organisation\",\"status\":\"active\",\"priority\":\"medium\",\"type\":\"ind\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":9,\"ownerId\":9,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":null,\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":0,\"regulatoryProgramId\":\"11111111-1111-4111-8111-111111111111\",\"createdAt\":\"2026-11-13T00:27:09.564Z\",\"updatedAt\":\"2026-11-13T00:27:09.564Z\"}",
+      "{\"id\":10,\"organizationId\":1,\"clientWorkspaceId\":101,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Sponsor A IND (amended)\",\"code\":\"A-101\",\"description\":\"Open to the organisation\",\"status\":\"active\",\"priority\":\"medium\",\"type\":\"ind\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":9,\"ownerId\":9,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":null,\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":0,\"regulatoryProgramId\":\"11111111-1111-4111-8111-111111111111\",\"createdAt\":\"2026-11-13T00:27:09.564Z\",\"updatedAt\":\"2026-11-13T00:27:09.576Z\"}",
+      "[\"name\"]",
+      "Project updated",
+      null,
+      false,
+      true,
+      true,
+      "{\"source\":\"projects-management\",\"clientWorkspaceId\":101}"
+    ],
+    "cause": {
+      "length": 111,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "42P01",
+      "position": "13",
+      "file": "parse_relation.c",
+      "line": "1469",
+      "routine": "parserOpenTable",
+      "query": "insert into \"audit_events\" (\"id\", \"organization_id\", \"event_type\", \"entity_type\", \"entity_id\", \"user_id\", \"user_name\", \"user_role\", \"session_id\", \"ip_address\", \"user_agent\", \"timestamp\", \"timestamp_utc\", \"old_values\", \"new_values\", \"changed_fields\", \"reason\", \"comments\", \"requires_signature\", \"signature_status\", \"signed_by\", \"signed_date\", \"signature_meaning\", \"application_version\", \"system_version\", \"regulatory_significant\", \"gxp_relevant\", \"record_hash\", \"previous_hash\", \"sequence_number\", \"metadata\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, default, default, default, default, default, default, $18, $19, default, default, default, $20, default, default)",
+      "params": [
+        1,
+        "project_update",
+        "project",
+        10,
+        null,
+        "system",
+        "member",
+        "127.0.0.xxx",
+        null,
+        "2026-11-13T00:27:09.579Z",
+        "2026-11-13T00:27:09.579Z",
+        "{\"id\":10,\"organizationId\":1,\"clientWorkspaceId\":101,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Sponsor A IND\",\"code\":\"A-101\",\"description\":\"Open to the organisation\",\"status\":\"active\",\"priority\":\"medium\",\"type\":\"ind\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":9,\"ownerId\":9,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":null,\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":0,\"regulatoryProgramId\":\"11111111-1111-4111-8111-111111111111\",\"createdAt\":\"2026-11-13T00:27:09.564Z\",\"updatedAt\":\"2026-11-13T00:27:09.564Z\"}",
+        "{\"id\":10,\"organizationId\":1,\"clientWorkspaceId\":101,\"parentProjectId\":null,\"depth\":0,\"path\":null,\"name\":\"Sponsor A IND (amended)\",\"code\":\"A-101\",\"description\":\"Open to the organisation\",\"status\":\"active\",\"priority\":\"medium\",\"type\":\"ind\",\"startDate\":null,\"targetEndDate\":null,\"actualEndDate\":null,\"progress\":0,\"budget\":null,\"budgetCurrency\":\"USD\",\"budgetStatus\":\"within-budget\",\"createdById\":9,\"ownerId\":9,\"sponsors\":null,\"tags\":null,\"therapeuticArea\":null,\"criticalToQualityFactors\":null,\"riskLevel\":null,\"riskAssessment\":null,\"qualityTargets\":null,\"moduleReferences\":null,\"settings\":{},\"metadata\":null,\"retrievalMode\":null,\"knowledgeTokenEstimate\":0,\"regulatoryProgramId\":\"11111111-1111-4111-8111-111111111111\",\"createdAt\":\"2026-11-13T00:27:09.564Z\",\"updatedAt\":\"2026-11-13T00:27:09.576Z\"}",
+        "[\"name\"]",
+        "Project updated",
+        null,
+        false,
+        true,
+        true,
+        "{\"source\":\"projects-management\",\"clientWorkspaceId\":101}"
+      ],
+      "queryOptions": {
+        "rowMode": "object",
+        "parsers": {}
+      }
+    }
+  }
+}
+
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET, PATCH and DELETE /api/projects/:projectId admit the project the same way > a project the member cannot open reads as missing; its owner reads it 22ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET, PATCH and DELETE /api/projects/:projectId admit the project the same way > another organisation's project reads as missing, the same answer 5ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET, PATCH and DELETE /api/projects/:projectId admit the project the same way > a member who cannot open the project cannot rename it: missing, and nothing is written 12ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET, PATCH and DELETE /api/projects/:projectId admit the project the same way > a member who can read an open project but is not on its team cannot change it; its owner can 20ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET, PATCH and DELETE /api/projects/:projectId admit the project the same way > a member who cannot open the project cannot delete it: missing, and the row remains 5ms
+ ✓ server/routes/__tests__/projects-management-project-scope.pglite.test.ts > GET, PATCH and DELETE /api/projects/:projectId admit the project the same way > a member who can read an open project but is not on its team cannot delete it 6ms
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+{
+  "timestamp": "2026-11-13T00:27:10.558Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > shows a governed write the moment it is chained (audit_logs), labelled by source 52ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > never shows another tenant's governed writes (organisation from the verified JWT) 18ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > merges audit_events (SCIM / projects-management / IVDR) newest-first with their own chain values 15ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > applies limit across both stores 18ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the organisation 4ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses without tenant context (403) rather than reading anything 6ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > fails closed (503, not an empty ledger) when the chained schema is missing 1512ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links > verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe) 21ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > tells apart two accounts that share a display name 16ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > names the account on an audit_events entry too, and names none for the system 9ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row 18ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a document e-sign: signed, by the signature the row records — for that document only 18ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned 16ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an approval that was not the last one its route required (RR2 records) > an interim QMS approval, written as its own type, reads k of n and never "approved" 17ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an approval that was not the last one its route required (RR2 records) > an approval stored before 2026-10-29 with the final type is read from its route: the earlier one is interim, the last one approved 20ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an approval that was not the last one its route required (RR2 records) > a stored earlier approval stays interim when the other approver never signed 16ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an approval that was not the last one its route required (RR2 records) > a Vault version: an earlier approver’s signature reads k of n, written as its own type or stored before 28ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an approval that was not the last one its route required (RR2 records) > a Vault version: the final approval, the route sent and the lifecycle moves are named as acts, not codes 29ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — Vault acts named in words (J2 human test) > every act the Vault writes without a description of its own is named in words 59ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — Vault acts named in words (J2 human test) > a folder made, renamed, moved or removed is named in words (vault-folders.ts writes no description) 22ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger names nothing of another organisation's in a break 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history names nothing of another organisation's in a break 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger still names this organisation's own broken row 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history still names this organisation's own broken row 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > the ledger states a walk over no chained rows as not verified, never ok 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > the chain verdict the ledger readers state (SECURITY-8) > a record's history states a walk over no chained rows as not verified, never ok 1ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > a record's history across record kinds > reads the submission and its leaves, newest first, and nothing else 19ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > project creation stays with canonical intake and explicit deferred owners > rejects planted SQL/ORM writers, aliases, extra sites and unreasoned exceptions 20ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > project creation stays with canonical intake and explicit deferred owners > has no alternate program/PM creation writer in production server sources 3895ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > project creation stays with canonical intake and explicit deferred owners > refuses another program writer even in the PM anchor owner file 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > project creation stays with canonical intake and explicit deferred owners > keeps the retired workspace creator closed independently of which store it writes 23ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > project creation stays with canonical intake and explicit deferred owners > keeps each owner exception exact, reasoned and unable to accumulate freed slots 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > bracket ORM syntax still belongs to canonical intake > rejects a bracket writer: const p = schema.projects; db["insert"](p).values({}); 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > bracket ORM syntax still belongs to canonical intake > rejects a bracket writer: db.insert(schema["projects"]).values({}); 0ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > bracket ORM syntax still belongs to canonical intake > rejects a bracket writer: db["insert"](schema["regulatoryPrograms"]).values({}); 0ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > covers all twelve retired POST registrations 0ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/concept2cure.ts at /projects 15ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/concept2cure.ts at /projects/:id/duplicate 12ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/device-projects.ts at / 3ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/projects-management.ts at / 3ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/project-hierarchy.ts at /:projectId/children 4ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/bootstrap/register-advanced-platform-routes.ts at /api/workspace/projects 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/ctd-onboarding.ts at /projects 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/ana-platform-control.ts at /projects 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/ana-platform-control.ts at /onboard 5ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/ana-platform-control.ts at /execute 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/program-journey.routes.ts at / 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > closes the alternate POST in server/routes/program-journey.routes.ts at /:id/stages/:stageId 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/concept2cure.ts get /projects 11ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/concept2cure.ts get /projects/:id 11ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/concept2cure.ts put /projects/:id 15ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/device-projects.ts get / 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/device-projects.ts put /:id 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/device-projects.ts delete /:id 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/projects-management.ts get / 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/projects-management.ts patch /:projectId 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/project-hierarchy.ts get /:projectId/children 3ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/project-hierarchy.ts patch /:projectId/move 3ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/bootstrap/register-advanced-platform-routes.ts get /api/workspace/projects 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/ctd-onboarding.ts get /projects 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/ctd-onboarding.ts get /projects/:id 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/ctd-onboarding.ts post /projects/:id/validate 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/ctd-onboarding.ts post /projects/:id/detect-section 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/program-journey.routes.ts get / 1ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/ana-platform-control.ts get /capabilities 5ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/ana-platform-control.ts patch /settings 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > retains server/routes/ana-platform-control.ts patch /projects/:projectId 2ms
+ ✓ tests/ci/project-creation-owners.contract.test.ts > retirement preserves the existing readable and governed route outcomes > treats comments, ordinary GETs and chained or bracket registrations distinctly 1ms
+stdout | server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — ownership before holds > judges its own project before deleting it
+✅ Deleted device project: 5 (org=9)
+
+stderr | server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — a store keeps a record under it (PF-13 follow-up) > the database refusing the delete is 409 PROJECT_HOLDS_RECORDS, archive instead, not a 500
+Device project delete refused by the database: a store keeps records under it {
+  table: 'fda_510k_projects',
+  constraint: 'fda_510k_projects_project_id_projects_id_fk'
+}
+
+stderr | server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — a store keeps a record under it (PF-13 follow-up) > any other failure is still a 500
+Failed to delete device project: Error: connection reset
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/device-projects-delete-ownership.test.ts:99:21
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — ownership before holds > answers another organization's project with 404, and never asks what it holds 15ms
+ ✓ server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — ownership before holds > judges its own project before deleting it 4ms
+ ✓ server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — a store keeps a record under it (PF-13 follow-up) > the database refusing the delete is 409 PROJECT_HOLDS_RECORDS, archive instead, not a 500 3ms
+ ✓ server/routes/__tests__/device-projects-delete-ownership.test.ts > DELETE /api/device-projects/:id — a store keeps a record under it (PF-13 follow-up) > any other failure is still a 500 4ms
+stderr | tests/routes/projects-management-tenant-boundary.test.ts > projects-management tenant boundary > lists projects for an organization that holds no `licenses` row (a fresh install is not a 403)
+{
+  "timestamp": "2026-11-13T00:27:20.616Z",
+  "level": "error",
+  "message": "[projects-management] Project access could not be read",
+  "context": {
+    "err": "[vitest] No \"pool\" export is defined on the \"../../server/db\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ tests/routes/projects-management-tenant-boundary.test.ts > projects-management tenant boundary > lists projects for an organization that holds no `licenses` row (a fresh install is not a 403) 232ms
+ ✓ tests/routes/projects-management-tenant-boundary.test.ts > projects-management tenant boundary > does not register the alternate creator for any payload organization 1ms
+stderr | server/routes/__tests__/quota-not-recorded-is-403.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/quota-not-recorded-is-403.test.ts
+{
+  "timestamp": "2026-11-13T00:27:21.418Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/quota-not-recorded-is-403.test.ts
+{
+  "timestamp": "2026-11-13T00:27:21.882Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-13T00:27:21.883Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/quota-not-recorded-is-403.test.ts
+{
+  "timestamp": "2026-11-13T00:27:21.883Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/quota-not-recorded-is-403.test.ts > QUOTA_NOT_RECORDED is 403 > POST /api/tenant-users 30ms
+ ✓ server/routes/__tests__/quota-not-recorded-is-403.test.ts > QUOTA_NOT_RECORDED is 403 > POST /api/tenant-users/invitations/:id/accept 4ms
+ ✓ server/routes/__tests__/projects-management-create-retired.test.ts > the retired legacy project creator > returns 404 and never reaches quota creation for body org 1 283ms
+ ✓ server/routes/__tests__/projects-management-create-retired.test.ts > the retired legacy project creator > returns 404 and never reaches quota creation for body org 999 3ms
+
+ Test Files  7 passed (7)
+      Tests  90 passed (90)
+   Start at  00:27:06
+   Duration  16.63s (transform 1.69s, setup 391ms, import 4.99s, tests 10.37s, environment 1ms)
+

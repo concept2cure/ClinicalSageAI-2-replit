@@ -23,7 +23,7 @@ import { pool } from '../db.js';
 import auditService from './auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 import type { Request, Response, NextFunction } from 'express';
-import { LAUNCH_MODULE_IDS } from '../../shared/constants/launch-scope';
+import { isLaunchSurface } from '../../shared/constants/launch-scope';
 import { grantsHeldThroughFolds } from './entitlements/folded-module-successors.js';
 
 const logger = createScopedLogger('license-manager');
@@ -150,8 +150,9 @@ export interface ModuleCatalogEntry {
   isAvailable: boolean; // true if tier + industry match
   requiredTier: string | null; // lowest tier that includes this module
   /**
-   * 'launch' when the module is in the launch catalog
-   * (shared/constants/launch-scope.ts), 'later' otherwise. Static per module;
+   * 'launch' when the module is a launch surface — the same test the rail
+   * applies (shared/constants/launch-scope.ts isLaunchSurface) — 'later'
+   * otherwise. Static per module;
    * whether 'later' locks anything is the deployment's LAUNCH_SCOPE_ENFORCE,
    * reported separately as `launchScope.enforced` on the payloads that carry
    * this entry. A 'later' row with enforcement off is an ordinary module.
@@ -370,7 +371,15 @@ export async function getModuleCatalog(organizationId: number): Promise<ModuleCa
         ...catalogSubscription(m.is_subscribed ?? null, grantExpired, license.heldThroughFolds[m.module_id]),
         isAvailable: tierMatch && industryMatch,
         requiredTier: lowestTier,
-        launchScope: LAUNCH_MODULE_IDS.includes(m.module_id) ? 'launch' : 'later',
+        // The rail's rule (navigation-entitlements applyLaunchScope keeps a
+        // launch SURFACE's licence verdict). It read LAUNCH_MODULE_IDS until
+        // 2026-11-12, which leaves out the apps admitted with no granted
+        // module (CMC, RBM, Biostatistics) and the surfaces of an app
+        // (Communication, the device features, the eTMF, the IND checklist).
+        // Subscription & features then called them "not in this release"
+        // while the rail, ⌘K and the lock dialog said "included from
+        // Professional" (running app, 2026-11-12).
+        launchScope: isLaunchSurface(m.module_id) ? 'launch' : 'later',
         sortOrder: m.sort_order || 0,
         grantExpiresAt: toIsoOrNull(m.grant_expires_at),
         grantExpired,
@@ -440,7 +449,7 @@ export async function canAccessModule(
      */
     ignoreRevocation?: boolean;
   } = {},
-): Promise<{ allowed: boolean; reason?: string; heldThrough?: string }> {
+): Promise<{ allowed: boolean; reason?: string; heldThrough?: string; notCatalogued?: true }> {
   const access = await licenseForAccess(organizationId, moduleId);
   if ('denied' in access) return access.denied;
   const { license } = access;
@@ -463,7 +472,12 @@ export async function canAccessModule(
   );
 
   if (moduleResult.rows.length === 0) {
-    return { allowed: false, reason: `Module '${moduleId}' does not exist` };
+    // Still a refusal here: a guard naming a module the catalog lacks (a typo,
+    // a retired id) must not open. `notCatalogued` lets the route gate tell
+    // "the catalog does not sell this surface" from "not licensed": a shell
+    // surface such as project-home or conversation-thread claims API prefixes
+    // and has no catalog row (moduleEntitlementGate).
+    return { allowed: false, reason: `Module '${moduleId}' does not exist`, notCatalogued: true };
   }
 
   const row = moduleResult.rows[0];

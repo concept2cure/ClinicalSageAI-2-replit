@@ -1,0 +1,25 @@
+== GET /api/projects as the organisation admin (manages every project)
+  rows 105 | has private 197807: True | keys: ['code', 'id', 'name', 'regulatoryProgramId', 'status']
+== GET /api/projects as a member who is not on the private project
+  rows 104 | has private 197807: False | keys: ['code', 'id', 'name', 'regulatoryProgramId', 'status']
+== the same, naming each client workspace
+ workspace 2
+  rows 91 | has private 197807: False | keys: ['code', 'id', 'name', 'regulatoryProgramId', 'status']
+ workspace 3
+  rows 4 | has private 197807: False | keys: ['code', 'id', 'name', 'regulatoryProgramId', 'status']
+ workspace 53496
+  rows 2 | has private 197807: False | keys: ['code', 'id', 'name', 'regulatoryProgramId', 'status']
+== GET /api/projects/197807 (private)
+ member: 404
+ admin: 200
+== PATCH /api/projects/197807 as the member
+{"error":"Project not found"}
+ HTTP 404
+== PATCH an open project (197806) the member can read but is not on
+{"error":"You can open this project but not change it.","code":"PROJECT_WRITE_DENIED"}
+ HTTP 403
+== DELETE /api/projects/197807 as the member
+{"error":"Project not found"}
+ HTTP 404
+== GET /api/c2c/projects as the member (the canonical list), for comparison
+  rows 50 | names the private project: False

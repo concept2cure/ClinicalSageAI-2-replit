@@ -406,16 +406,35 @@ private ones).
 - **The release's locks.** Also add `LAUNCH_SCOPE_ENFORCE=on`. Unset, it is
   off under `NODE_ENV=development` and on in production. Without it you are
   not testing what a customer sees.
+- **Sign-up with no mail server.** Also add `ALLOW_DEV_AUTH=1` (development
+  only). Without it, sign-up needs the e-mailed confirmation link, and with
+  SMTP unset it answers "Sign-up is not available right now". It also skips
+  the sign-in code, so this journey does not test the second factor; the
+  UX-01 row above covers it.
 - **A customer's administrator.** In a private window, sign up at
   `/concept2cure/signup`. The password must not contain your name, e-mail
   address or organisation; if it does, the form returns to step 1 and says
-  so. On the legal step, each checkbox enables once you scroll that agreement
-  to its end. The new organisation is on the Free plan with the launch
-  catalog.
+  so. On the legal step, the Terms of Service and Privacy Policy checkboxes
+  each enable once you scroll that document to its end; the regulatory
+  acknowledgement can be ticked at once. The new organisation is on the Free
+  plan with the launch catalog.
 - **A member of that customer.** As the customer's administrator: account
   menu → Admin → **Invite member**, role Member. With no SMTP configured,
   the page shows the setup link. Open it in the third profile and set a
   password.
+
+**Two traps at this head** (found by the walk on 2026-11-12, handed to the
+client-administration lane in `.design/claude-convergence/COORDINATION.md`):
+
+- **As the owner, do not reload a page.** After a reload the name under your
+  account becomes the newest customer's organisation: Usage then shows
+  Concept2Cure's plan under that name, and New project is refused. The
+  organisation switcher cannot undo it (it lists your own organisation as
+  current). Sign out and sign in again.
+- **As a Free customer's administrator, do not turn a launch app off** in
+  Subscription & features. It cannot be turned back on: the switch is refused
+  for anything above the Free tier, and the lock dialog's "turn it back on"
+  leads nowhere.
 
 **Steps.**
 
@@ -430,7 +449,9 @@ private ones).
 3. **As the customer's administrator,** click the same app. You get
    **Compare subscriptions** and no request button: an administrator decides
    rather than asks. Account menu → **Access requests** lists the member's
-   request with the reason.
+   request with the reason. **Do not approve it here** if the app is above the
+   plan: at this head an administrator's approval turns it on for good, with
+   no plan check (known, S1c below). Decline it, or leave it for the owner.
 4. **As the owner, decide.** Account menu → **Platform licensing** →
    **Access requests**. The request shows its workspace, who asked and why.
    **Approve** is a governed action: a reason of at least three characters,
@@ -465,4 +486,9 @@ tabs were clipped to a 1px strip, so only Packaging could be reached; at phone
 width the console was 915px wide and cut off at the right; and the owner's
 answers to access requests were missing from Decisions.
 
-Known issues on this journey (bold = stops it): GTM-02, GTM-05, UX-05.
+Known issues on this journey (bold = stops it): GTM-02, GTM-05, UX-05, and
+**S1c** from the client-administration audit
+([`docs/evidence/F1/2026-11-10-client-admin/`](../evidence/F1/2026-11-10-client-admin/README.md)):
+a customer's administrator can approve a request for an app above the plan,
+which writes a grant with no end date and no plan check. It is held by that
+audit's fix lane. Log a recurrence there, not as new.

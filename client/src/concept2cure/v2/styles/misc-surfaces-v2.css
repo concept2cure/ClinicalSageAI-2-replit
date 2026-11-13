@@ -729,7 +729,13 @@
 .c2c-v2 .ml-count{ margin-left:auto; font-size:12px; color:var(--text-300); font-variant-numeric:tabular-nums; }
 
 /* ── Tables ──────────────────────────────────────────────────────────────── */
-.c2c-v2 .ml-scroll{ overflow-x:auto; }
+/* `position:relative` makes the scroll box the containing block of the
+   visually hidden `.ml-vh` labels inside its rows' buttons. They are
+   position:absolute, and with no positioned ancestor their containing block
+   was the page, so this box's overflow did not clip them: at 390px the page
+   itself scrolled sideways to 509px on Feature flags, 549px on a workspace's
+   modules and 823px on Trials (2026-11-12). */
+.c2c-v2 .ml-scroll{ overflow-x:auto; position:relative; }
 .c2c-v2 .ml-table{
   --ml-cols: minmax(230px,2fr) minmax(330px,auto) minmax(140px,.7fr);
   min-width:760px; border:1px solid var(--border); border-radius:var(--radius-md);
@@ -750,6 +756,10 @@
 
 .c2c-v2 .ml-table-trials{ --ml-cols: minmax(150px,1fr) minmax(150px,1fr) 140px minmax(230px,1.6fr) 160px; min-width:900px; }
 .c2c-v2 .ml-table-enterprise{ --ml-cols: 150px minmax(170px,1fr) minmax(200px,1.2fr) minmax(230px,1.8fr) 100px; min-width:900px; }
+/* A prospect's request is several lines ("Organization type: …", "Pricing
+   model: …"); collapsed into one, the organisation type read as "Biotech
+   Pricing model" (2026-11-12). No other cell in this table holds a newline. */
+.c2c-v2 .ml-table-enterprise .ml-sub{ white-space:pre-line; }
 
 .c2c-v2 .ml-thead,
 .c2c-v2 .ml-row{ display:grid; grid-template-columns:var(--ml-cols); gap:14px; align-items:start; }
