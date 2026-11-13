@@ -87,6 +87,12 @@ The final ordinary cached Codespace-image start must serve the published SHA and
 demo cache files. This component evidence does not qualify a provider, final agency wire, credential-grant
 migration, private human-signature issuer or the full v0.5 architecture.
 
+**Final canonical integration:** normal merges preserve the later Codespaces evidence and `5a552f142`'s
+disjoint native AnA catalogue projection/deletion-fixture repair. The earlier coordination append conflict keeps
+both owners' records. Independent review finds no integration issue; the existing catalogue suite passes
+**27/27** on Node22 after merge, with its worker closed before the normal full compiler. No branch, force push,
+hook bypass or baseline adjustment is used.
+
 ## 2026-11-13 F1 continuation — current activity and unreadable credential custody
 
 The founder asked to continue the whole existing implementation after the Codespace demo publication. This
