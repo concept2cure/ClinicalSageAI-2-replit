@@ -14,6 +14,17 @@
 
 export const SYNTHETIC = 'SYNTHETIC demonstration data, fictional sponsor; not clinical evidence';
 
+// A completed INTERNAL delivery example reuses the fictional QLM-118-101 source;
+// the eight native CSR documents retain their scientific-review stages.
+export const INTERNAL_HANDOVER = {
+  key: 'qlm118-101-internal-handover', company: 'quillmont', stage: 'internal',
+  programType: 'csr', productName: 'QLM-118', productType: 'drug',
+  protocolNumber: 'QLM-118-101-INTERNAL', shortTitle: 'QLM-118-101 completed INTERNAL demonstration handover',
+  indication: 'Fictional internal data and document handover demonstration', internalHandover: true,
+};
+
+export const INTERNAL_HANDOVER_NOTICE = 'SYNTHETIC EXAMPLE — unapproved, not a rendition/export of the native CSR. Internal demonstration material only; no clinical approval, electronic signature, regulatory submission or agency acceptance is represented.';
+
 /**
  * The four fictional sponsors. Each is its OWN client workspace (SPONSOR_WORKSPACES), so a sponsor's projects
  * show that sponsor's records and not the organisation's own workspace's. "Varnhollow Oncology" replaced
@@ -223,7 +234,7 @@ export const workspaceIdOf = (row) => {
 };
 
 /**
- * What to do with the projects already titled `title` (the list excludes archived ones): create one, reuse the one
+ * What to do with the projects already titled `title` (including archived records): create one, reuse the one
  * in the sponsor's workspace, or REFUSE one found anywhere else. A project is never moved between workspaces and a
  * project in another workspace is never reused. Duplicates are refused before anything is decided.
  */
