@@ -1,0 +1,5 @@
+ × client/src/concept2cure/v2/__tests__/homeProjectStatusInWords.test.tsx > Home project rows > say the status in the words Projects uses, never the stored value 86ms
+   → expected 'Biotech · Planning · active' to be 'Biotech · Planning · Active' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/homeProjectStatusInWords.test.tsx > Home project rows > say nothing for a status that is not recorded 33ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)
