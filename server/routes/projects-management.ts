@@ -1,14 +1,18 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { db } from '../db';
+import type { Request, Response } from 'express';
+import { db, pool } from '../db';
 import { auditEvents, projects } from '@shared/schema';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 import { requireEditorAccess } from '../middleware/orgMembership';
+import { authedUserId } from '../utils/authedActor';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access';
+import { canAccessReportProject, getAccessibleReportProjectIds, type ReportProjectActor } from '../services/report-os/project-access';
 
 const log = createScopedLogger('projects-management');
 
@@ -33,6 +37,41 @@ const log = createScopedLogger('projects-management');
 //     server/middleware/moduleEntitlementGate.ts).
 // Project creation and quotas belong to POST /api/c2c/projects (A2.9). One
 // decision per question; this router asks none of them twice.
+
+// ── Which projects this router answers for ─────────────────────────────────
+//
+// Until 2026-11-13 every handler here resolved a project by its organisation
+// alone. The organisation is the verified session's, so nothing crossed a
+// tenant; but inside one organisation the list answered every project's whole
+// row to any member, narrowed only by a client workspace id the caller chose
+// to send, and one project could be read, renamed or deleted by a member who
+// cannot open it. A CRO member working in one sponsor's workspace read the
+// other sponsors' project names by leaving the header off.
+//
+// Each handler now asks the project sharing policy the canonical list and the
+// reporting, tasks and at-risk reads already ask (readCurrentProgramActor,
+// then getAccessibleReportProjectIds / canAccessReportProject): one mechanism.
+// A project the person cannot open reads as missing, the same answer a project
+// that does not exist gets. A failed access read is an error, never an empty
+// list. Evidence: docs/evidence/F1/2026-11-13-projects-list-scope/.
+
+/** The session's member of the organisation, as the project sharing policy reads them. */
+function projectActor(req: Request, organizationId: number): Promise<ReportProjectActor> {
+  return readCurrentProgramActor(pool, { organizationId, userId: authedUserId(req) ?? undefined });
+}
+
+function projectAccessFailure(res: Response, error: unknown): Response {
+  if (error instanceof ProgramReadAccessError) return res.status(error.status).json({ error: error.message, code: error.code });
+  log.error('Project access could not be read', { err: error instanceof Error ? error.message : String(error) });
+  return res.status(503).json({ error: 'Current project access could not be verified. Nothing was read or changed.', code: 'PROJECT_ACCESS_UNAVAILABLE' });
+}
+
+/** What the person may do with one project of the organisation: nothing (it reads as missing), open it, or change it. */
+async function projectAdmission(req: Request, organizationId: number, projectId: number): Promise<'none' | 'read' | 'write'> {
+  const actor = await projectActor(req, organizationId);
+  if (!(await canAccessReportProject(organizationId, actor, projectId, pool))) return 'none';
+  return (await canAccessReportProject(organizationId, actor, projectId, pool, { forWrite: true })) ? 'write' : 'read';
+}
 
 const router = Router();
 
@@ -62,29 +101,30 @@ router.get('/', async (req, res) => {
       from: req.headers['x-organization-id'] ? 'header' : 'query',
     });
 
-    // Get projects from database
-    const orgProjects = await db
-      .select()
+    let readable: number[];
+    try {
+      readable = await getAccessibleReportProjectIds(organizationId, await projectActor(req, organizationId), pool);
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+    if (readable.length === 0) return res.json([]);
+
+    // The projects the person can open, and only the fields the task board and the collaboration launcher read
+    // (TaskBoard.tsx ProjectOpt, CollabLauncher.tsx ProjectRow). The client workspace a caller names narrows the
+    // list; it never widens it.
+    const listed = await db
+      .select({ id: projects.id, name: projects.name, code: projects.code, status: projects.status,
+        regulatoryProgramId: projects.regulatoryProgramId })
       .from(projects)
-      .where(
-        clientWorkspaceId
-          ? and(
-              eq(projects.organizationId, organizationId),
-              eq(projects.clientWorkspaceId, clientWorkspaceId)
-            )
-          : eq(projects.organizationId, organizationId)
-      );
+      .where(and(
+        eq(projects.organizationId, organizationId),
+        inArray(projects.id, readable),
+        ...(clientWorkspaceId ? [eq(projects.clientWorkspaceId, clientWorkspaceId)] : []),
+      ))
+      .orderBy(asc(projects.id));
 
-    const filteredProjects = clientWorkspaceId
-      ? orgProjects.filter(project => project.clientWorkspaceId === clientWorkspaceId)
-      : orgProjects;
-
-    log.debug('🔍 Retrieved projects for org', {
-      organizationId,
-      count: orgProjects.length,
-    });
-    log.debug('🔍 Projects data:', orgProjects);
-    res.json(filteredProjects);
+    log.debug('Listed projects', { organizationId, count: listed.length });
+    res.json(listed);
   } catch (error) {
     log.error('Error fetching projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
@@ -115,6 +155,14 @@ router.get('/:projectId', async (req, res) => {
           eq(projects.clientWorkspaceId, clientWorkspaceId)
         )
       : and(eq(projects.id, projectId), eq(projects.organizationId, organizationId));
+
+    try {
+      if ((await projectAdmission(req, organizationId, projectId)) === 'none') {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
 
     const [project] = await db.select().from(projects).where(whereClause);
 
@@ -148,15 +196,20 @@ router.delete('/:projectId', requireEditorAccess, async (req, res) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    // Check if project exists
-    const [existingProject] = await db.select().from(projects).where(eq(projects.id, projectId));
+    // A project the person cannot open reads as missing; one they can open but not change is refused.
+    try {
+      const admission = await projectAdmission(req, organizationId, projectId);
+      if (admission === 'none') return res.status(404).json({ error: 'Project not found' });
+      if (admission === 'read') return res.status(403).json({ error: 'You can open this project but not change it.', code: 'PROJECT_WRITE_DENIED' });
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+
+    const [existingProject] = await db.select().from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)));
 
     if (!existingProject) {
       return res.status(404).json({ error: 'Project not found' });
-    }
-
-    if (existingProject.organizationId !== organizationId) {
-      return res.status(403).json({ error: 'Access denied to this project' });
     }
 
     /* A program's anchor row, and a project holding documents past draft, is
@@ -245,14 +298,20 @@ router.patch('/:projectId', async (req, res) => {
       return res.status(400).json({ error: 'No valid fields provided for update' });
     }
 
-    const [existingProject] = await db.select().from(projects).where(eq(projects.id, projectId));
+    // A project the person cannot open reads as missing; one they can open but not change is refused.
+    try {
+      const admission = await projectAdmission(req, organizationId, projectId);
+      if (admission === 'none') return res.status(404).json({ error: 'Project not found' });
+      if (admission === 'read') return res.status(403).json({ error: 'You can open this project but not change it.', code: 'PROJECT_WRITE_DENIED' });
+    } catch (error) {
+      return projectAccessFailure(res, error);
+    }
+
+    const [existingProject] = await db.select().from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)));
 
     if (!existingProject) {
       return res.status(404).json({ error: 'Project not found' });
-    }
-
-    if (existingProject.organizationId !== organizationId) {
-      return res.status(403).json({ error: 'Access denied to this project' });
     }
 
     const [updatedProject] = await db
@@ -261,7 +320,7 @@ router.patch('/:projectId', async (req, res) => {
         ...updates,
         updatedAt: new Date(),
       })
-      .where(eq(projects.id, projectId))
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
       .returning();
 
     try {
