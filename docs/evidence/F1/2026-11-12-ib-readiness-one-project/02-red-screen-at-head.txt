@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/investigatorBrochureOneProject.test.tsx > Investigator's Brochure readiness, with no project open > says to open a project, shows no figure and no sections, and reads nothing 5051ms
+ × client/src/concept2cure/v2/__tests__/investigatorBrochureOneProject.test.tsx > Investigator's Brochure readiness, with a project open > reads the open project's readiness and names the project 33ms
+ × client/src/concept2cure/v2/__tests__/investigatorBrochureOneProject.test.tsx > Investigator's Brochure readiness, with a project open > counts only the sections that need project data 26ms
+ × client/src/concept2cure/v2/__tests__/investigatorBrochureOneProject.test.tsx > Investigator's Brochure readiness, with a project open > labels a section that needs no project data as that, not as Ready 18ms
+ × client/src/concept2cure/v2/__tests__/investigatorBrochureOneProject.test.tsx > Investigator's Brochure readiness, with a project open > says which registers were not read for a project 5020ms
+ × client/src/concept2cure/v2/__tests__/investigatorBrochureOneProject.test.tsx > Investigator's Brochure readiness, with a project open > a failed read shows no figure 5009ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  6 failed (6)

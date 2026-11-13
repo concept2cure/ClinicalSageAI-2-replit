@@ -1520,7 +1520,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       </div>
 
       <PortfolioFigures settled={settled} counts={counts} />
-      <ProjectsAtRisk open={riskOpen} onClose={() => setRiskOpen(false)} />
+      <ProjectsAtRisk open={riskOpen} onClose={() => setRiskOpen(false)} onOpenProject={openProj} />
       {/* One quiet toolbar row: search, the filters as selects, the view. */}
       <div className="pj-toolbar">
         <div className="pj-search">

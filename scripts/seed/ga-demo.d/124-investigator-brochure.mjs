@@ -21,6 +21,13 @@
  * domain and that the CMC Module 3 authoring engine writes. With it, the demo IB's
  * §2 Introduction and §3 Properties/Formulation flip to "Ready" and the four-domain
  * BX-204 IB reads fully green. to_regclass-guarded, org-scoped, idempotent.
+ *
+ * 2026-11-12 (S12 sweep finding 92): that last sentence no longer holds, and should not.
+ * The readiness is now read for ONE project (GET /api/investigator-brochure?programId=…),
+ * by each row's project link. This seed's rows carry project_id 'bx204', which is no
+ * project's id, and clinical_ops.studies carries no project at all, so these rows make
+ * no project's brochure "ready". They did before only because the figure was the
+ * organisation's. The launch demo is scripts/demo/launch-demo/, which this seed is not part of.
  */
 const PROJECT_ID = 'bx204';
 

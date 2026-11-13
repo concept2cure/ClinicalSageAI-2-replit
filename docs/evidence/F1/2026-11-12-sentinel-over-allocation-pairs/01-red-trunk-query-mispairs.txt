@@ -1,0 +1,10 @@
+# Red: the analyzer's own query text, as on trunk, run on PGlite (2026-11-12)
+# Seeded: project 11 "Zeta stability study", 12 "Mu device 510(k)", 13 "Kappa IND", 14 "Alpha NDA"; one person with two open tasks on each.
+project_ids   = [11,12,13,14]
+project_names = ["Alpha NDA","Kappa IND","Mu device 510(k)","Zeta stability study"]
+
+affected_items as sentinel.ts builds them (project_ids.map((id, i) => ({ id, label: project_names[i] }))):
+  id 11 label "Alpha NDA" <- WRONG: project 11 is "Zeta stability study"
+  id 12 label "Kappa IND" <- WRONG: project 12 is "Mu device 510(k)"
+  id 13 label "Mu device 510(k)" <- WRONG: project 13 is "Kappa IND"
+  id 14 label "Zeta stability study" <- WRONG: project 14 is "Alpha NDA"
