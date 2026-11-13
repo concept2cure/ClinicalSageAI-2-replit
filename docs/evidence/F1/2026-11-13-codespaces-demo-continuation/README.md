@@ -1,0 +1,84 @@
+# Rehearse and repair the existing Codespaces demonstration path
+
+2026-11-13. Plan F1, W1, launch D1/D2; baseline `35af13338e7d8f67992c0f7dcbf5145ee94f0445` on `concept2cure-v2`, initially clean. User asks continuation from Claude Code and a working simple GitHub Codespaces demo today. This is existing workflow/startup completion, with all commits directly on canonical and normal hooks. No new app, screen, editor, service or provider model.
+
+## What already exists
+
+Inventory before this design/worker prompts: `rg` searched Codespaces/startup/devcontainer/doctor/demo/runbook/handoff names across `.devcontainer`, scripts, operations/testing/design docs and current coordination/plan. Non-shallow full history `git log --all --diff-filter=D` over `.devcontainer/*`, `*codespace*`, `*startup*`, `*launch-demo*` found old beta cleanup/WIP changes, no replacement startup system. Current code has advanced beyond the supplied session; its actual roadmap includes P-122 preservation and subsequent rulings, so the earlier UI direction is not treated as authority to remove current functions.
+
+- `.devcontainer/devcontainer.json` already defines the Node22 bookworm Codespace, 4CPU/16GB/32GB, port5000 browser forwarding and post-create/post-start lifecycle. Extend this owner if a verified Codespaces defect exists; no second launcher or alternate branch.
+- `.devcontainer/post-create.sh` already installs native PostgreSQL16/pgvector and export tools, creates isolated owner/app credential files outside the repo, provisions via existing DB scripts, installs locked dependencies and creates fictional author/reviewer/approver and Lumen accounts. Owner credentials are separated from the serving app.
+- `.devcontainer/post-start.sh` already refreshes dependencies/provisioning, enforces runtime credential isolation, starts the real server, checks readiness, seeds the Lumen/all demo packs, configures demo accounts/session settings and prepares the CDISC CSR study via the existing browser walk. It reports provider/billing/search limitations; no fake regulatory AI or agency success is permitted.
+- `scripts/startup.sh`, `scripts/ops/codespaces-doctor.mjs` and existing doctor/startup/Neon policy tests own runtime checks, fixed-port behavior, no owner credentials in app, RLS, schema/grants and provider-readiness diagnostics. Run them; do not bypass them for the demo.
+- `scripts/db/provision.mjs`, deploy migration set and readiness contract already own empty-database setup and runtime-role proof. Use a disposable local development DB or the current authorized Codespace; never repurpose production credentials or a shared clinical DB.
+- `scripts/demo/launch-demo/**` and existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk.cjs` already create fictional showcase projects, multi-role review and CDISC preparation. Latest Lumen/showcase handoffs are `docs/evidence/DEMO/2026-11-10-lumen-data-handoff/README.md` and `2026-11-10-sales-showcase/README.md`; recover actual remaining steps before selecting workflow fixes.
+- `docs/operations/CODESPACES_NEON_OPENAI_RECOVERY.md` and `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md` are existing operator homes. The operations text includes a separate external-Neon mode and historical setup claims; reconcile with actual current local lifecycle before relying on instructions.
+- `AGENTS.md`, `CLAUDE.md`, `ONE_DESIGN_PLAN.md`, its ledger and current coordination govern scope. F1 is open, paths **; do not edit the plan/ledger/gates or another lane's held files. Inventory reported `.devcontainer/**` released after prior Codespaces/Lumen work; recheck holds before edits.
+
+## Execution boundary
+
+Recover current Claude handoff/roadmap and existing Codespaces availability. Install Node22/dependencies, run existing startup/doctor tests, then exercise the real app in a fresh native development database or actual GitHub Codespace, with tenant/runtime-role checks and fictional demo data. Follow Project→data room→existing editor/report/demo work; retain all visible capabilities. Reproduce concrete blockers before fixing existing owners. Use a live browser and retain screenshots/receipts for the path actually walked. Distinguish a local or container rehearsal from an actual hosted Codespaces run, and distinguish no-key deterministic preparation from real provider/PQ qualification. No live provider generation or credential change merely to turn readiness green. User keys are never printed or entered in chat. Root owns integration/Git/build; focused read-only audit and disjoint fixes may be delegated after inventory. File evidence in this directory; commit with Plan:F1/Completes existing-owner trailers and publish directly to concept2cure-v2 under normal hooks.
+
+
+## Reproduced recovery defect and bounded repair
+
+Read-only audit reproduced `.devcontainer/post-start.sh::c2c_keys_app_lacks` retaining an old nonempty provider key when a terminal supplies a corrected nonempty key. Its keep/restart decision sees no missing name, while later diagnostics inspect the newer shell credential. A synthetic child-process probe observed an empty mismatch-name result and no restart predicate; no provider request or real key was used. Extend this existing comparison to detect missing OR changed supplied values internally, return names only, and restart the existing app. Do not print/hash-export key values, probe real providers, alter model/PQ/placement gates, or change absent-key behavior. Add behavioral reds in the existing startup suite before the source fix. All other startup/bootstrap behavior stays with its current owner.
+
+
+## Recovered current handoff and runtime scope
+
+Latest Nov12 handoff (`docs/evidence/DEMO/2026-11-12-three-completed-csrs/README.md`) supersedes old live-build steps: Lumen has three fully written119-section synthetic CSRs, frozen fictional study sources and actual reviewer tasks. Rehearse Demo access→Lumen Reviewer→LMN-301→Author with synopsis/efficacy/safety and evidence-review preview. No model generation is needed for that path; scientific approval/freeze remains the presenter’s action. Older coordination TODOs about absent Lumen wiring and missing second signer are already resolved in source and will not be rebuilt.
+
+This fresh executor has Node22.23.5, locked dependencies and55/55 existing Codespaces tests passing. GitHub repo authentication works, but Codespaces list returns403 Resource not accessible by integration. Pulling the exact Microsoft devcontainer image failed at layer registration because this executor’s32GB/vfs Docker store filled; the failed layer was automatically cleaned and19GB remained. This is an executor storage limitation, not a demonstrated defect in the GitHub image. Continue using the smaller official Node22/bookworm runtime to run the real post-create/start scripts and native PostgreSQL16/pgvector, keeping that evidence separate from actual hosted Codespaces qualification. No real provider keys are available here and no provider requests have been made.
+
+
+## What already exists — current presenter instructions
+
+`docs/demo/lumen-showcase.md` is the existing presenter script; its CSR step9 still emphasizes a paid69-heading build. Newer `docs/evidence/DEMO/2026-11-12-three-completed-csrs/README.md` documents three119-section synthetic reports already in the normal seed. Extend that same presenter script to put those existing reports first while retaining the optional live build and all scientific-review controls. `docs/operations/CODESPACES_NEON_OPENAI_RECOVERY.md` describes external-Neon owner isolation but several unqualified sentences now conflict with the default local devcontainer’s automatic isolated provisioning/accounts. Clarify the two existing modes in that file, preserve Neon serving restrictions, and distinguish local/container proof from actual hosted Codespaces access. No parallel runbook or new product flow is needed.
+
+
+## Verified in the fresh Bookworm rehearsal
+
+The real `.devcontainer/post-create.sh` completed in an official `node:22-bookworm` container (image digest `sha256:e13726ca604184d7a91fcacab1fc09eefd642dc28e79ac34e85540dd93b78cfb`), using the repository mounted at `/workspaces/repo`, restricted state outside the checkout and port 5000 forwarded to this executor. It installed the locked 2,420 npm packages, PostgreSQL 16.16, pgvector 0.8.7, document-export dependencies and browser support, then provisioned an empty database and created the seven development accounts. Post-start created the three Lumen accounts and seeded their organization through the actual APIs. The Lumen manifest reports 434 created and 3 found. The separate all-pack development seed also completed. The subsequent CDISC blocker, repaired preparation and cached restart are recorded below.
+
+| Check | Observation / receipt |
+|---|---|
+| Behavioral red for corrected nonempty keys | `key-restart-red.txt`: 2 failures, 21 passes before the helper fix; synthetic child-process environments, no provider call |
+| Full bootstrap cohort after fix | `bootstrap-tests.txt`, `key-restart-green.txt`: 61/61 pass; includes both providers, matching/new/absent/empty keys and non-disclosure |
+| Existing demo seed suites | `demo-seed-tests.txt`: 208/208 pass |
+| Shell syntax | `bash -n .devcontainer/post-create.sh .devcontainer/post-start.sh` passes |
+| Production bundle | `build.txt`: Vite build and server/audit/qualification-verifier bundles pass under Node 22; existing chunk-size/dependency annotation warnings remain |
+| Fresh provisioning | `post-create.txt`: real native PG16/pgvector install, schema/grants/runtime verification and setup completion; not a mocked database |
+| Runtime / origin policy | `runtime-before-restart.json`: `app_service`, RLS on, checked owner aliases absent, database/schema/storage ok; configured forwarded-origin dev-login 200, foreign origin 403. Tokens are discarded, never retained. Version is baseline35af13338e; shell recovery change is exercised separately above. |
+| Three complete synthetic reports | `three-csrs.json`: LMN-201, LMN-301, LMN-801 each119/119 nonempty sections and their own frozen study data; documents remain Draft with pending human review |
+| Browser workflow | `reviewer-walk.json`: actual Demo person chooser → Lumen Reviewer → Projects → LMN-301 → Author → Open → report → Review tasks → Review board → scientific evidence preview200; no page errors or failedAPI responses in the captured walk |
+| Scientific review | Preview retains saved-text snapshot hash and table digest, with document-specific frozen source. Selecting Approve reveals the form only. No CSR claim mappings, attestations, independent-check receipts or CSR approval were manufactured; Record approval remains disabled. |
+| Mobile capture | After closing the shell navigation drawer at390px, document width390 and review-dialog width374; screenshot retained. This is a narrow review-dialog observation, not acceptance of every mobile screen. |
+
+The editor, efficacy (§11.4.1), adverse events (§12.2.2), project and scientific preview screenshots are retained beside this record. `reviewer-walk.cjs` records the observed UI path and accepts a base URL; its default Chromium path is executor-specific (`CHROMIUM_PATH` can override it). Authentication happens through the UI and no session token is saved. All study values are fictional synthetic demo data. The draft's unbound/filing readiness state and human scientific-review controls are deliberately visible.
+
+## Acceptance limits
+
+This is an actual fresh native Bookworm/container and browser rehearsal, **not a hosted GitHub Codespaces acceptance**. The Codespaces API returns403 for the connected integration, and the exact Microsoft image pull exhausted this executor's vfs Docker layer store. No configuration was weakened to hide either limit. The smaller official Node22/Bookworm image runs the same existing lifecycle scripts and native database path; devcontainer feature installation, GitHub's port proxy and a real hosted launch remain unverified here.
+
+There are no real provider credentials in this environment. `/readyz` truthfully answers503 with `anaState=no_provider` while database/schema/storage are ok and the seeded report workflow serves. No live AnA generation, billed provider request, model PQ, scientific approval, agency submission, broad therapeutic-area coverage or global-region regulatory validation is established by these synthetic CSR examples. Existing launch-catalog unsupported/not-executed seed steps remain visible in the seed log, including provider-dependent assessments and UUID/integer orchestration restrictions.
+
+
+## Additional reproduced preparation blocker: collapsed upload list
+
+Actual native CDISC preparation repeatedly failed at `openVersions` before sending `adsl.xpt` for review. A read-only browser diagnostic retained the full Playwright call log: the visible exact filename locator found no row; the live page offered `Show all 79 in this window`. Inventory/deletion-history check before this repair: existing `walk-common.cjs::openVersions`, `walk-prepare.cjs::sendForReview` and `Vault.tsx::UploadsLane` own this path; no deleted replacement helper exists. The product's current Uploads lane deliberately displays eight rows before its existing Show all control, and the helper's earlier visible-copy correction cannot reach a row beyond that window. Extend the same helper to reveal the existing lane rows before selecting the file. Preserve product layout, review roles/signatures and data-source approval; no API shortcut or new workflow. Use the observed helper red and real full browser preparation as behavioral verification, rather than a test mirroring the helper's locator implementation.
+
+The fictional demo personas are organization administrators. Separate reviewer/approver identities are observed, but this walkthrough does not establish least-privilege role enforcement. CDISC preparation uses its existing three-person source-file route; that is distinct from the still-pending scientific review of the Lumen CSRs.
+
+
+## Completed preparation and cached-start acceptance
+
+The initial post-start completed both seed organizations but could not prepare the CDISC study because the target file was outside Uploads' first eight rows. After retaining the exact helper failure, the blocked browser was stopped rather than waiting through all eight retries (`post-start-initial.txt`). The existing helper now reveals Show all. A direct same-helper browser run opens Versions and reaches an enabled Send action (`cdisc-helper-red.txt`, `cdisc-helper-green.txt`). No product UI, role or signature gate changed.
+
+The repaired `.devcontainer/post-start.sh` completed with exit0 (`post-start-repaired.txt`). It verified/reused the database and seed state, restarted the older35af app to codefixd06fb86ec9, and completed actual CDISC preparation: normal three-person source-file review/approval, one CSR catalog entry, CSR creation, clinical-table preview and frozen study data. `cdisc-prepare-result.json` reports `outcome=passed`; `cdisc-prepare.txt` retains two signature-click retries and a document-create response retry. Existing re-read/retry logic advanced from recorded state; no signature bypass was added. One background project source-list GET returned503 in that walk; `cdisc-source-read-recheck.json` subsequently returns200 for the same endpoint. The successful Lumen reviewer walk separately has zero failedAPI responses. These are distinct observations.
+
+Another full post-start completed with exit0 (`post-start-cached.txt`), reporting “The app is already running on port5000.” It did not re-run either seed or the completed CDISC preparation. `runtime-repaired.json` and `runtime-cached.json` show identical process IDs and `startedAt=2026-11-13T19:41:31.846Z`; the server serves codefixd06fb86ec9. Database/schema/storage and runtime isolation remain as recorded, with AnA honestly unavailable. Source hashes below identify the tested helper bytes even though the evidence/operator edits were uncommitted during this rehearsal.
+
+`push-key-fix.txt` records normal publication ofd06fb86ec9 directly to concept2cure-v2:89 Lint-job gates in144s, zero red gates, scoped lint/warning checks and all other normal push guards pass. Typecheck explicitly **skipped** because the four changed files cannot change a type; no full compiler-zero claim is made. The later helper/evidence changes use the same normal hooks.
+
+`source-and-artifact-hashes.json` binds the tested bootstrap/helper/manifest and existing relevant UI/route sources, plus this evidence's text/JSON/screenshots. Native public CDISC datasets and their subject rows, database credentials, session tokens and provider credentials are not committed here. The two existing operator homes remain `docs/operations/CODESPACES_NEON_OPENAI_RECOVERY.md` and `docs/demo/lumen-showcase.md`.
