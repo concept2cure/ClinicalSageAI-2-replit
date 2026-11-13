@@ -37,16 +37,22 @@ describe('commitSectionToFiling: a Quality controlled document', () => {
     expect((result as { reason: string }).reason).not.toMatch(/not bound to a filing/i);
   });
 
-  it('keeps the unbound-document reason for a document no Quality record names', async () => {
+  /* A working copy that was never placed into a filing (every template copy starts so) is not a failed
+     commit either: the page says "Unbound working copy" beside it. The result names that state, so the
+     editor does not print a half-failure on every save (the CSR lane's ED-04, 2026-11-12). The sentence
+     stays for a caller that reads it. */
+  it('names a working copy that is in no filing, for a document no Quality record names', async () => {
     const { client } = makeClient({ qmsStore: true, controlled: false });
     const result = await commitSectionToFiling({ client: client as any, ...input });
-    expect(result).toEqual({ committed: false, reason: 'This document is not bound to a filing, so there is no governed section to update.' });
+    expect(result).toEqual({ committed: false, outsideFiling: 'unbound-working-copy',
+      reason: 'This document is not bound to a filing, so there is no governed section to update.' });
   });
 
   it('never reads a Quality store that is not there: a failed statement would abort the save', async () => {
     const { client, queries } = makeClient({ qmsStore: false, controlled: true });
     const result = await commitSectionToFiling({ client: client as any, ...input });
-    expect(result).toEqual({ committed: false, reason: 'This document is not bound to a filing, so there is no governed section to update.' });
+    expect(result).toEqual({ committed: false, outsideFiling: 'unbound-working-copy',
+      reason: 'This document is not bound to a filing, so there is no governed section to update.' });
     expect(queries.some((sql) => /FROM qms_documents/.test(sql))).toBe(false);
   });
 });
