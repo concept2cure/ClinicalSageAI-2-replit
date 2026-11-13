@@ -1,0 +1,26 @@
+{
+  "startedAt": "2026-11-13T23:34:37.501540+00:00",
+  "elapsedSeconds": 2.945,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts",
+    "server/services/clinical-regulatory-evidence/record-source.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "quality-inputs.json",
+  "inputCount": 71,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "quality-integration-lint.txt.gz",
+  "outputSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}
