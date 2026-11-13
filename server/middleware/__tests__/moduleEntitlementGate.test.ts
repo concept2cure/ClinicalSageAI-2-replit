@@ -28,6 +28,7 @@ import {
 import {
   NEVER_GATED,
   buildPrefixMap,
+  collapseIds,
   moduleEntitlementGate,
   modulesForPath,
 } from '../moduleEntitlementGate';
@@ -44,6 +45,8 @@ function storeHolds(mode: string | null) {
 }
 
 const SURFACES = [
+  { id: 'conversation-thread', apiPrefixes: ['/api/chat'] },
+  { id: 'admin-console', apiPrefixes: ['/api/tenant-users'] },
   { id: 'projects', apiPrefixes: ['/api/projects', '/api/programs'] },
   { id: 'project-home', apiPrefixes: ['/api/projects'] },
   { id: 'pv-cockpit', apiPrefixes: ['/api/pv'] },
@@ -217,6 +220,61 @@ describe('the gate', () => {
       expect(next, `${p} must never be gated`).toHaveBeenCalledOnce();
       expect(res.statusCode).toBe(0);
     }
+  });
+});
+
+describe('the gate: claimants the catalog does not sell, protected subpaths, recorded paths', () => {
+  const gate = moduleEntitlementGate(buildPrefixMap(SURFACES));
+
+  // Running app, 2026-11-12: in 'enforce' the project page, conversations and
+  // the admin console were refused to every customer, because the surfaces
+  // claiming their prefixes have no catalog row and that read as a refusal.
+  it('serves a path whose claimant the catalog does not sell', async () => {
+    process.env.MODULE_ENFORCEMENT = 'enforce';
+    mockAccess.mockImplementation(async (_org: number, moduleId: string) => ({
+      allowed: false,
+      reason: `Module '${moduleId}' does not exist`,
+      notCatalogued: true,
+    }));
+    const next = vi.fn();
+    const res = resSpy();
+    await gate(reqFor('/api/chat/threads'), res, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.statusCode).toBe(0);
+  });
+
+  it('still refuses when every claimant is a catalogued module the org lacks', async () => {
+    process.env.MODULE_ENFORCEMENT = 'enforce';
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'requires professional' });
+    const next = vi.fn();
+    const res = resSpy();
+    await gate(reqFor('/api/chat/threads'), res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(403);
+  });
+
+  // The membership inbox sits under a NEVER_GATED entry, but the broader
+  // '/api/tenant-users' claim matched it and it was refused on every page.
+  it('never gates a path under a protected entry, even when a broader prefix claims it', async () => {
+    process.env.MODULE_ENFORCEMENT = 'enforce';
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'tier' });
+    const next = vi.fn();
+    const res = resSpy();
+    await gate(reqFor('/api/tenant-users/invitations/mine'), res, next);
+    expect(next).toHaveBeenCalledOnce();
+    expect(mockAccess).not.toHaveBeenCalled();
+    // The broader claim still gates what is not protected.
+    const next2 = vi.fn();
+    const res2 = resSpy();
+    await gate(reqFor('/api/tenant-users/12'), res2, next2);
+    expect(res2.statusCode).toBe(403);
+  });
+
+  // The module gate recorded raw ids, so every record opened added a row.
+  it('collapses record ids in what it records', () => {
+    expect(collapseIds('/api/concept2cure/projects/10/tasks')).toBe('/api/concept2cure/projects/:id/tasks');
+    expect(collapseIds('/api/charters/by-project/b3669da4-aa17-42df-a2dd-de8bdd01c6da/objectives')).toBe('/api/charters/by-project/:id/objectives');
+    expect(collapseIds('/api/cmc/module3-board')).toBe('/api/cmc/module3-board');
   });
 });
 

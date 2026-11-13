@@ -53,147 +53,20 @@ import LicensingHistoryPanel from './licensing/LicensingHistoryPanel';
 import { TrialsPanel } from './licensing/TrialsPanel';
 import '../styles/misc-surfaces-v2.css';
 import { getSurfaceMeta } from '../registryModel';
-
-/* ── The server contract, as this surface reads it ─────────────────────────── */
-
-type Tier = 'free' | 'standard' | 'professional' | 'enterprise';
-
-const TIERS: Tier[] = ['free', 'standard', 'professional', 'enterprise'];
-
-const TIER_LABEL: Record<Tier, string> = {
-  free: 'Free',
-  standard: 'Standard',
-  professional: 'Professional',
-  enterprise: 'Enterprise',
-};
-
-/** `null` minTier is unrestricted — the module is in every tier. */
-function tierLabel(t: string | null | undefined): string {
-  if (!t) return 'Unrestricted';
-  return TIER_LABEL[t as Tier] ?? t.charAt(0).toUpperCase() + t.slice(1);
-}
-
-interface LicensingModule {
-  moduleId: string;
-  name: string;
-  category: string | null;
-  minTier: Tier | null;
-  industries: string[];
-  deprecated: boolean;
-  grantedOrgs: number;
-  revokedOrgs: number;
-}
-
-interface LicensingOrg {
-  id: string | number;
-  name: string;
-  slug: string;
-  tier: string;
-  industryMode: string;
-  status: string;
-  grants: number;
-  revocations: number;
-}
-
-interface LicensingPayload {
-  tiers: Tier[];
-  modules: LicensingModule[];
-  organizations: LicensingOrg[];
-}
-
-type ModuleSource = 'subscribed' | 'included' | 'disabled' | 'tier' | 'industry';
-
-interface TenantModule {
-  moduleId: string;
-  name: string;
-  category: string | null;
-  minTier: Tier | null;
-  subscriptionState: 'enabled' | 'disabled' | 'none';
-  effective: boolean;
-  source: ModuleSource;
-}
-
-interface TenantDetail {
-  organization: {
-    id: string | number;
-    name: string;
-    slug: string;
-    tier: string;
-    industryMode: string;
-    status: string;
-  };
-  modules: TenantModule[];
-}
-
-/** GET /api/admin/master/feature-flags — rows straight out of `feature_toggles`. */
-interface FeatureFlag {
-  id: number | string;
-  feature_key: string;
-  description: string | null;
-  enabled: boolean;
-  enabled_for_organization_ids: unknown;
-  enabled_for_client_workspace_ids: unknown;
-  updated_at: string | null;
-}
-
-/**
- * The verdict sentence for one module in one workspace.
- *
- * The server sends a five-value enum; a platform admin needs the sentence. Both
- * halves are rendered — the effective state as its own words ("Available" /
- * "Not available") and the reason underneath — so the row never depends on a
- * colour to say which way it went.
- */
-function verdictText(m: TenantModule): string {
-  switch (m.source) {
-    case 'subscribed':
-      return 'Granted for this workspace';
-    case 'included':
-      return 'Included in their plan';
-    case 'disabled':
-      return 'Turned off for this workspace';
-    case 'tier':
-      return m.minTier
-        ? `Above their plan (needs ${tierLabel(m.minTier)})`
-        : 'Above their plan';
-    case 'industry':
-      return 'Not offered for their industry';
-    default:
-      return m.effective ? 'Available to this workspace' : 'Not available to this workspace';
-  }
-}
-
-/* ── Enforcement report ─────────────────────────────────────────────────────
-   What route-level enforcement is refusing, or would refuse if it were on.
-
-   The one thing this must never do is collapse "nothing has been observed" into
-   "nothing would be refused". They render identically as an empty table and they
-   mean opposite things: the second is a green light to switch enforcement on,
-   the first is an absence of evidence. `observingSince: null` is the server
-   saying it holds no evidence, and the surface below says so in those words. */
-
-interface EnforcementObservation {
-  path: string;
-  organizationId: number;
-  modules: string[];
-  reasons: string[];
-  enforced: boolean;
-  firstSeen: string;
-  lastSeen: string;
-  count: number;
-}
-
-interface EnforcementReport {
-  mode: string;
-  /** null = this server holds no observations. NOT "nothing would be refused". */
-  observingSince: string | null;
-  perProcess: boolean;
-  capacity: number;
-  truncated: boolean;
-  organizationsAffected: number;
-  modulesAffected: string[];
-  observations: EnforcementObservation[];
-}
+import {
+  type EnforcementReport,
+  type FeatureFlag,
+  type LicensingModule,
+  type LicensingPayload,
+  TIERS,
+  TIER_LABEL,
+  type TenantDetail,
+  type TenantModule,
+  type Tier,
+  reportSentence,
+  tierLabel,
+  verdictText,
+} from './masterLicensingContract';
 
 /* ── The one governed action shape ─────────────────────────────────────────── */
 
@@ -306,8 +179,15 @@ export function MasterLicensing() {
   >(null);
   useEffect(() => {
     setOrgTier(tenant.data?.organization?.tier ?? null);
-    setProvisionResult(null); // a previous tenant's result must never sit over this one
   }, [tenant.data]);
+  // A previous workspace's result must never sit over this one. Cleared when
+  // the selection changes, not on every re-read of the same workspace: the
+  // provisioning run re-reads it at once, and clearing there removed the
+  // outcome ("Still granted above this plan") within about 200 ms (running
+  // app, 2026-11-12), leaving only a toast that does not mention it.
+  useEffect(() => {
+    setProvisionResult(null);
+  }, [selectedOrg]);
 
   const [flags, setFlags] = useState<FeatureFlag[] | null>(null);
   const flagSeed = useRef<FeatureFlag[] | null>(null);
@@ -332,16 +212,30 @@ export function MasterLicensing() {
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
 
+  // One option per category, whatever its case. The catalog holds both
+  // 'Submissions' and 'submissions' (an older seed wrote slugs), and a
+  // case-sensitive list showed them as two: picking 'Submissions' hid five
+  // submission modules (running app, 2026-11-12). The key is the lower-cased
+  // value; the label is a recorded spelling with capitals, else the slug
+  // with its first letter raised.
   const categories = useMemo(() => {
-    const set = new Set<string>();
-    for (const m of moduleRows) if (m.category) set.add(m.category);
-    return Array.from(set).sort();
+    const labels = new Map<string, string>();
+    for (const m of moduleRows) {
+      if (!m.category) continue;
+      const key = m.category.toLowerCase();
+      const seen = labels.get(key);
+      if (!seen || (seen === seen.toLowerCase() && m.category !== m.category.toLowerCase())) labels.set(key, m.category);
+    }
+    return Array.from(labels, ([key, label]) => ({
+      key,
+      label: label === label.toLowerCase() ? label.charAt(0).toUpperCase() + label.slice(1) : label,
+    })).sort((a, b) => a.label.localeCompare(b.label));
   }, [moduleRows]);
 
   const visibleModules = useMemo(() => {
     const q = search.trim().toLowerCase();
     return moduleRows.filter((m) => {
-      if (category !== 'all' && (m.category ?? '') !== category) return false;
+      if (category !== 'all' && (m.category ?? '').toLowerCase() !== category) return false;
       if (!q) return true;
       return (
         m.name.toLowerCase().includes(q) ||
@@ -414,6 +308,8 @@ export function MasterLicensing() {
         return;
       }
       fireToast(`${action.label} moved to ${tierLabel(action.to)}.`);
+      // The last provisioning run was against the previous plan.
+      setProvisionResult(null);
       // The tier changes every verdict on the list, and only the server can
       // recompute them. Re-read rather than guess.
       retry();
@@ -706,9 +602,7 @@ export function MasterLicensing() {
           facts.truncated = enf.data.truncated;
           summary =
             `Platform licensing, Enforcement tab — mode "${enf.data.mode}"` +
-            (enf.data.mode === 'enforce'
-              ? ' (everything recorded was actually refused)'
-              : ' (observing only — everything recorded was served)') +
+            ` (${reportSentence(enf.data.mode, enf.data.observations)})` +
             `, recorded since ${whenText(enf.data.observingSince)}: ` +
             `${enf.data.observations.length} observation(s) across ${enf.data.organizationsAffected} workspace(s) and ${enf.data.modulesAffected.length} module(s)` +
             (enf.data.truncated ? '; the record is truncated at capacity, older entries dropped' : '') +
@@ -765,11 +659,12 @@ export function MasterLicensing() {
         return { ok: false, reason: 'A governed confirmation is open on this console — let the person finish or cancel it first.' };
       }
       const needle = raw.toLowerCase();
-      const target = needle === 'all' ? 'all' : categories.find((c) => c.toLowerCase() === needle);
+      const found = categories.find((c) => c.key === needle || c.label.toLowerCase() === needle);
+      const target = needle === 'all' ? 'all' : found?.key;
       if (!target) {
         return {
           ok: false,
-          reason: `No module category named "${raw}". On screen: all, ${categories.join(', ')}.`,
+          reason: `No module category named "${raw}". On screen: all, ${categories.map((c) => c.label).join(', ')}.`,
         };
       }
       const switched = tab !== 'packaging';
@@ -777,7 +672,7 @@ export function MasterLicensing() {
       setCategory(target);
       return {
         ok: true,
-        detail: `Filtered the module catalog to ${target}` + (switched ? ' on the packaging tab' : ''),
+        detail: `Filtered the module catalog to ${found?.label ?? target}` + (switched ? ' on the packaging tab' : ''),
       };
     },
     'master-licensing.search-modules': (params) => {
@@ -872,7 +767,7 @@ export function MasterLicensing() {
                   >
                     <option value="all">All categories</option>
                     {categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c.key} value={c.key}>{c.label}</option>
                     ))}
                   </select>
                 </div>
@@ -1078,14 +973,19 @@ export function MasterLicensing() {
                       </button>
                     </div>
 
-                    {/* Changing the tier writes no subscription rows — provisioning
-                        is a separate act. Said here rather than left implicit,
-                        because a plan change that appears to have taken effect and
-                        has not is the failure this control exists to prevent. */}
+                    {/* Changing the tier writes no subscription rows, but every
+                        module without a row of its own follows the tier at once
+                        (license-manager canAccessModule), so the customer's rail
+                        changes immediately. The note said the opposite until
+                        2026-11-12, when the running app showed CMC, Biostatistics,
+                        Risk-based monitoring and Communication open on a move to
+                        Professional with nothing applied. Applying the plan writes
+                        grants, and a grant outlives a later downgrade. */}
                     <p className="ml-note">
-                      Changing the plan does not grant its modules on its own. Apply
-                      the plan to grant what this tier includes. Nothing is ever
-                      revoked by applying a plan.
+                      A new plan takes effect at once for every module this
+                      workspace holds no grant of its own for. Applying the plan
+                      writes its modules as grants: a grant stays if the plan is
+                      later lowered, and applying a plan never revokes one.
                     </p>
 
                     {provisionResult && (
@@ -1155,14 +1055,20 @@ export function MasterLicensing() {
                                 <div className="ml-sub">{verdictText(m)}</div>
                               </div>
                               <div role="cell">
-                                <button
-                                  type="button"
-                                  className="btn ghost"
-                                  onClick={() => askTenantModule(m, !m.effective)}
-                                >
-                                  {m.effective ? 'Turn off' : 'Grant'}
-                                  <span className="ml-vh"> {m.name}</span>
-                                </button>
+                                {m.source === 'launch-scope' ? (
+                                  // Outside the release no grant or turn-off reaches
+                                  // the customer, so none is offered.
+                                  <span className="ml-sub">No change reaches this workspace</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="btn ghost"
+                                    onClick={() => askTenantModule(m, !m.effective)}
+                                  >
+                                    {m.effective ? 'Turn off' : 'Grant'}
+                                    <span className="ml-vh"> {m.name}</span>
+                                  </button>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -1339,9 +1245,9 @@ export function MasterLicensing() {
                     <div className="ml-enf-h">Nothing recorded on this server yet</div>
                     <p className="ml-enf-body">
                       No request has been refused, or would have been refused, since this server
-                      last restarted. That is not the same as knowing nothing would be refused —
-                      a quiet period and a clean one look identical from here, and the record
-                      starts empty after every restart.
+                      last restarted or its record was last cleared. That is not the same as
+                      knowing nothing would be refused — a quiet period and a clean one look
+                      identical from here, and the record starts empty after every restart.
                     </p>
                     <p className="ml-enf-body">
                       Leave observation running across a period that covers real use before
@@ -1359,9 +1265,7 @@ export function MasterLicensing() {
                         : 'Requests that would be refused'}
                     </div>
                     <p className="ml-enf-body">
-                      {enf.data.mode === 'enforce'
-                        ? 'Enforcement is on. Everything below was actually refused.'
-                        : 'Enforcement is observing only — everything below was served. This is what switching it on would cost.'}
+                      {reportSentence(enf.data.mode, enf.data.observations)}
                       {' '}Recorded since {whenText(enf.data.observingSince)}.
                     </p>
                   </div>

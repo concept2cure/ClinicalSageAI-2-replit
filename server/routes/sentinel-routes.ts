@@ -20,8 +20,10 @@ import { getPool } from '../db';
 import { getTenantContext } from '../utils/tenantContext';
 import { authedUserId } from '../utils/authedActor';
 import { getSentinelScheduler } from '../services/sentinel/scheduler';
+import { findingNamedProjectIds } from '../services/sentinel/sentinel';
 import type { SentinelAnalyzerType } from '../services/sentinel/types';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access';
+import { namedProjectsWithRoot, type NamedProject } from '../services/c2c/program-project-anchor';
 import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -47,6 +49,24 @@ async function readableProjectIds(req: Request, organizationId: number): Promise
   const userId = authedUserId(req);
   const actor = await readCurrentProgramActor(pool, { organizationId, userId: userId ?? undefined });
   return getAccessibleReportProjectIds(organizationId, actor, pool);
+}
+
+/** Each finding with the projects it names, as the blockers and the work due carry theirs (submission-ops.ts
+ *  `withNamedProjects`, 2026-11-12): `project` is the finding's own project and `projects` every project it names, its
+ *  own first. Each is the project and its root, the filing project a card on Projects carries; the root is named only
+ *  when the person can open it. The names come from `projects`, by id. A label stored in `affected_items` is not used:
+ *  until 2026-11-12 the over-allocation finding stored them on the wrong ids. Fields and order are the finding's own. */
+async function withNamedProjects<T extends { project_id?: unknown; affected_items?: unknown }>(organizationId: number,
+  readable: readonly number[], findings: readonly T[]): Promise<Array<T & { project: NamedProject | null; projects: NamedProject[] }>> {
+  const named = (finding: T) => findingNamedProjectIds(finding).filter((id) => Number.isSafeInteger(id) && id > 0);
+  const ids = [...new Set(findings.flatMap(named))];
+  if (ids.length === 0) return findings.map((finding) => ({ ...finding, project: null, projects: [] }));
+  const projects = await namedProjectsWithRoot(pool, organizationId, ids, new Set(readable));
+  return findings.map((finding) => ({
+    ...finding,
+    project: projects.get(Number(finding.project_id)) ?? null,
+    projects: named(finding).map((id) => projects.get(id)).filter((p): p is NamedProject => p !== undefined),
+  }));
 }
 
 /** Whether the finding exists and every project it names is one the person can open. Throws when that cannot be read. */
@@ -126,7 +146,7 @@ router.get('/findings', async (req: Request, res: Response) => {
       offset: parseInt(req.query.offset as string, 10) || 0,
     });
 
-    res.json(result);
+    res.json({ ...result, findings: await withNamedProjects(organizationId, readable, result.findings) });
   } catch (error) {
     logger.error('Error fetching findings', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to fetch findings' });

@@ -1372,7 +1372,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
-    pr: Pick<ProjPortfolioEntry, 'id' | 'title' | 'code'> & Partial<Pick<ProjPortfolioEntry, 'ws' | 'status'>>,
+    pr: Pick<ProjPortfolioEntry, 'id' | 'title'> & Partial<Pick<ProjPortfolioEntry, 'code' | 'ws' | 'status'>>,
   ) => openProjectHome({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status }, onNav);
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:

@@ -40,6 +40,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 import {
   AuthoringPlaceIntoFiling,
   IDENTITY_STATEMENT,
+  documentFilingCode,
+  ownSectionRefusal,
 } from '../surfaces/AuthoringPlaceIntoFiling';
 import { assembleSnapshot } from '../surfaces/placeIntoFilingCopy';
 
@@ -429,6 +431,47 @@ describe('the section code says where the document will be filed, before it is',
 });
 
 const PLACED = { id: 91, sequenceId: 31, sectionCode: '2.7.3', title: 'M2.7 Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 501, auditTrail: { persisted: true, chained: true } };
+
+/* S12's biotech sweep, 2026-11-09 (finding 22). An IND template's working headings are stored as
+   "<node>:work:<n>" (ind-template-outlines-m1.ts: "Working preparation heading, not an additional CTD
+   node"). The dialog read each as a code that is not CTD, so the document had no code of its own, the
+   open heading's key was prefilled and refused, and the right code was refused as "one section of this
+   document". No document made from such a template (the 1.20 request, the cover letter, Form 1571) could
+   be placed from the editor. A working heading belongs to the node it prepares. */
+describe('a document of working headings is filed at the node they prepare', () => {
+  const CODES = ['1.20', ...Array.from({ length: 9 }, (_, i) => `1.20:work:${i + 1}`)];
+
+  it('reads the document’s own code through its working headings', () => {
+    expect(documentFilingCode(CODES)).toBe('1.20');
+    expect(documentFilingCode(['m5.3.5.1:work:1', 'm5.3.5.1:work:2'])).toBe('5.3.5.1');
+    // Still no code for a document whose sections share none, or one that holds a key that is no code.
+    expect(documentFilingCode(['1', '2', '3'])).toBeNull();
+    expect(documentFilingCode(['1.20', 'title_page'])).toBeNull();
+  });
+
+  it('accepts that code, and still refuses a different section of the same document', () => {
+    expect(ownSectionRefusal('1.20', CODES)).toBeNull();
+    expect(ownSectionRefusal('2.5.1', ['2.5.1', '2.5.2', '2.5.3'])).toMatch(/is one section of this document/);
+  });
+
+  it('prefills the node, not the open heading’s key, and does not refuse it', async () => {
+    mockApi();
+    renderSeam({ activeSectionCode: '1.20:work:1', sectionCodes: CODES });
+    fireEvent.click(screen.getByRole('button', { name: /Place into filing/ }));
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    expect((screen.getByLabelText(/Section code/) as HTMLInputElement).value).toBe('1.20');
+    expect(document.body.textContent).not.toMatch(/is not a CTD section code/);
+    expect(document.body.textContent).not.toMatch(/is one section of this document/);
+  });
+
+  it('with no code of the document’s own, offers the open heading’s node and never its key', async () => {
+    mockApi();
+    renderSeam({ activeSectionCode: '1.20:work:1', sectionCodes: ['1.20:work:1', '3.2.S.1'] });
+    fireEvent.click(screen.getByRole('button', { name: /Place into filing/ }));
+    await waitFor(() => expect(document.body.textContent).toContain('ZX-9 First-in-Human'));
+    expect((screen.getByLabelText(/Section code/) as HTMLInputElement).value).not.toMatch(/:work:/);
+  });
+});
 
 describe('filing placement confirmation', () => {
   it('a lost leaf reply is unknown, never nothing placed, and offers reconciliation', async () => {

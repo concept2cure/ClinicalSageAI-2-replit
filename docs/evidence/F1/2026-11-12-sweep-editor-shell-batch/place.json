@@ -1,0 +1,39 @@
+{
+ "submissions": [
+  "Choose a submission…",
+  "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) · IND · FDA"
+ ],
+ "sequences": [
+  "Choose a sequence…",
+  "0000 · original · Draft"
+ ],
+ "sectionCode": "1.20",
+ "placeDisabled": false,
+ "dialogBefore": "Authoring → filingPlace into filingThe submission of record cannot point at a working draft, so placing does not move this document — it files a point-in-time copy of the SAVED sections and places that copy as the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.Target submissionChoose a submission…[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) · IND · FDASequenceChoose a sequence…0000 · original · DraftSection code*Files the whole saved document (10 sections) as one leaf, at the document’s own code 1.20. Edit to file elsewhere.Files as 1.20 in the regional Module 1 folder (1-20/).Lifecycle operationNewReplaceAppendDeleteReason for this placement*Walk: placing the 1.20 introductory statement.Required, at least 8 characters. Recorded with the placement in the audit trail.Will be filed as a draft. Freeze refuses it until y",
+ "said": [
+  "Files as 1.20 in the regional Module 1 folder (1-20/).",
+  "Placed as leaf 1.20 in sequence 0000 · original — server-confirmed (leaf #14, from Authored document #1). The filing copy is a draft. Freeze will refuse it until you re-place it after approval.",
+  "0 of 0 templatesNo templates are available.",
+  "Attribution highlighting is paused while you edit — it describes the text as last saved."
+ ],
+ "calls": [
+  {
+   "status": 200,
+   "method": "PATCH",
+   "url": "/api/authoring/sections/47cd1592-056a-4955-89de-de76f551e749",
+   "body": "{\"success\":true,\"section\":{\"id\":\"47cd1592-056a-4955-89de-de76f551e749\",\"doc_id\":\"c1ddeda6-3a31-424b-8018-488dc00e711d\",\"code\":\"1.20:work:1\",\"title\":\"Drug name (proprietary and established), all active ingredients, pharmacological class, and structural formula\",\"content\":\"<p>LMN-201 is a live biotherapeutic product for the prevention of recurrent C. difficile infection.</p>\",\"order_index\":1,\"track_"
+  },
+  {
+   "status": 201,
+   "method": "POST",
+   "url": "/api/coauthor/documents",
+   "body": "{\"success\":true,\"document\":{\"id\":1,\"organizationId\":2,\"title\":\"1.20 · Introductory Statement and General Investigational Plan\",\"content\":\"## 1.20 — Introductory Statement and General Investigational Plan\\n\\n\\n\\n## 1.20:work:1 — Drug name (proprietary and established), all active ingredients, pharmacological class, and structural formula\\n\\n<p>LMN-201 is a live biotherapeutic product for the preven"
+  },
+  {
+   "status": 200,
+   "method": "PUT",
+   "url": "/api/submissions/sequences/3/leaves",
+   "body": "{\"id\":14,\"sequenceId\":3,\"sectionCode\":\"1.20\",\"title\":\"1.20 · Introductory Statement and General Investigational Plan\",\"granularity\":null,\"lifecycleOp\":\"new\",\"documentTable\":\"coauthor_documents\",\"documentId\":1,\"documentUuid\":null,\"documentType\":null,\"studyId\":null,\"stfFileTag\":null,\"leafGuid\":null,\"parentLeafId\":null,\"checksum\":null,\"documentContentSha256\":\"81e1460c5c34a8e5004c6263f522395adb5f185d4"
+  }
+ ]
+}

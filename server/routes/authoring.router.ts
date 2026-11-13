@@ -2068,6 +2068,18 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
         }
       }
 
+      /* How many revisions the section has now, read in this transaction so it counts the one just
+         written. The editor shows it beside the section and says "revision N recorded"; without it
+         the count stayed at its old value until a reload, and the confirmation fell back to "open
+         History to confirm" (S12's sweep, 2026-11-09, findings 14 and 26). */
+      if (content !== undefined && result.rows[0]) {
+        const counted = await client.query(
+          'SELECT COUNT(*)::int AS revision_count FROM doc_revisions WHERE section_id = $1 AND tenant_id = $2',
+          [sectionId, tenantId],
+        );
+        result.rows[0] = { ...result.rows[0], revision_count: counted.rows[0]?.revision_count ?? null };
+      }
+
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
@@ -2127,6 +2139,7 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
       `SELECT
         r.id, r.section_id, r.content, r.created_by, r.created_at, r.tenant_id,
         r.content_sha256, r.chain_sha256, r.origin,
+        ar.change_reason as reason,
         u.name as created_by_name,
         u.email as created_by_email
        FROM doc_revisions r
@@ -2145,6 +2158,21 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
        LEFT JOIN LATERAL public.actor_name(
          CASE WHEN r.created_by ~ '^[0-9]{1,9}$' THEN r.created_by::int END
        ) u ON TRUE
+       -- The reason given for the change that produced this revision. doc_revisions
+       -- does not store it; the audit trail does, with the hash of the text the
+       -- change left (content_hash_after = this revision's content_sha256). A
+       -- section can return to an earlier text, so the audit row nearest in time is
+       -- taken. A revision that predates the ledger has no hash and no reason.
+       LEFT JOIN LATERAL (
+         SELECT a.change_reason
+           FROM authoring_audit_trail a
+          WHERE a.section_id = r.section_id
+            AND a.tenant_id = r.tenant_id
+            AND r.content_sha256 IS NOT NULL
+            AND a.content_hash_after = r.content_sha256
+          ORDER BY abs(extract(epoch FROM (a.created_at - r.created_at)))
+          LIMIT 1
+       ) ar ON TRUE
        WHERE r.section_id = $1 AND r.tenant_id = $2
        ORDER BY r.created_at DESC
        LIMIT $3`,

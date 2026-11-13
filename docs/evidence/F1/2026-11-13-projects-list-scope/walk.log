@@ -1,0 +1,8 @@
+== member (signed in: true)
+  Tasks board project filter: 104 projects; names the private project: false; read error shown: false
+  New task dialog: 104 projects offered in #tb-project; names the private project: false
+  API responses of 500 or more while on the board: none
+== admin (signed in: true)
+  Tasks board project filter: 105 projects; names the private project: true; read error shown: false
+  New task dialog: 105 projects offered in #tb-project; names the private project: true
+  API responses of 500 or more while on the board: none

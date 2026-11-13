@@ -101,6 +101,38 @@ const router = Router();
  */
 export const NON_LICENSING = ['user.status_change', 'billing_alert.acknowledge'] as const;
 
+/**
+ * Fields an access-request answer records (server/routes/module-access-requests.ts)
+ * that its Decisions row already says another way, so they are not repeated as
+ * raw tokens and ids: the action names the answer and whether it granted, the
+ * row names the workspace, and every row here is the owner's decision. Without
+ * this the row read "Access request action: request.approved", "Organization id:
+ * 18", "Decided by master admin: No" (2026-11-12 review of 6fd195ef88).
+ * `requestedBy` is shown as the requester's e-mail when the account resolves.
+ */
+const ACCESS_REQUEST_SAID_ELSEWHERE: ReadonlySet<string> = new Set([
+  'accessRequestAction',
+  'organizationId',
+  'decidedByMasterAdmin',
+  'granted',
+]);
+
+/** What a decision changed, without the two fields the row shows as columns. */
+function changedFields(action: string | null, details: Record<string, unknown>, requesterEmail: string | null) {
+  const accessRequest = action?.startsWith('access_request.') ?? false;
+  const changed: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(details)) {
+    if (k === 'masterAdminAction' || k === 'reason') continue;
+    if (accessRequest && ACCESS_REQUEST_SAID_ELSEWHERE.has(k)) continue;
+    if (accessRequest && k === 'requestedBy' && requesterEmail) {
+      changed.requesterEmail = requesterEmail;
+      continue;
+    }
+    changed[k] = v;
+  }
+  return changed;
+}
+
 /** Page size. Deliberately small — this is read line by line, not scanned. */
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
@@ -541,17 +573,23 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
     // Selection is on the PRESENCE of masterAdminAction (invariant 1) minus the
     // two non-licensing actions. The module filter matches the recorded module
     // and, for a packaging change, the audited record itself.
-    // tenant-isolation-safe: estate-wide platform-admin read under the system scope (/api/admin/master); the optional workspace filter only narrows it, and users is joined for the actor's email alone
+    // tenant-isolation-safe: estate-wide platform-admin read under the system scope (/api/admin/master); the optional workspace filter only narrows it, and users is joined for the actor's e-mail and an access request's requester's e-mail alone
     const rowsRes = await query(
       `SELECT a.id, a.occurred_at, a.created_at, a.tenant_id, a.user_id,
               a.table_name, a.record_id, a.new_values, a.sha256_chain, a.hmac_seal,
               a.chain_seq,
               u.email AS actor_email,
+              ru.email AS requester_email,
               o.name  AS organization_name,
               am.name AS module_name,
               COUNT(*) OVER() AS total_matching
          FROM audit_logs a
          LEFT JOIN users u          ON u.id = a.user_id
+         LEFT JOIN users ru         ON ru.id = CASE
+                                         WHEN a.new_values->>'masterAdminAction' LIKE 'access\\_request.%'
+                                          AND a.new_values->>'requestedBy' ~ '^[0-9]{1,9}$'
+                                         THEN (a.new_values->>'requestedBy')::int
+                                       END
          LEFT JOIN organizations o  ON o.id = a.tenant_id
          LEFT JOIN available_modules am ON am.module_id = a.new_values->>'moduleId'
         WHERE a.new_values->>'masterAdminAction' IS NOT NULL
@@ -611,13 +649,7 @@ router.get('/licensing/history', async (req: Request, res: Response) => {
       // Everything else the operator's action recorded, so an action this file
       // has never heard of still shows WHAT it changed. The two fields already
       // surfaced as their own columns are not repeated.
-      const changed: Record<string, unknown> = {};
-      if (details) {
-        for (const [k, v] of Object.entries(details)) {
-          if (k === 'masterAdminAction' || k === 'reason') continue;
-          changed[k] = v;
-        }
-      }
+      const changed = details ? changedFields(action, details, r.requester_email ?? null) : {};
 
       const detailModuleId =
         details && typeof details.moduleId === 'string' ? (details.moduleId as string) : null;

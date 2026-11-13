@@ -1,0 +1,19 @@
+{
+ "url": "/concept2cure/quality?program=e00d4d40-5378-41dc-b85e-e49662afe6a6",
+ "said": [
+  "Attribution highlighting is paused while you edit — it describes the text as last saved.",
+  "Section saved (qms-purpose) — open History to confirm the revision. The text is saved in the editor but not in the filing: This document is not bound to a filing, so there is no governed section to update."
+ ],
+ "saves": [
+  {
+   "status": 200,
+   "filing": {
+    "committed": false,
+    "reason": "This document is not bound to a filing, so there is no governed section to update."
+   }
+  }
+ ],
+ "apiFailures": [
+  "409 GET /api/c2c/projects/e00d4d40-5378-41dc-b85e-e49662afe6a6/sources?limit=200&offset=0"
+ ]
+}
