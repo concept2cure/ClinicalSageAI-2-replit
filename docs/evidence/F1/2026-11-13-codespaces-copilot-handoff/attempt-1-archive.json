@@ -1,0 +1,44 @@
+{
+  "sourceSha256": "ba08e77ded8fe9fb1a04a25baff4175968167fec0dca3c95562841dff5bf1929",
+  "compressedSource": "attempt-1-reviewer-current-walk.cjs.gz",
+  "receipt": "reviewer-browser.json",
+  "outputs": {
+    "reviewer-current-walk.json": {
+      "retainedAs": "attempt-1-reviewer-current-walk.json",
+      "sha256": "e00faecb65854f89f4134794090be6d941c0d62d4229e65cbeee8aab4abfa824"
+    },
+    "reviewer-adverse-events-1440.png": {
+      "retainedAs": "attempt-1-reviewer-adverse-events-1440.png",
+      "sha256": "fb6f4823ad68aefdd91e90d57009dc89fa226c47924fa2267f01233b445675ab"
+    },
+    "reviewer-csr-editor-1440.png": {
+      "retainedAs": "attempt-1-reviewer-csr-editor-1440.png",
+      "sha256": "ace6d06f6fd671086d05c2b7c043515bdda87c17d843f9b4aea6de721ede84da"
+    },
+    "reviewer-efficacy-1440.png": {
+      "retainedAs": "attempt-1-reviewer-efficacy-1440.png",
+      "sha256": "4e94d9910cd3537b9f32dd782ca9b77f0093f80760dc1e712e2824cf705883dc"
+    },
+    "reviewer-project-author-1440.png": {
+      "retainedAs": "attempt-1-reviewer-project-author-1440.png",
+      "sha256": "a394ebd572d519f84e86704b9a641b8cbdd8afb78d77a91b6f6f3fc3c2c39e16"
+    },
+    "reviewer-projects-1440.png": {
+      "retainedAs": "attempt-1-reviewer-projects-1440.png",
+      "sha256": "8c30367bf3638d408660c6fe372358bec41d9c225bf8f42aa85ce0c1e648ee90"
+    },
+    "reviewer-scientific-preview-1440.png": {
+      "retainedAs": "attempt-1-reviewer-scientific-preview-1440.png",
+      "sha256": "875c718d28a9e44c0674d4d1d5acb5ea658f1492e878cd1b88df786ec4bef577"
+    },
+    "reviewer-scientific-preview-390.png": {
+      "retainedAs": "attempt-1-reviewer-scientific-preview-390.png",
+      "sha256": "38cedf5ae34b00494575419c34712621f99eb1ccd8b612fcdf0334e463b45946"
+    },
+    "reviewer-working-copies-1440.png": {
+      "retainedAs": "attempt-1-reviewer-working-copies-1440.png",
+      "sha256": "1b70452a19caef91a56d16a7cebb20f23f263fba4e14800735efaad06d029441"
+    }
+  },
+  "reason": "Functional steps completed; initial observer treated client GET net::ERR_ABORTED cancellations as transport failures. Native exit1 is retained, not recast as a passing run."
+}

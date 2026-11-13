@@ -149,6 +149,53 @@ the app on port 5000 in development mode and opens it in your browser.
    manual editing and honestly labelled synthetic scenarios do not establish
    real model drafting or a completed regulatory filing.
 
+### Update the Codespace and Copilot checkout
+
+Copilot reads and edits the same repository checkout that serves this Codespace.
+Before asking it to continue, have it read `AGENTS.md`, `CLAUDE.md`,
+`docs/design/ONE_DESIGN_PLAN.md`, its ledger,
+`.design/claude-convergence/COORDINATION.md` and
+[the devcontainer agent rules](../../.devcontainer/AGENT_RULES.md).
+
+First check the current branch and local work:
+
+```bash
+git branch --show-current
+git status --short
+```
+
+Continue only on `concept2cure-v2` with local work preserved. If there are
+uncommitted changes or the branch has diverged, coordinate that work first;
+do not reset, rebase or replace the checkout. With a clean canonical checkout:
+
+```bash
+git pull --ff-only origin concept2cure-v2
+git rev-parse HEAD
+git rev-parse origin/concept2cure-v2
+```
+
+For a published-revision rehearsal, those two commits must match. A clean
+checkout can still have unpublished local commits; preserve and coordinate
+them if the commits differ. Then start the existing app:
+
+```bash
+bash .devcontainer/post-start.sh
+git rev-parse HEAD
+curl -fsS "http://127.0.0.1:${PORT:-5000}/api/version"
+curl -sS -i "http://127.0.0.1:${PORT:-5000}/readyz"
+```
+
+The `commit` in `/api/version` must equal `git rev-parse HEAD`. A successful
+pull alone does not update an already running backend. The existing startup
+checks that public stamp and restarts an older or unverified process; it also
+handles changed dependencies, migrations and supplied keys. Keep forwarded
+port 5000 private and reopen its browser page after startup finishes.
+
+Record `/readyz`'s HTTP status and component states separately from the commit
+match. A serving manual editor with `anaState: no_provider` is not a passing
+live-AnA demonstration. New Codespaces still follow the creation steps above;
+no second frontend, editor, deployment or branch is needed.
+
 What the setup did, and where to look when something is wrong:
 
 | Step | Where | Log |
@@ -162,12 +209,9 @@ What the setup did, and where to look when something is wrong:
   runs with: the `app_service` role, which is not an owner and does not bypass
   row-level security, and random signing secrets. Nothing is committed or
   printed.
-- **Update an existing Codespace before the demo:** in its terminal, confirm
-  `git branch --show-current` says `concept2cure-v2`, then run
-  `git pull --ff-only origin concept2cure-v2` and
-  `bash .devcontainer/post-start.sh`. The start checks the running backend's
-  public `/api/version` stamp against the checkout and restarts an older or
-  unverified backend. It also restarts when a supplied key is missing or
+- **Update an existing Codespace before the demo:** use
+  [the canonical checkout procedure above](#update-the-codespace-and-copilot-checkout).
+  Startup also restarts when a supplied key is missing or
   changed in the running app, or the verified document Python runtime
   is missing from that process. A healthy backend already serving this
   commit with the same supplied keys and runtime is retained.
