@@ -540,6 +540,39 @@ export async function programOfProject(client: EnsureWorkProjectInput['client'],
   return typeof programId === 'string' && programId ? programId : null;
 }
 
+/** A project as a list row names it: itself, and its root (the filing project a Projects card carries, with the
+ *  program that card opens). `root` is null when the walk reaches none inside the organization, or the reader may not
+ *  open it. */
+export interface NamedProject { id: number; name: string; root: { id: number; name: string; programId: string | null } | null }
+
+/** Each of these projects with its root ancestor, in one read: the batch form of `programOfProject`'s walk, inside
+ *  the organization and at most ten levels. `openable` is the set of projects the reader can open: a root outside it
+ *  is not named, because a work project's member gains nothing on its parent (tasking/task-project.ts). A project the
+ *  organization does not hold is absent from the answer. */
+export async function namedProjectsWithRoot(client: EnsureWorkProjectInput['client'], orgId: number,
+  projectIds: readonly number[], openable: ReadonlySet<number>): Promise<Map<number, NamedProject>> {
+  const ids = [...new Set(projectIds.filter((id) => Number.isSafeInteger(id) && id > 0))];
+  const named = new Map<number, NamedProject>();
+  if (ids.length === 0) return named;
+  const found = await client.query(
+    `WITH RECURSIVE up(start_id, id, name, parent_project_id, regulatory_program_id, hops) AS (
+       SELECT id, id, name, parent_project_id, regulatory_program_id, 0 FROM projects
+        WHERE organization_id = $1 AND id = ANY($2::int[])
+       UNION ALL SELECT up.start_id, p.id, p.name, p.parent_project_id, p.regulatory_program_id, up.hops + 1 FROM projects p
+         JOIN up ON p.id = up.parent_project_id WHERE p.organization_id = $1 AND up.hops < 10)
+     SELECT s.id, s.name, r.id AS root_id, r.name AS root_name, r.regulatory_program_id::text AS program_id
+       FROM projects s LEFT JOIN up r ON r.start_id = s.id AND r.parent_project_id IS NULL
+      WHERE s.organization_id = $1 AND s.id = ANY($2::int[])`, [orgId, ids]);
+  for (const row of found.rows) {
+    const id = Number(row.id), rootId = Number(row.root_id);
+    const root = row.root_id !== null && row.root_id !== undefined && openable.has(rootId)
+      ? { id: rootId, name: String(row.root_name), programId: typeof row.program_id === 'string' && row.program_id ? row.program_id : null }
+      : null;
+    named.set(id, { id, name: String(row.name), root });
+  }
+  return named;
+}
+
 export interface WorkProjectResult { projectId: number; created: boolean; parentId: number; depth: number; path: string }
 
 /** Ensure a work project under a program's anchor: the existing child of that parent with that name and kind, or a

@@ -377,6 +377,54 @@ function domainLabel(domain: IBInputDomain): string {
   }
 }
 
+/**
+ * True when a section draws on the project's data. The title page, the confidentiality
+ * statement, the table of contents and the references do not: they are always
+ * "rendered", and a readiness figure that counted them read above zero for a project
+ * with nothing recorded (S12 sweep finding 92, 2026-11-12).
+ */
+export function sectionNeedsData(section: IBSection): boolean {
+  return section.inputs.some(d => d !== 'none');
+}
+
+/** One section of the readiness view: the registry row with its verdict for a given availability. */
+export interface IBSectionRow {
+  number: string;
+  title: string;
+  required: boolean;
+  status: IBSectionStatus;
+  gaps: string[];
+  description: string;
+  /** 0 = top-level IB chapter / front matter, 1 = sub-section (e.g. 4.1). */
+  depth: number;
+  /** False for front matter and references, which need no project data and are left out of the figure. */
+  needsData: boolean;
+}
+
+/** The readiness view's rows for an availability map: the one projection the read route and its fail-closed skeleton share. */
+export function ibSectionRows(available: Record<IBInputDomain, boolean>): IBSectionRow[] {
+  return flattenSections().map(s => {
+    const gaps = detectSectionGaps(s, available);
+    return {
+      number: s.number,
+      title: s.title,
+      required: s.required,
+      status: sectionStatus(s, available, gaps),
+      gaps,
+      description: s.description,
+      depth: s.number.includes('.') ? 1 : 0,
+      needsData: sectionNeedsData(s),
+    };
+  });
+}
+
+/** Share (0–100) of the required sections that need project data and have all of it. */
+export function ibCompleteness(rows: IBSectionRow[]): number {
+  const counted = rows.filter(r => r.required && r.needsData);
+  const rendered = counted.filter(r => r.status === 'rendered').length;
+  return counted.length ? Math.round((rendered / counted.length) * 100) : 0;
+}
+
 /** Return the full IB section registry (deep copy). */
 export function getIBStructure(): IBSection[] {
   return JSON.parse(JSON.stringify(IB_STRUCTURE));

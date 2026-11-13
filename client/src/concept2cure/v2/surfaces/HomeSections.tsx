@@ -11,6 +11,7 @@ import { applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
 import { WS_LABEL } from './ProjectPortfolioFilters';
+import { enumWords } from './projectWords';
 import { OpenWorkGroups, useOpenWorkReads } from '../OpenWork';
 import { taskActorScope, taskTargetLocation } from '../taskTarget';
 import { useAuth } from '@/services/portal/authService';
@@ -127,7 +128,7 @@ export function HomeProjects({
                   onClick={() => openProjectHome({ id: p.id, title: p.title, code: p.code, ws: p.ws, status: p.status }, onNav)}
                 >
                   <span className="home-row-t">{rowTitle(p)}</span>
-                  <span className="home-row-m">{[p.ws ? WS_LABEL[p.ws] ?? p.ws : null, p.stage, p.status].filter(Boolean).join(' · ')}</span>
+                  <span className="home-row-m">{[p.ws ? WS_LABEL[p.ws] ?? p.ws : null, p.stage, enumWords(p.status)].filter(Boolean).join(' · ')}</span>
                   <span className="home-row-go" aria-hidden="true">{I.right}</span>
                 </button>
               </li>

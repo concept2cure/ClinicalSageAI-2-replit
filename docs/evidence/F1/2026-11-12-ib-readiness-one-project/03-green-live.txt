@@ -1,0 +1,14 @@
+GET /api/investigator-brochure   (no project named)
+  -> 400  {"error":{"code":"PROJECT_REQUIRED","message":"Readiness of an Investigator's Brochure is read for one project. Open a project and try again."}}
+GET /api/investigator-brochure?programId=66277053-752f-4806-8112-85be3e9d1aea   (C2C-101, a biologic with no Module 3 section of its own)
+  -> 200  completeness 0  provisioned false  source none  availability {"product":false,"nonclinical":false,"clinical":false,"safety":false}  storesWithoutProject ["clinical_ops.studies"]
+  ready, of the sections that need project data: none   | need no project data: 0, 0a, 0b, 7
+GET /api/investigator-brochure?programId=da734679-6598-492c-9335-813c248f17eb   (C2C-201, whose 21 Module 3 sections are recorded)
+  -> 200  completeness 18  provisioned true  source cmc_module3_sections  availability {"product":true,"nonclinical":false,"clinical":false,"safety":false}  storesWithoutProject ["clinical_ops.studies"]
+  ready, of the sections that need project data: 2, 3   | need no project data: 0, 0a, 0b, 7
+GET /api/investigator-brochure?programId=00000000-0000-4000-8000-000000000000   (a project id that is in no organisation)
+  -> 404  {"success":false,"error":"PROJECT_NOT_FOUND","message":"Project not found."}
+GET /api/investigator-brochure?programId=abc   (not a project id)
+  -> 404  {"success":false,"error":"PROJECT_NOT_FOUND","message":"Project not found."}
+GET the same, with no session
+  -> 401
