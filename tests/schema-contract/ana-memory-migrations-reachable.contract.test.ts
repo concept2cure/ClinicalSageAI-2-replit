@@ -263,7 +263,7 @@ describe('project_memory_entries has a creator on the deploy path', () => {
       INSERT INTO project_intelligence_profiles (project_id, organization_id) VALUES (1, 1);
     `);
     for (const pass of [1, 2]) {
-      try { await pg.exec(readMig(OUTCOME_LOG)); } catch (err) { throw new Error(`pass ${pass}: ${(err as Error).message}`); }
+      try { await pg.exec(readMig(OUTCOME_LOG)); } catch (err) { throw new Error(`pass ${pass}: ${(err as Error).message}`, { cause: err }); }
     }
   }, 120_000);
   afterAll(async () => { await pg.close(); });
