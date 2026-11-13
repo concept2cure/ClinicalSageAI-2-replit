@@ -1720,3 +1720,24 @@ continued runtime health. No implementation hold remains.
 2026-11-13 F1 Codespaces continuation scoped hold: existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs` only for the reproduced eight-row Uploads preparation blocker. Root owns this repair; no product-screen changes.
 
 2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.
+
+### Codex continued implementation — activity ownership and credential audit, 2026-11-13
+
+The founder asked to continue all existing work after the demo handoff. This **F1 / W1 / D2** slice starts at
+`2a667bf51`; the Anna epic owner's latest note releases all source (`cc5a05d4b7`). The following narrowly scoped
+holds end at canonical publication or **2026-11-14 01:00 UTC**, whichever comes first. Other lanes retain their
+own holds; no plan/ledger or qualification status is changed.
+
+| Holder | Existing files and scope |
+|---|---|
+| Credential agent | `server/services/connectors/connector-registry.ts` prior-state/audit-reason handling only; `server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts` |
+| Activity agent | `client/src/concept2cure/v2/useAgentActivity.ts` background reader only; `client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx` regression coverage |
+| Measured-time agent | `server/services/ana/sub-agent.ts`, `sub-agent-stream.ts`, `run-events.ts`, `turn-plan.ts` for the existing deterministic-check estimate only; existing `sub-agent.test.ts` and `run-coordination-dispositions.test.ts` tests |
+| Root | This entry, existing `docs/evidence/ANA-AGENTS/2026-09-27/README.md`, integration, Git and the sole full compiler |
+
+The evidence README's dated **What already exists** inventory precedes implementation. Both agents reproduce
+their specific failures before fixes. Read-only actor-propagation and measured-ETA investigations hold no further
+source beyond the assignments above. Measured-time implementation follows the existing evidence README's explicit
+whole-check timing contract. Root may edit the existing worker-time formatter only after the activity agent
+releases that file. Connector actor propagation still requires its separate trusted-caller contract and assignment.
+No new source file, screen, route, table, provider, model or dependency is approved by this continuation.

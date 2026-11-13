@@ -247,13 +247,19 @@ function credentialAuditVariants(value: string): string[] {
   const normalized = value.replace(/\\n/g, '\n').replace(/\r\n?/g, '\n');
   return [value, value.trim(), normalized, normalized.trim(), normalized.replace(/\n/g, '\\n'), normalized.trim().replace(/\n/g, '\\n')].filter(Boolean);
 }
+function readablePriorCredentialFields(credentials: ConnectorCredentials): boolean {
+  return Object.entries(credentials).every(([name, value]) => typeof value === 'string'
+    || (name === 'customHeaders' && record(value) && Object.values(value).every(field => typeof field === 'string')));
+}
 function priorCardState(row: Record<string, any> | undefined, spec: CredentialCardSpec, organizationId: number) {
-  if (!row) return { grant: undefined, values: [] as string[] };
+  if (!row) return { grant: undefined, values: [] as string[], unreadable: false };
   try {
     const value = decodeCredentials(row.credentials, organizationId, spec.id);
+    const credentials = isEnvelope(value) ? value.credentials : value;
+    const readable = readablePriorCredentialFields(credentials);
     return { grant: isEnvelope(value) ? value.grant : undefined,
-      values: credentialFieldValues(isEnvelope(value) ? value.credentials : value) };
-  } catch { return { grant: undefined, values: [] as string[] }; }
+      values: readable ? credentialFieldValues(credentials) : [], unreadable: !readable };
+  } catch { return { grant: undefined, values: [] as string[], unreadable: true }; }
 }
 /** The caller owns BEGIN/COMMIT: the credential and its chained audit commit together. */
 export async function writeCredentialCard(db: CredentialDb, organizationId: number, userId: number, change: CredentialCardChange): Promise<CredentialCardView> {
@@ -278,6 +284,8 @@ export async function writeCredentialCard(db: CredentialDb, organizationId: numb
   let reason = change.reason.trim();
   const heldValues = [...new Set([...prior.values, ...credentialFieldValues(credentials)].flatMap(credentialAuditVariants))].sort((a, b) => b.length - a.length);
   for (const value of heldValues) reason = reason.split(value).join('[redacted]');
+  // Unknown prior values cannot be safely removed from arbitrary free text.
+  if (prior.unreadable) reason = 'Credential changed; reason withheld because prior credentials could not be read.';
   const { writeChainedAuditRow } = await import('../auditService.js');
   await writeChainedAuditRow(db, { tenantId: organizationId, userId, action: `credential.${change.action}`,
     resourceType: 'connector_credential_grant', resourceId: spec.id, reason,

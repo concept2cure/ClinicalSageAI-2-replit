@@ -1,5 +1,56 @@
 # AnA runs multiple agents; Manual/Auto is a real run policy (row 74)
 
+## 2026-11-13 F1 continuation — current activity and unreadable credential custody
+
+The founder asked to continue the whole existing implementation after the Codespace demo publication. This
+bounded repair moves **W1 / D2** under **F1** and starts from canonical `2a667bf51`. It adds no screen, source
+file, route, table, provider, model or dependency and does not declare real model PQ or the Anna epic complete.
+
+### What already exists
+
+`client/src/concept2cure/v2/useAgentActivity.ts` reads the background investigation queue for the conversation,
+eCTD co-author and RBM progress panels. The same file's project-team reader already uses the current
+`authoringCurrentRead.ts` session guard and captured actor headers. The older background reader does not: a late
+response or retained result can outlive an account change, and missing counters/items are coerced into an empty
+success. Extend this reader with the existing ownership guard, strict canonical summary validation and serialized
+polls. Preserve the default-off project-team presentation and its durable monitoring.
+
+`server/services/connectors/connector-registry.ts` already encrypts all fourteen administration credential cards,
+checks management authority and commits each change with its chained audit. Its prior-state decoder currently
+maps both an absent card and unreadable ciphertext to no known old values. Rotation or revocation can then save
+free text containing an old secret that could not be redacted. The existing gateway-account writer already
+distinguishes unreadable prior state and withholds that free-text reason. Extend the connector writer in the same
+way; keep key bytes, grant tombstones, current authority and audit atomicity intact. The existing connector
+PGlite and conversation tests are the regression homes. Current aliases, hosts, contracts and full deletion
+history were searched before edits; no deleted replacement was found.
+
+Only executed regression, integration, compiler and publication results will be recorded as passing below.
+
+**Credential repair verified:** six corrupt/wrong-tenant/wrong-provider rotation/revocation canary cases fail
+against the original source. Independent review then found a decrypted malformed-shape edge; four actual AES
+legacy/envelope cases fail against the first repair. The final three existing suites pass **90/90** (the owned
+PGlite suite is **61/61**, included in that total), with zero changed-file lint errors or warnings. Recovery keeps
+exact replacement bytes, valid grant identity, revoked tombstones, readable reasons and atomic rollback on audit
+failure. Unsupported prior nested/nonstring shapes withhold the free-text reason without changing SDK decoding
+or authority. Independent review reports no remaining in-scope finding. These fixtures use synthetic credentials;
+no live customer/provider credential or external qualification is claimed.
+
+**Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
+but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
+plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`
+already carry their measured counters into immutable progress receipts. Extend those same paths with monotonic
+elapsed observations of each whole deterministic check, including its scoped deterministic reads, with one
+consistent timing boundary. Exclude import, parent hold, ledger and subsequent model/advisory time. Three usable
+assessed observations and a known positive remaining count are required; errors, unavailable checks, invalid
+timing and lifecycle transitions clear the estimate. The range is an explicitly approximate observation-based
+estimate of remaining checks, never calibrated provider p95, worker completion or project/filing readiness.
+Persist the estimate in the idempotent audited snapshot before projection; preserve the existing aggregate-count
+granularity and replay. The existing sub-agent and coordination tests are its regression homes. No retired
+fixture progress bar or constant ETA is restored. A later formatter repair, after the activity file is released,
+must avoid rounding a sub-minute estimate into an invented one-minute lower bound.
+
+## Original delivery record — 2026-09-27
+
 Founder-directed on 2026-09-27. This lane moves no D-row, and it is recorded
 on the work-order board as the founder's explicit exception to RULE 2.
 

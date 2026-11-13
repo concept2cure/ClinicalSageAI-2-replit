@@ -22,6 +22,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { connectorCredentials } from '../../../../shared/schema';
 import { logger } from '../../../utils/logger';
+import { decryptCredential, encryptCredential } from '../../security/credential-cipher.js';
 
 const holder = vi.hoisted(() => ({ pg: null as unknown as import('@electric-sql/pglite').PGlite }));
 const pool = vi.hoisted(() => ({
@@ -298,6 +299,71 @@ describe('credential use retains current membership through its durable audit', 
     const ledger = JSON.stringify((await holder.pg.query('SELECT action,reason,new_values FROM audit_logs')).rows);
     for (const value of [...Object.values(old), ...Object.values(next)]) expect(ledger).not.toContain(value);
     expect((await holder.pg.query('SELECT action FROM audit_logs ORDER BY chain_seq')).rows).toEqual([{ action: 'credential.capture' }, { action: 'credential.rotate' }, { action: 'credential.revoke' }]);
+  });
+});
+
+describe('credential recovery withholds reasons containing unknown prior values', () => {
+  it.each([
+    ['corrupt', 'rotate'], ['corrupt', 'revoke'], ['organization', 'rotate'], ['organization', 'revoke'], ['provider', 'rotate'], ['provider', 'revoke'],
+    ['nested_legacy', 'rotate'], ['nested_legacy', 'revoke'], ['nested_envelope', 'rotate'], ['nested_envelope', 'revoke'],
+    ['invalid_json', 'rotate'], ['invalid_json', 'revoke'], ['scalar', 'rotate'], ['scalar', 'revoke'], ['array', 'rotate'], ['array', 'revoke'],
+  ] as const)('withholds an unknown prior reason after %s ciphertext on %s', async (state, action) => {
+    const oldKey = 'unreadable-prior-fixture-canary', nextKey = 'replacement-fixture-key';
+    const organizationId = state === 'organization' ? 2 : ORG;
+    const connectorId = state === 'provider' ? 'llm_anthropic' : 'llm_openai';
+    if (organizationId === 2) await holder.pg.query("INSERT INTO organization_users VALUES (2,11,'admin')");
+    await holder.pg.query('DELETE FROM connector_credentials');
+    await changeCard({ ...cardChange(), credentials: { apiKey: oldKey }, reason: 'Initial fixture credential capture' });
+    if (state === 'corrupt') {
+      await holder.pg.query('UPDATE connector_credentials SET credentials=$1', ['not-an-encrypted-fixture']);
+    } else if (state === 'organization' || state === 'provider') {
+      await holder.pg.query(`INSERT INTO connector_credentials (organization_id,connector_id,credentials,is_valid)
+        SELECT $1,$2,credentials,is_valid FROM connector_credentials WHERE organization_id=1 AND connector_id='llm_openai'`, [organizationId, connectorId]);
+    } else {
+      const stored = (await holder.pg.query<{ credentials: string }>('SELECT credentials FROM connector_credentials')).rows[0];
+      const envelope: Record<string, unknown> = JSON.parse(decryptCredential(stored.credentials));
+      const nested = { customHeaders: { nested: { apiKey: oldKey } } };
+      const plaintext: Record<string, string> = { nested_legacy: JSON.stringify(nested), nested_envelope: JSON.stringify({ ...envelope, credentials: nested }),
+        invalid_json: 'not-json-fixture', scalar: JSON.stringify(oldKey), array: JSON.stringify([oldKey]) };
+      await holder.pg.query('UPDATE connector_credentials SET credentials=$1', [encryptCredential(plaintext[state])]);
+    }
+    const saved = await changeCard({ connectorId, action, credentials: action === 'rotate' ? { apiKey: nextKey } : undefined,
+      scopes: ['model_inference'], reason: `Recover ${oldKey} using ${nextKey}` }, organizationId);
+    const rows = (await holder.pg.query('SELECT reason,new_values FROM audit_logs WHERE tenant_id=$1 AND record_id=$2 AND action=$3', [organizationId, connectorId, `credential.${action}`])).rows;
+    const visible = JSON.stringify([saved, rows, await listCredentialCards(organizationId, true, pool)]);
+    expect(visible).not.toContain(oldKey);
+    expect(visible).not.toContain(nextKey);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].reason).toBe('Credential changed; reason withheld because prior credentials could not be read.');
+    if (action === 'rotate') expect((await captureCredentialForUse(organizationId, connectorId, 'model_inference', pool))?.credentials.apiKey).toBe(nextKey);
+    else {
+      expect(saved).toMatchObject({ status: 'revoked', grantedScopes: [], secretFieldsHeld: [] });
+      await expect(captureCredentialForUse(organizationId, connectorId, 'model_inference', pool)).rejects.toMatchObject({ code: 'TENANT_CREDENTIAL_UNAVAILABLE' });
+    }
+  });
+  it('retains the safe reason when prior credentials are absent or readable', async () => {
+    const reasons = ['Initial client account setup', 'Routine client account rotation', 'Retire the client account grant', 'Restore the client account grant'];
+    for (const [index, action] of (['capture', 'rotate', 'revoke', 'capture'] as const).entries()) await changeCard({ ...cardChange(action), reason: reasons[index] });
+    expect((await holder.pg.query('SELECT reason FROM audit_logs ORDER BY chain_seq')).rows.map(row => row.reason)).toEqual(reasons);
+  });
+  it.each(['legacy', 'envelope'])('keeps flat fields and string customHeaders readable in a %s prior record', async format => {
+    await changeCard();
+    const stored = (await holder.pg.query<{ credentials: string }>('SELECT credentials FROM connector_credentials')).rows[0];
+    const envelope: Record<string, unknown> = JSON.parse(decryptCredential(stored.credentials));
+    const credentials = { apiKey: CANARY, customHeaders: { tenantId: 'legacy-tenant-fixture' } };
+    await holder.pg.query('UPDATE connector_credentials SET credentials=$1', [encryptCredential(JSON.stringify(format === 'legacy' ? credentials : { ...envelope, credentials }))]);
+    await changeCard({ ...cardChange('rotate'), reason: `Routine rotation ${CANARY} legacy-tenant-fixture` });
+    const rows = (await holder.pg.query("SELECT reason FROM audit_logs WHERE action='credential.rotate'")).rows;
+    expect(rows).toEqual([{ reason: 'Routine rotation [redacted] [redacted]' }]);
+  });
+  it('an unreadable prior credential is unchanged if its replacement audit is refused', async () => {
+    await changeCard();
+    await holder.pg.query('UPDATE connector_credentials SET credentials=$1', ['unreadable-fixture-ciphertext']);
+    const before = (await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows;
+    await holder.pg.exec('ALTER TABLE audit_logs ADD CONSTRAINT refuse_audit CHECK (false) NOT VALID');
+    await expect(changeCard({ ...cardChange('rotate'), credentials: { apiKey: 'replacement-after-unreadable-fixture' } })).rejects.toThrow();
+    expect((await holder.pg.query('SELECT credentials,is_valid FROM connector_credentials')).rows).toEqual(before);
+    expect((await holder.pg.query('SELECT action FROM audit_logs')).rows).toEqual([{ action: 'credential.capture' }]);
   });
 });
 
