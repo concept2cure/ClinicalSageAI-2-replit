@@ -1,0 +1,92 @@
+{
+  "scope": "Running canonical app with real fictional project/document/authentication; lock and presence responses are intercepted UI boundaries, not backend qualification.",
+  "cases": [
+    {
+      "stage": "existing-editor-opened",
+      "passed": true
+    },
+    {
+      "stage": "section-switch",
+      "mode": "red",
+      "carriedOldConfirmation": true
+    },
+    {
+      "stage": "takeover-request-intercepted",
+      "passed": true,
+      "mode": "red",
+      "sectionId": "f6310755-aab9-4254-89cb-044f367b8f14",
+      "reasonBelongsTo": "previous-section"
+    }
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/c2dbf867-8475-446d-b934-09c49f0bd89e/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "GET",
+      "path": "/api/realtime-collab/locks/c2dbf867-8475-446d-b934-09c49f0bd89e"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/c2dbf867-8475-446d-b934-09c49f0bd89e/awareness"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/c2dbf867-8475-446d-b934-09c49f0bd89e/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/c2dbf867-8475-446d-b934-09c49f0bd89e/awareness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/realtime-collab/locks/c2dbf867-8475-446d-b934-09c49f0bd89e"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/c2dbf867-8475-446d-b934-09c49f0bd89e/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/c2dbf867-8475-446d-b934-09c49f0bd89e/awareness"
+    },
+    {
+      "method": "GET",
+      "path": "/api/realtime-collab/locks/c2dbf867-8475-446d-b934-09c49f0bd89e"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/locks",
+      "body": {
+        "documentId": "c2dbf867-8475-446d-b934-09c49f0bd89e",
+        "sectionId": "f6310755-aab9-4254-89cb-044f367b8f14",
+        "lockType": "section-edit",
+        "takeover": true,
+        "reason": "Jo asked me to finish section one."
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/realtime-collab/locks/c2dbf867-8475-446d-b934-09c49f0bd89e"
+    }
+  ],
+  "url": "http://127.0.0.1:5000/concept2cure/document-authoring?program=8b057fbd-0530-450a-88c1-73ed0ad0b1f4"
+}

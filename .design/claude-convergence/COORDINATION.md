@@ -1768,8 +1768,38 @@ runtime/scratch-only. Other lanes' holds and broader roadmap/model acceptance re
 
 **Codex provider/AnA completion repair, 2026-11-13 (F1 W1 D1/D2), completed; holds released by this source commit:** repaired only `scripts/ops/codespaces-doctor.mjs`, `scripts/ops/codespaces-doctor.test.mjs`, `scripts/ops/verify-ana-answers.mjs`, `scripts/ops/verify-ana-answers.test.mjs`, the existing recovery guide's AnA-check paragraph and its own evidence/design packet. Two scoped workers split doctor and AnA verifier; the doctor split private `codespaces-provider-receipt.mjs` and focused `codespaces-doctor-receipt-cases.mjs` inside scripts/ops to preserve lint limits and the existing test command. Root owns integration/Git. Correct false-success completion receipts only; no provider call, new key, route, model or approval change.
 
+**Codex collaboration-context repair, 2026-11-13 (F1 W1/D2), completed; holds released by this source commit:** repaired only `v2/surfaces/AuthoringCollab.tsx` and a focused lock-context test (the two existing auth test mocks only preserve real exports), plus `v2/surfaces/CollabLauncher.tsx` directory/session lines (not S12 workProject lines) and a focused directory-context test. Existing takeover intent must not follow a different section, and the existing directory must not retain a previous account. Root owns evidence/runtime/Git; two workers split those files. TaskBoard, TaskTray, CommunicationCenter and other held screens remain with their owners. No external messages, new module, route, service, table, model or provider change.
+
 ## Codespaces and Copilot handoff — 2026-11-13
 
 F1/W1 D1–D2, Codex continuation: holds only `.devcontainer/AGENT_RULES.md` and the existing Codespaces operator guide for canonical pull/start/verification handoff. Ends at publication or 2026-11-13 23:45 UTC, whichever comes first. Existing boot/doctor/demo source is read-only unless an actual reproduced blocker is reserved separately; no other owner is paused. Root owns Git, installation and all runtime/check jobs. Inventory `.design/claude-convergence/F1-CODESPACES-COPILOT-HANDOFF-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/`. No protected instruction/plan change, UI change, new capability or model/credential-policy bypass.
 
 2026-11-13 F1 Codespaces/Copilot handoff source completion: the existing agent rules and single operator procedure are complete; these two documentation holds release with publication. Fresh declared-image setup passes81/81 at its named baseline; integrated focused checks pass173/173 and scoped lint passes. The real synthetic CSR browser rerun passes with119/119 saved bodies, physical draft Word/PDF and scientific preview; the original failed observer and interrupted startup remain explicit. Root retains only its evidence/design/this-entry receipt scope and owned local runtime until the complete normal-start/current-stamp check. No other owner is paused; no provider, qualification or hosted-Codespace acceptance is claimed.
+
+### Codex final integration follow-up — delayed billing action ownership, 2026-11-13
+
+The activity/credential/measured-check continuation is published at canonical
+`277a47e767c5fed14023109b2c29c4ee0b84f5bb`, confirmed by Git and connected GitHub; all89 CI lint gates and full
+TypeScript0/baseline0 pass. **Every hold in that continuation's table is released.** A read-only review of the
+incoming `1cddec661` checkout repair finds a delayed response UI-attribution gap; its existing13 contract tests
+pass and server authorization is unchanged. The evidence README records the pre-edit inventory and bounded
+repair using the existing `captureAuthoringSession` helper.
+
+Under F1/W1, the keyboard verification agent now holds only existing
+`client/src/concept2cure/v2/surfaces/LicensingSurface.tsx` checkout/portal callback response ownership and
+`client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx`. Root holds only this entry, the existing
+AnA evidence README, integration/Git and the sole full compiler. These holds end at publication or
+**2026-11-14 01:00 UTC**, whichever comes first. No shared helper, billing backend, status/invoice reader,
+new source file, screen, provider, dependency, model or qualification gate is in scope. The rehearsal agent
+remains runtime/scratch-only, with the existing demo held stable until final version verification.
+
+**Follow-up completion:** corrected exact-baseline RED proves14 actual assertion failures and five real ordinary
+refresh controls pass; final focused32/32 and adjacent50/50 pass on the frozen source. Zero lint errors and no
+warning growth (three existing source warnings, zero test warnings), existing code-line ceiling preserved.
+Independent final review has no finding. Only the two held files change; shared helper, transport, status/invoice
+readers and server authority remain unchanged. **These two source holds and root's evidence/coordination holds
+release with canonical publication of this completion.** Root then retains only Git receipts and the ordinary
+cached exact-version/health check in the existing local Codespace-image runtime; no live-model qualification,
+hosted Codespace, Stripe settlement or broader regulatory/commercial acceptance is declared.
+
+Publication request, Codex collaboration-context repair, 2026-11-13 23:10 UTC: two canonical ref races followed every normal gate passing, including full compiler0 and 89 CI gates each time. Under rule6, a 15-minute publication window is requested from the coordinating session. No callable cross-session channel reaches it from this task; no other lane is claimed paused. Ordinary fetch/merge/retry continues, with no force or skipped hooks. Verified source279a6f144, both disjoint canonical billing/activity/connector updates preserved.
