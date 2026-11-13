@@ -33,6 +33,7 @@ import {
   DISSOLUTION_RELEASE_PURPOSE,
 } from '../../shared/cmc/dissolution-purpose';
 import {
+  isHumanOrAnimalOrigin,
   normalizeMaterialScope,
   scopeCovers,
   type CmcMaterialScope,
@@ -1963,6 +1964,47 @@ function materialSpecText(p: Record<string, any>): string {
  * The screen and the dossier disagreeing about where a record belongs is the
  * failure shared/cmc/material-scope.ts exists to prevent.
  */
+/* A raw or starting material's recorded origin and TSE/BSE certificate.
+ *
+ * The material register records both for every role, and §3.2.A.2 tells the
+ * reviewer "the origin of the raw and starting materials is recorded in
+ * §3.2.S.2.3". Until 2026-11-12 this table had no Origin column, and §3.2.A.3
+ * reads excipients only, so a bovine-derived reagent, with or without a
+ * certificate, appeared in no composed section. The origin is printed as
+ * recorded and never inferred; a blank is "not recorded", as in §3.2.P.4. */
+const rawMaterialOrigin = (p: Record<string, any>): string => String(p.origin || '').trim();
+
+function rawMaterialOriginCells(p: Record<string, any>): [string, string] {
+  const origin = rawMaterialOrigin(p);
+  const detail = String(p.originDetail || '').trim();
+  const certificate = String(p.tseCertificate || '').trim();
+  /* A certificate is owed where the origin is human or animal, and cannot be
+     ruled out where no origin is recorded. Elsewhere its absence is a dash. */
+  const owed = !origin || isHumanOrAnimalOrigin(origin);
+  return [
+    origin ? `${origin}${detail ? ` (${detail})` : ''}` : 'not recorded',
+    certificate || (owed ? 'not recorded' : '—'),
+  ];
+}
+
+function rawMaterialOriginSentence(rows: Array<Record<string, any>>): string {
+  const names = (list: Array<Record<string, any>>) => list.map((p) => String(p.materialName)).join(', ');
+  const unrecorded = rows.filter((p) => !rawMaterialOrigin(p));
+  const humanOrAnimal = rows.filter((p) => isHumanOrAnimalOrigin(rawMaterialOrigin(p)));
+  const uncertified = humanOrAnimal.filter((p) => !String(p.tseCertificate || '').trim());
+  return (
+    (unrecorded.length > 0
+      ? `${unrecorded.length} of them (${names(unrecorded)}) record no origin, so whether any is of human or animal origin is not established by this section. `
+      : '') +
+    (humanOrAnimal.length > 0
+      ? `${humanOrAnimal.length} (${names(humanOrAnimal)}) ${humanOrAnimal.length === 1 ? 'is' : 'are'} recorded as of human or animal origin. `
+      : unrecorded.length === 0
+        ? 'None is recorded as of human or animal origin. '
+        : '') +
+    (uncertified.length > 0 ? `No TSE/BSE certificate is recorded for ${names(uncertified)}. ` : '')
+  );
+}
+
 function rawMaterialRendering(
   sources: CanonicalSource[],
 ): { tables: GeneratedTable[]; narrative: string } {
@@ -1972,7 +2014,7 @@ function rawMaterialRendering(
   return {
     tables: [{
       title: 'Raw and Starting Material Specifications',
-      headers: ['Material', 'Role', 'Grade', 'Compendial Monograph', 'Specification', 'Supplier', 'Site'],
+      headers: ['Material', 'Role', 'Grade', 'Compendial Monograph', 'Specification', 'Supplier', 'Site', 'Origin', 'TSE/BSE Certificate'],
       rows: rawMaterials.map((p) => [
         String(p.materialName),
         String(p.materialRole || '—'),
@@ -1981,13 +2023,15 @@ function rawMaterialRendering(
         materialSpecText(p),
         String(p.supplier || '—'),
         String(p.manufacturerSite || '—'),
+        ...rawMaterialOriginCells(p),
       ]),
     }],
     narrative:
       `${rawMaterials.length} raw or starting material specification(s) are recorded for the drug substance, reported above. ` +
       (unspecified.length > 0
         ? `${unspecified.length} of them record neither a specification nor a compendial monograph, so what they are controlled to is not established by this section. `
-        : ''),
+        : '') +
+      rawMaterialOriginSentence(rawMaterials),
   };
 }
 
