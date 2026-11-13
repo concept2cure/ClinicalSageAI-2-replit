@@ -545,7 +545,7 @@ test('first session: create an IND project, add a source, assign, draft with AnA
     const entry = entryIn(page.locator('details[data-phase="phase1"]'));
     await entry.getByRole('button', { name: 'Create from template' }).click();
     await expect(page).toHaveURL(/document-authoring/, { timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: deliverable })).toBeVisible();
+    await expect(page.locator('.ed-bar-id .dcv-bar-t:visible')).toHaveText(deliverable);
   });
 
   await test.step('AnA: the draft request arrives in the conversation, and leads back', async () => {
@@ -556,7 +556,7 @@ test('first session: create an IND project, add a source, assign, draft with AnA
     await checkPreparedEditorAsk(page, programId, deliverable);
     await page.getByRole('button', { name: /^Back to/ }).first().click();
     await expect(page).toHaveURL(/document-authoring/);
-    await expect(page.getByRole('heading', { name: deliverable })).toBeVisible();
+    await expect(page.locator('.ed-bar-id .dcv-bar-t:visible')).toHaveText(deliverable);
   });
 
   await test.step('the editor saves a revision, with its reason', async () => {
