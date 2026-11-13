@@ -46,7 +46,7 @@ import { getSubmissionTypeContext, GLOBAL_REGISTRY } from '../surfaces/RegistryB
 function selFor(id: string) {
   const ctx = getSubmissionTypeContext(id);
   if (!ctx) return null;
-  return { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' } as never;
+  return { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey ?? '' } as never;
 }
 
 describe('the New Project wizard creates the filing type that was chosen', () => {
