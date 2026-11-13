@@ -61,6 +61,7 @@ import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import type { AuthoringDocumentStart } from './useAuthoringCreation';
 import { NOTICE_UUID } from '@shared/types/notification-navigation';
 import { sectionNumberLabel } from '@shared/regulatory/section-code';
+import { revisionPreviewText } from './textDiff';
 import { newDocumentAction } from '../newDocumentAction';
 import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
@@ -250,6 +251,9 @@ interface AuthRevision {
   content_sha256?: string | null;
   chain_sha256?: string | null;
   origin?: string | null;
+  /** The reason given for the change that produced this revision, from the audit trail; null when
+   *  none was recorded for it. */
+  reason?: string | null;
 }
 
 /** How each ledger origin reads to an author. */
@@ -949,6 +953,16 @@ export function readDocumentAccess(raw: unknown, readScope?: unknown): DocumentA
     assignReview: readActGate(a.assignReview),
     placeIntoFiling: readActGate(a.placeIntoFiling),
   };
+}
+
+/**
+ * What the save confirmation calls a section: its number and its title, never a stored key. A name code
+ * (title_page, a controlled document's qms-purpose) has no number, and a template's working heading
+ * ("1.20:work:1") is shown as its node, as the outline shows both (sectionNumberLabel). The confirmation
+ * printed the key itself: "Section saved (qms-purpose)" (S12's sweep, 2026-11-09, finding 11).
+ */
+export function savedSectionName(section: { code?: string | null; title?: string | null }): string {
+  return [sectionNumberLabel(section.code), (section.title ?? '').trim()].filter(Boolean).join(' ') || 'this section';
 }
 
 /**
@@ -3588,8 +3602,8 @@ export function DocumentWorkbench({
            the History rail when nothing did. */
         fireToast(
           (adopted && adopted.revision_count != null
-            ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
-            : `Section saved (${activeSection.code}) — open History to confirm the revision.`) +
+            ? `Section saved — revision ${num(adopted.revision_count)} recorded (${savedSectionName(activeSection)}).`
+            : `Section saved (${savedSectionName(activeSection)}) — open History to confirm the revision.`) +
             filingCommitNote((json as { filing?: unknown } | null)?.filing) +
             machineTextNote((json as { machineText?: unknown } | null)?.machineText)
         );
@@ -5902,8 +5916,11 @@ export function DocumentWorkbench({
                   className="cmt-body"
                   style={{ whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'hidden' }}
                 >
-                  {(r.content ?? '').slice(0, 400) || <span style={{ opacity: 0.6 }}>(empty)</span>}
+                  {revisionPreviewText(r.content) || <span style={{ opacity: 0.6 }}>(empty)</span>}
                 </div>
+                {/* Why the text changed, as the audit trail recorded it with this revision. A comment's
+                    anchor is saved under its own reason, so its revision reads as what it is. */}
+                {r.reason && <div className="cmt-when">Reason: {r.reason}</div>}
                 {/* The word-level redline against the revision before this
                     one (the list is newest-first, so that is the next row).
                     Computed from the two stored contents already loaded —

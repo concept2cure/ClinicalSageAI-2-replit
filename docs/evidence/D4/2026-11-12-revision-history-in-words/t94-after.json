@@ -1,0 +1,43 @@
+{
+ "saves": [
+  {
+   "reason": "Walk 94: the dosage form stated",
+   "said": [
+    "Section saved — revision 2 recorded (1.20 Dosage form, formulation, and route of administration). The text is saved in the editor but not in the filing: This document is not bound to a filing, so there is no governed section to update."
+   ],
+   "versionRightAfter": "v2"
+  },
+  {
+   "reason": "Walk 94: the unit dose added",
+   "said": [
+    "Section saved — revision 3 recorded (1.20 Dosage form, formulation, and route of administration). The text is saved in the editor but not in the filing: This document is not bound to a filing, so there is no governed section to update."
+   ],
+   "versionRightAfter": "v3"
+  }
+ ],
+ "cards": [
+  {
+   "head": null,
+   "body": "The dosage form is an oral capsule. Each capsule holds one dose.",
+   "lines": [
+    "Reason: Walk 94: the unit dose added"
+   ],
+   "markupShown": false
+  },
+  {
+   "head": null,
+   "body": "The dosage form is an oral capsule.",
+   "lines": [
+    "Reason: Walk 94: the dosage form stated"
+   ],
+   "markupShown": false
+  },
+  {
+   "head": null,
+   "body": "(empty)",
+   "lines": [],
+   "markupShown": false
+  }
+ ],
+ "apiFailures": []
+}
