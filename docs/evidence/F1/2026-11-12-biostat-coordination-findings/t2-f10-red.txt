@@ -1,0 +1,22 @@
+ ✓ the engine’s own "revise" on a fragile design > is a real case: adequate verdict, high risk, revise, and no escalation reason
+ × the engine’s own "revise" on a fragile design > lists the fragility and the dimension judged short of adequate — not an empty list
+ × every way the engine reaches "revise" has a reason printed > a marginal dimension is named with its first flag
+ × every way the engine reaches "revise" has a reason printed > a dimension with no flag is named with its rationale; one lacking information is named too
+ × every way the engine reaches "revise" has a reason printed > marginal on the average alone: says so, with the figure and the lowest dimensions
+ ✓ every way the engine reaches "revise" has a reason printed > an escalation reason is not repeated by the dimension it came from
+ × every way the engine reaches "revise" has a reason printed > with nothing recorded at all, it says that and prints no empty list
+ ✓ the other recommendations are unchanged > "proceed" still reads as it did
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 0 to be greater than 0
+AssertionError: expected [] to deeply equal [ Array(1) ]
+AssertionError: expected [] to deeply equal [ Array(1) ]
+AssertionError: expected '## Recommendations\n\nRevision recomm…' to contain 'No single dimension is judged short o…'
+AssertionError: expected '## Recommendations\n\nRevision recomm…' not to contain 'Key concerns:'
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)
+ × the fragility sentence names parameters only when the engine has some > a fragile design with no computed sensitivity point has no empty parenthesis
+ ✓ the fragility sentence names parameters only when the engine has some > a fragile design with sensitivity points still names them
+ ✓ the fragility sentence names parameters only when the engine has some > no category leaves a doubled space where a clause was dropped
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'The design is fragile. Small changes …' not to contain '(especially )'
+      Tests  1 failed | 2 passed | 8 skipped (11)

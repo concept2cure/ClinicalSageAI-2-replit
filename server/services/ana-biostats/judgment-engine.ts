@@ -40,7 +40,17 @@ import {
    their labels (shared/biostat-vocabulary.ts); the verdicts stay the keys. */
 
 /** The power below which a sensitivity point is a breakpoint. */
+/** How the design handles missing data, in one sentence: the modelled method, the design's own words, or none. */
+export function missingDataHandlingSentence(input: StatisticalInput): string {
+  if (input.missingDataMethod) return `Handling: ${vocabPhrase(MISSING_DATA_METHOD_LABELS, input.missingDataMethod)}.`;
+  if (input.missingDataStrategyStated) return `Handling as stated on the design: "${input.missingDataStrategyStated}".`;
+  return 'No method specified.';
+}
+
 export const SENSITIVITY_POWER_THRESHOLD = 0.8;
+/** The mean dimension score at or above which the overall verdict is "adequate". Exported so the document that
+ *  explains a "marginal" verdict states the same figure the verdict was decided on (T2-F10). */
+export const ADEQUATE_MEAN_SCORE = 80;
 
 function roundTo(value: number, places: number): number {
   const f = 10 ** places;
@@ -570,7 +580,12 @@ export class JudgmentEngine {
       flags.push(`Missing data rate of ${(missingRate * 100).toFixed(0)}% is manageable but should be addressed in SAP`);
     }
 
-    if (!input.missingDataMethod) {
+    if (!input.missingDataMethod && input.missingDataStrategyStated) {
+      /* The design states a strategy the engine has no model for. That is not an unstated strategy:
+         no "not specified" penalty, and no opinion on a method the engine cannot assess (T2-F9). */
+      flags.push(`Strategy as stated on the design: "${input.missingDataStrategyStated}"`);
+      flags.push('The engine has no model of this method, so its effect on power and bias is not assessed here');
+    } else if (!input.missingDataMethod) {
       if (phaseOf(input) === 'III') {
         score -= 15;
         flags.push('No missing data handling method specified for Phase III — pre-specify in SAP');
@@ -612,7 +627,7 @@ export class JudgmentEngine {
       name: 'Missing Data Risk',
       verdict,
       score,
-      rationale: `Expected missing rate: ${(missingRate * 100).toFixed(0)}%. ${input.missingDataMethod ? `Handling: ${vocabPhrase(MISSING_DATA_METHOD_LABELS, input.missingDataMethod)}.` : 'No method specified.'}`,
+      rationale: `Expected missing rate: ${(missingRate * 100).toFixed(0)}%. ${missingDataHandlingSentence(input)}`,
       flags,
     };
   }
@@ -731,9 +746,14 @@ export class JudgmentEngine {
       case 'robust':
         return `The design is robust. Power of ${(comp.power * 100).toFixed(1)}% provides adequate margin, and assumptions are well-supported.`;
       case 'moderate':
-        return `The design is moderately sensitive to assumptions. ${params.length > 0 ? `Key parameter(s) have ${params[0].percentMargin.toFixed(0)}% margin before power drops below threshold.` : ''} Consider sensitivity analyses in the SAP.`;
-      case 'fragile':
-        return `The design is fragile. Small changes in assumptions (especially ${params.map(p => parameterLabel(p.parameter).toLowerCase()).join(', ')}) could undermine study conclusions. Strongly recommend formal sensitivity analysis and contingency planning.`;
+        // A clause the engine has no figure for is left out, not left as a doubled space.
+        return `The design is moderately sensitive to assumptions.${params.length > 0 ? ` Key parameter(s) have ${params[0].percentMargin.toFixed(0)}% margin before power drops below threshold.` : ''} Consider sensitivity analyses in the SAP.`;
+      case 'fragile': {
+        /* A design is fragile on its power, dropout, size and defaulted inputs too, so it can be
+           fragile with no sensitivity point computed. It then read "(especially )". */
+        const named = params.map(p => parameterLabel(p.parameter).toLowerCase()).join(', ');
+        return `The design is fragile. Small changes in assumptions${named ? ` (especially ${named})` : ''} could undermine study conclusions. Strongly recommend formal sensitivity analysis and contingency planning.`;
+      }
       case 'very_fragile':
         return `The design is very fragile and should be revisited. Multiple assumptions are at or near breakpoints. The study risks being underpowered under realistic scenario variations. Recommend revising assumptions or increasing sample size before proceeding.`;
     }
@@ -853,7 +873,7 @@ export class JudgmentEngine {
     const hasCritical = dimensions.some(d => d.verdict === 'inadequate');
 
     if (hasCritical) return 'inadequate';
-    if (avg >= 80) return 'adequate';
+    if (avg >= ADEQUATE_MEAN_SCORE) return 'adequate';
     if (avg >= 60) return 'marginal';
     return 'inadequate';
   }

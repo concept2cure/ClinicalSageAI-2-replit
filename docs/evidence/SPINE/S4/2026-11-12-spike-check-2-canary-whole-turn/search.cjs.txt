@@ -1,0 +1,45 @@
+// Where is the canary (the server's provider key), and where is the control marker a person typed?
+// Prints counts and hashes only; neither value is written.
+const fs = require('fs'); const crypto = require('crypto'); const path = require('path');
+const { CANARY, CONTROL } = process.env;
+if (!CANARY || !CONTROL) throw new Error('CANARY and CONTROL must be set');
+const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
+const count = (file, needle) => { // streamed, so a large file is not loaded whole
+  if (!fs.existsSync(file)) return null;
+  const fd = fs.openSync(file, 'r'); const buf = Buffer.alloc(1 << 20); let carry = ''; let n = 0; let read;
+  while ((read = fs.readSync(fd, buf, 0, buf.length, null)) > 0) {
+    const text = carry + buf.toString('latin1', 0, read);
+    let at = -1; while ((at = text.indexOf(needle, at + 1)) !== -1) n++;
+    carry = text.slice(-(needle.length - 1));
+    // a match wholly inside the carried tail was already counted
+    if (carry.includes(needle)) n--;
+  }
+  fs.closeSync(fd); return n;
+};
+const here = (f) => path.join(__dirname, f);
+const requests = fs.readFileSync(here('provider-requests.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+const keyHashes = [...new Set(requests.map(r => r.headers['x-api-key'] && r.headers['x-api-key'].sha256).filter(Boolean))];
+const bodies = requests.map(r => JSON.stringify(r.body));
+const dump = fs.existsSync(here('db-dump.sql')) ? fs.readFileSync(here('db-dump.sql'), 'latin1') : '';
+const tablesWith = (needle) => [...new Set(dump.split('\n').filter(l => l.includes(needle)).map(l => (l.match(/^INSERT INTO ([\w."]+)/) || [])[1]).filter(Boolean))].sort();
+const places = { 'provider request bodies': here('provider-requests.jsonl'), 'browser traffic (HAR)': here('browser.har'),
+  'server log': here('server.log'), 'database dump': here('db-dump.sql'), 'walk log': here('walk-canary.log.txt') };
+const out = {
+  canary: { chars: CANARY.length, sha256: sha(CANARY) }, control: { chars: CONTROL.length, sha256: sha(CONTROL) },
+  providerRequests: requests.length,
+  requestsCarryingAToolResult: bodies.filter(b => b.includes('[Tool Result for ')).length,
+  modelsAsked: [...new Set(requests.map(r => r.body && r.body.model))],
+  keyHeaderHashes: keyHashes, keyHeaderIsTheCanary: keyHashes.length === 1 && keyHashes[0] === sha(CANARY),
+  requestsWithTheKeyHeader: requests.filter(r => r.headers['x-api-key']).length,
+  canaryFound: Object.fromEntries(Object.entries(places).map(([k, f]) => [k, count(f, CANARY)])),
+  controlFound: Object.fromEntries(Object.entries(places).map(([k, f]) => [k, count(f, CONTROL)])),
+  // The random part of the canary alone, so a masked or re-prefixed copy would still be seen; and its base64.
+  canaryRandomPartFound: Object.fromEntries(Object.entries(places).map(([k, f]) => [k, count(f, CANARY.split('-')[4])])),
+  canaryBase64Found: Object.fromEntries(Object.entries(places).map(([k, f]) => [k, count(f, Buffer.from(CANARY).toString('base64').replace(/=+$/, ''))])),
+  // That the log search reads the log at all: the line every start writes.
+  serverLogLines: fs.readFileSync(here('server.log'), 'latin1').split('\n').length, serverLogStartLine: count(here('server.log'), 'Server running on'),
+  tablesHoldingTheControl: tablesWith(CONTROL),
+  dumpBytes: dump.length,
+};
+fs.writeFileSync(here('results.json'), JSON.stringify(out, null, 1) + '\n');
+console.log(JSON.stringify(out, null, 1));

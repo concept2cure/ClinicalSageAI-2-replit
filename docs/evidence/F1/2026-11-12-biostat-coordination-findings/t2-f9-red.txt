@@ -1,0 +1,23 @@
+ × the adapter carries the strategy the design states > a strategy with no engine analogue is passed as stated, with a note saying what the engine does with it
+ ✓ the adapter carries the strategy the design states > a strategy the engine models is mapped as before, and carries no second copy
+ ✓ the adapter carries the strategy the design states > a design that states none passes none
+ × the judgment does not call a stated strategy unstated > quotes the design and takes no "not specified" penalty
+ ✓ the judgment does not call a stated strategy unstated > a design that states none is still told so
+ × the documents quote the strategy instead of asking for one > SAP section draft §7
+ × the documents quote the strategy instead of asking for one > the full SAP §9
+ × the documents quote the strategy instead of asking for one > CSR §9.7.3 states what the plan says
+ ✓ the documents quote the strategy instead of asking for one > a design that states none is still asked for one
+ × AnA’s guidance does not ask for what the design already states > says nothing about pre-specifying a method that is stated
+ × the field survives the request path > the normalizer keeps it, trimmed
+ × the field survives the request path > an AnA tool’s request keeps it; a blank one is dropped
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected undefined to be 'Participants with a missing week-12 a…' // Object.is equality
+AssertionError: expected 'Expected missing rate: 10%. No method…' not to match /No method specified/
+AssertionError: expected '## 7. Missing Data Handling\n\nMissin…' to contain 'Participants with a missing week-12 a…'
+AssertionError: expected '## 9. Missing Data\n\nPre-specify the…' to contain 'Participants with a missing week-12 a…'
+AssertionError: expected '## 9.7.3 Handling of Missing Data\n\n…' to contain 'Participants with a missing week-12 a…'
+TypeError: Cannot read properties of undefined (reading 'id')
+AssertionError: expected undefined to be 'Participants with a missing week-12 a…' // Object.is equality
+AssertionError: expected undefined to be 'Participants with a missing week-12 a…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  8 failed | 4 passed (12)

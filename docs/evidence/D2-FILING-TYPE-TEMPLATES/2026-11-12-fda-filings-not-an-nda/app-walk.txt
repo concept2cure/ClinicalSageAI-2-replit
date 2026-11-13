@@ -1,0 +1,12 @@
+POST /api/c2c/projects on the local app (database migrated by deploy-migrate, 474 files), then GET the project and its dossier.
+
+BEFORE (trunk): each filing sent as the wizard sends it today, programType 'nda'.
+  us_pmr             sent as nda       -> 201 | program_type=nda | dossier: 59 sections counted in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  us_accel_approval  sent as nda       -> 201 | program_type=nda | dossier: 59 sections counted in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  us_rolling         sent as nda       -> 201 | program_type=nda | dossier: 59 sections counted in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+
+AFTER (this change): the wizard's shared rule (programTypeFor) now gives 'protocol' for us_pmr.
+  us_pmr             sent as protocol  -> 201 | program_type=protocol | dossier: 75 sections counted in 1 group(s): clinical trial protocol
+  us_accel_approval  sent as nda       -> 201 | program_type=nda | dossier: 59 sections counted in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  us_rolling         sent as nda       -> 201 | program_type=nda | dossier: 59 sections counted in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  us_pmr sent as nda -> 400 | The selected filing is a clinical trial protocol; create it as that filing, not as "nda". 
