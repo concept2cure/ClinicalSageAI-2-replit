@@ -1723,4 +1723,51 @@ continued runtime health. No implementation hold remains.
 
 2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.
 
+### Codex continued implementation — activity ownership and credential audit, 2026-11-13
+
+The founder asked to continue all existing work after the demo handoff. This **F1 / W1 / D2** slice starts at
+`2a667bf51`; the Anna epic owner's latest note releases all source (`cc5a05d4b7`). The following narrowly scoped
+holds end at canonical publication or **2026-11-14 01:00 UTC**, whichever comes first. Other lanes retain their
+own holds; no plan/ledger or qualification status is changed.
+
+| Holder | Existing files and scope |
+|---|---|
+| Credential agent | `server/services/connectors/connector-registry.ts` prior-state/audit-reason handling only; `server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts` |
+| Activity agent | `client/src/concept2cure/v2/useAgentActivity.ts` background reader only; `client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx` regression coverage |
+| Measured-time agent | `server/services/ana/sub-agent.ts`, `sub-agent-stream.ts`, `run-events.ts`, `turn-plan.ts` for the existing deterministic-check estimate only; existing `sub-agent.test.ts` and `run-coordination-dispositions.test.ts` tests |
+| Credential agent, second bounded repair | Existing connector registry credential-use/search functions; `server/services/integrations/connector-search.ts`, `server/routes/knowledge-base.ts`, `server/services/ana/AnaToolExecutor.ts` connector-search call sites only, and `server/services/deep-research-orchestrator.ts`; existing connector/search regression tests only, named before edits |
+| Activity agent, adjacent fixture repair | `client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx` two stale ordinary-refresh notice cases only; activity source is committed and released to root |
+| Root | This entry, existing `docs/evidence/ANA-AGENTS/2026-09-27/README.md`, integration, Git and the sole full compiler |
+| Root, released estimate display | Existing `useAgentActivity.ts` worker formatter, `AnaWorkPanel.tsx`, `TurnSummary.tsx`, and existing `conversationRemembers.test.tsx` / `turnSummary.test.tsx`; live observation-window expiry and explicitly recorded historical estimates only |
+
+The evidence README's dated **What already exists** inventory precedes implementation. Both agents reproduce
+their specific failures before fixes. Read-only actor-propagation and measured-ETA investigations hold no further
+source beyond the assignments above. Measured-time implementation follows the existing evidence README's explicit
+whole-check timing contract. Root now owns the released worker-time formatter and its existing panel/conversation
+tests. Connector actor propagation follows the evidence README's trusted-caller contract and the exact second
+credential assignment above; the agent names any additional existing regression file before changing it.
+No new source file, screen, route, table, provider, model or dependency is approved by this continuation.
+
+**2026-11-13 implementation and runtime completion:** all assigned source is committed and frozen. Existing
+credential reason suites pass90/90, connector actor suites198/198, measured-check producer suites189/189 and
+the combined activity/Reporting/estimate/Summary UI suites134/134; overlapping counts are not added. Full
+TypeScript passes0 against baseline0 at `15b41dda4`, after fixing four fixture-only type annotations; the two
+affected suites pass121/121. Changed-file lint has no errors or warning growth. Merged doctor126/126 and
+AnA verifier47/47 pass without provider requests. Normal default startup in the existing declared Codespace
+image exits0 and serves that exact candidate; all seven cached stamp/log hashes and modification times remain
+unchanged. Six actual current-account/project UI checks pass, including default-off Show team and all14 existing
+administration credential cards. Zero credential writes, provider turns or page errors. The observed project has
+no running workers and no available overall ETA; no fake progress is inserted. Database/schema/storage are
+healthy; AnA remains explicitly `no_provider`, so this is not a live-model or qualification pass. Independent
+reviews close all in-scope findings. The existing evidence README records the exact scope and limits.
+**All source and evidence holds in this continuation's table release with canonical publication of this entry.**
+Root retains only ordinary Git publication and final version/health verification; the rehearsal agent remains
+runtime/scratch-only. Other lanes' holds and broader roadmap/model acceptance remain unchanged.
+
 **Codex provider/AnA completion repair, 2026-11-13 (F1 W1 D1/D2), completed; holds released by this source commit:** repaired only `scripts/ops/codespaces-doctor.mjs`, `scripts/ops/codespaces-doctor.test.mjs`, `scripts/ops/verify-ana-answers.mjs`, `scripts/ops/verify-ana-answers.test.mjs`, the existing recovery guide's AnA-check paragraph and its own evidence/design packet. Two scoped workers split doctor and AnA verifier; the doctor split private `codespaces-provider-receipt.mjs` and focused `codespaces-doctor-receipt-cases.mjs` inside scripts/ops to preserve lint limits and the existing test command. Root owns integration/Git. Correct false-success completion receipts only; no provider call, new key, route, model or approval change.
+
+## Codespaces and Copilot handoff — 2026-11-13
+
+F1/W1 D1–D2, Codex continuation: holds only `.devcontainer/AGENT_RULES.md` and the existing Codespaces operator guide for canonical pull/start/verification handoff. Ends at publication or 2026-11-13 23:45 UTC, whichever comes first. Existing boot/doctor/demo source is read-only unless an actual reproduced blocker is reserved separately; no other owner is paused. Root owns Git, installation and all runtime/check jobs. Inventory `.design/claude-convergence/F1-CODESPACES-COPILOT-HANDOFF-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/`. No protected instruction/plan change, UI change, new capability or model/credential-policy bypass.
+
+2026-11-13 F1 Codespaces/Copilot handoff source completion: the existing agent rules and single operator procedure are complete; these two documentation holds release with publication. Fresh declared-image setup passes81/81 at its named baseline; integrated focused checks pass173/173 and scoped lint passes. The real synthetic CSR browser rerun passes with119/119 saved bodies, physical draft Word/PDF and scientific preview; the original failed observer and interrupted startup remain explicit. Root retains only its evidence/design/this-entry receipt scope and owned local runtime until the complete normal-start/current-stamp check. No other owner is paused; no provider, qualification or hosted-Codespace acceptance is claimed.

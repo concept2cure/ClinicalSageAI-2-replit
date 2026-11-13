@@ -1,5 +1,144 @@
 # AnA runs multiple agents; Manual/Auto is a real run policy (row 74)
 
+## 2026-11-13 F1 continuation — current activity and unreadable credential custody
+
+The founder asked to continue the whole existing implementation after the Codespace demo publication. This
+bounded repair moves **W1 / D2** under **F1** and starts from canonical `2a667bf51`. It adds no screen, source
+file, route, table, provider, model or dependency and does not declare real model PQ or the Anna epic complete.
+
+### What already exists
+
+`client/src/concept2cure/v2/useAgentActivity.ts` reads the background investigation queue for the conversation,
+eCTD co-author and RBM progress panels. The same file's project-team reader already uses the current
+`authoringCurrentRead.ts` session guard and captured actor headers. The older background reader does not: a late
+response or retained result can outlive an account change, and missing counters/items are coerced into an empty
+success. Extend this reader with the existing ownership guard, strict canonical summary validation and serialized
+polls. Preserve the default-off project-team presentation and its durable monitoring.
+
+`server/services/connectors/connector-registry.ts` already encrypts all fourteen administration credential cards,
+checks management authority and commits each change with its chained audit. Its prior-state decoder currently
+maps both an absent card and unreadable ciphertext to no known old values. Rotation or revocation can then save
+free text containing an old secret that could not be redacted. The existing gateway-account writer already
+distinguishes unreadable prior state and withholds that free-text reason. Extend the connector writer in the same
+way; keep key bytes, grant tombstones, current authority and audit atomicity intact. The existing connector
+PGlite and conversation tests are the regression homes. Current aliases, hosts, contracts and full deletion
+history were searched before edits; no deleted replacement was found.
+
+Only executed regression, integration, compiler and publication results will be recorded as passing below.
+
+**Credential repair verified:** six corrupt/wrong-tenant/wrong-provider rotation/revocation canary cases fail
+against the original source. Independent review then found a decrypted malformed-shape edge; four actual AES
+legacy/envelope cases fail against the first repair. The final three existing suites pass **90/90** (the owned
+PGlite suite is **61/61**, included in that total), with zero changed-file lint errors or warnings. Recovery keeps
+exact replacement bytes, valid grant identity, revoked tombstones, readable reasons and atomic rollback on audit
+failure. Unsupported prior nested/nonstring shapes withhold the free-text reason without changing SDK decoding
+or authority. Independent review reports no remaining in-scope finding. These fixtures use synthetic credentials;
+no live customer/provider credential or external qualification is claimed.
+
+**Activity repair verified:** the old background reader fails **23** new regression cases before the fix; the
+complete existing conversation suite then passes **41/41**, with zero changed-file lint errors or warnings and no
+material independent-review finding. The reader now masks data immediately across actor/access/session changes,
+guards delayed JSON and dispatched actor headers, serializes/coalesces polls, stops hidden polling, and preserves
+ordinary bearer refresh. Invalid summaries or failed reads clear prior data rather than fabricate empty success.
+An initial adjacent run passes 63/65 checks; the two Reporting same-reader refresh-notice failures are reproduced
+against the pre-change baseline and resolved as documented below. These counts overlap and are not summed.
+
+**Adjacent current-session fixture repair.** The two Reporting notice failures also occur against pre-activity
+commit `fc9fe8cf7`; the activity module is absent from their import graph. `Insights.tsx` already uses the shared
+stable-session reader, so re-reading unchanged access retains the report rather than resetting it. Reconcile only
+those two existing tests to require the current report/export DOM and request counts remain unchanged; preserve
+the actual account-switch notice and every different-actor/permission/session/late-read negative control.
+
+**Connector-use continuation.** The existing registry can recheck current user standing and audit a versioned
+credential use, but its search wrappers drop the initiating actor. The knowledge-base route has authenticated
+`authedUserId(req)`, AnA has `ctx.userId`, and asynchronous deep research retains its initiating `request.userId`.
+Carry that trusted positive identity through the existing repository-search orchestration and both pre-auth and
+post-auth credential checks. Missing/invalid foreground identity refuses; explicit server background identity is
+distinct and never inferred from missing user context. Extend the existing standing check to legacy credential
+uses too, without inventing a legacy grant or revision audit. Current upload already retains its requesting actor.
+The actual scoped credential/audit boundary remains the authority, with no ambient global or request-body actor.
+
+### Executed continuation results
+
+- Credential actor propagation: **198/198** across ten existing suites. Eleven original failures demonstrate
+  missing actor attribution, revocation during the real use audit reaching transport, and legacy standing gaps.
+  Final PGlite/Drive fixtures prove zero OAuth/search sends after audit-time revocation, no search after
+  authentication-time revocation, current standing for legacy credentials, and explicit active-organization
+  background use. Trusted route/tool/queued-job actors survive awaits; spoofed or missing foreground actors fail.
+- Measured estimate producer: **189/189** across five existing suites. Original producer and durable-ledger tests
+  fail before implementation. The real child runner and RunCoordinator/PGlite fixture record three observations,
+  both optional aggregate groups, immutable idempotent replay and audit-before-projection. Controlled durations
+  explicitly distinguish lazy imports, ledger and advisory time from actual check samples. These substituted
+  transport/timing fixtures are not provider latency or real model qualification evidence.
+- Current-activity/estimate/Reporting/Summary UI: **134/134** across four existing suites. Six old-format cases and
+  the historical Summary case fail before their respective repairs. The live estimate counts down inside its
+  measured window, uses seconds without an invented minute floor and withdraws when overdue; Summary preserves
+  an explicit as-recorded value/timestamp across elapsed time and reload. The two unrelated Reporting failures
+  were reproduced against the pre-activity module, then reconciled without weakening account-change controls.
+
+These runs overlap earlier component counts and are not summed. Independent reviews found no remaining
+in-scope issue in the credential reason, actor propagation, activity ownership or estimate producer paths.
+All changed paths have no lint errors and no warning-count growth; the existing knowledge-base/executor warning
+counts remain 46/93. No baseline, model admission, privacy, approval, signing or filing gate is loosened.
+The full compiler and actual demo-runtime results follow. Normal publication retains every existing push gate.
+
+### Merged build and actual Codespace-image runtime
+
+- Full TypeScript passes with **zero errors against baseline zero** at `15b41dda4`. The first run exposed four
+  fixture typing errors; tuple-table and PGlite result-row annotations fix them without changing runtime behavior,
+  assertions or baseline. The two affected suites then pass **121/121**, with zero lint errors or warnings, before
+  the successful full compiler. These counts overlap the earlier suite totals.
+- The merged canonical doctor and AnA-verifier checks pass **126/126** and **47/47** on Node 22, respectively,
+  without provider requests. Canonical `50019d14e` is then merged normally; this later delta contains operator
+  instructions and evidence only, with no application or startup-script change. Independent instruction review
+  finds no integration blocker.
+- The ordinary default post-start command in the existing declared Node 22 Codespace image exits **0** and serves
+  exact application revision `15b41dda4517e9cd93959d6dcaf77474e05b6e69`. All seven existing seed stamp/log files retain
+  their SHA-256 and modification time; the current demo tree is `e3c8ebd2de9ebc3780052b5afc93ce61af9a6e2e`.
+  There is no seed replay or installer event. Database, schema and storage are healthy; the three application
+  processes use `app_service`, with no owner credentials, superuser or RLS-bypass privilege. Forwarded Codespace
+  origin login returns 200 and foreign origin returns 403. The private verified DOCX interpreter imports
+  python-docx 1.2.0 and lxml 6.1.1 successfully.
+- **Six actual browser checks pass** against that serving revision: real synthetic Lumen Lead login; current
+  project conversation with Show team initially off; current scoped project-team read; keyboard toggle/off and
+  reload; current-account background activity read; and all **14** existing administration credential cards.
+  PRS/FDA cards retain their explicit storage-only wording. The real project goal is recorded, but there are zero
+  running workers and no available overall ETA; neither worker activity nor a time estimate is manufactured.
+  There are zero page errors, credential writes or provider-turn requests.
+
+This is actual local declared-image startup/browser evidence, not hosted Codespaces acceptance or a live-model
+run. `/readyz` reports HTTP 503 specifically for `ana/no_provider`; database/schema/storage remain healthy.
+Real model PQ, provider latency, customer KMS and regulatory release acceptance remain pending. No model, signing,
+review or filing gate is bypassed. Source holds release with canonical publication of this entry; the final
+ordinary cached restart must compare the served version with that published SHA and preserve the same caches.
+
+**Canonical integration during publication:** the first normal push passes all existing hooks, including all
+89 CI lint gates (zero red), warning-count comparison and full TypeScript (zero errors), then Git refuses the
+ref update because another contributor published `1cddec661`. That disjoint self-service checkout repair is
+inspected and merged normally; its existing billing-control suite passes **13/13** at merged `73e798338`.
+Review finds no integration issue. The first refused update is retained as a failed publication attempt, not a
+successful push. Publication retries all normal hooks; no force push, hook bypass or baseline change is used.
+
+**Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
+but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
+plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`
+already carry their measured counters into immutable progress receipts. Extend those same paths with monotonic
+elapsed observations of each whole deterministic check, including its scoped deterministic reads, with one
+consistent timing boundary. Exclude import, parent hold, ledger and subsequent model/advisory time. Three usable
+assessed observations and a known positive remaining count are required; errors, unavailable checks, invalid
+timing and lifecycle transitions clear the estimate. The range is an explicitly approximate observation-based
+estimate of remaining checks, never calibrated provider p95, worker completion or project/filing readiness.
+Persist the estimate in the idempotent audited snapshot before projection; preserve the existing aggregate-count
+granularity and replay. The existing sub-agent and coordination tests are its regression homes. No retired
+fixture progress bar or constant ETA is restored. The released formatter must avoid rounding a sub-minute
+estimate into an invented one-minute lower bound, count down only within the actual observation window and
+withdraw expired/future or inconsistent measurements. The existing `TurnSummary.tsx` forensic rows need an
+explicit as-recorded estimate and timestamp, preserving immutable numeric history without a live countdown claim.
+Its existing `turnSummary.test.tsx` is the additional regression home; the live team panel shares `useNow` and
+stops its clock when that measured window ends or the panel is hidden.
+
+## Original delivery record — 2026-09-27
+
 Founder-directed on 2026-09-27. This lane moves no D-row, and it is recorded
 on the work-order board as the founder's explicit exception to RULE 2.
 

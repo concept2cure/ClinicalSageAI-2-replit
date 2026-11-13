@@ -14,6 +14,7 @@ import { generateKeyPairSync } from 'crypto';
 
 const h = vi.hoisted(() => ({
   store: new Map<string, string>(),
+  activeOrganizations: new Set<number>(),
   query: vi.fn(),
   requests: [] as Array<{ url: string; auth: string | undefined }>,
 }));
@@ -43,8 +44,13 @@ const realFetch = globalThis.fetch;
 
 beforeEach(() => {
   h.store.clear();
+  h.activeOrganizations.clear();
+  for (const organizationId of [1, 2, 3]) h.activeOrganizations.add(organizationId);
   h.requests.length = 0;
   h.query.mockImplementation(async (sql: string, params: unknown[]) => {
+    if (sql === "SELECT id FROM organizations WHERE id = $1 AND status = 'active'") {
+      return { rows: h.activeOrganizations.has(Number(params[0])) ? [{ id: Number(params[0]) }] : [] };
+    }
     if (/INSERT INTO connector_credentials/.test(sql)) {
       h.store.set(`${params[0]}:${params[1]}`, params[2] as string);
       return { rows: [] };
@@ -74,7 +80,8 @@ afterEach(() => {
   globalThis.fetch = realFetch;
 });
 
-const search = (org: number, connector: string) => searchConnectors(org, [connector], { keywords: ['protocol'] });
+// These transport fixtures delegate explicitly; organization standing is still checked through SQL.
+const search = (org: number, connector: string) => searchConnectors(org, [connector], { keywords: ['protocol'] }, null);
 
 describe('a credentialed connector searches with the caller\'s credentials', () => {
   it('Google Drive: organization B, right after A, searches with its own token', async () => {
@@ -119,6 +126,17 @@ describe('a credentialed connector searches with the caller\'s credentials', () 
     const [c] = await search(3, 'google_drive');
     expect(c.error).toMatch(/not available or not configured/);
     expect(h.requests).toHaveLength(1);
+  });
+
+  it('a delegated search with historical credentials refuses an inactive organization before any provider request', async () => {
+    await seedLegacyCredentials(1, 'box', { clientId: 'box-a', clientSecret: 's-a', baseUrl: '111' });
+    h.activeOrganizations.delete(1);
+
+    const [result] = await search(1, 'box');
+
+    expect(result.error).toMatch(/Connector search failed/);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(h.requests).toEqual([]);
   });
 });
 

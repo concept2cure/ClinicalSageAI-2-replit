@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-11-13T22:32:26.896829+00:00",
+  "elapsedSeconds": 26.378,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "--test",
+    "scripts/ops/verify-ana-answers.test.mjs",
+    "scripts/ops/codespaces-doctor.test.mjs",
+    "scripts/ops/codespaces-startup.test.mjs",
+    "scripts/ops/codespaces-neon-policy.test.mjs",
+    "scripts/ops/codespaces-csr-browser.test.mjs"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "merged-inputs.json",
+  "inputCount": 12722,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "scripts/ops/verify-ana-answers.test.mjs": "07437dc9551a7172e05feea8efb4d18009547cee34aa3ecb766409b6365027b5",
+    "scripts/ops/codespaces-doctor.test.mjs": "ec48bb6aa0285c9c770f2ec77c9b21974bb6b5a1a276cb9a7f153581841d9f69",
+    "scripts/ops/codespaces-startup.test.mjs": "c7693e2a1d779dd31e1ace7e4bcd807ad89d7d2c7a4849aab00491dab4a14277",
+    "scripts/ops/codespaces-neon-policy.test.mjs": "2969914d2e36acc2b58e631f8297e1baaff05658fec52fda1b92e316cd470571",
+    "scripts/ops/codespaces-csr-browser.test.mjs": "db64b9d318850061a85abe2218edc9be91478a8b8e19b6cb50831d2c439f4ca8"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "merged-checks.txt.gz",
+  "outputSha256": "8c41f9871b5e9b0429321345053d83c02cb782ee55ea6bf89e6e267e91e10953",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}
