@@ -1,0 +1,24 @@
+{
+  "startedAt": "2026-11-13T22:56:18.398858+00:00",
+  "elapsedSeconds": 3.259,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx",
+    "client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "final-inputs.json",
+  "inputCount": 8,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "final-licensing-lint.txt.gz",
+  "outputSha256": "f1955352649b9b9fffdf06f5eda903c4fe6201921a441710f46e1e9f3b590c4f",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

@@ -1,0 +1,14 @@
+{
+  "head": "1cddec661e2e2526ef79f613a89e059c71b22b0a",
+  "scope": "Focused licensing source/tests and config/package inputs. Unchanged measured core input identities are checked separately in final-source-bridge.json.",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx": "38584861acbc46fff2b378b151e1723bd39c679ec330a564eccde0593d502c5b",
+    "client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx": "5aa5dfe559df86a3ff10ea514aaf794ecab22c3cbe0aa57ae13cfc79d86876cf",
+    "client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx": "84e31783fd805fa065a2f3990ad2fe76015dc2f70b8c76b677060d09527f5019",
+    "client/src/concept2cure/v2/__tests__/licensingEnterpriseAction.test.tsx": "cd2dd97609918dfa0355a6915419f450c8f63bee81934e65931b473813e2bafd",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd",
+    ".nvmrc": "f14b4987904bcb5814e4459a057ed4d20f58a633152288a761214dcd28780b56"
+  }
+}

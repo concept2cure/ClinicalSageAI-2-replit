@@ -1,0 +1,9 @@
+{
+  "checkoutHead": "75247cc6d7c899b0dda02a7dd3a694381da49900",
+  "versionStatus": 200,
+  "version": {
+    "commit": "75247cc6d7c899b0dda02a7dd3a694381da49900",
+    "startedAt": "2026-11-13T23:25:30.533Z"
+  },
+  "browserPrefix": "collab-"
+}
