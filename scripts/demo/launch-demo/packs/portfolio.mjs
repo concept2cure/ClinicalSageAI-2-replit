@@ -42,6 +42,9 @@
  * document in the ONE editor from the canonical CSR template
  * (component:clinical_study_report), with ICH E3 narrative headings written as
  * saved revisions; reviewer comments; tasks; and the stage's own records.
+ * Its Vault files are download-verified in named project folders. A separate
+ * ninth project retains a completed INTERNAL reference Word/PDF/data handover;
+ * those reference files are unapproved examples, not native CSR exports.
  *
  * NOT EXECUTED, recorded in the manifest with the reason, never faked: the
  * Vault approval and freeze of a study source (two further people), the build
@@ -108,12 +111,14 @@
  * the product's archive route (2026-11-09, docs/evidence/DEMO/portfolio/
  * sponsor-workspaces/local-archive.log) and are not touched by this pack.
  */
-import { connectSigner, demoTitle, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
+import { connectSigner, demoTitle, makeMultiPagePdfBuffer, must } from '../lib.mjs';
 import { asArray, makeTally, NOT_EXECUTED_NO_SIGNER } from './biotech-shared.mjs';
 import { canonicalSubmissionFor } from './biotech-submission.mjs';
 import { ensureAgencyLetter, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
+import { ensurePortfolioFolders, ensurePortfolioVaultFile } from './portfolio-vault.mjs';
+import { ensureInternalHandover, HANDOVER_FILE_LABELS, HANDOVER_TASK_TITLE } from './portfolio-handover.mjs';
 import {
-  ALL_HEADINGS, COMPANIES, HALCYRA_IR_LETTER, HEADING_PATTERNS, KNOWN_PRODUCT_BEHAVIOUR, SPONSOR_WORKSPACES, STAGES, STUDIES, SYNTHETIC,
+  ALL_HEADINGS, COMPANIES, HALCYRA_IR_LETTER, HEADING_PATTERNS, INTERNAL_HANDOVER, KNOWN_PRODUCT_BEHAVIOUR, SPONSOR_WORKSPACES, STAGES, STUDIES, SYNTHETIC,
   buildCsrSource, companyOf, designOwnedElsewhere, existingProjectFor, matchSponsorWorkspace, narrative, protocolSections,
   sapSections, stageTasks, studyDesignFor, workspaceIdOf, workspaceOf,
 } from './portfolio-content.mjs';
@@ -148,6 +153,7 @@ export function plannedTitles() {
     if (needsSource(s)) out.push(T(sourceLabel(s)));
     for (const t of stageTasks(s)) out.push(T(t.title));
   }
+  out.push(T(projectTitle(INTERNAL_HANDOVER)), ...HANDOVER_FILE_LABELS.map(T), HANDOVER_TASK_TITLE);
   return out;
 }
 
@@ -170,6 +176,7 @@ export function projectIntakeBody(study, workspaceId) {
 
 export function objectiveFor(study) {
   const c = companyOf(study);
+  if (study.internalHandover) return `Complete a SYNTHETIC internal demonstration handover for ${c.name}: save and verify unapproved reference Word/PDF files, synthetic study data and a hash inventory, then complete the internal delivery task. Keep the project active so the examples can be opened during presentation; later archival is optional. No clinical approval, signature, regulatory submission or agency acceptance is represented.`;
   return [
     `FICTIONAL demonstration project (${SYNTHETIC}). Sponsor: ${c.name}.`,
     `Goal: author, review, sign and file the ICH E3 Clinical Study Report for study ${study.protocolNumber} (Phase ${study.phase}): ${study.title}.`,
@@ -210,7 +217,7 @@ async function ensureSponsorWorkspaces({ api, run, tally, identity }) {
 async function listProjects(api) {
   const rows = [];
   for (let offset = 0, page = 0; page < 100; page += 1) {
-    const data = must(await api('GET', `/api/c2c/projects?limit=200${offset ? `&offset=${offset}` : ''}`), 200, 'list projects');
+    const data = must(await api('GET', `/api/c2c/projects?limit=200&includeArchived=true${offset ? `&offset=${offset}` : ''}`), 200, 'list projects');
     if (!Array.isArray(data.data)) throw new Error('the project list is unavailable; no project was created');
     rows.push(...data.data);
     if (data.meta?.hasMore !== true) return rows;
@@ -241,45 +248,9 @@ async function ensureProject({ api, run, tally }, projects, study, workspaceId) 
     const detail = must(await api('GET', `/api/c2c/projects/${id}`), 200, `read project ${id}`);
     if (workspaceIdOf(detail) !== workspaceId) throw new Error(`project ${id} is not in client workspace ${workspaceId}; nothing was attached`);
     if (detail.program_type !== study.programType) throw new Error(`project ${id} is not a ${study.programType} project; nothing was attached`);
-    return { id, title: name, programType: study.programType, productName: study.productName, submissionId, clientWorkspaceId: workspaceId };
-  });
-}
-
-async function vaultCandidates(api, programId, query, exactTitle) {
-  const matches = [];
-  let offset = 0;
-  for (let page = 0; page < 100; page += 1) {
-    const r = must(await api('GET', `/api/c2c/project-vault/${programId}/search?q=${encodeURIComponent(query)}&limit=50${offset ? `&offset=${offset}` : ''}`), 200, 'search the project Vault');
-    const d = r.data;
-    if (!Array.isArray(d?.results) || !Number.isSafeInteger(d.total)) throw new Error('the project Vault search was incomplete; no upload was attempted');
-    matches.push(...d.results.filter((e) => e.title === exactTitle));
-    offset += d.results.length;
-    if (offset >= d.total || d.results.length === 0) return matches;
-  }
-  throw new Error('project Vault search exceeded 100 pages');
-}
-
-async function ensureVaultFile({ api, run, tally }, project, spec) {
-  return run.step(`Vault: ${spec.label}`, async () => {
-    const name = T(spec.label);
-    const bytes = spec.bytes();
-    const digest = sha256(bytes);
-    const found = await vaultCandidates(api, project.id, spec.label, name);
-    if (found.length > 1) throw new Error(`the Vault holds ${found.length} current documents titled "${name}"; reconcile before seeding`);
-    if (found[0]) {
-      tally.found('vault-document');
-      return { id: found[0].id, sha256: found[0].contentHash, sameBytes: found[0].contentHash === digest, action: 'found' };
-    }
-    const form = new FormData();
-    form.append('file', new Blob([bytes], { type: spec.mime }), spec.fileName);
-    form.append('programId', project.id);
-    form.append('documentCode', spec.code);
-    form.append('documentTitle', name);
-    form.append('documentType', spec.documentType);
-    const res = must(await api('POST', '/api/vault/ingest', form), 201, `ingest ${spec.label}`);
-    if (!res.document?.id || res.document.contentHash !== digest) throw new Error('the Vault returned no document or another content hash');
-    tally.created('vault-document');
-    return { id: res.document.id, sha256: digest, sameBytes: true, action: 'uploaded', approval: 'not assumed' };
+    if (detail.status === 'archived' && !study.internalHandover) throw new Error(`Archived portfolio study ${id} is not changed by the seed; it was not reopened or modified.`);
+    return { id, title: name, programType: study.programType, productName: study.productName, submissionId, clientWorkspaceId: workspaceId,
+      readOnly: detail.status === 'archived' };
   });
 }
 
@@ -561,20 +532,24 @@ async function seedStudy(c, study, { projects, workspaces, template, notExecuted
     return rec;
   }
   Object.assign(rec, { projectId: project.id, title: project.title, programType: project.programType });
-  rec.protocol = await ensureVaultFile(c, project, {
+  rec.folders = await ensurePortfolioFolders(c, project, { hasSource: needsSource(study) });
+  rec.protocol = await ensurePortfolioVaultFile(c, project, {
+    folderId: rec.folders.documents,
     label: `${study.protocolNumber} protocol · synthetic`, fileName: `${study.protocolNumber.toLowerCase()}-protocol-synthetic.pdf`,
     mime: 'application/pdf', code: `${study.protocolNumber}-PROTOCOL-SYNTHETIC.pdf`, documentType: 'PROTOCOL',
     bytes: pdf(study, `${study.protocolNumber} protocol (fictional)`, protocolSections(study)),
   });
   if (['a', 'c'].includes(study.stage)) {
-    rec.sap = await ensureVaultFile(c, project, {
+    rec.sap = await ensurePortfolioVaultFile(c, project, {
+      folderId: rec.folders.documents,
       label: `${study.protocolNumber} statistical analysis plan · synthetic`, fileName: `${study.protocolNumber.toLowerCase()}-sap-synthetic.pdf`,
       mime: 'application/pdf', code: `${study.protocolNumber}-SAP-SYNTHETIC.pdf`, documentType: 'SAP',
       bytes: pdf(study, `${study.protocolNumber} statistical analysis plan (fictional)`, sapSections(study)),
     });
   }
   if (needsSource(study)) {
-    rec.source = await ensureVaultFile(c, project, {
+    rec.source = await ensurePortfolioVaultFile(c, project, {
+      folderId: rec.folders.data,
       label: sourceLabel(study), fileName: `${study.protocolNumber.toLowerCase()}-csr-source-synthetic-${sourceVersion(study)}.json`,
       mime: 'application/json', code: `${study.protocolNumber}-CSR-SOURCE-${sourceVersion(study)}.json`, documentType: 'OTHER',
       bytes: () => sourceBytes(study),
@@ -626,6 +601,7 @@ export async function seed(ctx) {
   });
   const c = { ...ctx, tally, signer };
   ctx.run.note(`FICTIONAL CSR portfolio: ${COMPANIES.length} invented sponsor companies, each its own client workspace ("(fictional demo)"), ${STUDIES.length} CSR projects at stages a–h. ${SYNTHETIC}. No workspace is marked the organisation's default and no organisation setting is changed.`);
+  ctx.run.note('The separate ninth example is a completed INTERNAL demonstration handover: its unapproved reference files are downloaded and hash-verified before the delivery task is completed. Fresh examples stay active for presentation; existing archived examples are validated without reopening. It is not a native CSR export or a clinical approval.');
   ctx.run.record('companies', COMPANIES);
   const template = await canonicalCsrTemplate(c);
   const workspaces = await ensureSponsorWorkspaces(c);
@@ -634,6 +610,9 @@ export async function seed(ctx) {
   const refused = [];
   const seeded = [];
   for (const study of STUDIES) seeded.push(await seedStudy(c, study, { projects, workspaces, template, notExecuted, refused }));
+  const handoverProject = await ensureProject(c, projects, INTERNAL_HANDOVER, workspaces.get(INTERNAL_HANDOVER.company));
+  const handover = await ensureInternalHandover(c, handoverProject);
+  ctx.run.record('internalHandover', handover);
   const h = seeded.find((r) => r.stage === 'h');
   ctx.run.record('knownProductBehaviour', [{
     ...KNOWN_PRODUCT_BEHAVIOUR,
@@ -641,12 +620,15 @@ export async function seed(ctx) {
   }]);
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   const byWorkspace = SPONSOR_WORKSPACES.map((w) => ({ key: w.key, id: workspaces.get(w.key) ?? null, name: w.name,
-    projects: seeded.filter((r) => r.clientWorkspace.name === w.name).map((r) => ({ stage: r.stage, id: r.projectId, title: r.title })) }));
+    projects: [...seeded.filter((r) => r.clientWorkspace.name === w.name).map((r) => ({ stage: r.stage, id: r.projectId, title: r.title })),
+      ...(w.key === INTERNAL_HANDOVER.company ? [{ stage: 'internal-handover', id: handoverProject.id, title: handoverProject.title }] : [])] }));
   ctx.run.record('notExecuted', notExecuted);
   ctx.run.record('refused', refused);
   ctx.run.record('summary', {
     created: sum(tally.tally.created), found: sum(tally.tally.found), notExecuted: notExecuted.length, refused: refused.length, workspaces: byWorkspace,
     projects: seeded.map((r) => ({ stage: r.stage, id: r.projectId, title: r.title, clientWorkspaceId: r.clientWorkspace.id, csrDocumentId: r.csrDocument?.id ?? null })),
+    internalHandover: { projectId: handoverProject.id, deliveryComplete: handover.deliveryComplete, projectStatus: handover.projectStatus,
+      archived: handover.archived, folderId: handover.folderId, files: handover.files.length },
   });
   console.info(`  summary: created ${sum(tally.tally.created)}, found ${sum(tally.tally.found)}, not executed ${notExecuted.length}, refused ${refused.length}`);
   for (const w of byWorkspace) console.info(`  workspace ${w.id} · ${w.name}: ${w.projects.map((r) => `${r.stage} ${r.id ?? 'REFUSED'}`).join(', ')}`);

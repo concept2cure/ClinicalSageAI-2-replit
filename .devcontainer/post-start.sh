@@ -41,6 +41,8 @@ fi
 
 c2c_blocked() { c2c_log "BLOCKED: $*"; c2c_log "The editor stays open for repair; see .devcontainer and docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md."; exit 0; }
 
+c2c_install_docx_runtime || c2c_blocked "the document Python runtime is unavailable; correct the setting or installation and restart."
+
 if [[ ! -s "$C2C_CODESPACE_STATE/owner.env" || ! -s "$C2C_CODESPACE_STATE/app.env" ]]; then
   c2c_log "No local database state yet; running the setup steps (post-create)."
   ( c2c_install_postgres && c2c_start_postgres && c2c_write_state && c2c_ensure_database ) || c2c_blocked "local PostgreSQL could not be set up."
@@ -124,6 +126,7 @@ c2c_stop_app() {
   pkill -9 -f 'tsx --inspect=0 server/index.ts' 2>/dev/null; sleep 2
 }
 c2c_start_app() {
+  local verified_docx_python="$C2C_VERIFIED_DOCX_PYTHON"
   c2c_log "Starting the app (npm run dev) on port $C2C_PORT; log: $C2C_APP_LOG"
   (
     set -a; . "$C2C_CODESPACE_STATE/app.env"; set +a
@@ -131,7 +134,7 @@ c2c_start_app() {
     if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then VITE_DEV_LOGIN_EMAIL="$(c2c_lumen_person lead)"; fi
     # The people "Demo access" offers to choose from, by account and role (c2c_demo_accounts).
     export VITE_DEMO_ACCOUNTS="$(c2c_demo_accounts)"
-    exec env "${C2C_UNSET[@]}" NODE_ENV=development PORT="$C2C_PORT" ALLOWED_ORIGINS="$C2C_ORIGINS" \
+    exec env "${C2C_UNSET[@]}" NODE_ENV=development ANA_DOCX_PYTHON="$verified_docx_python" PORT="$C2C_PORT" ALLOWED_ORIGINS="$C2C_ORIGINS" \
       setsid nohup npm run dev >"$C2C_APP_LOG" 2>&1 </dev/null
   ) &
   disown || true
@@ -165,12 +168,32 @@ c2c_keys_app_lacks() {
   echo "${missing[*]}"
 }
 
+# A healthy same-commit server can predate this runtime, or a changed explicit interpreter.
+# Read only the named value from its environment, never print process/secret data.
+c2c_app_docx_current() {
+  local pid entry
+  [[ -n "${C2C_VERIFIED_DOCX_PYTHON:-}" ]] || return 1
+  pid="$(pgrep -f 'tsx --inspect=0 server/index.ts' | tail -n 1)"
+  [[ "$pid" =~ ^[0-9]+$ && -r "/proc/$pid/environ" ]] || return 1
+  while IFS= read -r -d '' entry; do
+    if [[ "$entry" == ANA_DOCX_PYTHON=* ]]; then
+      [[ "${entry#ANA_DOCX_PYTHON=}" == "$C2C_VERIFIED_DOCX_PYTHON" ]]
+      return "$?"
+    fi
+  done <"/proc/$pid/environ"
+  return 1
+}
+
 if c2c_app_up; then
   C2C_APP_LACKS="$(c2c_keys_app_lacks)"
   if [[ -n "$C2C_APP_LACKS" ]]; then
     # A newly supplied or corrected key is not applied to an existing process.
     # Restart before diagnostics so the app and this start use the same keys.
     c2c_log "The running app does not have this start's $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
+    c2c_stop_app
+    c2c_start_app
+  elif ! c2c_app_docx_current; then
+    c2c_log "The running app does not use the verified document Python runtime; restarting it."
     c2c_stop_app
     c2c_start_app
   elif ! c2c_app_current; then
@@ -256,6 +279,14 @@ if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_V
   else
     c2c_log "The demo seed did not finish; see $C2C_CODESPACE_STATE/demo-seed.log. It re-runs on the next start."
   fi
+fi
+
+# Its fictional sponsor workspaces are created only after the general packs:
+# project intake must never have to guess between several client workspaces.
+if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" == "$C2C_DEMO_VERSION" ]]; then
+  c2c_seed_portfolio_org "$C2C_DEMO_VERSION"
+else
+  c2c_log "The fictional CSR portfolio waits until the general demo seed finishes."
 fi
 
 # A demonstration is a conversation: the default 15-minute idle sign-out

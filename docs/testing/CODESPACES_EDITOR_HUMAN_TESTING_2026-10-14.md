@@ -71,13 +71,14 @@ the app on port 5000 in development mode and opens it in your browser.
 2. **Create the Codespace on `concept2cure-v2`.** Repository page → **Code** →
    **Codespaces** → **…** → **New with options** → branch `concept2cure-v2` →
    machine type with 4 cores and 16 GB or more → **Create codespace**.
-3. **Wait.** The first creation takes about 15–25 minutes: `npm ci`, the
+3. **Wait.** Allow about 30–45 minutes for the first creation, depending on the
+   machine and package mirrors: `npm ci`, the
    PostgreSQL install, the database provisioning (every migration), the first
    client compile, then the demo seed. The terminal ends with a box that says
    `Concept2Cure is running: https://…-5000.app.github.dev`. That page opens by
    itself. If it does not, open **Ports** and click the globe beside port 5000.
-   Keep the port **Private**. A restart takes a minute or two, and it applies
-   any new migrations first.
+   Keep the port **Private**. A cached restart is quicker; new migrations or
+   changed demo seeds take longer.
 4. **Choose a demo person and sign in.** Under **Sign in as**, the sign-in page
    lists ten people grouped by account: the Lumen lead, reviewer and approver,
    then the development organisation's seven people. **Demo access** signs in
@@ -97,6 +98,32 @@ the app on port 5000 in development mode and opens it in your browser.
    The [three-CSR evidence](../evidence/DEMO/2026-11-12-three-completed-csrs/README.md)
    and [existing sales run of show](../evidence/DEMO/2026-11-10-sales-showcase/README.md)
    give the report names and the other demo scenes.
+   As **Ana Author**, choose a fictional sponsor workspace in **Projects**:
+   Varnhollow Oncology, Petrelline Rare Therapeutics, Quillmont Immunology or
+   Halcyra Vaccines. The separate portfolio seed supplies eight CSR scenarios
+   from planning through review comments and handover preparation.
+
+   In a portfolio project, open **Vault** → **[Demo · Portfolio] Synthetic
+   study records** → **Protocol and analysis · SYNTHETIC** or **Study data ·
+   SYNTHETIC**. These hold actual protocol/SAP PDFs and study JSON where relevant.
+   Open the native CSR separately in the project's documents/editor.
+
+   For the finished internal package, choose **Quillmont Immunology (fictional
+   demo)** and open the project ending
+   **QLM-118-101 completed INTERNAL demonstration handover — SYNTHETIC**.
+   Its Vault parent contains **Completed internal handover · SYNTHETIC**:
+   a Word example report, PDF, synthetic study data and a checksum inventory.
+   The project stays visible in the active list for presentation; its internal
+   delivery task is completed after verifying the saved files.
+   Use **Export Completed internal handover · SYNTHETIC** to collect the four files. This is a completed
+   internal demonstration handover. Its reference files are unapproved examples,
+   separate from the native CSR's scientific review, signatures and regulatory filing.
+
+   Automatic setup runs the portfolio separately after the general demo succeeds.
+   If it needs a retry, run `bash .devcontainer/post-start.sh`; inspect
+   `~/.concept2cure-codespace/portfolio-seed.log`. The pack remains opt-in when
+   using the CLI directly: `npm run demo:seed -- --pack portfolio --base-url
+   http://127.0.0.1:5000 --email ana.author@concept2cure.pro`.
 6. **Optionally show live CSR drafting with a working provider key.** Choose
    **Ana Author**, then **Projects** → **Xanomeline TTS Phase 2
    (CDISCPILOT01)** → **Author** in the project's steps → open **CDISCPILOT01
@@ -110,12 +137,24 @@ the app on port 5000 in development mode and opens it in your browser.
    startup diagnostic does make one small billable drafting probe when the
    configured Anthropic key passes the model-list check, as described below.
 
+   A full build can take tens of minutes. Prepare it before the meeting and
+   reopen that same CSR for the live demonstration; do not create a different
+   CSR or freeze newer study data and expect the prepared build to follow.
+   Show the project goal and Plan, the Vault's sources, the frozen study data
+   and saved report text. Send the document for review before switching to
+   the independent reviewer. Use the existing review board to record the
+   review; do not approve as the author or bypass qualification, scientific
+   review or signing refusals. See the [CSR demo runbook](../evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md#demo-runbook-for-the-founder)
+   and its current-path note. A missing provider blocks the AnA demonstration;
+   manual editing and honestly labelled synthetic scenarios do not establish
+   real model drafting or a completed regulatory filing.
+
 What the setup did, and where to look when something is wrong:
 
 | Step | Where | Log |
 |---|---|---|
 | Dependencies, PostgreSQL 16 + pgvector, the database, the sign-in accounts | `.devcontainer/post-create.sh` | the creation log; `~/.concept2cure-codespace/provision.log` |
-| Database up, new migrations, the app, demo data, the CSR study | `.devcontainer/post-start.sh` | `/tmp/concept2cure-app.log`; `~/.concept2cure-codespace/{demo-seed,csr-study}.log` |
+| Database up, new migrations, the app, demo data, portfolio, the CSR study | `.devcontainer/post-start.sh` | `/tmp/concept2cure-app.log`; `~/.concept2cure-codespace/{lumen-seed,demo-seed,portfolio-seed,csr-study}.log` |
 
 - **Credentials.** `~/.concept2cure-codespace/` is outside the repository, and
   its files are readable only by you. `owner.env` holds the database owner's
@@ -129,8 +168,9 @@ What the setup did, and where to look when something is wrong:
   `bash .devcontainer/post-start.sh`. The start checks the running backend's
   public `/api/version` stamp against the checkout and restarts an older or
   unverified backend. It also restarts when a supplied key is missing or
-  different in the running app. A healthy backend already serving this commit
-  with the same supplied keys is retained.
+  changed in the running app, or the verified document Python runtime
+  is missing from that process. A healthy backend already serving this
+  commit with the same supplied keys and runtime is retained.
   To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
   A terminal opened before a secret was added does not hold that secret; stop and start the Codespace instead.
 - **Check it:** `set -a; . ~/.concept2cure-codespace/app.env; set +a; npm run codespaces:doctor -- --check-app --probe-anthropic`.
@@ -259,13 +299,15 @@ current Codespace's `https://<codespace-name>-5000.app.github.dev`, not another
 person's localhost. The existing server binds `0.0.0.0:5000` and recognizes this
 Codespaces origin. No second frontend server or alternate editor is required.
 
-With the development flags above, use **Demo access** under **DEV ONLY** to
-enter the local development account. This bypass is for this private development
-session. The development server's bootstrap creates the account; the schema
-installer does not. A fresh account has a random, non-recoverable password unless
-the operator supplies `DEMO_USER_PASSWORD`, so do not assume a built-in password
-works. This account bootstrap does not populate a project, filing, document or
-submission. Confirm the signed-in organisation before creating work.
+In the automatically prepared Codespace, use **Sign in as** under **DEV ONLY**
+to choose the required account and person before pressing **Demo access**.
+The Lumen lead is the default when that account is ready; Ana Author and the
+CDISC CSR study are in **Concept2Cure Therapeutics (demo)**. The startup scripts
+seed those accounts and their demo scenarios, as described above. This bypass
+is for the private development session only. If following the manual setup
+instead, the development bootstrap creates its configured account; the schema
+installer does not seed projects or people. Do not assume a built-in password
+works. Confirm the signed-in organisation before creating work.
 
 Arrange three roles through existing account/membership controls: an author,
 an independent current colleague who can receive the review assignment, and a
