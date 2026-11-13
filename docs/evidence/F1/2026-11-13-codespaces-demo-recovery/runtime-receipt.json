@@ -1,0 +1,22 @@
+{
+  "publicImageConfigEquality": {
+    "Env": true,
+    "Entrypoint": true,
+    "Cmd": true,
+    "User": true,
+    "WorkingDir": true,
+    "Labels": true
+  },
+  "localImageId": "sha256:182f76ada5d26c505a36478c4f275e5cfe0618cc6e655cb03cce1a661f789a10",
+  "postCreateExitCode": 0,
+  "actualBrowserRehearsalExitCode": 0,
+  "providerRequestsMade": false,
+  "hostedCodespacesVerified": false,
+  "sourceHashes": {
+    ".devcontainer/post-create.sh": "6396093169ad6d0891e6383defbe85a296f1ed5758f0813aed7dbf75b8792714",
+    ".devcontainer/post-start.sh": "5c7932b2f95728cd22b29f6cce10548e168e44194b7c8150bab7ce2be1a624bc",
+    "scripts/demo/launch-demo/packs/lumen.mjs": "721889e5a21ede066fcad497984abbb284fe63377b484d2782cda6429160146b",
+    "scripts/demo/launch-demo/lumen-report-scope.test.mjs": "7872c3d65b6ac44a55a3641ff558c368f22db47f73d05adb5648f992937c038f",
+    "scripts/ops/codespaces-csr-browser.test.mjs": "db64b9d318850061a85abe2218edc9be91478a8b8e19b6cb50831d2c439f4ca8"
+  }
+}

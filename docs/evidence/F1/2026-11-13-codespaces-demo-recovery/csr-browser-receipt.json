@@ -7,19 +7,19 @@
     "tests": 7,
     "failed": 6,
     "passed": 1,
-    "log": "csr-browser-red.log"
+    "log": "csr-browser-red.txt"
   },
   "green": {
     "tests": 7,
     "failed": 0,
     "passed": 7,
-    "log": "csr-browser-green.log"
+    "log": "csr-browser-green.txt"
   },
   "adjacent": {
     "files": 3,
     "tests": 45,
     "failed": 0,
-    "log": "csr-browser-adjacent.log"
+    "log": "csr-browser-adjacent.txt"
   },
   "syntax": [
     "bash -n .devcontainer/post-start.sh",
