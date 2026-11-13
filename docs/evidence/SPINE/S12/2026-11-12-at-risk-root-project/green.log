@@ -1,0 +1,53 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/submission-ops-at-risk-root-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-at-risk-root-project.test.ts
+{
+  "timestamp": "2026-11-12T23:49:08.199Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a blocker on a work project names the work project and its filing project, with the program a card opens 38ms
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a blocker on a filing project names it as its own root; an ordinary project has no program 8ms
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a reader who can open the work project and not its filing project is not told the filing project 7ms
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > the walk never leaves the organization: a parent in another organization is not a root 7ms
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > keeps every field the row had, and its order 9ms
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/due-soon: each task names its project and the project a card carries > a task due on a work project names its filing project 5ms
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/due-soon: each task names its project and the project a card carries > nothing due: no project read, an empty list 4ms
+stderr | tests/submission-ops-blocker-resolver.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-blocker-resolver.test.ts
+{
+  "timestamp": "2026-11-12T23:49:14.045Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a blocker on a project the caller cannot open is answered as missing, and nothing is written (P-122) 36ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a body naming another resolver is refused, and nothing is written 8ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > resolving records the caller, whose session subject is a string 12ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a body naming the caller themself (as a number) is accepted 8ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a body naming the caller themself (as a string) is accepted 8ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a repeat resolution keeps the original closer and time 13ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > dismissing clears the gate, so it records its closer too 8ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > reopening clears the last closer, who did not set the new state 15ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "closed" is refused, and nothing changes 4ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "Resolved" is refused, and nothing changes 5ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "resolved " is refused, and nothing changes 3ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "done" is refused, and nothing changes 3ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > status "" is refused, and nothing changes 3ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > a next-action edit alone records no closer 6ms
+ ✓ tests/submission-ops-blocker-resolver.test.ts > a blocker is closed by the session user (L195) > another organisation's blocker is 404, and untouched 5ms
+
+ Test Files  2 passed (2)
+      Tests  22 passed (22)
+   Start at  23:49:05
+   Duration  11.71s (transform 2.42s, setup 211ms, import 6.55s, tests 4.55s, environment 0ms)
+
