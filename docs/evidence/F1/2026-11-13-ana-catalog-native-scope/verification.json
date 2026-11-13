@@ -1,0 +1,57 @@
+{
+  "package": "F1",
+  "baselineRevision": "337b87b68",
+  "runtime": "Node v22.23.5",
+  "sourceSha256": {
+    "server/services/ana/document-catalog-data-room.ts": "66f42148d45a8fa35a710859862ae3ff64c9dfe34dabc420ecda02a5253a2fe4",
+    "server/services/ana/__tests__/document-catalog-data-room.test.ts": "fd49eb971e60bba13d2cd0518f8769632edf9bdbdbeec3134dd79e9b11f89eb7"
+  },
+  "red": {
+    "command": "vitest run --config vitest.config.ts server/services/ana/__tests__/document-catalog-data-room.test.ts --reporter=default",
+    "exitCode": 1,
+    "filesFailed": 1,
+    "testsFailed": 17,
+    "testsPassed": 10,
+    "testsSkipped": 0,
+    "durationSeconds": 3.29,
+    "runtimeSourceChanged": false
+  },
+  "green": {
+    "command": "vitest run --config vitest.config.ts server/services/ana/__tests__/document-catalog-data-room.test.ts server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts server/services/ana/__tests__/document-catalog-program-binding.test.ts server/services/ana/__tests__/catalog-scope-platform-role.test.ts server/services/ana/__tests__/document-catalog-safe-errors.test.ts --reporter=default",
+    "exitCode": 0,
+    "filesPassed": 5,
+    "testsPassed": 61,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "durationSeconds": 8.93,
+    "files": {
+      "document-catalog-data-room.test.ts": 27,
+      "document-catalog-tools-project-scope.test.ts": 16,
+      "document-catalog-program-binding.test.ts": 7,
+      "catalog-scope-platform-role.test.ts": 5,
+      "document-catalog-safe-errors.test.ts": 6
+    }
+  },
+  "lint": {
+    "command": "eslint server/services/ana/document-catalog-data-room.ts server/services/ana/__tests__/document-catalog-data-room.test.ts",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "outputBytes": 0
+  },
+  "whitespace": {
+    "command": "git diff --check -- <owned source, test and evidence paths>",
+    "exitCode": 0
+  },
+  "localFullLogSha256": {
+    "red": "af41da5e1f17420ef59d85e88b9bd2a231c8976f5510ddd5ada03615e6d42d46",
+    "green": "185ba44ef418b2d1f4d7c66515576b5dab09c806b4d56f1715733266c9f54da1",
+    "lint": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "limits": [
+    "No provider or live-model calls.",
+    "No full compiler, build or Git mutation by this worker.",
+    "Selected native-context scope loss beyond the 16000-unit excerpt is handed to held existing owners, not fixed here.",
+    "Native source admission, scope filters, source hashes and filing authority unchanged."
+  ]
+}
