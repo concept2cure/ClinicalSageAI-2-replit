@@ -2,6 +2,10 @@
 
 **Scope:** `concept2cure-v2` in `concept2cure/ClinicalSageAI-2-replit`. Use the existing project workflow and one editor. A Codespace editor opening is not application readiness, and a working AI chat is not regulatory drafting qualification.
 
+**Continuing with GitHub Copilot:** start with the [current Codespaces handoff](../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md#github-copilot-codespaces-handoff),
+which the devcontainer already opens. It links the current roadmap, file coordination, shared implementation and
+demo evidence, and explains how an existing Codespace receives published work.
+
 ## 1. Default fresh Codespace: local PostgreSQL and fictional demo data
 
 The repository's `.devcontainer/devcontainer.json` selects Node 22 on Bookworm, requests 4 CPUs, 16 GB memory and 32 GB storage, and forwards port **5000**. Its normal lifecycle is:

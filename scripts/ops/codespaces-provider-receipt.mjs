@@ -41,4 +41,3 @@ export function readableAnthropicReply(body, model) {
     servedModelMatches(body.model, model) && body.stop_reason === 'end_turn' && body.error == null &&
     hasReplyText(body.content, 'text');
 }
-

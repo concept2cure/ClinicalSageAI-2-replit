@@ -38,3 +38,5 @@ node --test scripts/ops/verify-ana-answers.test.mjs scripts/ops/codespaces-docto
 ```
 
 The current configured provider key and authorized hosted Codespace access are still needed for a real live turn. No claim is made about account billing balance, actual model availability, PQ, scientific review, signatures or a complete regulated CSR lifecycle.
+
+Final integration retained canonical `039b714a4` documentation by merge. The combined 173-case check was repeated after removing one extra blank line at the new helper's EOF. `qualification-status.json` binds that final source; `doctor-green-status.json` retains the worker's earlier, functionally identical pre-cleanup helper hash.
