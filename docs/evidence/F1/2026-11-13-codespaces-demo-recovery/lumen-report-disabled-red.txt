@@ -1,0 +1,170 @@
+TAP version 13
+# Subtest: reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+ok 1 - reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+  ---
+  duration_ms: 6.504364
+  type: 'test'
+  ...
+# Subtest: creates missing reports with both canonical program and numeric scope, then passes those runs directly
+ok 2 - creates missing reports with both canonical program and numeric scope, then passes those runs directly
+  ---
+  duration_ms: 2.706505
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor null before writes
+ok 3 - refuses invalid canonical numeric anchor null before writes
+  ---
+  duration_ms: 0.751261
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 0 before writes
+ok 4 - refuses invalid canonical numeric anchor 0 before writes
+  ---
+  duration_ms: 0.338159
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 411 before writes
+ok 5 - refuses invalid canonical numeric anchor 411 before writes
+  ---
+  duration_ms: 0.343777
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor -1 before writes
+ok 6 - refuses invalid canonical numeric anchor -1 before writes
+  ---
+  duration_ms: 0.496437
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 1.5 before writes
+ok 7 - refuses invalid canonical numeric anchor 1.5 before writes
+  ---
+  duration_ms: 0.262325
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+ok 8 - an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+  ---
+  duration_ms: 0.526483
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+ok 9 - an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+  ---
+  duration_ms: 1.417865
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+ok 10 - an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+  ---
+  duration_ms: 1.598697
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+ok 11 - refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+  ---
+  duration_ms: 0.593914
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+ok 12 - refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+  ---
+  duration_ms: 0.441335
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+ok 13 - refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+  ---
+  duration_ms: 0.477159
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"id":0}
+ok 14 - refuses a created report outside the expected settled receipt: {"id":0}
+  ---
+  duration_ms: 0.419912
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"status":"failed"}
+ok 15 - refuses a created report outside the expected settled receipt: {"status":"failed"}
+  ---
+  duration_ms: 0.574816
+  type: 'test'
+  ...
+# Subtest: retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+ok 16 - retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+  ---
+  duration_ms: 3.565569
+  type: 'test'
+  ...
+# Subtest: an older four-report bundle does not suppress the current five-report pack
+ok 17 - an older four-report bundle does not suppress the current five-report pack
+  ---
+  duration_ms: 1.257478
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+ok 18 - refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+  ---
+  duration_ms: 0.396637
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+ok 19 - refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+  ---
+  duration_ms: 0.323237
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+ok 20 - refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+  ---
+  duration_ms: 0.407364
+  type: 'test'
+  ...
+# Subtest: refuses a returned bundle with unexpected members before scheduling
+ok 21 - refuses a returned bundle with unexpected members before scheduling
+  ---
+  duration_ms: 0.386342
+  type: 'test'
+  ...
+# Subtest: leaves foreign schedules intact and creates only platform schedules for the selected project
+ok 22 - leaves foreign schedules intact and creates only platform schedules for the selected project
+  ---
+  duration_ms: 0.663209
+  type: 'test'
+  ...
+# Subtest: an entitlement refusal stays explicitly not executed without inventing a schedule
+ok 23 - an entitlement refusal stays explicitly not executed without inventing a schedule
+  ---
+  duration_ms: 0.39226
+  type: 'test'
+  ...
+# Subtest: retains an explicitly disabled LMN-201 schedule instead of recreating active work
+not ok 24 - retains an explicitly disabled LMN-201 schedule instead of recreating active work
+  ---
+  duration_ms: 1.427109
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:154:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:158:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 23
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 147.869365

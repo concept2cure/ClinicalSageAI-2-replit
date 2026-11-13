@@ -1,0 +1,9 @@
+Fresh pinned browser preparation
+[c2c-codespace] Installing playwright@1.56.1 for the CSR study preparation; log: /root/.concept2cure-codespace/playwright-install.log
+[c2c-codespace] Repairing Chromium and its system dependencies for CSR preparation; log: /root/.concept2cure-codespace/playwright-install.log
+Installed Playwright: 1.56.1
+Healthy retry
+Healthy retry left installer log unchanged
+Matching browser cache absent: repairing through actual helper
+[c2c-codespace] Repairing Chromium and its system dependencies for CSR preparation; log: /root/.concept2cure-codespace/playwright-install.log
+Repaired Chromium launched successfully

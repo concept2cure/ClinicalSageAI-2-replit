@@ -1,0 +1,399 @@
+TAP version 13
+# Subtest: reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+not ok 1 - reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+  ---
+  duration_ms: 3.155355
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:68:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 5
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 5
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:72:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: creates missing reports with both canonical program and numeric scope, then passes those runs directly
+not ok 2 - creates missing reports with both canonical program and numeric scope, then passes those runs directly
+  ---
+  duration_ms: 1.346409
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:83:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 5
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 5
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:85:65)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses invalid canonical numeric anchor null before writes
+not ok 3 - refuses invalid canonical numeric anchor null before writes
+  ---
+  duration_ms: 0.771412
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:91:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:93:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses invalid canonical numeric anchor 0 before writes
+not ok 4 - refuses invalid canonical numeric anchor 0 before writes
+  ---
+  duration_ms: 0.49789
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:91:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:93:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses invalid canonical numeric anchor 411 before writes
+not ok 5 - refuses invalid canonical numeric anchor 411 before writes
+  ---
+  duration_ms: 0.574606
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:91:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:93:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses invalid canonical numeric anchor -1 before writes
+not ok 6 - refuses invalid canonical numeric anchor -1 before writes
+  ---
+  duration_ms: 0.358511
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:91:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:93:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses invalid canonical numeric anchor 1.5 before writes
+not ok 7 - refuses invalid canonical numeric anchor 1.5 before writes
+  ---
+  duration_ms: 0.269526
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:91:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:93:5)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+not ok 8 - an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+  ---
+  duration_ms: 0.415136
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:97:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:98:33)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+ok 9 - an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+  ---
+  duration_ms: 0.400623
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+not ok 10 - an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+  ---
+  duration_ms: 0.774197
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:97:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    4 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 4
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:98:80)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+not ok 11 - refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+  ---
+  duration_ms: 0.460353
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:102:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:103:60)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+not ok 12 - refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+  ---
+  duration_ms: 0.301404
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:102:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:103:60)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+not ok 13 - refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+  ---
+  duration_ms: 0.310788
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:102:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:103:60)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"id":0}
+not ok 14 - refuses a created report outside the expected settled receipt: {"id":0}
+  ---
+  duration_ms: 0.94275
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:102:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:103:60)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"status":"failed"}
+not ok 15 - refuses a created report outside the expected settled receipt: {"status":"failed"}
+  ---
+  duration_ms: 0.281094
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:102:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:103:60)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+not ok 16 - retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+  ---
+  duration_ms: 0.362196
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:109:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:113:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an older four-report bundle does not suppress the current five-report pack
+not ok 17 - an older four-report bundle does not suppress the current five-report pack
+  ---
+  duration_ms: 0.299952
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:119:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:121:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+not ok 18 - refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+  ---
+  duration_ms: 0.370318
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:126:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:127:33)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+not ok 19 - refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+  ---
+  duration_ms: 0.309767
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:126:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:127:33)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+not ok 20 - refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+  ---
+  duration_ms: 0.246591
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:126:3'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:127:33)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: refuses a returned bundle with unexpected members before scheduling
+not ok 21 - refuses a returned bundle with unexpected members before scheduling
+  ---
+  duration_ms: 0.315746
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:132:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:133:61)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: leaves foreign schedules intact and creates only platform schedules for the selected project
+not ok 22 - leaves foreign schedules intact and creates only platform schedules for the selected project
+  ---
+  duration_ms: 0.359501
+  type: 'test'
+  location: '/workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:137:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 2
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 2
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/Concept2cure-V2/scripts/demo/launch-demo/lumen-report-scope.test.mjs:141:75)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: an entitlement refusal stays explicitly not executed without inventing a schedule
+ok 23 - an entitlement refusal stays explicitly not executed without inventing a schedule
+  ---
+  duration_ms: 0.317729
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 2
+# fail 21
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 137.687706
