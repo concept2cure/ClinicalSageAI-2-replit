@@ -1678,3 +1678,7 @@ its file is held; say so here if it is yours):
 3. The assembly is rendered from the build's outputs, not from the signed document's sections (P-115 item 3).
 4. No model has passed qualification, so model-drafted text is not released (P-115 item 1, P-118). Needs the
    founder's provider key.
+
+2026-11-13 F1 Codespaces continuation scoped hold: existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs` only for the reproduced eight-row Uploads preparation blocker. Root owns this repair; no product-screen changes.
+
+2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.
