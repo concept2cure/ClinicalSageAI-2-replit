@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-11-13T22:40:00.983709+00:00",
+  "branch": "concept2cure-v2",
+  "commit": "50019d14e50304d023b6e9e7c945456c74175979",
+  "fetchedRemoteCommit": "50019d14e50304d023b6e9e7c945456c74175979",
+  "pushNativeExitCode": 0,
+  "normalHooksPassed": true,
+  "lintJobGates": 89,
+  "lintJobRed": 0,
+  "typecheck": "Skipped by the normal pushed-typecheck gate: none of 50 changed files can change a type. No compiler pass is claimed.",
+  "sourceWorkingTreeCleanBeforeThisReceipt": true,
+  "publication": "Direct normal push to existing canonical branch, then a fresh authenticated fetch confirmed the same commit. No PR or deployment.",
+  "runtimeCheck": "Pending after the initial ordinary seed completes."
+}
