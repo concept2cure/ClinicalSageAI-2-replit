@@ -261,6 +261,9 @@ class RunCoordinator implements RunCoordinationHost {
       source: input.outcome === 'cancelled' || input.outcome === 'failed' ? undefined : this.sources.get(worker) });
   }
   async message(handle: WorkerCoordinationHandle | null, input: Parameters<RunCoordinationHost['message']>[1]) {
+    input = { ...input,
+      basis: input.basis?.map(row => ({ ...row })),
+      model: input.model ? { ...input.model } : input.model };
     const sender = handle === null ? 'anna' : this.worker(handle);
     const source = this.sources.get(sender);
     const body={operation:'message',sender,recipient:input.recipient,textSha256:input.text===undefined?null:coordinationSha256(input.text),messageKind:input.messageKind??'help'};
