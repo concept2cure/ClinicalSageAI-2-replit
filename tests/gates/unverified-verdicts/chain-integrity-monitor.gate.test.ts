@@ -60,6 +60,7 @@ import {
   stopChainMonitor,
 } from '../../../server/services/audit/chainIntegrityMonitor';
 import { assertNoVerdictClaims } from '../../../scripts/ci/lib/verdict-inspector.mjs';
+import { sealSymbolic } from '../../../server/services/audit/__tests__/_audit-event-chain-fixtures';
 
 type Row = {
   id: number;
@@ -83,8 +84,12 @@ const row = (
   previous_hash: previousHash,
 });
 
-/** A pool that answers the monitor's chain SELECT with `rows`. */
-function poolServing(rows: Row[]) {
+/** A pool that answers the monitor's chain SELECT with `rows`, hashed as the
+ *  trigger hashes them: the monitor's walk re-computes every row's hash
+ *  (services/audit/audit-event-chain.ts), so the named hashes these cases are
+ *  written with ('h1', 'h2') are sealed into the chain they describe. */
+function poolServing(named: Row[]) {
+  const rows = sealSymbolic(named);
   const calls: string[] = [];
   return {
     calls,
@@ -239,7 +244,7 @@ describe('chain integrity monitor: a verdict only when something was verified', 
 
     expect(status.status).toBe('broken');
     expect(status.brokenLinks).toBe(1);
-    expect(status.details).toEqual([{ id: 3, sequenceNumber: 3, orgId: 1 }]);
+    expect(status.details).toEqual([{ id: 3, sequenceNumber: 3, orgId: 1, kind: 'pointer' }]);
     expect(status.unhashedEntries).toBe(1);
     expect(sawIntactLog()).toBe(false);
   });

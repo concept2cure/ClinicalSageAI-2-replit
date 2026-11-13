@@ -61,31 +61,49 @@ describe('audit-trail integrity: the stores', () => {
 });
 
 describe('audit-trail integrity: the verdicts', () => {
-  /* HS-1008-7, honest-state review 2026-10-08. This verdict read "Every one of
-     N rows carries a hash linked to its predecessor" — which reads as the
-     cryptographic linkage the sibling audit_logs verdict genuinely verifies
-     ("re-derives from its predecessor", a chain walk that recomputes). The
-     audit_events check compares stored pointers and never recomputes
-     `record_hash` from the row's content, so a row whose content was altered
-     while its pointers were kept consistent passes it. It is regulator-facing,
-     so the gap between the two had to close from the wording end until the
-     check is migrated onto the re-derivation that already exists in
-     routes/part11-compliance.ts. */
-  it('does not claim to have re-derived row content it only checked pointers for', async () => {
+  /* HS-1008-7, honest-state review 2026-10-08, closed in two steps. This verdict
+     read "Every one of N rows carries a hash linked to its predecessor" over a
+     check that compared stored pointers and re-computed nothing. First the
+     sentence was cut down to the check (2026-10-12). Now the check is the one
+     walk of the chain (services/audit/audit-event-chain.ts), which re-computes
+     each entry's hash as well, and the sentence is the walk's own. */
+  it('says the entries match their recorded hash, and that before and after values are not part of it', async () => {
+    const recomputed: LinkageSnapshot = { ...intactLinkage, verifiedEntries: 3 };
+    const v = await verdicts(ctx({ ok: true, rowsChecked: 5 }, recomputed, sealsOk));
+    const detail = String(v['audit_events linkage'].detail);
+    expect(detail).toMatch(/All 3 audit entries match the hash recorded/);
+    expect(detail).toMatch(/follows the entry before it/);
+    expect(detail, 'the verdict reads as covering the before and after values')
+      .toMatch(/before and after values .* not part of the hash/);
+    expect(v['audit_events linkage'].rows_checked).toBe(3);
+  });
+
+  /* A snapshot with no re-computed count compared pointers only. It is still
+     described as that, never as a re-computation it did not do. */
+  it('does not claim a re-computation for a snapshot that only compared pointers', async () => {
     const v = await verdicts(ctx({ ok: true, rowsChecked: 5 }, intactLinkage, sealsOk));
     const detail = String(v['audit_events linkage'].detail);
-    expect(detail, 'the linkage verdict claimed a content re-derivation it never did')
-      .toMatch(/not re-derived/);
-    expect(detail).toMatch(/previous_hash matches its predecessor/);
+    expect(detail, 'the linkage verdict claimed a re-computation it never did').toMatch(/No hash was re-computed/);
+    expect(detail).not.toMatch(/match the hash recorded/);
     expect(detail).toContain('3');
   });
 
-  /* The sibling verdict verifies more and must keep saying so: if both read the
-     same, a regulator cannot tell a pointer check from a re-derivation. */
-  it('keeps the audit_logs chain verdict distinguishable from the pointer check', async () => {
-    const v = await verdicts(ctx({ ok: true, rowsChecked: 5 }, intactLinkage, sealsOk));
-    expect(String(v['audit_logs hash chain'].detail)).toMatch(/re-derives from its predecessor/);
-    expect(String(v['audit_events linkage'].detail)).not.toMatch(/re-derives from/);
+  /* An altered entry and a broken link are different findings. */
+  it('says which kind of break was found', async () => {
+    const altered: LinkageSnapshot = { status: 'broken', totalEntries: 3, hashedEntries: 3, verifiedEntries: 2, brokenLinks: 1, contentBreaks: 1, pointerBreaks: 0 };
+    const a = await verdicts(ctx({ ok: true, rowsChecked: 5 }, altered, sealsOk));
+    expect(String(a['audit_events linkage'].detail)).toMatch(/1 entry does not match the hash recorded when it was written/);
+
+    const relinked: LinkageSnapshot = { status: 'broken', totalEntries: 3, hashedEntries: 3, verifiedEntries: 3, brokenLinks: 2, contentBreaks: 0, pointerBreaks: 2 };
+    const r = await verdicts(ctx({ ok: true, rowsChecked: 5 }, relinked, sealsOk));
+    expect(String(r['audit_events linkage'].detail)).toMatch(/2 entries do not follow the entry before them/);
+  });
+
+  /* The walk's reason is already a sentence; it is not wrapped in a second one. */
+  it('prints the walk\'s own sentence for a chain that could not be verified', async () => {
+    const gap: LinkageSnapshot = { status: 'unverified', totalEntries: 3, hashedEntries: 2, verifiedEntries: 2, brokenLinks: 0, reason: '1 of 3 audit entries carries no hash, so it could not be verified.' };
+    const v = await verdicts(ctx({ ok: true, rowsChecked: 5 }, gap, sealsOk));
+    expect(v['audit_events linkage']).toMatchObject({ verdict: 'not verified', detail: '1 of 3 audit entries carries no hash, so it could not be verified.' });
   });
 
   it('states three intact checks when all three ran and passed', async () => {
