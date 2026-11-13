@@ -210,6 +210,22 @@ describe('the gate', () => {
     expect(mockAccess).not.toHaveBeenCalled();
   });
 
+  it('never denies a protected path', async () => {
+    process.env.MODULE_ENFORCEMENT = 'enforce';
+    mockAccess.mockResolvedValue({ allowed: false, reason: 'tier' });
+    for (const p of ['/api/module-subscriptions/navigation', '/api/billing/invoices', '/api/audit/x']) {
+      const next = vi.fn();
+      const res = resSpy();
+      await gate(reqFor(p), res, next);
+      expect(next, `${p} must never be gated`).toHaveBeenCalledOnce();
+      expect(res.statusCode).toBe(0);
+    }
+  });
+});
+
+describe('the gate: claimants the catalog does not sell, protected subpaths, recorded paths', () => {
+  const gate = moduleEntitlementGate(buildPrefixMap(SURFACES));
+
   // Running app, 2026-11-12: in 'enforce' the project page, conversations and
   // the admin console were refused to every customer, because the surfaces
   // claiming their prefixes have no catalog row and that read as a refusal.
@@ -259,18 +275,6 @@ describe('the gate', () => {
     expect(collapseIds('/api/concept2cure/projects/10/tasks')).toBe('/api/concept2cure/projects/:id/tasks');
     expect(collapseIds('/api/charters/by-project/b3669da4-aa17-42df-a2dd-de8bdd01c6da/objectives')).toBe('/api/charters/by-project/:id/objectives');
     expect(collapseIds('/api/cmc/module3-board')).toBe('/api/cmc/module3-board');
-  });
-
-  it('never denies a protected path', async () => {
-    process.env.MODULE_ENFORCEMENT = 'enforce';
-    mockAccess.mockResolvedValue({ allowed: false, reason: 'tier' });
-    for (const p of ['/api/module-subscriptions/navigation', '/api/billing/invoices', '/api/audit/x']) {
-      const next = vi.fn();
-      const res = resSpy();
-      await gate(reqFor(p), res, next);
-      expect(next, `${p} must never be gated`).toHaveBeenCalledOnce();
-      expect(res.statusCode).toBe(0);
-    }
   });
 });
 

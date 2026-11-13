@@ -224,6 +224,20 @@ describe('GET /licensing/history — the decisions, newest first', () => {
     expect(res.body.entries[0].changed).toEqual({ requestId: 99, grantedModules: ['ectd'] });
   });
 
+  it('passes the workspace and module filters through to the read', async () => {
+    wireQuery({});
+    await request(makeApp())
+      .get('/api/admin/master/licensing/history')
+      .query({ organizationId: '7', moduleId: 'cmc' });
+
+    const call = queryMock.mock.calls.find((c) => /FROM audit_logs a/.test(c[0] as string));
+    const params = call![1] as unknown[];
+    expect(params[1]).toBe(7);
+    expect(params[2]).toBe('cmc');
+  });
+});
+
+describe("GET /licensing/history — an owner's answer to an access request", () => {
   it("an owner's answer to an access request is not repeated as raw tokens and ids", async () => {
     // What module-access-requests.ts records (6fd195ef88). The action names the
     // answer, the row names the workspace, and every row here is the owner's.
@@ -275,18 +289,6 @@ describe('GET /licensing/history — the decisions, newest first', () => {
     });
     const res = await request(makeApp()).get('/api/admin/master/licensing/history');
     expect(res.body.entries[0].changed).toEqual({ moduleId: 'cmc', organizationId: 7, granted: true, requestedBy: 5 });
-  });
-
-  it('passes the workspace and module filters through to the read', async () => {
-    wireQuery({});
-    await request(makeApp())
-      .get('/api/admin/master/licensing/history')
-      .query({ organizationId: '7', moduleId: 'cmc' });
-
-    const call = queryMock.mock.calls.find((c) => /FROM audit_logs a/.test(c[0] as string));
-    const params = call![1] as unknown[];
-    expect(params[1]).toBe(7);
-    expect(params[2]).toBe('cmc');
   });
 });
 

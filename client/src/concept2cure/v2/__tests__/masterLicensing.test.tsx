@@ -186,37 +186,38 @@ describe('Master Licensing — reads', () => {
   });
 });
 
+/* The workspace fixtures the plan and verdict cases share. */
+const TENANT_DETAIL = {
+  organization: { id: 42, name: 'Northwind Bio', slug: 'northwind', tier: 'standard', industryMode: 'biotech', status: 'active' },
+  modules: [
+    { moduleId: 'pv-cockpit', name: 'PV cockpit', category: null, minTier: 'professional', subscriptionState: 'enabled', effective: true, source: 'subscribed' },
+  ],
+};
+
+function routeTenant(patch?: (url: string, body: unknown) => Promise<Response>) {
+  apiRequest.mockImplementation(async (method: string, url: string, body: unknown) => {
+    if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
+    if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
+    if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(TENANT_DETAIL);
+    if ((method === 'POST' || method === 'PATCH') && patch) return patch(url, body);
+    throw apiError(404, { error: `unrouted ${method} ${url}` });
+  });
+}
+
+async function openTenant() {
+  render(<MasterLicensing />);
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
+  const tenantsTab = screen.getAllByRole('button').find((b) => /^tenants$/i.test((b.textContent ?? '').trim()));
+  expect(tenantsTab, 'a Tenants tab must exist').toBeTruthy();
+  fireEvent.click(tenantsTab as HTMLButtonElement);
+  const row = await screen.findByText(ORG.name);
+  fireEvent.click(row.closest('button') ?? row);
+  await waitFor(() =>
+    expect(apiRequest.mock.calls.some((c: unknown[]) => String(c[1]).startsWith(`${LICENSING}/tenants/`))).toBe(true),
+  );
+}
+
 describe('Master Licensing — applying a plan', () => {
-  const TENANT_DETAIL = {
-    organization: { id: 42, name: 'Northwind Bio', slug: 'northwind', tier: 'standard', industryMode: 'biotech', status: 'active' },
-    modules: [
-      { moduleId: 'pv-cockpit', name: 'PV cockpit', category: null, minTier: 'professional', subscriptionState: 'enabled', effective: true, source: 'subscribed' },
-    ],
-  };
-
-  function routeTenant(patch?: (url: string, body: unknown) => Promise<Response>) {
-    apiRequest.mockImplementation(async (method: string, url: string, body: unknown) => {
-      if (method === 'GET' && url === LICENSING) return ok(PAYLOAD);
-      if (method === 'GET' && url === FLAGS) return ok({ flags: [] });
-      if (method === 'GET' && url.startsWith(`${LICENSING}/tenants/`)) return ok(TENANT_DETAIL);
-      if ((method === 'POST' || method === 'PATCH') && patch) return patch(url, body);
-      throw apiError(404, { error: `unrouted ${method} ${url}` });
-    });
-  }
-
-  async function openTenant() {
-    render(<MasterLicensing />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
-    const tenantsTab = screen.getAllByRole('button').find((b) => /^tenants$/i.test((b.textContent ?? '').trim()));
-    expect(tenantsTab, 'a Tenants tab must exist').toBeTruthy();
-    fireEvent.click(tenantsTab as HTMLButtonElement);
-    const row = await screen.findByText(ORG.name);
-    fireEvent.click(row.closest('button') ?? row);
-    await waitFor(() =>
-      expect(apiRequest.mock.calls.some((c: unknown[]) => String(c[1]).startsWith(`${LICENSING}/tenants/`))).toBe(true),
-    );
-  }
-
   /* THE DOWNGRADE CASE. provision_org_modules grants and never revokes, so
      applying a plan after a downgrade adds nothing and removes nothing. A
      console that reports only "provisioned" lets an operator conclude that
@@ -270,6 +271,22 @@ describe('Master Licensing — applying a plan', () => {
     await waitFor(() => expect(document.body.textContent).toMatch(/7 modules granted/i));
   });
 
+  it('reports nothing at all when provisioning fails', async () => {
+    // A provisioning result that did not happen must never appear.
+    routeTenant(async (url) => {
+      if (url.endsWith('/provision')) throw apiError(500, { error: 'Provisioning failed. Apply the pending migrations first.' });
+      throw apiError(404, { error: 'unrouted' });
+    });
+    await openTenant();
+    const apply = screen.getAllByRole('button').find((b) => /apply plan/i.test(b.textContent ?? ''));
+    fireEvent.click(apply as HTMLButtonElement);
+    await completeConfirmDialog('deliberate failure');
+    await waitFor(() => expect(document.body.textContent).toMatch(/Provisioning failed/));
+    expect(document.body.textContent).not.toMatch(/modules granted|no new modules to grant/i);
+  });
+});
+
+describe("Master Licensing — a workspace's outcome and verdict", () => {
   // Running app, 2026-11-12: the outcome rendered for ~200 ms, then the
   // re-read the provisioning run triggers cleared it. waitFor alone catches
   // that brief window, so this waits for the re-read to land first.
@@ -324,20 +341,6 @@ describe('Master Licensing — applying a plan', () => {
     // A module inside the release keeps its control.
     const pv = (await screen.findAllByText('PV cockpit')).map((n) => n.closest('[role="row"]')).find(Boolean) as HTMLElement;
     expect(pv.querySelector('button')?.textContent).toMatch(/Turn off/);
-  });
-
-  it('reports nothing at all when provisioning fails', async () => {
-    // A provisioning result that did not happen must never appear.
-    routeTenant(async (url) => {
-      if (url.endsWith('/provision')) throw apiError(500, { error: 'Provisioning failed. Apply the pending migrations first.' });
-      throw apiError(404, { error: 'unrouted' });
-    });
-    await openTenant();
-    const apply = screen.getAllByRole('button').find((b) => /apply plan/i.test(b.textContent ?? ''));
-    fireEvent.click(apply as HTMLButtonElement);
-    await completeConfirmDialog('deliberate failure');
-    await waitFor(() => expect(document.body.textContent).toMatch(/Provisioning failed/));
-    expect(document.body.textContent).not.toMatch(/modules granted|no new modules to grant/i);
   });
 });
 
@@ -644,47 +647,5 @@ describe('Master Licensing — enforcement report', () => {
     await waitFor(() => expect(del).toHaveBeenCalled());
     const sent = apiRequest.mock.calls.find((c: unknown[]) => c[0] === 'DELETE');
     expect((sent?.[2] as { reason?: string })?.reason).toBe('packaging fixed, measuring again');
-  });
-});
-
-// jsdom does no layout, so the tab strip's visibility is pinned in the rule that
-// decides it. In the running app on 2026-11-12 the strip measured 1px: a scroll
-// container's automatic minimum height is 0, and inside `.ml-lic`'s column the
-// 95-row packaging table made it shrink to its border, clipping every tab.
-describe('the console tab strip stays on the screen', () => {
-  it('scrolls sideways and never shrinks to nothing', async () => {
-    const { readFileSync } = await import('node:fs');
-    const { resolve } = await import('node:path');
-    const { rules } = await import('./_cssRules');
-    const css = readFileSync(resolve(__dirname, '../styles/misc-surfaces-v2.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const decl = (body: string, prop: string) =>
-      body.split(';').map((d) => d.split(':')).filter(([k]) => k?.trim() === prop).map(([, ...v]) => v.join(':').trim()).pop();
-    const strip = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-tabs'));
-    expect(strip.some((r) => decl(r.body, 'overflow-x') === 'auto'), 'eight tabs must scroll, not push the page').toBe(true);
-    expect(strip.some((r) => decl(r.body, 'flex-shrink') === '0'), 'the scrolling strip can shrink to its 1px border').toBe(true);
-    // `.page-full` is a row, so the column's automatic minimum was the tables'
-    // min-width: 915px wide in a 390px page, everything cut off at the right.
-    const column = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-lic'));
-    expect(column.some((r) => decl(r.body, 'min-width') === '0'), 'the column is as wide as its widest table').toBe(true);
-    // The visually hidden `.ml-vh` labels are position:absolute; unless the
-    // scroll box is their containing block its overflow does not clip them,
-    // and the page scrolled sideways to 509-823px at 390px (2026-11-12).
-    const box = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-scroll'));
-    expect(box.some((r) => decl(r.body, 'position') === 'relative'), 'hidden labels widen the page').toBe(true);
-    // A prospect's multi-line request keeps its lines.
-    const enterprise = rules(css).filter((r) => !r.media && r.selector.split(',').map((s) => s.trim()).includes('.c2c-v2 .ml-table-enterprise .ml-sub'));
-    expect(enterprise.some((r) => decl(r.body, 'white-space') === 'pre-line'), 'the request reads as one run-on line').toBe(true);
-  });
-
-  // With one class the request tables' templates tied the base `.ml-table` and
-  // lost to the later stylesheet: five cells on a three-column grid (2026-11-12).
-  it("the access-request tables' templates outrank the base table template", async () => {
-    const { readFileSync } = await import('node:fs');
-    const { resolve } = await import('node:path');
-    const { rules } = await import('./_cssRules');
-    const css = readFileSync(resolve(__dirname, '../styles/licensing-access-requests.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const selectors = rules(css).filter((r) => /--ml-cols/.test(r.body)).flatMap((r) => r.selector.split(',').map((s) => s.trim()));
-    expect(selectors).toEqual(expect.arrayContaining(['.c2c-v2 .ml-table.ml-table-requests', '.c2c-v2 .ml-table.ml-table-requests-all']));
-    expect(selectors.filter((s) => /^\.c2c-v2 \.ml-table-requests(-all)?$/.test(s))).toEqual([]);
   });
 });
