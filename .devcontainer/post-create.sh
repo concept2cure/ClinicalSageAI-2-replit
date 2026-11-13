@@ -104,6 +104,72 @@ c2c_install_export_tools() {
   return 0
 }
 
+# The existing document worker needs the same two pinned packages as Dockerfile.optimized.
+# Probe imports as well as metadata: a cache marker cannot detect a removed/broken module.
+c2c_docx_runtime_ready() {
+  "$1" -I - "${@:2}" >/dev/null 2>&1 <<'PY'
+import sys
+from importlib.metadata import version
+import docx
+import lxml.etree
+for requirement in sys.argv[1:]:
+    name, expected = requirement.split('==', 1)
+    if version(name) != expected:
+        raise RuntimeError('document runtime pin differs')
+PY
+}
+c2c_install_docx_runtime() {
+  local pin_text requirement explicit_python docx_count=0 lxml_count=0
+  local runtime="$C2C_CODESPACE_STATE/docx-runtime" log="$C2C_CODESPACE_STATE/docx-runtime.log"
+  local python="$C2C_CODESPACE_STATE/docx-runtime/bin/python"
+  local -a requirements
+  unset C2C_VERIFIED_DOCX_PYTHON
+  pin_text="$(awk '$1 ~ /^(python-docx|lxml)([<>=!~]|$)/ {print $1}' "$C2C_REPO_ROOT/requirements.txt" 2>/dev/null)" || pin_text=''
+  mapfile -t requirements <<< "$pin_text"
+  for requirement in "${requirements[@]}"; do
+    [[ "$requirement" =~ ^(python-docx|lxml)==[0-9][0-9A-Za-z.+!-]*$ ]] || break
+    case "$requirement" in python-docx==*) docx_count=$((docx_count+1));; lxml==*) lxml_count=$((lxml_count+1));; esac
+  done
+  if [[ "${#requirements[@]}" != 2 || "$docx_count" != 1 || "$lxml_count" != 1 ]]; then
+    c2c_log "BLOCKED: requirements.txt must contain one exact python-docx pin and one exact lxml pin."
+    return 1
+  fi
+  if [[ -n "${ANA_DOCX_PYTHON:-}" && "$ANA_DOCX_PYTHON" != "$python" ]]; then
+    explicit_python="$(type -P -- "$ANA_DOCX_PYTHON")" || explicit_python=''
+    if [[ -n "$explicit_python" && "$explicit_python" != /* ]]; then explicit_python="$PWD/$explicit_python"; fi
+    if [[ -z "$explicit_python" ]] || ! c2c_docx_runtime_ready "$explicit_python" "${requirements[@]}"; then
+      c2c_log "BLOCKED: ANA_DOCX_PYTHON does not provide the pinned document runtime; correct that explicit setting."
+      return 1
+    fi
+    C2C_VERIFIED_DOCX_PYTHON="$explicit_python"
+    export ANA_DOCX_PYTHON="$explicit_python"
+    return 0
+  fi
+  unset ANA_DOCX_PYTHON
+  if ! c2c_docx_runtime_ready "$python" "${requirements[@]}"; then
+    install -d -m 700 "$C2C_CODESPACE_STATE" || return 1
+    c2c_log "Installing the pinned document Python runtime; log: $log"
+    ( umask 077; : >"$log" ) || return 1
+    if ! python3 -I -m venv "$runtime" >>"$log" 2>&1; then
+      export DEBIAN_FRONTEND=noninteractive
+      if ! c2c_sudo apt-get update -qq >>"$log" 2>&1 ||
+         ! c2c_sudo apt-get install -y -qq --no-install-recommends python3-venv >>"$log" 2>&1 ||
+         ! python3 -I -m venv "$runtime" >>"$log" 2>&1; then
+        c2c_log "BLOCKED: Python virtual-environment support could not be installed; see $log."
+        return 1
+      fi
+    fi
+    if ! "$python" -I -m pip install --disable-pip-version-check --no-input --force-reinstall "${requirements[@]}" >>"$log" 2>&1 ||
+       ! c2c_docx_runtime_ready "$python" "${requirements[@]}"; then
+      c2c_log "BLOCKED: the pinned document Python runtime could not be verified; see $log. A later start retries."
+      return 1
+    fi
+  fi
+  C2C_VERIFIED_DOCX_PYTHON="$python"
+  export ANA_DOCX_PYTHON="$python"
+  c2c_log "Document Python runtime verified."
+}
+
 # Start (creating if needed) the cluster, listening on localhost only. The
 # packaged pg_hba.conf (peer for the postgres OS user, scram-sha-256 on
 # 127.0.0.1) is used unchanged.
@@ -335,6 +401,23 @@ c2c_seed_lumen_org() {
   fi
 }
 
+# The presenter explicitly opted in to the fictional CSR portfolio. Keep its CLI
+# separate from "all" and run it afterwards, once the general projects exist.
+c2c_seed_portfolio_org() {
+  local version="$1|$DEMO_SEED_EMAIL" marker="$C2C_CODESPACE_STATE/portfolio-seed.done"
+  local log="$C2C_CODESPACE_STATE/portfolio-seed.log"
+  [[ "$(cat "$marker" 2>/dev/null)" == "$version" ]] && return 0
+  c2c_log "Seeding the fictional CSR portfolio as $DEMO_SEED_EMAIL; log: $log"
+  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
+      npm run --silent demo:seed -- --pack portfolio --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
+      >"$log" 2>&1; then
+    printf '%s\n' "$version" >"$marker"
+    c2c_log "Fictional CSR portfolio seeded: open Projects as Ana Author and choose a fictional sponsor workspace."
+  else
+    c2c_log "The fictional CSR portfolio did not finish; see $log. It re-runs on the next start."
+  fi
+}
+
 # Every person "Demo access" offers (client DemoAccounts.tsx), as email|name|organisation|role entries separated by
 # ";": the Lumen account's three people, then the development organisation's roster. Only accounts that exist.
 c2c_demo_role() {
@@ -378,6 +461,10 @@ c2c_post_create_main() {
   # Match CI: fail rather than allowing a partially installed npm tree to look
   # complete. Do not delete/change the lockfile to hide an install error.
   c2c_install_deps
+
+  # The native runtime tests create venvs too; ensure their prerequisite before
+  # running them on the base image (which may not include ensurepip).
+  c2c_install_docx_runtime
 
   # Native self-tests do not use a credential or a database.
   npm run codespaces:doctor:test

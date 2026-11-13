@@ -25,6 +25,113 @@ person.
 | The CSR path with a provider | `docs/evidence/D2-CSR/2026-11-10-build-provider-refusals/` | Walked against a strict stand-in for the provider; says what still stands between the CSR and a filed sequence |
 | Watching a CSR being written | `docs/evidence/D2-CSR/2026-11-10-live-drafting-view/` | The live drafting view and "Resume build" |
 
+### 2026-11-13 continuation: startup and browser proof
+
+This continuation picks up Claude's canonical `d06fb86ec` and moves W1 / D2 under **F1**, finishing the existing
+Codespace and demo verification. It adds no screen, route, service, table, model or production dependency.
+
+**What already exists:** `.devcontainer/post-create.sh` installs and provisions the local database with separate
+owner/runtime credentials; `.devcontainer/post-start.sh` starts the current revision and seeds the existing demo.
+The first dependency-log redirect previously preceded creation of its private state directory. The existing
+`scripts/ops/codespaces-startup.test.mjs` now exercises that actual shell recovery branch. Claude's provider-key
+fingerprint/restart checks remain in place. The auto-opened editor handoff now describes the current Lumen chooser,
+three synthetic reports, human review and current model qualification boundary.
+
+`.github/workflows/tier5-browser-smoke.yml` already provisions the real schema and runs four browser suites.
+`scripts/run-e2e-smoke.mjs` already seeds its login identity and passes the environment to the browser, while
+`tests/e2e/dev-auth-helper.ts` correctly refuses an unnamed identity. The job now supplies the same explicit
+fictional seed/browser account; no authentication gate or anonymous negative control is weakened.
+The existing authenticated smoke also expected a former person's name; its greeting must instead identify the
+current authenticated account, while the anonymous case refuses any personalized Home greeting. The existing
+keyboard walk needs accurate visibility/paint observation: Vault's hidden upload inputs are not tab stops, and
+RBM's existing composer frame changes its visible border on `:focus-within`. Its checker is extended with bounded
+frame observation and positive/negative controls; the product's skip target and focus styling are preserved.
+`tests/e2e/golden-customer-journey.e2e.ts` still called the retired project creator and expected a stored title in
+AnA's prompt. It now uses the existing canonical creator's UUID and integer-anchor receipt, and verifies the fixed
+neutral prompt plus exact saved-section context. Its bounded capture aborts before provider transport and proves
+client request preparation only. The retired creator is not restored. Full deletion-history searches of these
+existing startup, workflow and journey paths found no deleted replacement to revive.
+The existing `tests/e2e/helpers.ts` is also the home for the journey's reusable authenticated browser request;
+its unrelated seed-file login helper remains lazy and is not used by this fixture-free path. Current UI checks
+scope Vault navigation to the active Command palette. The editor's one-use return link is checked before sending;
+the captured send consumes that origin as designed, and a fresh saved editor context is checked independently.
+
+Initial checks: all three private-state regressions fail against the preceding shell branch; the full Codespaces
+suite passes **64/64** on Node 22. The smoke identity contract fails four cases before the workflow correction and
+passes **6/6** afterward, including the actual helper's refusal before fetch. These are component checks. Fresh
+devcontainer startup, actual browser checks, compiler, normal push and remote receipt are recorded below only
+after completion; earlier green CI skipped its conditional Codespace rehearsal.
+
+The actual configured devcontainer filesystem/configuration now completes `post-create.sh`: fresh locked
+dependencies, all 64 checks on the image's Node 22.16, PostgreSQL 16 + pgvector, canonical provisioning, separate
+non-owner runtime credentials, fictional accounts, Chromium, Noto fonts, LibreOffice and `xmllint`. This runner's
+VFS layer-copying exhausted its 32 GiB disk on a normal image pull. The rehearsal therefore exports the same
+official amd64 image filesystem and imports a single layer with the original runtime configuration; it changes
+no repository or Codespace configuration. Original image manifest:
+`sha256:a32008c8fa6eaa28f8974577d28dc83e23e2d0fb939cb7b17ce65ed8a9b13f72`.
+
+Actual default startup serves the app with database/schema/storage healthy. Forwarded-origin dev sign-in answers
+200; a foreign origin answers 403. The app holds only its `app_service` runtime DSN, with no owner credential;
+native PostgreSQL verifies NOSUPER/NOBYPASS. Model readiness truthfully remains unavailable without keys.
+Actual authenticated reads find three completed synthetic reports, each with **119 sections and 119 nonempty saved
+contents**, frozen study/source hashes and three pending reviewer tasks. This establishes saved demo content, not
+scientific approval or model qualification. The complete host compiler passes **0 errors / baseline 0**, and the
+changed-source warning count does not grow. These are overlapping checks, not additive totals.
+
+**Completed execution, 2026-11-13:** the default Lumen browser walk passes **13/13** checks with no API or page
+errors: the ten-person chooser defaults to Lead and works by keyboard, all three exact completed reports contain
+119 nonempty sections, the synthetic-data banner and scientific-review hold remain visible, and Reviewer sees
+three tasks and opens LMN-301's exact linked document. Lead and Reviewer also fit the 390-pixel viewport without horizontal
+overflow. One actual working-copy PDF is 126,363 bytes, 19 pages, with DRAFT on every page; its SHA-256 is
+`f4fd6889ba25dabc5c78f4d3dde6a66e936e0fbaac2856483dc618899dbf63e7`.
+
+The actual browser suites pass all **22 access-boundary cases**, **2 authenticated/anonymous app cases**, and
+**10 keyboard page cases** across their focused runs. The keyboard checker separately passes **9 qualification
+controls**, including refusal of absent, transparent and zero-width focus paint. The initial combined run exposed
+the former-name greeting and two keyboard-observation false positives; these counts describe the corrected runs,
+not a sum of the initial and repeat runs. No product focus style, access gate or authentication helper is changed.
+
+The first image startup finished its ordinary demo seeds but did not finish CDISC preparation: Node 22.16's fetch
+did not use this managed runner's HTTPS proxy. The unchanged existing public-CDISC fetcher was therefore run with
+Node 22.23.4's environment-proxy support and the runner's trusted CA. All ten existing source hashes verified;
+unchanged bytes were copied to the private cache outside Git and verified again inside the image. This is a
+runner adaptation, not a product or hosted Codespace network change. The subsequent regular `post-start.sh`
+completes with exit 0 and **7/7 actual preparation steps**: canonical project, fictional IND identity, seven Vault
+uploads, three-person review/signature/approval, New document, Build from the study's data, and eleven table
+previews frozen into the document. Demo/Lumen cache and CSR-ready markers are present.
+
+For the golden browser journeys only, that second startup supplied the existing CI launcher's
+`EXPORT_REVIEW_GATE=enforce` in the process environment. This preserves the pre-review 403 assertion. Ordinary
+development Codespaces permit a labelled uncontrolled DRAFT preview; production enforces the review gate. The
+final regular startup must restore the ordinary default, and no product export policy is amended for a test.
+
+This rehearsal uses the configured official-image filesystem locally; it is not a claim that this session created
+a hosted GitHub Codespace. No provider key, paid model call, real client credential, agency submission, model PQ
+pass or scientific approval was exercised. The attached architecture is already mapped in the current plan's
+Anna epic (P-104/P-105); its remaining model qualification gates (P-118) stay pending.
+
+The canonical `cd5f9c95a` changes are also integrated: the existing CSR browser bootstrap now repairs incomplete
+Chromium installations, Lumen report selection verifies LMN-201's canonical project scope, and the AnA verifier
+requires an actual completed provider receipt. The combined checkout passes **71/71** `codespaces:doctor:test`
+checks, **49/49** focused demo regressions and **31/31** verifier checks. These test fixtures establish control
+behavior; they do not establish live provider generation. Their original source/evidence packets are preserved at
+`docs/evidence/F1/2026-11-13-codespaces-demo-recovery/` and `docs/evidence/F1/2026-11-13-openai-ana-verifier/`.
+The subsequent `b0300fe5c` integration also preserves its existing document-runtime and portfolio handover repairs.
+The latest combined startup suite passes **81/81**, superseding the earlier 71-case result; portfolio checks pass
+**46/46**, and the changed validation harness's explicit-identity checks pass **3/3**. Independent source reviews
+found no blocking interaction. These overlapping fixture sets are not added together. Actual default startup and
+report-scope acceptance follow at the merged revision; no earlier runtime observation is relabelled as that check.
+
+Both full golden journeys now pass across focused strict-policy browser runs. The governed-record journey proves
+canonical project creation, source/provenance links, saved edits, stale-version refusal, a pre-review export 403,
+independent reviewer assignment/decision and a review-bound DOCX still marked draft and not agency validated.
+The first-session UI journey proves IND creation, source upload, assignment, the exact neutral AnA request and
+same-document return, a reasoned saved revision, review to a second person with a required future deadline, and
+that person's real Home task. Its actual review POST answers 200 and records the selected UTC due day on one route
+task. Current toolbar/receipt selectors and the required due field replace stale test assumptions; no review gate
+is weakened. The first journey passed twice unchanged; the final second-only run passes in 24.2 seconds. All
+browser workers are closed. The prepared AnA send was deliberately aborted before provider transport.
+
 ## Before the room
 
 1. **Codespaces secrets** (GitHub, Settings, Codespaces, Secrets, for this repository). Never typed into a chat.

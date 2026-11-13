@@ -6,8 +6,9 @@
  * For each surface it presses Tab up to MAX_STOPS times and records every stop:
  * what received focus, whether it is visible, whether it sits under
  * aria-hidden, and whether focusing it changed how it looks. The last is
- * measured, not inferred from CSS: each stop's outline, box-shadow, border and
- * background are read while focused and again once focus has moved on, and a
+ * measured, not inferred from CSS: each stop's painted outline, shadow, border
+ * and background are read focused/unfocused. A composer's one enclosing focus
+ * frame is compared with its unfocused baseline too. A
  * stop whose appearance did not change has no visible focus indicator
  * (WCAG 2.2 2.4.7). It then presses Shift+Tab once and checks focus returns to
  * the previous stop, and checks that focus moves at all and is not held in a
@@ -81,11 +82,7 @@ async function skipLinkReachesContent(page: Page): Promise<boolean> {
   const onTarget = await page.evaluate(() => document.activeElement?.id === 'c2c-page');
   // A surface with no control of its own (an empty state with nothing to do)
   // has nowhere inside for the next Tab to land; landing on it is the bypass.
-  const hasControls = await page.evaluate(() =>
-    Array.from(
-      document.querySelectorAll<HTMLElement>('#c2c-page :is(a[href], button, input, select, textarea, [tabindex])'),
-    ).some(el => el.tabIndex >= 0 && !(el as HTMLButtonElement).disabled),
-  );
+  const hasControls = await tabbableCount(page, '#c2c-page :is(a[href], button, input, select, textarea, [tabindex])');
   if (!hasControls) return onTarget;
   await page.keyboard.press('Tab');
   const inside = await page.evaluate(() => {
@@ -95,16 +92,61 @@ async function skipLinkReachesContent(page: Page): Promise<boolean> {
   return onTarget && inside;
 }
 
+/** Measure actual paint, including the existing D0 composer's single focus frame. */
+async function installPaintProbe(page: Page) {
+  await page.evaluate(() => {
+    const w = window as unknown as Record<string, unknown>;
+    const transparent = (color: string) => {
+      const value = color.trim().toLowerCase();
+      if (value === 'transparent') return true;
+      if (value.includes('/')) return parseFloat(value.split('/').at(-1)!) === 0;
+      const rgba = value.startsWith('rgba(') ? value.slice(5, -1).split(',') : [];
+      return rgba.length === 4 && parseFloat(rgba[3]) === 0;
+    };
+    const painted = (style: string, width: string, color: string) =>
+      style !== 'none' && style !== 'hidden' && parseFloat(width) > 0 && !transparent(color);
+    const look = (el: Element) => {
+      const cs = window.getComputedStyle(el);
+      const outline = painted(cs.outlineStyle, cs.outlineWidth, cs.outlineColor)
+        ? [cs.outlineStyle, cs.outlineWidth, cs.outlineColor] : null;
+      const borders = ['Top', 'Right', 'Bottom', 'Left'].map(side => {
+        const [style, width, color] = ['Style', 'Width', 'Color'].map(part => cs.getPropertyValue(`border-${side.toLowerCase()}-${part.toLowerCase()}`));
+        return painted(style, width, color) ? [style, width, color] : null;
+      });
+      const shadow = cs.boxShadow.split(/,(?![^(]*\))/).filter(value => {
+        const color = value.match(/(?:rgba?|hsla?|color|lab|lch|oklab|oklch)\([^)]*\)|transparent/i)?.[0] ?? '';
+        const lengths = value.replace(color, '').match(/-?\d+(?:\.\d+)?px/g) ?? [];
+        return !transparent(color) && lengths.some(length => parseFloat(length) !== 0);
+      });
+      const decoration = cs.textDecorationLine !== 'none' && !transparent(cs.textDecorationColor)
+        ? [cs.textDecorationLine, cs.textDecorationColor] : null;
+      return JSON.stringify([outline, borders, shadow, transparent(cs.backgroundColor) ? null : cs.backgroundColor, decoration]);
+    };
+    const frames = '.landing-composer, .pj-composer, .ct-composer, .rbm-ana-composer, .pj-search';
+    const rest = new WeakMap<Element, string>();
+    document.querySelectorAll(frames).forEach(frame => rest.set(frame, look(frame)));
+    const frameFor = (el: Element) => {
+      if (!el.matches('input, textarea, [contenteditable="true"]')) return null;
+      const frame = el.closest(frames);
+      if (!frame || frame === el) return null;
+      const box = frame.getBoundingClientRect(), control = el.getBoundingClientRect();
+      return box.width > 0 && box.height > 0 && box.left <= control.left && box.top <= control.top &&
+        box.right >= control.right && box.bottom >= control.bottom ? frame : null;
+    };
+    w.__kbLookPaint = look; w.__kbFocusFrame = frameFor; w.__kbFrameRest = rest;
+  });
+}
+
 /** Installs the per-page probe: describe the focused element and snapshot its look. */
 async function installProbe(page: Page) {
+  await installPaintProbe(page);
   await page.evaluate(() => {
     const w = window as unknown as Record<string, unknown>;
     const seen: Element[] = [];
-    const looks: string[] = [];
-    const look = (el: Element) => {
-      const cs = window.getComputedStyle(el);
-      return [cs.outlineStyle, cs.outlineWidth, cs.outlineColor, cs.boxShadow, cs.borderColor, cs.backgroundColor, cs.textDecorationLine].join('|');
-    };
+    const looks: Array<{ self: string; enclosingFrame: boolean }> = [];
+    const look = w.__kbLookPaint as (el: Element) => string;
+    const frameFor = w.__kbFocusFrame as (el: Element) => Element | null;
+    const rest = w.__kbFrameRest as WeakMap<Element, string>;
     const describe = (el: Element) => {
       const r = el.getBoundingClientRect();
       const cs = window.getComputedStyle(el);
@@ -128,38 +170,43 @@ async function installProbe(page: Page) {
         underAriaHidden: Boolean(el.closest('[aria-hidden="true"]')),
       };
     };
-    w.__kbStep = () => {
+    w.__kbStep = async () => {
+      await new Promise<void>(done => requestAnimationFrame(() => requestAnimationFrame(() => done())));
       const el = document.activeElement;
       // Close the previous stop: its look now, unfocused, against its look focused.
       let previousIndicator: boolean | null = null;
       if (seen.length > 0) {
         const prev = seen[seen.length - 1];
-        previousIndicator = prev.isConnected ? look(prev) !== looks[looks.length - 1] : null;
+        const focused = looks[looks.length - 1];
+        previousIndicator = prev.isConnected ? look(prev) !== focused.self || focused.enclosingFrame : null;
       }
       if (!el || el === document.body || el === document.documentElement) {
         return { body: true, previousIndicator, repeatOf: -1 };
       }
       const repeatOf = seen.indexOf(el);
       seen.push(el);
-      looks.push(look(el));
+      const frame = frameFor(el);
+      looks.push({ self: look(el), enclosingFrame: !!frame && rest.has(frame) && look(frame) !== rest.get(frame) });
       return { body: false, previousIndicator, repeatOf, ...describe(el) };
     };
     w.__kbIsPrevious = () => seen.length >= 2 && document.activeElement === seen[seen.length - 2];
   });
 }
 
-async function tabbableCount(page: Page) {
+async function tabbableCount(page: Page, selector = 'a[href], button, input, select, textarea, [tabindex], [contenteditable="true"], summary') {
   return page.evaluate(
-    () =>
+    query =>
       Array.from(
-        document.querySelectorAll<HTMLElement>(
-          'a[href], button, input, select, textarea, [tabindex], [contenteditable="true"], summary',
-        ),
+        document.querySelectorAll<HTMLElement>(query),
       ).filter(el => {
-        if ((el as HTMLButtonElement).disabled || el.tabIndex < 0) return false;
+        if ((el as HTMLInputElement).type === 'hidden' || (el as HTMLButtonElement).disabled ||
+          el.matches(':disabled') || el.tabIndex < 0 || el.hidden || el.closest('[inert]')) return false;
         const r = el.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && window.getComputedStyle(el).visibility !== 'hidden';
+        const cs = window.getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && el.getClientRects().length > 0 && cs.display !== 'none' &&
+          cs.visibility !== 'hidden' && cs.visibility !== 'collapse' && Number(cs.opacity) > 0;
       }).length,
+    selector,
   );
 }
 
@@ -246,6 +293,55 @@ function verdict(rec: SurfaceRecord) {
     }
   }
 }
+
+/** Qualify the measurement itself before using it as a product verdict. */
+test.describe('Keyboard probe qualification', () => {
+  const skipFixture = (contents: string) => `
+    <a href="#c2c-page" onclick="event.preventDefault();document.getElementById('c2c-page').focus()">Skip to content</a>
+    <button id="outside">Outside navigation</button>
+    <div id="c2c-page" tabindex="-1">${contents}</div>`;
+
+  test('an empty skip target does not acquire controls from hidden file inputs', async ({ page }) => {
+    await page.setContent(skipFixture('<input type="file" hidden><input type="hidden">'));
+    expect(await skipLinkReachesContent(page)).toBe(true);
+  });
+
+  test('the next Tab still has to enter a visible control in the skip target', async ({ page }) => {
+    await page.setContent(skipFixture('<input type="file" hidden><button>Current surface action</button>'));
+    expect(await skipLinkReachesContent(page)).toBe(true);
+  });
+
+  test('a visible control that redirects focus outside still fails the skip check', async ({ page }) => {
+    await page.setContent(skipFixture('<button onfocus="document.getElementById(\'outside\').focus()">Broken surface action</button>'));
+    expect(await skipLinkReachesContent(page)).toBe(false);
+  });
+
+  const focusCases: Array<{ name: string; css: string; visible: boolean; frame?: string }> = [
+    { name: 'visible enclosing composer border', css: '.rbm-ana-composer:focus-within { border-color: rgb(173,81,50); }', visible: true },
+    { name: 'visible enclosing search frame', frame: 'pj-search', css: '.pj-search:focus-within { border-color: rgb(173,81,50); box-shadow:0 0 0 3px rgb(249,241,225); }', visible: true },
+    { name: 'missing focus paint', css: '', visible: false },
+    { name: 'transparent outline', css: 'textarea:focus { outline: 2px solid transparent; }', visible: false },
+    { name: 'zero-width outline', css: 'textarea:focus { outline: 0 solid rgb(173,81,50); }', visible: false },
+    { name: 'zero-width border color', css: 'textarea:focus { border-color: rgb(173,81,50); }', visible: false },
+  ];
+  for (const example of focusCases) {
+    test(`measures ${example.name}`, async ({ page }) => {
+      await page.setContent(`<style>
+        .focus-frame { width:280px; padding:8px; border:1px solid rgb(127,125,117); }
+        textarea { width:240px; height:28px; border:0 solid rgb(127,125,117); outline:none; background:white; }
+        ${example.css}
+      </style><div class="focus-frame ${example.frame ?? 'rbm-ana-composer'}"><textarea aria-label="Current input"></textarea></div>
+      <button>Next action</button>`);
+      await resetToDocumentStart(page);
+      await installProbe(page);
+      await page.getByRole('textbox', { name: 'Current input' }).focus();
+      await page.evaluate(() => (window as any).__kbStep());
+      await page.getByRole('button', { name: 'Next action' }).focus();
+      const step = await page.evaluate(() => (window as any).__kbStep());
+      expect(step.previousIndicator).toBe(example.visible);
+    });
+  }
+});
 
 test.describe('Keyboard pass — sign-in and the launch catalog', () => {
   test('sign-in page', async ({ page }) => {

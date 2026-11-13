@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { browserApi } from './helpers';
 
 const JOURNEY = {
   email: process.env.GOLDEN_JOURNEY_EMAIL ?? 'e2e-author@trialsage.test',
@@ -41,64 +42,58 @@ async function login(page: Page, email: string, password: string) {
   }
 }
 
-async function browserApi<T>(
-  page: Page,
-  method: 'GET' | 'POST' | 'PUT',
-  path: string,
-  body?: unknown
-): Promise<{ status: number; headers: Record<string, string>; body: T }> {
-  return page.evaluate(
-    async ({ method, path, body }) => {
-      const token = localStorage.getItem('trialsage_access_token');
-      const response = await fetch(path, {
-        method,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: body === undefined ? undefined : JSON.stringify(body),
-      });
-      const headers = Object.fromEntries(response.headers.entries());
-      const contentType = response.headers.get('content-type') ?? '';
-      const responseBody = contentType.includes('json')
-        ? await response.json()
-        : { byteLength: (await response.arrayBuffer()).byteLength };
-      return { status: response.status, headers, body: responseBody };
-    },
-    { method, path, body }
-  ) as Promise<{ status: number; headers: Record<string, string>; body: T }>;
-}
-
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SECTION_DRAFT_ASK = 'Draft this section from the linked section evidence.';
+
+interface CanonicalProjectReceipt {
+  data: { id: string; title: string };
+  meta: { created: boolean; organizationId: number; actorUserId: number; projectAnchorId: number };
+}
 
 function payload<T>(response: { body: any }): T {
   return (response.body.data ?? response.body) as T;
 }
 
-async function authenticatedPage(
-  context: BrowserContext,
-  email: string,
-  password: string
-): Promise<Page> {
+/** Creation uses the same canonical intake as Projects; artifacts keep its integer anchor. */
+async function createJourneyProject(page: Page) {
+  const profile = await browserApi<{ id: string; organizationId: string }>(page, 'GET', '/api/auth/me');
+  expect(profile.status).toBe(200);
+  const actor = payload<{ id: string; organizationId: string }>(profile);
+  const created = await browserApi<CanonicalProjectReceipt>(page, 'POST', '/api/c2c/projects', {
+    name: JOURNEY.projectName, programType: 'ind', primaryAgency: 'FDA', submissionTypeId: 'us_ind',
+    productType: 'Drug', productName: 'Synthetic compound C2C-001',
+    indication: 'Clearly labelled synthetic browser-workflow record.',
+  });
+  expect(created.status).toBe(201);
+  const receipt = created.body;
+  expect(receipt.data).toMatchObject({ id: expect.stringMatching(UUID), title: JOURNEY.projectName });
+  expect(receipt.meta).toMatchObject({ created: true, organizationId: Number(actor.organizationId), actorUserId: Number(actor.id) });
+  expect(Number.isSafeInteger(receipt.meta.projectAnchorId)).toBe(true);
+  expect(receipt.meta.projectAnchorId).toBeGreaterThan(0);
+  const program = await browserApi(page, 'GET', `/api/c2c/projects/${receipt.data.id}`);
+  expect({ status: program.status, data: payload(program) }).toMatchObject({ status: 200,
+    data: { id: receipt.data.id, name: JOURNEY.projectName } });
+  const project = await browserApi(page, 'GET', `/api/concept2cure/projects/${receipt.meta.projectAnchorId}`);
+  expect(project.status).toBe(200);
+  expect(payload(project)).toMatchObject({ id: `proj_${receipt.meta.projectAnchorId}`, name: JOURNEY.projectName,
+    organizationId: Number(actor.organizationId) });
+  return { id: receipt.meta.projectAnchorId, programId: receipt.data.id };
+}
+
+async function authenticatedPage(context: BrowserContext, email: string, password: string): Promise<Page> {
   const page = await context.newPage();
   await login(page, email, password);
   return page;
 }
 
-test('fixture-free golden journey persists evidence, content edits, review, provenance, and governed draft export', async ({
-  browser,
-}, testInfo) => {
+test('fixture-free golden journey persists evidence, content edits, review, provenance, and governed draft export', async ({ browser }, testInfo) => {
   // Generous, not arbitrary: this drives three authenticated browser contexts
   // through a dozen governed round-trips, and a CI runner is several times
   // slower than a developer machine. A ceiling that only a hang can reach.
   test.setTimeout(300_000);
   const reviewerContext = await browser.newContext();
-  const reviewerPage = await authenticatedPage(
-    reviewerContext,
-    JOURNEY.reviewerEmail,
-    JOURNEY.reviewerPassword
-  );
+  const reviewerPage = await authenticatedPage(reviewerContext, JOURNEY.reviewerEmail, JOURNEY.reviewerPassword);
   const reviewerProfile = await browserApi<any>(reviewerPage, 'GET', '/api/auth/me');
   expect(reviewerProfile.status).toBe(200);
   const reviewerId = Number(payload<any>(reviewerProfile).id);
@@ -107,14 +102,7 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
   const authorContext = await browser.newContext();
   const page = await authenticatedPage(authorContext, JOURNEY.email, JOURNEY.password);
 
-  const createdProject = await browserApi<any>(page, 'POST', '/api/concept2cure/projects', {
-    name: JOURNEY.projectName,
-    submissionType: 'IND',
-    description: 'Clearly labeled deterministic synthetic browser-test record.',
-    product: 'Synthetic compound C2C-001',
-  });
-  expect(createdProject.status).toBe(201);
-  const project = payload<{ id: number }>(createdProject);
+  const project = await createJourneyProject(page);
 
   const invalidArtifact = await browserApi(
     page,
@@ -317,13 +305,14 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
   // The Artifacts center folded into the Vault (D2, fold F3 slice C, 2026-10-29):
   // with no project open, the Vault lists the governed artifacts of every project
   // the author can open, with the gallery's governance line. Open it from the
-  // sidebar's Search (the top bar's search box went in D1-2), by accessible names: the
+  // current command palette, by accessible names: the
   // path client/src/concept2cure/v2/__tests__/shellNav.test.tsx pins. A direct URL load
   // bounces back to Home (the shell restores its own state on a cold load).
-  await page.locator('nav[aria-label="Primary"]').getByRole('button', { name: /^Search/ }).first().click();
+  await page.getByRole('button', { name: 'Search, jump, or run a command', exact: true }).click();
+  const palette = page.getByRole('dialog', { name: 'Command palette', exact: true });
   // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
-  await page.getByPlaceholder(/^Search projects, conversations and pages/).fill('Vault');
-  await page.getByRole('button', { name: /^Vault/ }).first().click();
+  await palette.getByPlaceholder(/^Search projects, conversations and pages/).fill('Vault');
+  await palette.getByRole('button', { name: 'Vault', exact: true }).click();
   // Anchor on the row's testid, not the exact title: the listing truncates
   // long titles in the cell text, so an exact-text locator can never match.
   // The governance label is the claim under test and is asserted verbatim.
@@ -351,6 +340,7 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
       JSON.stringify(
         {
           projectId: project.id,
+          programId: project.programId,
           evidenceArtifactId: evidence.id,
           artifactId: artifact.id,
           provenance: payload(provenance),
@@ -364,8 +354,7 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
     ),
     contentType: 'application/json',
   });
-  await authorContext.close();
-  await reviewerContext.close();
+  await Promise.all([authorContext.close(), reviewerContext.close(), adminContext.close()]);
 });
 
 /** The New project wizard, as a person fills it: an IND for a drug. */
@@ -378,7 +367,83 @@ async function createIndProject(page: Page, projectName: string) {
   await page.getByLabel('Product type').selectOption('Drug');
   await page.getByLabel('Target submission date').fill('2027-03-31');
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: /Create project/ }).click();
+  const [response] = await Promise.all([
+    page.waitForResponse(response => new URL(response.url()).pathname === '/api/c2c/projects' && response.request().method() === 'POST'),
+    page.getByRole('button', { name: /Create project/ }).click(),
+  ]);
+  expect(response.status()).toBe(201);
+  const receipt = await response.json() as CanonicalProjectReceipt;
+  expect(receipt.data.id).toMatch(UUID);
+  expect(Number.isSafeInteger(receipt.meta.projectAnchorId)).toBe(true);
+  return receipt;
+}
+
+/**
+ * Observe the client's actual prepared request, then abort before the server
+ * or any provider receives it. This proves saved UI context, not model output,
+ * server admission, scientific validity or performance qualification.
+ */
+async function checkPreparedEditorAsk(page: Page, programId: string, documentTitle: string) {
+  const route = '**/api/ana-ri/stream';
+  const abort = (request: import('@playwright/test').Route) =>
+    request.request().method() === 'POST' ? request.abort('aborted') : request.continue();
+  await page.route(route, abort);
+  try {
+    const [request] = await Promise.all([
+      page.waitForRequest(request => new URL(request.url()).pathname === '/api/ana-ri/stream' && request.method() === 'POST'),
+      page.getByRole('button', { name: 'Send message to AnA', exact: true }).click(),
+    ]);
+    const prepared = request.postDataJSON() as {
+      message: string; project_id: string;
+      module_context: { documentId: string; sectionId: string; sectionCode: string; sectionUpdatedAt: string | null; savedRecordOnly: boolean };
+      authoring_context: { projectId: string; artifactId: string; sectionId: string; sectionUpdatedAt?: string };
+    };
+    expect(prepared).toMatchObject({ message: SECTION_DRAFT_ASK, project_id: programId });
+    const context = prepared.module_context;
+    const profile = await browserApi<{ organizationId: string }>(page, 'GET', '/api/auth/me');
+    expect(profile.status).toBe(200);
+    expect(Number(request.headers()['x-organization-id'])).toBeGreaterThan(0);
+    expect(Number(request.headers()['x-organization-id'])).toBe(Number(payload<{ organizationId: string }>(profile).organizationId));
+    const document = await browserApi<{ document: { id: string; title: string; client_program_id: string } }>(page, 'GET',
+      `/api/authoring/docs/${context.documentId}?programId=${encodeURIComponent(programId)}`);
+    expect(document.status).toBe(200);
+    expect(document.body.document).toMatchObject({ id: context.documentId, title: documentTitle, client_program_id: programId });
+    const sections = await browserApi<{ sections: Array<{ id: string; doc_id: string; code: string; updated_at: string | null }> }>(page, 'GET',
+      `/api/authoring/docs/${context.documentId}/sections?programId=${encodeURIComponent(programId)}`);
+    expect(sections.status).toBe(200);
+    const exact = sections.body.sections.filter(section => section.id === context.sectionId);
+    expect(exact).toHaveLength(1);
+    expect(exact[0]).toMatchObject({ doc_id: context.documentId, code: context.sectionCode, updated_at: context.sectionUpdatedAt });
+    expect(context.savedRecordOnly).toBe(true);
+    expect(prepared.authoring_context).toMatchObject({ projectId: programId, artifactId: context.documentId, sectionId: exact[0].id });
+    expect(prepared.authoring_context.sectionUpdatedAt ?? null).toBe(exact[0].updated_at);
+    return { documentId: context.documentId, programId };
+  } finally {
+    await page.unroute(route, abort);
+  }
+}
+
+async function checkEditorAskNavigation(page: Page, programId: string, title: string, snap: (name: string) => Promise<void>) {
+  await chooseFromEditorMenu(page, 'ed-ana', 'Draft with AnA');
+  await expect(page).toHaveURL(/conversation-thread/);
+  await expect(page.getByRole('textbox', { name: 'Reply to AnA', exact: true })).toHaveValue(SECTION_DRAFT_ASK);
+  await snap('first-session-04-ana.png');
+  await page.getByTestId('ct-ask-origin').getByRole('button', { name: 'Back to the editor', exact: true }).click();
+  await expect(page).toHaveURL(/document-authoring/);
+  await expect(page.locator('.ed-bar-id .dcv-bar-t:visible')).toHaveText(title);
+  // Sending consumes the one-turn origin. A fresh deliberate ask supplies it again.
+  await chooseFromEditorMenu(page, 'ed-ana', 'Draft with AnA');
+  await expect(page).toHaveURL(/conversation-thread/);
+  const prepared = await checkPreparedEditorAsk(page, programId, title);
+  const [read] = await Promise.all([
+    page.waitForResponse(response => response.request().method() === 'GET' &&
+      new URL(response.url()).pathname === `/api/authoring/docs/${prepared.documentId}`),
+    page.goBack(),
+  ]);
+  expect(read.status()).toBe(200);
+  expect((await read.json()).document).toMatchObject({ id: prepared.documentId, client_program_id: programId, title });
+  await expect(page).toHaveURL(/document-authoring/);
+  await expect(page.locator('.ed-bar-id .dcv-bar-t:visible')).toHaveText(title);
 }
 
 /** An act the editor's bar holds in one of its two menus since D4-2 (D4.md §D4.B): AnA (✻) or More. */
@@ -390,16 +455,28 @@ async function chooseFromEditorMenu(page: Page, menu: 'ed-ana' | 'ed-more', item
 
 /** The editor's Send for review, to one reviewer, with a reason; returns the dialog showing its outcome. */
 async function sendForReview(page: Page, reviewer: string) {
-  await chooseFromEditorMenu(page, 'ed-more', 'Send for review…');
+  await page.getByRole('button', { name: 'Send for review…', exact: true }).click();
   const dialog = page.getByRole('dialog');
   // Offered only when the document's existing review requests were read; a
   // refused read (2026-10-25: the 20-a-minute document bucket) offers no one.
   await expect(dialog.getByLabel(reviewer)).toBeVisible({ timeout: 30_000 });
   await dialog.getByLabel(reviewer).check();
   await dialog.getByLabel(/Reason for the request/).fill('Ready for a first review of the profile.');
-  await dialog.getByRole('button', { name: 'Send for review' }).click();
+  const reviewDue = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  await dialog.getByLabel(/^Review due/).fill(reviewDue);
+  await expect(dialog.getByTestId('sfr-submit')).toBeEnabled();
+  const [response] = await Promise.all([
+    page.waitForResponse(response => response.request().method() === 'POST' &&
+      new URL(response.url()).pathname.endsWith('/request-review')),
+    dialog.getByRole('button', { name: 'Send for review' }).click(),
+  ]);
+  expect(response.status()).toBe(200);
+  const receipt = await response.json();
+  expect(receipt.route).toMatchObject({
+    timeZone: 'UTC', tasks: [{ dueDate: expect.stringMatching(new RegExp(`^${reviewDue}T`)) }],
+  });
   await expect(dialog.getByText(/^Review requested\. The server recorded one request on this document/)).toBeVisible({ timeout: 30_000 });
-  await expect(dialog.getByText(new RegExp(`in ${reviewer}’s My work`))).toBeVisible();
+  await expect(dialog.getByTestId('sfr-tasks')).toHaveText(new RegExp(`^\\s*Task .+ in ${escapeRegExp(reviewer)}’s tasks\\s*$`));
   return dialog;
 }
 
@@ -417,21 +494,21 @@ const SYNTHETIC_SOURCE = {
  * biotech signs in, creates an IND project, adds a source, assigns a document
  * of the filing to a person with a due date, starts it from its template, asks
  * AnA to draft it, sends it for review, and sees what is left. Every step is a
- * click or a keystroke on a screen; no step is an API call. The test above
- * proves the governed records; this one proves a person can reach them.
+ * click or a keystroke on a screen. Additional scope checks read the actual
+ * saved identities; the prepared AnA request is stopped before any provider.
+ * The test above proves the governed records; this one proves their UI reach.
  *
  * No model key is configured where this runs, so the AnA step asserts the
  * hand-off (the request arrives in the conversation, with the document it came
  * from, and the way back to it), not a drafted answer.
  */
-test('first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left', async ({
-  browser,
-}, testInfo) => {
+test('first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left', async ({ browser }, testInfo) => {
   test.setTimeout(300_000);
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   const page = await authenticatedPage(context, JOURNEY.adminEmail, JOURNEY.adminPassword);
   const projectName = `FS-${Date.now().toString(36).toUpperCase()} — first session IND`;
   const deliverable = 'Target Product Profile';
+  let programId = '';
   const snap = async (name: string) =>
     testInfo.attach(name, { body: await page.screenshot({ fullPage: false }), contentType: 'image/png' });
 
@@ -441,7 +518,7 @@ test('first session: create an IND project, add a source, assign, draft with AnA
   });
 
   await test.step('the wizard creates an IND and the project opens on Plan', async () => {
-    await createIndProject(page, projectName);
+    programId = (await createIndProject(page, projectName)).data.id;
     await expect(page).toHaveURL(/project-home/, { timeout: 30_000 });
     await expect(page.getByRole('heading', { name: projectName })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What this IND needs' })).toBeVisible();
@@ -477,17 +554,11 @@ test('first session: create an IND project, add a source, assign, draft with AnA
     const entry = entryIn(page.locator('details[data-phase="phase1"]'));
     await entry.getByRole('button', { name: 'Create from template' }).click();
     await expect(page).toHaveURL(/document-authoring/, { timeout: 30_000 });
-    await expect(page.getByRole('heading', { name: deliverable })).toBeVisible();
+    await expect(page.locator('.ed-bar-id .dcv-bar-t:visible')).toHaveText(deliverable);
   });
 
   await test.step('AnA: the draft request arrives in the conversation, and leads back', async () => {
-    await chooseFromEditorMenu(page, 'ed-ana', 'Draft with AnA');
-    await expect(page).toHaveURL(/conversation-thread/);
-    await expect(page.locator('textarea').first()).toHaveValue(new RegExp(deliverable));
-    await snap('first-session-04-ana.png');
-    await page.getByRole('button', { name: /^Back to/ }).first().click();
-    await expect(page).toHaveURL(/document-authoring/);
-    await expect(page.getByRole('heading', { name: deliverable })).toBeVisible();
+    await checkEditorAskNavigation(page, programId, deliverable, snap);
   });
 
   await test.step('the editor saves a revision, with its reason', async () => {
