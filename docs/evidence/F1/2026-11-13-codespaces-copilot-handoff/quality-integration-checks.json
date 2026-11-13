@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-11-13T23:34:19.472173+00:00",
+  "elapsedSeconds": 13.348,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "quality-inputs.json",
+  "inputCount": 71,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "quality-integration-checks.txt.gz",
+  "outputSha256": "d1cc33bf979369e56571710241d1bc399b424f8238c85426a3f94fba7cce0974",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

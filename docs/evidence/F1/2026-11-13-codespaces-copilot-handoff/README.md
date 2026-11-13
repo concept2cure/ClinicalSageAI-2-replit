@@ -312,6 +312,30 @@ with matching hashes and draft notices, and scientific preview. It records
 `collab-reviewer-*` outputs preserve all earlier attempts. The same no-provider
 and scientific/hosted/large-document limitations below remain in force.
 
+## Published native Quality catalogue integration
+
+The `b83a09804` attempt passed all 89 normal lint gates, then lost a second
+canonical ref race; it is not an accepted publication. Canonical `841c41466`
+was preserved by normal merge at `f774de54a`. Its two runtime files enforce
+current native Quality titles and project/facet admission. No local production
+TypeScript/config/package delta exists against that published tree
+(`quality-source-bridge.json`). The incoming owner's final compiler and
+adjacent tests stay in `../2026-11-13-native-quality-currentness/README.md`.
+
+Both changed suites pass **40/40**, and scoped lint has zero errors/warnings
+(`quality-integration-checks.json`, `quality-integration-lint.json`). The
+fixtures run actual catalogue/admission SQL through PGlite while mocking the
+native producer and capture-audit seams. These cases do not establish browser
+Quality catalogue acceptance, a database-wide atomic snapshot or large-catalogue
+performance.
+
+Normal startup exits 0 in 32.1 seconds and serves `f774de54a`. The real CSR
+walk passes again in 36.2 seconds: 119/119 saved sections, delivered-byte-checked
+draft Word/PDF and scientific preview, with zero HTTP/page/transport/functional
+failures and 56 retained client-cancelled GETs (`quality-integration-browser.json`).
+`quality-reviewer-*` and `quality-runtime.json` retain this separate observation.
+No provider turn or scientific approval is initiated.
+
 This local image/browser rehearsal does not exercise GitHub-hosted creation,
 VS Code extension sign-in, a live AnA turn, model qualification, real scientific
 approval, submission delivery or 10,000-page performance.
