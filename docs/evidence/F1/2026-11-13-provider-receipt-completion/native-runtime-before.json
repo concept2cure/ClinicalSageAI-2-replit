@@ -1,0 +1,27 @@
+{
+  "api/version": {
+    "status": 200,
+    "commit": "2a667bf51ec9d5ff5445728e7026816af7ac393b"
+  },
+  "healthz": {
+    "status": 200,
+    "ok": true
+  },
+  "readyz": {
+    "status": 503,
+    "ready": false,
+    "dependencies": {
+      "database": "ok",
+      "schema": "ok",
+      "ana": "down",
+      "storage": "ok",
+      "sessions": "skipped",
+      "virusScan": "skipped",
+      "redis": "skipped",
+      "worker": "skipped"
+    },
+    "schemaState": "ready",
+    "anaState": "no_provider",
+    "capabilityRegistry": "seeded"
+  }
+}
