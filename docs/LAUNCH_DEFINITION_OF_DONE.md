@@ -3462,3 +3462,67 @@ second copy that drifts from what was approved. So:
 4. **The protocol workspace's Consent tab** reads the protocol's project's consent document through the same gate.
    It stays read-only and opens the document in the editor.
 5. **Nothing is added:** no screen, route, table, service or AnA tool.
+
+### P-131 — Tasks opens on what is needed of the person, in order of need, with AnA's greeting and suggestion; every area's work reaches it; AnA tracks assigned work and work with no owner
+
+**The founder's words, 2026-11-12** (to session `01W4xrdh…`, unprompted):
+
+> "Tasking must be on the left rail as it sits above or includes all project types and more and be connected to every
+> global features across all of the platforms"
+
+> "And when I log in to my tasking page I should see everything needed and by priority and a suggestion and greeting
+> from AnA who must also keep track of all assigned tasks and even unassigned but needed tasks for our clients"
+
+**What was already decided, and is already true.** Tasks is a place on the rail, one entry with My work (P-36, P-47),
+the same for every client type, and it spans projects. Commitments and agency letters go to tasks (P-81). Work-project
+tasks roll up into each person's Tasks, never a second list (P-111). The plan's row reads "each person's due work for
+the project, by date". What exists is filed, piece by piece, in
+`docs/evidence/SPINE/S9/2026-11-13-tasking-what-exists/README.md`: 81 pieces, and 58 gaps that survived a skeptic.
+
+**What this decides that no earlier decision did.**
+
+1. **Tasks opens on the person's own needed work.** The rail entry opened on everyone's tasks, filtered to whichever
+   project was open. It opens on the signed-in person's work across every project. Everyone's work is one press away
+   on the same page.
+2. **"Everything needed" is everything the product already counts as theirs.** That is their assigned tasks, the
+   approvals at their sign-off, the reviews they were named for and the review threads waiting on them. The top bar
+   and Home list these today from one component (`client/src/concept2cure/v2/OpenWork.tsx`). Tasks shows the same
+   list from the same component. It is not read a second time.
+3. **In order of need.** One rule, the same wherever a person's work is listed (Tasks, the top bar, Home, AnA):
+   overdue first, then due within seven days, then later, then no date. Within each: critical, then urgent, high,
+   medium and low, by the scale the cross-store read already normalises
+   (`server/services/unified-work/unified-work-view.ts`). Then the earlier date. The plan said "by date".
+4. **AnA greets and suggests on Tasks.** The greeting is Home's (time of day and first name), by the same rule. The
+   suggestion is one sentence naming the item to start with and why, computed by code from the person's work (RULE 2:
+   no figure and no ranking from a model). "What needs me first?" asks AnA to reason about it in the conversation.
+   Until now the greeting was Home's alone, "the only warmth in the product, once". It is now on Home and on Tasks.
+5. **Every area's work reaches Tasks.** There is one task store (`unified_tasks`) and one cross-store read. An area
+   that raises work writes through the existing source-task writer (`server/services/tasking/source-task.ts`). An
+   area that already keeps its own list of what is owed is read by the cross-store read, not copied. The areas not
+   yet connected are listed in the record above. Each is finished under the package that owns it.
+6. **AnA tracks assigned work and work with no owner.** AnA reads the task store through the readers the screens
+   use. Her briefing carries the person's work and the count of open work that has no owner. "Needed but unassigned"
+   is two things, both computed by code: open work with no owner, and a need an existing check already finds (a
+   required document not started, a review with no reviewer, a commitment with no owner). AnA proposes an owner; a
+   person confirms it (P-81's rule stands).
+7. **It stays inside the design (plan §2).** The page is the recorded, unbuilt design for Tasks
+   (`.design/claude-convergence/D6.md` §D6.A, slice D6-1): a calm list grouped by when. This decision amends it in
+   §A.7 there. No banner, no "next step" box, no tiles.
+8. **Nothing is added:** no screen, route, table, service or AnA tool.
+
+**Readings this session made. Each is reversible by the founder.**
+
+- "My tasking page" is read as the Tasks page. Home stays the page a person lands on after signing in (P-47). If
+  the founder means that signing in should land on Tasks, that is a further decision; it was not made here.
+- "Sits above or includes all project types" is read as scope: Tasks spans every project and client type. It is not
+  read as rail order. Tasks stays third on the rail, after Home and Projects.
+- The order of need in item 3 is this session's reading of "by priority".
+
+**Unchanged.** The rail's entries (P-47). The one task store and its governed write path. P-81: AnA proposes, a
+person confirms. RULE 2: numbers and verdicts from code. Removing a duplicate router or an unreached converter is a
+separate decision under the working agreement.
+
+**Packages.** D6 (the Tasks page), D1 (Home, the tray, `OpenWork.tsx`), S9 (the task server), S4 (AnA's readers and
+briefing), and each producing area's own package. The rail entry in `registryModel.ts` is in no scoped package and
+is carried by R1.
+

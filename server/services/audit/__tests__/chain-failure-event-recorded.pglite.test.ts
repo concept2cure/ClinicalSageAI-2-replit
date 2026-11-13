@@ -23,6 +23,7 @@ vi.mock('../../background-jobs-metrics', () => ({
 }));
 
 import { runOnDemandCheck, startChainMonitor, stopChainMonitor } from '../chainIntegrityMonitor';
+import { AUDIT_EVENT_CHAIN_COLUMNS, auditEventRecordHash, type AuditEventChainRow } from '../audit-event-chain';
 // @ts-expect-error — a plain .mjs script, no declarations.
 import { recordChainFailures as recordFromScript } from '../../../../scripts/run-chain-verify.mjs';
 
@@ -52,18 +53,39 @@ const REFUSE_ORG_9 = `
   BEGIN IF NEW.organization_id = 9 THEN RAISE EXCEPTION 'refused for organisation 9'; END IF; RETURN NEW; END $$;
   CREATE TRIGGER refuse_org_9 BEFORE INSERT ON audit_events FOR EACH ROW
     WHEN (NEW.event_type = 'audit.chain_integrity_failure') EXECUTE FUNCTION refuse_org_9();`;
-/** Two organisations' chains, each with one link whose previous_hash does not match. */
+/** Three organisations' rows; `sealChains` gives them their hashes. */
 const TWO_BROKEN_CHAINS = `INSERT INTO audit_events
-  (organization_id, event_type, entity_type, entity_id, user_id, user_name, sequence_number, record_hash, previous_hash) VALUES
-  (7, 'document.updated', 'document', 1, 1, 'someone', 1, 'a1', NULL),
-  (7, 'document.updated', 'document', 1, 1, 'someone', 2, 'a2', 'TAMPERED'),
-  (9, 'document.updated', 'document', 2, 1, 'someone', 1, 'b1', NULL),
-  (9, 'document.updated', 'document', 2, 1, 'someone', 2, 'b2', 'WRONG'),
-  (12, 'document.updated', 'document', 3, 1, 'someone', 1, 'c1', NULL),
-  (12, 'document.updated', 'document', 3, 1, 'someone', 2, 'c2', 'c1')`;
+  (organization_id, event_type, entity_type, entity_id, user_id, user_name, sequence_number) VALUES
+  (7, 'document.updated', 'document', 1, 1, 'someone', 1),
+  (7, 'document.updated', 'document', 1, 1, 'someone', 2),
+  (9, 'document.updated', 'document', 2, 1, 'someone', 1),
+  (9, 'document.updated', 'document', 2, 1, 'someone', 2),
+  (12, 'document.updated', 'document', 3, 1, 'someone', 1),
+  (12, 'document.updated', 'document', 3, 1, 'someone', 2)`;
+/** The pointer each organisation's second row carries; absent means the right one. */
+const WRONG_POINTER: Record<number, string> = { 7: 'TAMPERED', 9: 'WRONG' };
 
 let pg: PGlite;
 const pool = () => ({ query: (sql: string, params?: unknown[]) => pg.query(sql, params) });
+/**
+ * Hash each row as the trigger would have, so the chains are chains. The
+ * monitor's walk re-computes every row's hash (audit-event-chain.ts): with the
+ * made-up hashes this file used, organisation 12's sound chain would read as
+ * altered too. Organisations 7 and 9 keep one wrong POINTER each, on a row that
+ * is otherwise self-consistent, so the pointer is the only thing wrong.
+ */
+async function sealChains(): Promise<void> {
+  const head = new Map<number, string>();
+  const { rows } = await pg.query<AuditEventChainRow>(
+    `SELECT ${AUDIT_EVENT_CHAIN_COLUMNS} FROM audit_events ORDER BY organization_id, sequence_number`);
+  for (const row of rows) {
+    const org = row.organization_id;
+    row.previous_hash = row.sequence_number === 1 ? null : WRONG_POINTER[org] ?? head.get(org) ?? null;
+    row.record_hash = auditEventRecordHash(row);
+    head.set(org, row.record_hash);
+    await pg.query('UPDATE audit_events SET previous_hash = $2, record_hash = $3 WHERE id = $1', [row.id, row.previous_hash, row.record_hash]);
+  }
+}
 const failureEvents = async () => (await pg.query<Record<string, unknown>>(
   `SELECT organization_id, user_id, user_name, user_role, ip_address, metadata FROM audit_events
     WHERE event_type = 'audit.chain_integrity_failure' ORDER BY organization_id`)).rows;
@@ -85,6 +107,7 @@ describe('the in-process chain monitor', () => {
 
   it("records the failure in each affected organisation's trail, as itself", async () => {
     await pg.exec(TWO_BROKEN_CHAINS);
+    await sealChains();
     const status = await scan();
     expect(status.status).toBe('broken');
     const events = await failureEvents();
@@ -95,7 +118,9 @@ describe('the in-process chain monitor', () => {
   }, 60_000);
 
   it('says which organisation it could not record the failure for', async () => {
-    await pg.exec(TWO_BROKEN_CHAINS + ';' + REFUSE_ORG_9);
+    await pg.exec(TWO_BROKEN_CHAINS);
+    await sealChains();
+    await pg.exec(REFUSE_ORG_9);
     const status = await scan();
     expect(status.status).toBe('broken');
     expect(status.failureEventsNotRecorded).toEqual([9]);
