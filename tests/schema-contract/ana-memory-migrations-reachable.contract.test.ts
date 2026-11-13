@@ -240,3 +240,68 @@ async function verifyRelationalProfileColumns(pg: PGlite): Promise<void> {
       expect(cols, `ana_relational_profiles.${col}`).toContain(col);
     }
   }
+
+/*
+ * AnA's project memory had no creator on the deploy path (the Reporting lane's note of 2026-11-09). Drizzle push
+ * created project_memory_entries, and deploy-migrate never pushes, so a database whose push skipped it never got it.
+ * install-fresh skips every table with a vector column when pgvector is missing, and three walk databases were built
+ * so (2026-11-04, 11-09, 11-11). 0013 now creates it where its key's target, project_intelligence_profiles, exists,
+ * without the vector column, which 20260602 adds, as with conversation_working_memory.
+ */
+describe('project_memory_entries has a creator on the deploy path', () => {
+  let pg: PGlite;
+  beforeAll(async () => {
+    pg = new PGlite();
+    // A pgvector-degraded install: push made the plain tables and skipped project_memory_entries.
+    await pg.exec(`
+      CREATE TABLE organizations (id serial PRIMARY KEY, name text);
+      CREATE TABLE users (id serial PRIMARY KEY, email text);
+      CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer, name text);
+      CREATE TABLE project_intelligence_profiles (id serial PRIMARY KEY, project_id integer, organization_id integer);
+      INSERT INTO organizations (name) VALUES ('acme');
+      INSERT INTO projects (organization_id, name) VALUES (1, 'P-1');
+      INSERT INTO project_intelligence_profiles (project_id, organization_id) VALUES (1, 1);
+    `);
+    for (const pass of [1, 2]) {
+      try { await pg.exec(readMig(OUTCOME_LOG)); } catch (err) { throw new Error(`pass ${pass}: ${(err as Error).message}`); }
+    }
+  }, 120_000);
+  afterAll(async () => { await pg.close(); });
+
+  it('creates the table in the Drizzle model\'s shape, less the vector column', async () => {
+    const { rows } = await pg.query<{ column_name: string; data_type: string; is_nullable: string; column_default: string | null }>(
+      `SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns
+        WHERE table_name = 'project_memory_entries' ORDER BY ordinal_position`);
+    expect(rows.map(r => r.column_name)).toEqual(['id', 'project_profile_id', 'project_id', 'organization_id', 'category',
+      'subcategory', 'title', 'content', 'source_document_name', 'source_document_type', 'confidence_score',
+      'importance_level', 'is_verified_by_user', 'status', 'extracted_by', 'created_at', 'updated_at']);
+    const col = (name: string) => rows.find(r => r.column_name === name)!;
+    // The tenant sweep at the end of the set policies a public table keyed by organization_id integer NOT NULL.
+    expect(col('organization_id')).toMatchObject({ data_type: 'integer', is_nullable: 'NO' });
+    // No default confidence (2026-10-15, 20261015l): nothing measures one.
+    expect(col('confidence_score').column_default).toBeNull();
+    const idx = await pg.query<{ indexname: string }>(`SELECT indexname FROM pg_indexes WHERE tablename = 'project_memory_entries' ORDER BY 1`);
+    expect(idx.rows.map(r => r.indexname)).toEqual(expect.arrayContaining(
+      ['project_memory_entries_category_idx', 'project_memory_entries_profile_idx', 'project_memory_entries_project_idx']));
+  });
+
+  it('takes the feature store\'s write and AnA\'s project read', async () => {
+    await pg.query(`INSERT INTO project_memory_entries (project_profile_id, project_id, organization_id, category, title, content, importance_level, extracted_by)
+      VALUES (1, 1, 1, 'regulatory', 'Pre-IND meeting', 'FDA agreed the nonclinical package.', 'high', 'ai')`);
+    const read = await pg.query<{ title: string; confidence_score: number | null }>(
+      `SELECT title, confidence_score FROM project_memory_entries WHERE organization_id = 1 AND project_id = 1 AND status = 'active'`);
+    expect(read.rows).toEqual([{ title: 'Pre-IND meeting', confidence_score: null }]);
+  });
+
+  it('refuses a key to no project profile', async () => {
+    await expect(pg.query(`INSERT INTO project_memory_entries (project_profile_id, project_id, organization_id, category, title, content)
+      VALUES (999, 1, 1, 'risk', 't', 'c')`)).rejects.toMatchObject({ code: '23503' }); // a foreign-key refusal, not a missing table
+  });
+
+  it('20260602 adds the embedding, after 0013 and before the tenant sweep', () => {
+    expect(readMig(EMBEDDINGS)).toMatch(/ALTER TABLE IF EXISTS project_memory_entries\s+ADD COLUMN IF NOT EXISTS embedding vector\(1536\)/i);
+    const at = (rel: string) => C2C_MIGRATION_FILES.indexOf(rel);
+    expect(at(OUTCOME_LOG)).toBeLessThan(at(EMBEDDINGS));
+    expect(at(EMBEDDINGS)).toBeLessThan(at(SWEEP));
+  });
+});

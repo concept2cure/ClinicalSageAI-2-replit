@@ -9,8 +9,19 @@
 --   5. ana_platform_wisdom — Quarantined legacy global wisdom; no runtime sharing
 --   6. ana_scoped_rules — Path-scoped rules for smart context loading
 --   7. ana_client_objectives — Company + project objectives tracking
+--   9. project_memory_entries — AnA's project memory, where project_intelligence_profiles exists
 --
 -- Also adds new fields to project_intelligence_profiles for project classification.
+--
+-- AMENDED IN PLACE 2026-11-13 (S4 owner `session_01KZK3…`; the Reporting lane's note of 2026-11-09) — section 9
+-- gives project_memory_entries a creator on the deploy path. It is a push-surface table (shared/schema.ts) that no
+-- file in C2C_MIGRATION_FILES created, and deploy-migrate never pushes, so a database whose push skipped it never got
+-- it: install-fresh skips every table with a vector column when pgvector is missing (three walk databases, 2026-11-04,
+-- 11-09 and 11-11). The shape is the Drizzle model's less `embedding`, which 20260602 adds, as with
+-- conversation_working_memory; `confidence_score` has no default (20261015l). Guarded on project_intelligence_profiles,
+-- its key's target, which is push-only too, so a set-only database still gets neither. Additive and IF NOT EXISTS:
+-- it removes nothing, and where push made the table it does nothing. Public, with organization_id INTEGER NOT NULL,
+-- so the tenant sweep at the end of the set gives it its policy. The journal records drift once; this note is why.
 --
 -- AMENDED IN PLACE 2026-10-15 (D2) — ana_platform_wisdom.confidence_score is
 -- nullable, with no default. It was `REAL NOT NULL DEFAULT 0.5`, and
@@ -327,3 +338,37 @@ BEGIN
   END IF;
 END
 $$;
+
+-- ============================================================
+-- 9. PROJECT MEMORY ENTRIES (amended in place 2026-11-13; see the header)
+-- ============================================================
+DO $project_memory_entries$
+BEGIN
+  IF to_regclass('public.project_intelligence_profiles') IS NULL
+     OR to_regclass('public.projects') IS NULL OR to_regclass('public.organizations') IS NULL THEN
+    RETURN;
+  END IF;
+  CREATE TABLE IF NOT EXISTS public.project_memory_entries (
+    id SERIAL PRIMARY KEY,
+    project_profile_id INTEGER NOT NULL REFERENCES public.project_intelligence_profiles(id),
+    project_id INTEGER NOT NULL REFERENCES public.projects(id),
+    organization_id INTEGER NOT NULL REFERENCES public.organizations(id),
+    category TEXT NOT NULL,
+    subcategory TEXT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    source_document_name TEXT,
+    source_document_type TEXT,
+    confidence_score REAL,
+    importance_level TEXT DEFAULT 'medium',
+    is_verified_by_user BOOLEAN DEFAULT false,
+    status TEXT DEFAULT 'active',
+    extracted_by TEXT DEFAULT 'ai',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+  );
+  CREATE INDEX IF NOT EXISTS project_memory_entries_profile_idx ON public.project_memory_entries (project_profile_id);
+  CREATE INDEX IF NOT EXISTS project_memory_entries_project_idx ON public.project_memory_entries (project_id);
+  CREATE INDEX IF NOT EXISTS project_memory_entries_category_idx ON public.project_memory_entries (category);
+END
+$project_memory_entries$;
