@@ -41,9 +41,10 @@ vi.mock('../../components/ana/useAnaChat', () => ({
 import { ConversationThread } from '../surfaces/ConversationThread';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { authService, type AuthUser } from '@/services/portal/authService';
+import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 import { readWorkerSnapshot, type WorkerSnapshot } from '@shared/ana/turn-timeline';
-import { uniqueTeamWorkers, useProjectTeam, workerEstimate, workerMeasurement, workerState } from '../useAgentActivity';
-import { ProjectTeamPanel } from '../AnaWorkPanel';
+import { AGENT_ACTIVITY_POLL_MS, uniqueTeamWorkers, useAgentActivity, useProjectTeam, workerEstimate, workerMeasurement, workerState } from '../useAgentActivity';
+import { ProjectTeamPanel, TeamWorker } from '../AnaWorkPanel';
 import { TurnSummary } from '../TurnSummary';
 import type { AnaChatMessage } from '../../components/ana/useAnaChat';
 
@@ -57,6 +58,7 @@ const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }
 let projectBefore: typeof window.C2C_PROJECT;
 
 beforeEach(() => {
+  clearAuthToken();
   projectBefore = window.C2C_PROJECT;
   (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'new' };
   chatOptions.length = 0;
@@ -74,7 +76,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks(); vi.useRealTimers();
-  localStorage.removeItem('trialsage_access_token');
+  clearAuthToken();
   window.C2C_PROJECT = projectBefore;
   delete (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO;
 });
@@ -102,6 +104,131 @@ function setupTeam(body = teamSnapshot()) {
   return { userRead, user };
 }
 const teamReads = () => apiRequest.mock.calls.filter(([, url]) => String(url).includes('view=team'));
+
+const ACTIVITY = '/api/ana-ri/agent-activity';
+const activityReads = () => apiRequest.mock.calls.filter(([method, url]) => method === 'GET' && url === ACTIVITY);
+const activityItem = { id: 'investigation_1', question: 'Check the supplied evidence', status: 'Running', toolCalls: 1,
+  startedAt: '2026-11-06T20:00:00Z', completedAt: null };
+const activitySummary = (activeCount = 1) => ({ activeCount, stalledCount: 0, recentlyCompletedCount: 0, items: [activityItem] });
+const activityToken = (userId = 3, organizationId = 7, generation = 1) => `fixture.${btoa(JSON.stringify({ userId, organizationId, generation }))}.fixture`;
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>(done => { resolve = done; });
+  return { promise, resolve };
+}
+function setupActivity(body: unknown = activitySummary()) {
+  const account = setupTeam(), revision = { value: 1, pending: false, credentials: 1 };
+  vi.mocked(authService.captureSessionReadGuard).mockImplementation(() => {
+    const captured = revision.value, credentials = revision.credentials;
+    const sameRevision = () => captured === revision.value && !revision.pending;
+    return { sameRevision, credentialsCurrent: () => sameRevision() && credentials === revision.credentials,
+      current: () => sameRevision() && credentials === revision.credentials };
+  });
+  setAuthToken(activityToken());
+  const fallback = apiRequest.getMockImplementation();
+  apiRequest.mockImplementation(async (method, url, ...rest) => url === ACTIVITY
+    ? ok({ success: true, data: body }) : fallback?.(method, url, ...rest));
+  return { ...account, revision };
+}
+
+describe('background activity belongs to the current verified account', () => {
+  it('accepts explicit empty results and canonical textual statuses without inventing counts', async () => {
+    setupActivity({ activeCount: 0, stalledCount: 0, recentlyCompletedCount: 0, items: [] });
+    const { result } = renderHook(() => useAgentActivity(true)); await act(async () => {});
+    expect(result.current.state).toBe('ready'); expect(result.current.summary?.items).toEqual([]);
+    apiRequest.mockResolvedValue(ok({ success: true, data: { ...activitySummary(0), items: [{ ...activityItem, question: '', status: 'external_status', startedAt: null }] } }));
+    await act(async () => result.current.refresh());
+    expect(result.current.state).toBe('ready'); expect(result.current.summary?.items[0].status).toBe('external_status');
+  });
+
+  it.each<[string, unknown]>([
+    ['absent summary fields', {}], ['missing items', { activeCount: 0, stalledCount: 0, recentlyCompletedCount: 0 }],
+    ['negative count', { ...activitySummary(), activeCount: -1 }], ['fractional count', { ...activitySummary(), stalledCount: 0.5 }],
+    ['unsafe count', { ...activitySummary(), recentlyCompletedCount: Number.MAX_SAFE_INTEGER + 1 }],
+    ['invalid item', { ...activitySummary(), items: [null] }],
+    ...[{ id: 12 }, { id: '' }, { question: undefined }, { status: undefined }, { toolCalls: -1 }, { toolCalls: 0.5 },
+      { startedAt: 'not a date' }, { completedAt: undefined }].map<[string, unknown]>(patch => ['invalid item fields', { ...activitySummary(), items: [{ ...activityItem, ...patch }] }]),
+  ])('rejects a successful envelope with %s as an error rather than an empty queue', async (_name, body) => {
+    setupActivity(body); const { result } = renderHook(() => useAgentActivity(true)); await act(async () => {});
+    expect(result.current.state).toBe('error'); expect(result.current.summary).toBeNull(); expect(result.current.readAt).toBeNull();
+  });
+
+  it('clears previously verified data after a failed refresh', async () => {
+    setupActivity(); const { result } = renderHook(() => useAgentActivity(true)); await act(async () => {});
+    expect(result.current.summary?.activeCount).toBe(1);
+    apiRequest.mockRejectedValue(new Error('synthetic unavailable'));
+    await act(async () => result.current.refresh());
+    expect(result.current.state).toBe('error'); expect(result.current.summary).toBeNull(); expect(result.current.readAt).toBeNull();
+  });
+
+  it.each(['account', 'roles', 'session'] as const)('hides retained data immediately on a %s change while hidden', async change => {
+    const { userRead, user, revision } = setupActivity();
+    const { result, rerender } = renderHook(({ enabled }) => useAgentActivity(enabled), { initialProps: { enabled: true } });
+    await act(async () => {}); expect(result.current.summary).not.toBeNull(); rerender({ enabled: false });
+    if (change === 'account') userRead.mockReturnValue({ ...user, id: '8', organizationId: '9' });
+    if (change === 'roles') userRead.mockReturnValue({ ...user, roles: ['changed-role'] } as AuthUser);
+    if (change === 'session') revision.value++;
+    rerender({ enabled: false });
+    expect(result.current.summary).toBeNull(); expect(result.current.readAt).toBeNull(); expect(activityReads()).toHaveLength(1);
+  });
+
+  it('holds pending session adoption and never sends old bearer headers for a new account', async () => {
+    const { userRead, user, revision } = setupActivity(); const { result, rerender } = renderHook(() => useAgentActivity(true));
+    await act(async () => {}); revision.value++; revision.pending = true;
+    userRead.mockReturnValue({ ...user, id: '8', organizationId: '9' }); rerender();
+    expect(result.current.summary).toBeNull(); await act(async () => {}); expect(activityReads()).toHaveLength(1);
+    revision.pending = false; rerender(); await act(async () => {});
+    expect(result.current.state).toBe('error'); expect(activityReads()).toHaveLength(1);
+    setAuthToken(activityToken(8, 9)); await act(async () => result.current.refresh());
+    expect(result.current.state).toBe('ready'); expect(activityReads()).toHaveLength(2);
+    expect(activityReads()[1][3]).toMatchObject({ Authorization: `Bearer ${activityToken(8, 9)}`, 'x-organization-id': '9' });
+  });
+
+  it('fences a late JSON body after an account switch', async () => {
+    const { userRead, user, revision } = setupActivity(), oldBody = deferred<unknown>();
+    apiRequest.mockResolvedValueOnce({ ok: true, status: 200, json: () => oldBody.promise } as Response);
+    const { result, rerender } = renderHook(() => useAgentActivity(true)); await act(async () => {});
+    revision.value++; userRead.mockReturnValue({ ...user, id: '8', organizationId: '9' }); setAuthToken(activityToken(8, 9));
+    rerender(); expect(result.current.summary).toBeNull(); await act(async () => {});
+    expect(result.current.summary?.activeCount).toBe(1);
+    await act(async () => oldBody.resolve({ success: true, data: activitySummary(99) }));
+    expect(result.current.summary?.activeCount).toBe(1); expect(activityReads()).toHaveLength(2);
+  });
+
+  it('serializes timers and coalesces refreshes while fencing the superseded response', async () => {
+    vi.useFakeTimers(); setupActivity(); const first = deferred<Response>(); apiRequest.mockReturnValueOnce(first.promise);
+    const { result } = renderHook(() => useAgentActivity(true)); await act(async () => {});
+    await act(async () => vi.advanceTimersByTime(AGENT_ACTIVITY_POLL_MS * 2)); expect(activityReads()).toHaveLength(1);
+    await act(async () => result.current.refresh()); await act(async () => result.current.refresh());
+    expect(activityReads()).toHaveLength(1);
+    apiRequest.mockResolvedValue(ok({ success: true, data: activitySummary(2) }));
+    await act(async () => first.resolve(ok({ success: true, data: activitySummary(99) })));
+    expect(activityReads()).toHaveLength(2); expect(result.current.summary?.activeCount).toBe(2);
+  });
+
+  it('stops hidden polling and discards its late response until explicitly shown again', async () => {
+    vi.useFakeTimers(); setupActivity(); const first = deferred<Response>(); apiRequest.mockReturnValueOnce(first.promise);
+    const { result, rerender } = renderHook(({ enabled }) => useAgentActivity(enabled), { initialProps: { enabled: false } });
+    await act(async () => {}); expect(activityReads()).toHaveLength(0); rerender({ enabled: true }); await act(async () => {});
+    expect(activityReads()).toHaveLength(1); rerender({ enabled: false });
+    await act(async () => { vi.advanceTimersByTime(AGENT_ACTIVITY_POLL_MS * 2); first.resolve(ok({ success: true, data: activitySummary(99) })); });
+    expect(result.current.state).toBe('idle'); expect(result.current.summary).toBeNull(); expect(activityReads()).toHaveLength(1);
+    rerender({ enabled: true }); await act(async () => {});
+    expect(result.current.summary?.activeCount).toBe(1); expect(activityReads()).toHaveLength(2);
+  });
+
+  it('retains a legitimate same-actor bearer refresh and uses its current token on the next poll', async () => {
+    vi.useFakeTimers(); const { userRead, user, revision } = setupActivity();
+    const { result, rerender } = renderHook(() => useAgentActivity(true)); await act(async () => {});
+    const readAt = result.current.readAt; revision.credentials++; userRead.mockReturnValue({ ...user });
+    setAuthToken(activityToken(3, 7, 2)); rerender();
+    expect(result.current.summary?.activeCount).toBe(1); expect(result.current.readAt).toBe(readAt); expect(activityReads()).toHaveLength(1);
+    await act(async () => vi.advanceTimersByTime(AGENT_ACTIVITY_POLL_MS));
+    expect(activityReads()).toHaveLength(2);
+    expect(activityReads()[1][3]).toMatchObject({ Authorization: `Bearer ${activityToken(3, 7, 2)}`, 'x-organization-id': '7' });
+    expect(result.current.state).toBe('ready');
+  });
+});
 
 describe('the optional project team view uses recorded project facts', () => {
   it('starts hidden in a new conversation, toggles accessibly, and renders the actual objective and measured checks', async () => {
@@ -179,13 +306,6 @@ describe('the optional project team view uses recorded project facts', () => {
     expect(screen.getByText('Awaiting AnA review')).toBeTruthy(); expect(screen.queryByText('Proposal accepted')).toBeNull();
   });
 
-  it('states a measured estimate only for remaining checks and never for whole-goal completion', () => {
-    const worker = teamWorker({ estimate: { basis: 'observed_check_durations', scope: 'remaining_checks', lowerMs: 60_000, upperMs: 120_000, sampleCount: 4, at: '2026-11-06T20:00:00Z' } });
-    expect(workerEstimate(worker)).toContain('Remaining checks: approximately 1–2 minutes');
-    expect(workerEstimate(worker)).toContain('Overall completion time is not estimated');
-    expect(workerEstimate({ ...worker, phase: 'reported', outcome: 'completed' })).toBe('Completion estimate unavailable.');
-  });
-
   it('keeps a stale parent phase historical and never turns it into current progress', () => {
     const worker = teamWorker({ parentState: 'stale', completed: 4 });
     expect(workerState(worker)).toContain('Last recorded: Checking');
@@ -198,6 +318,50 @@ describe('the optional project team view uses recorded project facts', () => {
     const parsed = readWorkerSnapshot({ ...teamWorker(), label: 'PRIVATE_CONTEXT_CANARY', objective: 'PRIVATE_CONTEXT_CANARY', report: 'PRIVATE_CONTEXT_CANARY' });
     expect(parsed?.label).toBe('Check assigned work'); expect(JSON.stringify(parsed)).not.toContain('PRIVATE_CONTEXT_CANARY');
   });
+});
+
+describe('measured remaining-check estimates', () => {
+  it('states a measured estimate only for remaining checks and never for whole-goal completion', () => {
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks', lowerMs: 60_000, upperMs: 120_000, sampleCount: 3, at: '2026-11-06T20:00:00Z' } });
+    const now = Date.parse('2026-11-06T20:00:00Z');
+    expect(workerEstimate(worker, now)).toContain('Remaining checks: approximately 1–2 minutes');
+    expect(workerEstimate(worker, now)).toContain('Overall completion time is not estimated');
+    expect(workerEstimate({ ...worker, phase: 'reported', outcome: 'completed' })).toBe('Completion estimate unavailable.');
+  });
+
+  it.each([
+    [10, 30, 'estimated under a second'], [900, 4900, 'estimated up to 5 seconds'],
+    [1000, 59_000, 'approximately 1–59 seconds'], [900, 61_000, 'estimated up to 2 minutes'],
+  ])('does not invent a minute-long lower bound for %sms–%sms of measured work', (lowerMs, upperMs, text) => {
+    const now = Date.parse('2026-11-13T12:00:00Z');
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks',
+      lowerMs: Number(lowerMs), upperMs: Number(upperMs), sampleCount: 3, at: new Date(now).toISOString() } });
+    expect(workerEstimate(worker, now)).toContain(`Remaining checks: ${text}`);
+  });
+
+  it('withdraws an expired or future-dated estimate and refuses inconsistent measurement counts', () => {
+    const now = Date.parse('2026-11-13T12:00:00Z');
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks',
+      lowerMs: 1000, upperMs: 5000, sampleCount: 3, at: new Date(now).toISOString() } });
+    for (const at of [now - 1, now + 5000, Number.NaN]) expect(workerEstimate(worker, at)).toBe('Completion estimate unavailable.');
+    expect(workerEstimate({ ...worker, completed: 1 }, now)).toBe('Completion estimate unavailable.');
+    expect(workerEstimate({ ...worker, basis: 'observed_steps' }, now)).toBe('Completion estimate unavailable.');
+    expect(workerEstimate({ ...worker, completed: 5 }, now)).toBe('Completion estimate unavailable.');
+  });
+
+  it('updates and expires the visible estimate without waiting for another server poll', () => {
+    vi.useFakeTimers(); const now = Date.parse('2026-11-13T12:00:00Z'); vi.setSystemTime(now);
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks',
+      lowerMs: 2000, upperMs: 5000, sampleCount: 3, at: new Date(now).toISOString() } });
+    render(<TeamWorker worker={worker} />);
+    expect(screen.getByText(/Remaining checks: approximately 2–5 seconds/)).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(screen.getByText(/Remaining checks: estimated up to 2 seconds/)).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(screen.getByText('Completion estimate unavailable.')).toBeTruthy();
+    expect(screen.queryByText(/Remaining checks:/)).toBeNull();
+  });
+
 });
 
 const profileReads = () => apiRequest.mock.calls.map(([, url]) => String(url)).filter((u) => u.startsWith('/api/mdx/ana/memory/profile'));

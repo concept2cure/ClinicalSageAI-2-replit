@@ -77,7 +77,7 @@ export interface CoordinationHostOptions { source?: CoordinationSource; monitor?
   onPrivateRequired?:()=>void;onPrivateActivated?:(receipt:import('./run-control').RunOwnerPrivacyReceipt)=>Promise<void>|void }
 export interface RunCoordinationHost {
   assign(input: CoordinationAction & { worker?: string; role: 'research' | 'verify'; task: string | null; parentStep: string; source?: CoordinationSource }): Promise<CoordinationProjection & { handle: WorkerCoordinationHandle }>;
-  progress(handle: WorkerCoordinationHandle, phase: WorkerSnapshot['phase'], input: CoordinationAction & { completed: number | null; total: number | null; outcome?: WorkerSnapshot['outcome']; basisKind?: WorkerSnapshot['basis'] }): Promise<CoordinationProjection>;
+  progress(handle: WorkerCoordinationHandle, phase: WorkerSnapshot['phase'], input: CoordinationAction & { completed: number | null; total: number | null; outcome?: WorkerSnapshot['outcome']; basisKind?: WorkerSnapshot['basis']; estimate?: WorkerSnapshot['estimate'] }): Promise<CoordinationProjection>;
   report(handle: WorkerCoordinationHandle, input: CoordinationAction & { reportSha256: string; source?: CoordinationSource; outcome?: WorkerSnapshot['outcome']; completed?: number | null; total?: number | null; basisKind?: WorkerSnapshot['basis'] }): Promise<CoordinationProjection>;
   message(handle: WorkerCoordinationHandle | null, input: CoordinationAction & { recipient: string; text?: string; messageKind?: 'review' | 'help' | 'source' | 'report' }): Promise<CoordinationProjection>;
   revise(handle: WorkerCoordinationHandle, input: CoordinationAction & { reportSha256: string; source?: CoordinationSource }): Promise<CoordinationProjection>;
@@ -112,6 +112,7 @@ export function assertCoordinationProjection(value: unknown): CoordinationProjec
 export function coordinationSnapshot(event: Pick<CoordinationEvent, 'snapshot' | 'eventId' | 'eventHash'>): WorkerSnapshot {
   const snapshot = readWorkerSnapshot({ ...(event.snapshot as object), receipt: { eventId: event.eventId, eventHash: event.eventHash } });
   if (!snapshot) return coordinationRefused();
+  if (snapshot.estimate) Object.freeze(snapshot.estimate);
   return snapshot;
 }
 export function assignmentProjection(projection: CoordinationProjection, handle: WorkerCoordinationHandle) {
