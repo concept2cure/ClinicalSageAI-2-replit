@@ -1771,3 +1771,20 @@ runtime/scratch-only. Other lanes' holds and broader roadmap/model acceptance re
 F1/W1 D1–D2, Codex continuation: holds only `.devcontainer/AGENT_RULES.md` and the existing Codespaces operator guide for canonical pull/start/verification handoff. Ends at publication or 2026-11-13 23:45 UTC, whichever comes first. Existing boot/doctor/demo source is read-only unless an actual reproduced blocker is reserved separately; no other owner is paused. Root owns Git, installation and all runtime/check jobs. Inventory `.design/claude-convergence/F1-CODESPACES-COPILOT-HANDOFF-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/`. No protected instruction/plan change, UI change, new capability or model/credential-policy bypass.
 
 2026-11-13 F1 Codespaces/Copilot handoff source completion: the existing agent rules and single operator procedure are complete; these two documentation holds release with publication. Fresh declared-image setup passes81/81 at its named baseline; integrated focused checks pass173/173 and scoped lint passes. The real synthetic CSR browser rerun passes with119/119 saved bodies, physical draft Word/PDF and scientific preview; the original failed observer and interrupted startup remain explicit. Root retains only its evidence/design/this-entry receipt scope and owned local runtime until the complete normal-start/current-stamp check. No other owner is paused; no provider, qualification or hosted-Codespace acceptance is claimed.
+
+### Codex final integration follow-up — delayed billing action ownership, 2026-11-13
+
+The activity/credential/measured-check continuation is published at canonical
+`277a47e767c5fed14023109b2c29c4ee0b84f5bb`, confirmed by Git and connected GitHub; all89 CI lint gates and full
+TypeScript0/baseline0 pass. **Every hold in that continuation's table is released.** A read-only review of the
+incoming `1cddec661` checkout repair finds a delayed response UI-attribution gap; its existing13 contract tests
+pass and server authorization is unchanged. The evidence README records the pre-edit inventory and bounded
+repair using the existing `captureAuthoringSession` helper.
+
+Under F1/W1, the keyboard verification agent now holds only existing
+`client/src/concept2cure/v2/surfaces/LicensingSurface.tsx` checkout/portal callback response ownership and
+`client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx`. Root holds only this entry, the existing
+AnA evidence README, integration/Git and the sole full compiler. These holds end at publication or
+**2026-11-14 01:00 UTC**, whichever comes first. No shared helper, billing backend, status/invoice reader,
+new source file, screen, provider, dependency, model or qualification gate is in scope. The rehearsal agent
+remains runtime/scratch-only, with the existing demo held stable until final version verification.

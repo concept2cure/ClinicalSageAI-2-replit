@@ -119,6 +119,29 @@ inspected and merged normally; its existing billing-control suite passes **13/13
 Review finds no integration issue. The first refused update is retained as a failed publication attempt, not a
 successful push. Publication retries all normal hooks; no force push, hook bypass or baseline change is used.
 
+**Publication receipt:** the retry exits0 and publishes `277a47e767c5fed14023109b2c29c4ee0b84f5bb` on canonical
+`concept2cure-v2`, confirmed independently by `git ls-remote` and the connected GitHub branch resource. All89
+CI lint gates pass with zero red, full TypeScript passes0/baseline0 and the working tree is clean. The activity,
+credential and measured-estimate source/evidence holds are released.
+
+### Publication follow-up — ownership of delayed billing action responses
+
+The incoming checkout review identifies a bounded UI attribution gap: a free activation begun by account A can
+finish after the same mounted Licensing surface switches to account B, then show A's activation success and
+trigger a status read under B. Paid checkout and portal callbacks already lack the same response guard. The
+server still authenticates the initiating request and enforces organization/administrator authority; the gap
+does not grant B an entitlement or access to A's server data.
+
+**What already exists:** `surfaces/LicensingSurface.tsx` owns both callbacks and its real free-activation readback;
+`editor/authoringCurrentRead.ts` exports `captureAuthoringSession()`, which compares the real person, organization,
+roles, permissions and session revision while preserving ordinary bearer/account refresh. Extend only those
+existing callbacks to capture that guard at dispatch and check it before both dispatch and response effects,
+including delayed JSON and failures. The existing `licensingBillingControls.test.tsx` is the regression home:
+exercise the actual auth service/guard for account, organization, access, sign-out and session changes, plus
+normal refresh controls. Preserve the13 existing contract/authority cases and adjacent invoice/enterprise flows.
+No new helper file, shared-helper behavior, screen, billing route, price or server authority is introduced.
+Do not broaden this repair into status/invoice reader ownership or financial fulfillment.
+
 **Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
 but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
 plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`
