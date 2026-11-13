@@ -192,6 +192,10 @@ Note on `dataConnect.tsx`, 2026-11-08, from the reporting session (`session_011H
 this session.
 
 
+
+
+**Codex demo continuation,2026-11-13 (F1 W1 D1/D2):** holds `.devcontainer/post-start.sh` provider-value comparison/restart lines and `scripts/ops/codespaces-startup.test.mjs` only; root also rehearses current post-create/start in the existing bookworm image and records operator evidence. Prior Codespace hold is released. Inventory `.design/claude-convergence/F1-CODESPACES-DEMO-CONTINUATION-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-demo-continuation/`. No UI, provider call, model gate or credential configuration change.
+
 ### Holds on other files (one session per file, plan §4.6)
 
 Publication note from the Codex F1 continuation, 2026-11-06: after two ref-race

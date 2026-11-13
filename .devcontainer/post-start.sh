@@ -137,14 +137,21 @@ c2c_start_app() {
 $(tail -n 30 "$C2C_APP_LOG")"
 }
 
-# The model keys this start holds that the running server process does not.
-# Read by name from the process's own environment; no value is printed.
+# Supplied model keys missing or different in the running server process.
+# Compare privately against its environment; only names leave this helper.
+# An absent/empty terminal key does not remove one the app already holds.
 c2c_keys_app_lacks() {
-  local pid name missing=()
+  local pid name entry missing=()
+  local -A app_keys=()
   pid="$(pgrep -f 'tsx --inspect=0 server/index.ts' | tail -n 1)"
   [[ -n "$pid" && -r "/proc/$pid/environ" ]] || return 0
+  while IFS= read -r -d '' entry; do
+    case "$entry" in
+      ANTHROPIC_API_KEY=*|OPENAI_API_KEY=*) app_keys["${entry%%=*}"]="${entry#*=}" ;;
+    esac
+  done < "/proc/$pid/environ"
   for name in ANTHROPIC_API_KEY OPENAI_API_KEY; do
-    if [[ -n "${!name:-}" ]] && ! tr '\0' '\n' < "/proc/$pid/environ" | grep -q "^$name=."; then
+    if [[ -n "${!name:-}" && "${app_keys[$name]:-}" != "${!name:-}" ]]; then
       missing+=("$name")
     fi
   done
@@ -154,10 +161,9 @@ c2c_keys_app_lacks() {
 if c2c_app_up; then
   C2C_APP_LACKS="$(c2c_keys_app_lacks)"
   if [[ -n "$C2C_APP_LACKS" ]]; then
-    # The app was started before the key reached this Codespace (a secret added
-    # later, or a restart from a terminal opened before it). It keeps the
-    # environment it started with, so it is restarted to start with the key.
-    c2c_log "The running app was started without $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
+    # A newly supplied or corrected key is not applied to an existing process.
+    # Restart before diagnostics so the app and this start use the same keys.
+    c2c_log "The running app does not have this start's $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
     c2c_stop_app
     c2c_start_app
   elif ! c2c_app_current; then
@@ -385,8 +391,8 @@ cat <<EOF
  Development organisation: $DEMO_SEED_EMAIL (password sign-in), with the CDISC CSR study.
  Password sign-in for the three demo people: see $C2C_CODESPACE_STATE/app.env
    (DEMO_SIGNER_PASSWORD). App log: $C2C_APP_LOG
- Restart the app: bash .devcontainer/post-start.sh (restarts it when it lacks a key this
-   terminal has). A secret added after the Codespace started is not in an open terminal:
+ Restart the app: bash .devcontainer/post-start.sh (restarts it when a supplied key is
+   missing or changed). A secret added after the Codespace started is not in an open terminal:
    stop and start the Codespace instead.
 ============================================================================
 EOF
