@@ -20,13 +20,14 @@ import { loadProjectStabilityStudies } from './stability-source';
 import { loadProjectAnalyticalMethods } from './analytical-method-source';
 import { loadProjectDrugSubstances } from './drug-substance-source';
 import {
-  checkQ1A, checkQ3AandQ3B, checkQ3D,
+  checkQ1A, checkQ3AandQ3B,
   checkQ6AandQ6B, checkQ8, checkQ9, checkQ10,
   ICH_GUIDELINES_CHECKED,
   type IchGuideline, type CheckStatus, type IchCheckFinding,
   type ProjectInputs, type ProjectInputKey,
 } from './ich-compliance-rules';
 import { checkQ2 } from './ich-compliance-q2';
+import { checkQ3D } from './ich-compliance-q3d';
 import { checkQ1E } from './ich-compliance-q1e';
 import { readProgramStage, type ProgramStage } from './program-stage';
 
@@ -34,10 +35,11 @@ export type {
   IchGuideline, CheckStatus, IchCheckFinding, ProjectInputs, ProjectInputKey,
 } from './ich-compliance-rules';
 export {
-  checkQ1A, checkQ3AandQ3B, checkQ3D,
+  checkQ1A, checkQ3AandQ3B,
   checkQ6AandQ6B, checkQ8, checkQ9, checkQ10,
 } from './ich-compliance-rules';
 export { checkQ2 } from './ich-compliance-q2';
+export { checkQ3D } from './ich-compliance-q3d';
 
 const log = createScopedLogger('cmc-ich-compliance');
 

@@ -347,60 +347,6 @@ export function checkQ3AandQ3B(inp: ProjectInputs): IchCheckFinding[] {
   return findings;
 }
 
-// ─── Q3D(R2) — Elemental impurities ──────────────────────────────────────────
-
-export function checkQ3D(inp: ProjectInputs): IchCheckFinding[] {
-  const findings: IchCheckFinding[] = [];
-
-  const elementalSpec = inp.specs.find(s => {
-    const txt = JSON.stringify(s.testParameters ?? '').toLowerCase();
-    return txt.includes('elemental') || txt.includes('heavy metal');
-  });
-  const elementalSource = inp.sourceObjects.find(o => {
-    const k = String(o.sourceKey ?? '').toLowerCase();
-    const t = String(o.sourceType ?? '').toLowerCase();
-    return k.includes('elemental') || k.includes('q3d') || t.includes('elemental');
-  });
-
-  // Q3D concludes from ABSENCE across two inputs. Finding evidence is sound
-  // even if the other input failed, but concluding "no assessment exists"
-  // requires that both reads actually happened.
-  const blockedQ3D = blockedInputs(inp, ['specs', 'sourceObjects']);
-  if (!elementalSpec && !elementalSource && blockedQ3D.length > 0) {
-    return [notEvaluatedFinding(
-      'Q3D(R2)',
-      'Q3D_NOT_EVALUATED',
-      blockedQ3D,
-      'ICH Q3D(R2) §3 — Risk assessment for Class 1, 2A, 2B, 3 elemental impurities.',
-    )];
-  }
-
-  if (!elementalSpec && !elementalSource) {
-    findings.push({
-      guideline: 'Q3D(R2)',
-      ruleId: 'Q3D_NO_ASSESSMENT',
-      status: 'fail',
-      message: 'No elemental-impurities assessment (ICH Q3D / USP <232>/<233>) found in specifications or source objects.',
-      evidence: ['No spec test parameter matches "elemental"', 'No source object keyed to Q3D'],
-      citation: 'ICH Q3D(R2) §3 — Risk assessment for Class 1, 2A, 2B, 3 elemental impurities.',
-    });
-  } else {
-    findings.push({
-      guideline: 'Q3D(R2)',
-      ruleId: 'Q3D_OK',
-      status: 'pass',
-      message: 'Elemental impurities assessment present.',
-      evidence: [
-        elementalSpec ? `Spec: ${elementalSpec.materialName}` : '',
-        elementalSource ? `Source: ${elementalSource.sourceKey}` : '',
-      ].filter(Boolean),
-      citation: 'ICH Q3D(R2) §3.',
-    });
-  }
-
-  return findings;
-}
-
 // ─── Q6A / Q6B — Specifications ──────────────────────────────────────────────
 
 export function checkQ6AandQ6B(inp: ProjectInputs): IchCheckFinding[] {
