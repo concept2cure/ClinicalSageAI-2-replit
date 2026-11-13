@@ -53,25 +53,34 @@ export interface AgentActivityView {
 /** Slow on purpose: investigations take minutes, and the panel is not a dashboard. */
 export const AGENT_ACTIVITY_POLL_MS = 20_000;
 
+function activityCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+function activityTime(value: unknown): value is string | null {
+  return value === null || typeof value === 'string' && Number.isFinite(Date.parse(value));
+}
+
+function coerceActivityItem(raw: unknown): AgentActivityItem | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const item = raw as Record<string, unknown>;
+  if (typeof item.id !== 'string' || !item.id || typeof item.question !== 'string' || typeof item.status !== 'string' ||
+      !activityCount(item.toolCalls) || !activityTime(item.startedAt) || !activityTime(item.completedAt)) return null;
+  return { id: item.id, question: item.question, status: item.status, toolCalls: item.toolCalls,
+    startedAt: item.startedAt, completedAt: item.completedAt };
+}
+
 function coerceSummary(raw: unknown): AgentActivitySummary | null {
-  if (!raw || typeof raw !== 'object') return null;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
-  const items = Array.isArray(r.items) ? r.items : [];
-  return {
-    activeCount: typeof r.activeCount === 'number' ? r.activeCount : 0,
-    stalledCount: typeof r.stalledCount === 'number' ? r.stalledCount : 0,
-    recentlyCompletedCount: typeof r.recentlyCompletedCount === 'number' ? r.recentlyCompletedCount : 0,
-    items: items
-      .filter((it): it is Record<string, unknown> => Boolean(it) && typeof it === 'object')
-      .map((it) => ({
-        id: String(it.id ?? ''),
-        question: typeof it.question === 'string' ? it.question : '',
-        status: typeof it.status === 'string' ? it.status : '',
-        toolCalls: typeof it.toolCalls === 'number' ? it.toolCalls : 0,
-        startedAt: typeof it.startedAt === 'string' ? it.startedAt : null,
-        completedAt: typeof it.completedAt === 'string' ? it.completedAt : null,
-      })),
-  };
+  if (!activityCount(r.activeCount) || !activityCount(r.stalledCount) || !activityCount(r.recentlyCompletedCount) || !Array.isArray(r.items)) return null;
+  const items: AgentActivityItem[] = [];
+  for (const rawItem of r.items) {
+    const item = coerceActivityItem(rawItem);
+    if (!item) return null;
+    items.push(item);
+  }
+  return { activeCount: r.activeCount, stalledCount: r.stalledCount, recentlyCompletedCount: r.recentlyCompletedCount, items };
 }
 
 /**
@@ -83,37 +92,49 @@ function coerceSummary(raw: unknown): AgentActivitySummary | null {
  *                 started or finished by it.
  */
 export function useAgentActivity(enabled: boolean, wakeKey?: unknown): AgentActivityView {
-  const [state, setState] = React.useState<AgentActivityState>('idle');
-  const [summary, setSummary] = React.useState<AgentActivitySummary | null>(null);
-  const [readAt, setReadAt] = React.useState<number | null>(null);
+  const session = useAuthoringReadSession(authService.getUser());
+  const scopeKey = `${session.actor}:${session.key}`;
+  const [read, setRead] = React.useState<{ owner: string; state: AgentActivityState; summary: AgentActivitySummary | null; readAt: number | null } | null>(null);
   const [epoch, setEpoch] = React.useState(0);
   const refresh = React.useCallback(() => setEpoch((n) => n + 1), []);
+  const generation = React.useMemo(() => ({ session, enabled, epoch, wakeKey }), [session, enabled, epoch, wakeKey]);
+  const owner = React.useRef(generation); owner.current = generation;
+  const inFlight = React.useRef<{ session: typeof session; promise: Promise<void> } | null>(null);
 
   React.useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    const read = async () => {
-      setState((s) => (s === 'ready' ? s : 'loading'));
-      const res = await apiCall<{ success?: boolean; data?: unknown }>('GET', '/api/ana-ri/agent-activity');
-      if (cancelled) return;
-      const parsed = res.ok && res.body?.success ? coerceSummary(res.body.data) : null;
-      if (!parsed) {
-        setState('error');
-        return;
-      }
-      setSummary(parsed);
-      setReadAt(Date.now());
-      setState('ready');
+    if (!enabled || !session.sameRevision()) return;
+    let active = true;
+    const held = () => active && owner.current === generation && session.sameRevision();
+    const readSummary = () => {
+      if (!held() || inFlight.current?.session === session) return;
+      const flight = { session, promise: Promise.resolve() };
+      inFlight.current = flight;
+      flight.promise = Promise.resolve().then(async () => {
+        if (!held()) return;
+        try {
+          const [organizationId, userId] = session.actor.split(':').map(Number);
+          const headers = capturedActorHeaders({ organizationId, userId });
+          if (!held()) return;
+          setRead(previous => previous?.owner === scopeKey && previous.state === 'ready' ? previous
+            : { owner: scopeKey, state: 'loading', summary: null, readAt: null });
+          const res = await apiCall<{ success?: boolean; data?: unknown }>('GET', '/api/ana-ri/agent-activity', undefined, held, headers);
+          if (!held()) return;
+          const summary = res?.ok && res.body?.success === true ? coerceSummary(res.body.data) : null;
+          setRead({ owner: scopeKey, state: summary ? 'ready' : 'error', summary, readAt: summary ? Date.now() : null });
+        } catch { if (held()) setRead({ owner: scopeKey, state: 'error', summary: null, readAt: null }); }
+      }).finally(() => { if (inFlight.current === flight) inFlight.current = null; });
     };
-    void read();
-    const timer = setInterval(() => void read(), AGENT_ACTIVITY_POLL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, [enabled, epoch, wakeKey]);
+    // Refreshes supersede old responses, but wait for that account's pending
+    // request to settle instead of starting overlapping polls.
+    const pending = inFlight.current;
+    if (pending?.session === session) void pending.promise.then(readSummary);
+    else readSummary();
+    const timer = setInterval(readSummary, AGENT_ACTIVITY_POLL_MS);
+    return () => { active = false; clearInterval(timer); };
+  }, [enabled, generation, scopeKey, session]);
 
-  return { state, summary, readAt, refresh };
+  const owned = enabled && session.sameRevision() && read?.owner === scopeKey ? read : null;
+  return { state: !enabled ? 'idle' : owned?.state ?? 'loading', summary: owned?.summary ?? null, readAt: owned?.readAt ?? null, refresh };
 }
 
 export interface ProjectTeamView {

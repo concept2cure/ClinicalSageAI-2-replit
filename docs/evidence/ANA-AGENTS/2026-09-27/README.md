@@ -35,6 +35,14 @@ failure. Unsupported prior nested/nonstring shapes withhold the free-text reason
 or authority. Independent review reports no remaining in-scope finding. These fixtures use synthetic credentials;
 no live customer/provider credential or external qualification is claimed.
 
+**Activity repair verified:** the old background reader fails **23** new regression cases before the fix; the
+complete existing conversation suite then passes **41/41**, with zero changed-file lint errors or warnings and no
+material independent-review finding. The reader now masks data immediately across actor/access/session changes,
+guards delayed JSON and dispatched actor headers, serializes/coalesces polls, stops hidden polling, and preserves
+ordinary bearer refresh. Invalid summaries or failed reads clear prior data rather than fabricate empty success.
+An adjacent run passes 63/65 checks; two Reporting same-reader refresh-notice expectations are being compared
+against the baseline separately before any change to those tests. These counts overlap and are not summed.
+
 **Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
 but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
 plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`
