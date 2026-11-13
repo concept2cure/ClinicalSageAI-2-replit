@@ -38,6 +38,8 @@ const MAX_LIMIT = 25;
 
 export interface ConnectorSearchParams {
   query: string;
+  /** Server-authenticated initiator; null only for explicitly delegated background work. */
+  actorUserId: number | null;
   /**
    * Restrict to these repositories (e.g. ['google_drive']; 'google-drive' names
    * the same one). Default: every repository connected for the organisation.
@@ -61,7 +63,8 @@ export interface ConnectorSearchDeps {
   searchConnectors: (
     orgId: number,
     connectorIds: string[],
-    query: { keywords?: string[]; limit?: number }
+    query: { keywords?: string[]; limit?: number },
+    actorUserId: number | null
   ) => Promise<{ connectorId: string; results: ConnectorResult[]; error?: string }[]>;
 }
 
@@ -177,6 +180,7 @@ export async function searchConnectedRepositories(
   params: ConnectorSearchParams,
   deps: ConnectorSearchDeps = defaultDeps
 ): Promise<ConnectorSearchResponse> {
+  const actorUserId = params.actorUserId;
   const limit = Math.min(Math.max(Math.trunc(params.limit ?? DEFAULT_LIMIT), 1), MAX_LIMIT);
   const skipped: Skipped = [];
 
@@ -207,7 +211,7 @@ export async function searchConnectedRepositories(
   const perConnector = await deps.searchConnectors(organizationId, toSearch, {
     keywords: [params.query],
     limit,
-  });
+  }, actorUserId);
 
   const documents: ConnectorSearchResponse['documents'] = [];
   const failed = new Set<string>();

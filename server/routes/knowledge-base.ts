@@ -51,7 +51,7 @@ import { extractWithTika } from '../services/ingestion/tikaClient';
 import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
 import { searchConnectedRepositories } from '../services/integrations/connector-search.js';
-import { assertCredentialUseCurrent, captureCredentialForUse, type CapturedCredentialUse } from '../services/connectors/connector-registry.js';
+import { assertCredentialUseCurrent, captureCredentialForUse, isCredentialActorId, type CapturedCredentialUse } from '../services/connectors/connector-registry.js';
 
 import { toBinaryBody } from '../utils/binary-body.js';
 import { serverError } from '../lib/api-response';
@@ -137,7 +137,7 @@ router.use(authenticateToken);
 router.get('/search-connectors', async (req: Request, res: Response) => {
   const user = (req as any).user;
   const orgId = Number(user?.organizationId ?? user?.orgId);
-  if (!orgId || orgId <= 0) {
+  if (!(orgId > 0)) {
     return void res.status(400).json({ error: 'Organization context required' });
   }
 
@@ -157,9 +157,11 @@ router.get('/search-connectors', async (req: Request, res: Response) => {
 
   const limitRaw = Number(req.query.limit);
   const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : undefined;
+  const actorUserId = authedUserId(req);
+  if (!isCredentialActorId(actorUserId)) return void res.status(403).json({ error: 'Current authenticated user required' });
 
   try {
-    const result = await searchConnectedRepositories(orgId, { query, connectors, limit });
+    const result = await searchConnectedRepositories(orgId, { query, connectors, limit, actorUserId });
     res.json({
       source: result.source,
       searched: result.searched,

@@ -43,6 +43,7 @@ const REPOSITORIES = ['google_drive', 'box', 'onedrive', 'sharepoint', 'veeva_va
 const DRIVE_ORG = 7;
 const BOX_ORG = 9;
 const NOTHING_ORG = 8;
+const ACTOR = 31;
 
 const json = (body: unknown) =>
   new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -53,6 +54,7 @@ beforeEach(() => {
   h.store.clear();
   h.requests.length = 0;
   h.query.mockImplementation(async (sql: string, params: unknown[] = []) => {
+    if (/SELECT ou.role FROM organization_users ou/.test(sql)) return { rows: [DRIVE_ORG, BOX_ORG, NOTHING_ORG].includes(Number(params[0])) && params[1] === ACTOR ? [{ role: 'member' }] : [] };
     if (/INSERT INTO connector_credentials/.test(sql)) {
       h.store.set(`${params[0]}:${params[1]}`, params[2] as string);
       return { rows: [] };
@@ -105,8 +107,15 @@ async function seedLegacyCredentials(organizationId: number, connectorId: string
 const connectDrive = (org: number) => seedLegacyCredentials(org, 'google_drive', { clientId: `svc-${org}@test.iam`, clientSecret: privateKey() });
 
 async function run(org: number, input: Record<string, unknown>) {
-  return JSON.parse(await getToolHandler('search_connected_repositories')!(input, { organizationId: org } as never));
+  return JSON.parse(await getToolHandler('search_connected_repositories')!(input, { organizationId: org, userId: ACTOR } as never));
 }
+
+it('a valid repository query cannot borrow its actor from tool input', async () => {
+  await connectDrive(DRIVE_ORG);
+  const out = JSON.parse(await getToolHandler('search_connected_repositories')!({ query: 'protocol', userId: ACTOR, actorUserId: ACTOR }, { organizationId: DRIVE_ORG } as never));
+  expect(out.error).toContain('Current authenticated user required');
+  expect(h.requests).toEqual([]);
+});
 
 const hosts = () => [...new Set(h.requests.map((u) => u.hostname))].sort();
 const driveSearches = () => h.requests.filter((u) => u.href.startsWith('https://www.googleapis.com/drive/v3/files'));
