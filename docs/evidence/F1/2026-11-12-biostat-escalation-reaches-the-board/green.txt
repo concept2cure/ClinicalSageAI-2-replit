@@ -1,0 +1,30 @@
+# The change as committed. Expected: green.
+ ✓ the insert it used to make > cannot succeed on the review-task table’s own DDL: four required columns are never named
+ ✓ a critical statistical finding’s escalation > reaches the task board as a Biostatistics task naming its creator, its project and the document it is about
+ ✓ a critical statistical finding’s escalation > carries its task.create row, by the person who ran the review
+ ✓ a critical statistical finding’s escalation > writes nothing to the review workflow’s own store
+ ✓ a critical statistical finding’s escalation > high risk is a high-priority task; a document on no project is filed on none
+ ✓ a critical statistical finding’s escalation > with no escalation reason recorded, it says what the engine said to the regulatory reader
+ ✓ a critical statistical finding’s escalation > raised twice for the same document, it is one task
+ ✓ a critical statistical finding’s escalation > a different document raises its own
+ ✓ the answer never carries the store’s words > trunk answered "Escalation task creation failed: Failed query: insert into …" with the statement and its values
+ ✓ all or nothing > when the ledger cannot be written, no task is raised and the answer is not a success
+ ✓ all or nothing > a document that names no creator raises nothing: a task nobody raised is not recorded
+ ✓ all or nothing > the store’s own error text does not reach the answer
+ ✓ the escalation does not wait on the document having been stored > a critical finding whose document failed to save is still raised, and says the document was not stored
+ ✓ the escalation does not wait on the document having been stored > the same text escalated twice is one task; a different text is another
+ ✓ a failed step says what did not happen, in its own words > the artifact step: no statement, no parameters, no document text
+ ✓ a failed step says what did not happen, in its own words > the review thread and the dossier attachment
+ ✓ a failed step says what did not happen, in its own words > no result of a whole failed run carries the store’s words
+ ✓ the hand-off names a place that exists > a document that was not stored is not "ready for editing"
+ ✓ the hand-off names a place that exists > a stored document is found on Biostatistics, not at a route that was removed
+ ✓ with no database > the review thread is not a success
+ ✓ with no database > the review thread hands out no id — a clock reading is not a thread id
+ ✓ with no database > the escalation task is not a success
+ ✓ with no database > the escalation says nothing was created, not that it was "prepared"
+ ✓ with no database > the artifact branch still fails closed, as it has since its own fix
+ ✓ WorkflowIntegrator.attachToDossier > maps through the canonical governed operation — tenant-scoped, with a reason, and never writing the row itself
+ ✓ WorkflowIntegrator.attachToDossier > SAYS a previously assembled bundle was cleared, rather than reporting a bare attachment
+ ✓ WorkflowIntegrator.attachToDossier > SAYS a lost audit row, and reports a refusal as a refusal
+ Test Files  3 passed (3)
+      Tests  27 passed (27)
