@@ -43,6 +43,45 @@ ordinary bearer refresh. Invalid summaries or failed reads clear prior data rath
 An adjacent run passes 63/65 checks; two Reporting same-reader refresh-notice expectations are being compared
 against the baseline separately before any change to those tests. These counts overlap and are not summed.
 
+**Adjacent current-session fixture repair.** The two Reporting notice failures also occur against pre-activity
+commit `fc9fe8cf7`; the activity module is absent from their import graph. `Insights.tsx` already uses the shared
+stable-session reader, so re-reading unchanged access retains the report rather than resetting it. Reconcile only
+those two existing tests to require the current report/export DOM and request counts remain unchanged; preserve
+the actual account-switch notice and every different-actor/permission/session/late-read negative control.
+
+**Connector-use continuation.** The existing registry can recheck current user standing and audit a versioned
+credential use, but its search wrappers drop the initiating actor. The knowledge-base route has authenticated
+`authedUserId(req)`, AnA has `ctx.userId`, and asynchronous deep research retains its initiating `request.userId`.
+Carry that trusted positive identity through the existing repository-search orchestration and both pre-auth and
+post-auth credential checks. Missing/invalid foreground identity refuses; explicit server background identity is
+distinct and never inferred from missing user context. Extend the existing standing check to legacy credential
+uses too, without inventing a legacy grant or revision audit. Current upload already retains its requesting actor.
+The actual scoped credential/audit boundary remains the authority, with no ambient global or request-body actor.
+
+### Executed continuation results
+
+- Credential actor propagation: **198/198** across ten existing suites. Eleven original failures demonstrate
+  missing actor attribution, revocation during the real use audit reaching transport, and legacy standing gaps.
+  Final PGlite/Drive fixtures prove zero OAuth/search sends after audit-time revocation, no search after
+  authentication-time revocation, current standing for legacy credentials, and explicit active-organization
+  background use. Trusted route/tool/queued-job actors survive awaits; spoofed or missing foreground actors fail.
+- Measured estimate producer: **189/189** across five existing suites. Original producer and durable-ledger tests
+  fail before implementation. The real child runner and RunCoordinator/PGlite fixture record three observations,
+  both optional aggregate groups, immutable idempotent replay and audit-before-projection. Controlled durations
+  explicitly distinguish lazy imports, ledger and advisory time from actual check samples. These substituted
+  transport/timing fixtures are not provider latency or real model qualification evidence.
+- Current-activity/estimate/Reporting/Summary UI: **134/134** across four existing suites. Six old-format cases and
+  the historical Summary case fail before their respective repairs. The live estimate counts down inside its
+  measured window, uses seconds without an invented minute floor and withdraws when overdue; Summary preserves
+  an explicit as-recorded value/timestamp across elapsed time and reload. The two unrelated Reporting failures
+  were reproduced against the pre-activity module, then reconciled without weakening account-change controls.
+
+These runs overlap earlier component counts and are not summed. Independent reviews found no remaining
+in-scope issue in the credential reason, actor propagation, activity ownership or estimate producer paths.
+All changed paths have no lint errors and no warning-count growth; the existing knowledge-base/executor warning
+counts remain 46/93. No baseline, model admission, privacy, approval, signing or filing gate is loosened.
+Full merged compiler, normal publication and actual demo-runtime checks remain the final acceptance steps.
+
 **Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
 but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
 plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`
@@ -54,8 +93,12 @@ timing and lifecycle transitions clear the estimate. The range is an explicitly 
 estimate of remaining checks, never calibrated provider p95, worker completion or project/filing readiness.
 Persist the estimate in the idempotent audited snapshot before projection; preserve the existing aggregate-count
 granularity and replay. The existing sub-agent and coordination tests are its regression homes. No retired
-fixture progress bar or constant ETA is restored. A later formatter repair, after the activity file is released,
-must avoid rounding a sub-minute estimate into an invented one-minute lower bound.
+fixture progress bar or constant ETA is restored. The released formatter must avoid rounding a sub-minute
+estimate into an invented one-minute lower bound, count down only within the actual observation window and
+withdraw expired/future or inconsistent measurements. The existing `TurnSummary.tsx` forensic rows need an
+explicit as-recorded estimate and timestamp, preserving immutable numeric history without a live countdown claim.
+Its existing `turnSummary.test.tsx` is the additional regression home; the live team panel shares `useNow` and
+stops its clock when that measured window ends or the panel is hidden.
 
 ## Original delivery record — 2026-09-27
 

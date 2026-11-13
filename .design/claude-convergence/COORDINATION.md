@@ -1733,11 +1733,15 @@ own holds; no plan/ledger or qualification status is changed.
 | Credential agent | `server/services/connectors/connector-registry.ts` prior-state/audit-reason handling only; `server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts` |
 | Activity agent | `client/src/concept2cure/v2/useAgentActivity.ts` background reader only; `client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx` regression coverage |
 | Measured-time agent | `server/services/ana/sub-agent.ts`, `sub-agent-stream.ts`, `run-events.ts`, `turn-plan.ts` for the existing deterministic-check estimate only; existing `sub-agent.test.ts` and `run-coordination-dispositions.test.ts` tests |
+| Credential agent, second bounded repair | Existing connector registry credential-use/search functions; `server/services/integrations/connector-search.ts`, `server/routes/knowledge-base.ts`, `server/services/ana/AnaToolExecutor.ts` connector-search call sites only, and `server/services/deep-research-orchestrator.ts`; existing connector/search regression tests only, named before edits |
+| Activity agent, adjacent fixture repair | `client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx` two stale ordinary-refresh notice cases only; activity source is committed and released to root |
 | Root | This entry, existing `docs/evidence/ANA-AGENTS/2026-09-27/README.md`, integration, Git and the sole full compiler |
+| Root, released estimate display | Existing `useAgentActivity.ts` worker formatter, `AnaWorkPanel.tsx`, `TurnSummary.tsx`, and existing `conversationRemembers.test.tsx` / `turnSummary.test.tsx`; live observation-window expiry and explicitly recorded historical estimates only |
 
 The evidence README's dated **What already exists** inventory precedes implementation. Both agents reproduce
 their specific failures before fixes. Read-only actor-propagation and measured-ETA investigations hold no further
 source beyond the assignments above. Measured-time implementation follows the existing evidence README's explicit
-whole-check timing contract. Root may edit the existing worker-time formatter only after the activity agent
-releases that file. Connector actor propagation still requires its separate trusted-caller contract and assignment.
+whole-check timing contract. Root now owns the released worker-time formatter and its existing panel/conversation
+tests. Connector actor propagation follows the evidence README's trusted-caller contract and the exact second
+credential assignment above; the agent names any additional existing regression file before changing it.
 No new source file, screen, route, table, provider, model or dependency is approved by this continuation.
