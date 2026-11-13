@@ -13,7 +13,7 @@ const row = () => ({ id: 9, client_program_id: '11111111-1111-4111-8111-11111111
   provenance: { origin: 'native_record_snapshot', recordSnapshot: { version: 1, renderer: 'quality-evidence:v1', workArea: 'quality',
     key: record.key, sourceScope: record.sourceScope, native: record.native, lifecycle: record.lifecycle } } });
 const q = { query: vi.fn() };
-beforeEach(() => { vi.resetAllMocks(); h.read.mockResolvedValue([record]); h.authorize.mockResolvedValue(undefined); q.query.mockResolvedValue({ rows: [{ native_text: record.text }] }); });
+beforeEach(() => { vi.resetAllMocks(); h.read.mockResolvedValue([record]); h.authorize.mockResolvedValue(undefined); q.query.mockResolvedValue({ rows: [{ native_text: record.text, title: record.title }] }); });
 describe('native source parent and freshness admission', () => {
   it('batches current native reads within one actor invocation through the canonical admitted collector', async () => {
     const admit = createNativeRecordAdmission(q, input);
@@ -40,6 +40,52 @@ describe('native source parent and freshness admission', () => {
     await expect(createNativeRecordAdmission(q, input)({ ...row(), is_current: false })).resolves.toBeUndefined();
     h.authorize.mockRejectedValue({ status: 403, code: 'QMS_DOCUMENT_VIEW_DENIED', message: 'Access denied' });
     await expect(createNativeRecordAdmission(q, input)({ ...row(), is_current: false })).rejects.toMatchObject({ status: 403 });
+  });
+});
+
+const assignment = { key: 'quality:qms_training_assignments:4', title: 'Training assignment: SOP-QA-001 Deviation handling (assignment 4)',
+  text: JSON.stringify({ evidenceKind: 'qms', sourceScope: 'project', lifecycle: 'active', data: { record: { id: 4, document_id: 5, user_id: 11, removed_at: null } } }),
+  version: null, sourceScope: 'project', native: { kind: 'qms_training_assignments', id: '4' }, lifecycle: 'active' };
+const renamedTitle = 'Training assignment: SOP-QA-001 Deviation investigation (assignment 4)';
+const assignmentRow = () => {
+  const identity = row();
+  return { ...identity, id: 41, checksum: createHash('sha256').update(assignment.text).digest('hex'),
+    provenance: { ...identity.provenance, recordSnapshot: { ...identity.provenance.recordSnapshot,
+      key: assignment.key, native: assignment.native, lifecycle: assignment.lifecycle } } };
+};
+
+describe('current native titles come from the canonical capture', () => {
+  it.each([undefined, assignment.title, renamedTitle])('refuses a title-only parent rename regardless of caller title %s', async claimedTitle => {
+    h.read.mockResolvedValue([{ ...assignment, title: renamedTitle }]);
+    q.query.mockResolvedValue({ rows: [{ native_text: assignment.text, title: assignment.title }] });
+    await expect(createNativeRecordAdmission(q, input)({ ...assignmentRow(), title: claimedTitle }))
+      .rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
+  });
+
+  it('admits an unchanged current capture when the identity projection supplies no title', async () => {
+    h.read.mockResolvedValue([assignment]);
+    q.query.mockResolvedValue({ rows: [{ native_text: assignment.text, title: assignment.title }] });
+    await expect(createNativeRecordAdmission(q, input)(assignmentRow())).resolves.toBeUndefined();
+  });
+
+  it('admits a refreshed successor by its canonical new title, ignoring a stale caller title', async () => {
+    h.read.mockResolvedValue([{ ...assignment, title: renamedTitle }]);
+    q.query.mockResolvedValue({ rows: [{ native_text: assignment.text, title: renamedTitle }] });
+    await expect(createNativeRecordAdmission(q, input)({ ...assignmentRow(), id: 42, title: assignment.title })).resolves.toBeUndefined();
+    expect(q.query.mock.calls[0][1]).toEqual(expect.arrayContaining([42, 7, row().client_program_id]));
+  });
+
+  it('keeps a historical child capture readable under its old title after a parent rename', async () => {
+    h.read.mockResolvedValue([{ ...assignment, title: renamedTitle }]);
+    q.query.mockResolvedValue({ rows: [{ native_text: assignment.text, title: assignment.title }] });
+    await expect(createNativeRecordAdmission(q, input)({ ...assignmentRow(), is_current: false })).resolves.toBeUndefined();
+  });
+
+  it('keeps the captured title of an authorized historical authored source', async () => {
+    h.read.mockResolvedValue([{ ...record, title: 'A renamed working copy' }]);
+    await expect(createNativeRecordAdmission(q, input)({ ...row(), is_current: false })).resolves.toBeUndefined();
+    expect(h.read).not.toHaveBeenCalled();
+    expect(h.authorize).toHaveBeenCalledWith(q, { ...input, programId: row().client_program_id }, record.native);
   });
 });
 

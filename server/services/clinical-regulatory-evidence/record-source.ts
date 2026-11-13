@@ -135,8 +135,8 @@ function nativeReceipt(row: NativeIdentityRow) {
   }
   return snapshot;
 }
-async function verifyRetainedText(q: RequestSqlClient, organizationId: number, row: NativeIdentityRow): Promise<void> {
-  const retained = await q.query(`SELECT extracted_text AS native_text FROM cre_evidence_sources
+async function verifyRetainedText(q: RequestSqlClient, organizationId: number, row: NativeIdentityRow, expectedCurrentTitle?: string): Promise<void> {
+  const retained = await q.query(`SELECT extracted_text AS native_text,title FROM cre_evidence_sources
     WHERE id=$1 AND organization_id=$2 AND client_program_id=$3 AND checksum=$4
       AND provenance->'recordSnapshot'=$5::jsonb AND is_current IS NOT DISTINCT FROM $6
       AND deleted_at IS NULL`, [row.id, organizationId, row.client_program_id, row.checksum,
@@ -144,6 +144,9 @@ async function verifyRetainedText(q: RequestSqlClient, organizationId: number, r
   const text = retained.rows[0]?.native_text;
   if (retained.rows.length !== 1 || typeof text !== 'string' || nativeRecordHash(text) !== row.checksum) {
     throw new SourceReadAccessError(409, 'NATIVE_SOURCE_IDENTITY_INVALID', 'The native source’s retained text no longer matches its recorded digest.');
+  }
+  if (expectedCurrentTitle !== undefined && retained.rows[0].title !== expectedCurrentTitle) {
+    throw new SourceReadAccessError(409, 'NATIVE_SOURCE_CHANGED', 'The Quality record changed or is no longer available. Refresh the project catalogue before using it.');
   }
 }
 function nativeAdmissionFailure(error: unknown): never {
@@ -172,6 +175,7 @@ export function createNativeRecordAdmission(q: RequestSqlClient, input: { organi
     try {
       const { authorizeQualityEvidenceSnapshot } = await import('../qms/project-evidence');
       const actor = { ...input, programId: row.client_program_id as string };
+      let expectedCurrentTitle: string | undefined;
       if (row.is_current === false && snapshot.native.authoringDocumentId) {
         await authorizeQualityEvidenceSnapshot(q, actor, snapshot.native);
       } else {
@@ -188,9 +192,12 @@ export function createNativeRecordAdmission(q: RequestSqlClient, input: { organi
           if (nativeRecordHash(current.text) !== row.checksum || stableStringify(receipt({ ...actor, workArea: 'quality' }, current)) !== stableStringify(snapshot)) {
             throw new SourceReadAccessError(409, 'NATIVE_SOURCE_CHANGED', 'The Quality record changed or is no longer available. Refresh the project catalogue before using it.');
           }
+          expectedCurrentTitle = current.title;
         }
       }
-      await verifyRetainedText(q, input.organizationId, row);
+      // Identity projections omit titles; compare the canonical capture only for
+      // current sources. Historical captures keep the title recorded then.
+      await verifyRetainedText(q, input.organizationId, row, expectedCurrentTitle);
     } catch (error) { nativeAdmissionFailure(error); }
   };
 }

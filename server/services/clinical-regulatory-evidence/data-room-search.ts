@@ -23,6 +23,7 @@ import { EXTRACTION_STATUSES, type EvidenceSource, type ExtractionStatus } from 
 import { syncQualityProjectSources } from './record-source';
 import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent } from './source-read-access';
 import { persistedTextAvailableSql } from './data-room-processing-state.js';
+import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
 export interface DataRoomQuery {
   programId: string;
@@ -171,23 +172,35 @@ function filterClauses(p: DataRoomQuery, args: unknown[]): string[] {
 }
 
 /**
- * The sources this person may read. The catalog spans several projects, so its scope is asked for
- * every project they can open (no one programId); the query below still holds it to the catalog's set.
+ * Admit only the requested canonical projects before reading native facts. The catalog's
+ * actor/program bracket still covers the whole loop, including an empty effective set.
  */
 async function prepareSourceScope(orgId: number, p: DataRoomQuery, actor?: { userId: number | undefined }) {
   if (!actor) return null;
-  if ((p.offset ?? 0) === 0) await syncQualityProjectSources({ organizationId: orgId, programId: p.programId, userId: actor.userId });
-  return getCurrentReadableSourceScope(pool, readableScopeInput(orgId, p, actor));
-}
-
-function readableScopeInput(orgId: number, p: DataRoomQuery, actor: { userId: number | undefined }) {
-  return { organizationId: orgId, userId: actor.userId, ...(Array.isArray(p.programIds) ? {} : { programId: p.programId }) };
+  const identity = { organizationId: orgId, userId: actor.userId };
+  const programs = Array.isArray(p.programIds) ? await getCurrentAccessibleProgramScope(pool, identity) : null;
+  const programIds = programs
+    ? [...new Set(p.programIds!.map(id => id.toLowerCase()))].filter(id => programs.programIds.includes(id) && (!p.project || id === p.project.toLowerCase()))
+    : [p.programId];
+  const admissions: Array<{ programId: string; scope: Awaited<ReturnType<typeof getCurrentReadableSourceScope>> }> = [];
+  for (const programId of programIds) {
+    if ((p.offset ?? 0) === 0) await syncQualityProjectSources({ ...identity, programId });
+    admissions.push({ programId, scope: await getCurrentReadableSourceScope(pool, { ...identity, programId }) });
+  }
+  if (programs) await requireProgramScopeStillCurrent(pool, identity, programs);
+  return { sourceIds: [...new Set(admissions.flatMap(admission => admission.scope.sourceIds))], admissions };
 }
 
 /** The person's readable sources did not change while the page was read; a change refuses the read. */
 async function confirmSourceScope(orgId: number, p: DataRoomQuery, actor: { userId: number | undefined } | undefined,
   readable: Awaited<ReturnType<typeof prepareSourceScope>>): Promise<void> {
-  if (actor && readable) await requireSourceReadScopeStillCurrent(pool, readableScopeInput(orgId, p, actor), readable);
+  if (!actor || !readable) return;
+  const identity = { organizationId: orgId, userId: actor.userId };
+  const programs = Array.isArray(p.programIds) ? await getCurrentAccessibleProgramScope(pool, identity) : null;
+  for (const { programId, scope } of readable.admissions) {
+    await requireSourceReadScopeStillCurrent(pool, { ...identity, programId }, scope);
+  }
+  if (programs) await requireProgramScopeStillCurrent(pool, identity, programs);
 }
 
 /** Which captures a query matches: the organization's visible, live client documents of the project (or the catalog's projects), filtered. */

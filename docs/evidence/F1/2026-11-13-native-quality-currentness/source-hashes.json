@@ -1,0 +1,6 @@
+{
+  "server/services/clinical-regulatory-evidence/record-source.ts": "a529d91a35c19cad4ee393f73a9e36f18978d4eea55edb59aaaec9ab630c3674",
+  "server/services/clinical-regulatory-evidence/data-room-search.ts": "4dc27d4fd35cf6c7a3557626fefa270dce1e70eeb696e5b2701c8cbb359dc732",
+  "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts": "025e716185b85100dc61743e1a78564bb9d98216f0275bfc6ae1f16b17fbf26d",
+  "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "abd679cfbc584264e23b1df48c25d898bcb185d1a2cecd55d02a7ac949ea6812"
+}

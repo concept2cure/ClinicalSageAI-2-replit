@@ -27,6 +27,7 @@ import { listClientDocuments } from '../evidence-spine.service';
 
 const ORG = 71, OTHER_ORG = 72, USER = 1;
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
+const SIBLING = '44444444-4444-4444-8444-444444444444';
 const OTHER_PROGRAM = '22222222-2222-4222-8222-222222222222';
 const AUTHORED = '33333333-3333-4333-8333-333333333333';
 const PRIVATE_TITLE = 'Private controlled procedure';
@@ -61,6 +62,11 @@ beforeAll(async () => {
     -- The catalog read names each source's project and study (S2, 2026-11-06): the columns it reads.
     CREATE TABLE IF NOT EXISTS cdisc_prm_studies(id serial PRIMARY KEY,tenant_id integer NOT NULL,study_id varchar(100),protocol_title text);
     ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS name text;`);
+  await pg.query(`INSERT INTO regulatory_programs(id,organization_id,name,code,program_type,product_type,primary_agency,product_name)
+    VALUES($1,$2,'Sibling programme','SOURCE-SIBLING','IND','drug','FDA','QA fixture')`, [SIBLING, ORG]);
+  await pg.query(`INSERT INTO projects(id,organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,regulatory_program_id,settings)
+    VALUES(171,$1,$1,'Sibling project','regulatory','active',1,1,$2,'{}')`, [ORG, SIBLING]);
+  await pg.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,171,'private')", [ORG]);
 }, 90_000);
 afterAll(async () => { await pg?.close(); });
 beforeEach(async () => {
@@ -156,15 +162,6 @@ describe('native catalogue omission stays private', () => {
 // 2026-11-10, the Codespace click-through: approving one project's controlled document left its captured Quality
 // source stale, and every project's Vault answered 500. The Vault's list checked every source in the organization.
 describe('a changed Quality record in one project', () => {
-  // A second project in the same organization, owned by the same person (the fixture's two are in two organizations).
-  const SIBLING = '44444444-4444-4444-8444-444444444444';
-  beforeAll(async () => {
-    await pg.query(`INSERT INTO regulatory_programs(id,organization_id,name,code,program_type,product_type,primary_agency,product_name)
-      VALUES($1,$2,'Sibling programme','SOURCE-SIBLING','IND','drug','FDA','QA fixture')`, [SIBLING, ORG]);
-    await pg.query(`INSERT INTO projects(id,organization_id,client_workspace_id,name,type,status,owner_id,created_by_id,regulatory_program_id,settings)
-      VALUES(171,$1,$1,'Sibling project','regulatory','active',1,1,$2,'{}')`, [ORG, SIBLING]);
-    await pg.query("INSERT INTO project_visibility_settings(organization_id,project_id,visibility) VALUES($1,171,'private')", [ORG]);
-  });
   async function staleInOtherProgram() {
     await searchDataRoom(ORG, { programId: SIBLING, limit: 200, offset: 0 }, { userId: USER });
     await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]);
@@ -179,6 +176,119 @@ describe('a changed Quality record in one project', () => {
     await staleInOtherProgram();
     await expect(listClientDocuments(q, ORG, { userId: USER, programId: SIBLING, currentOnly: true }))
       .rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
+  });
+});
+
+/** This native record belongs only to B; project, source, disposition and access SQL remain real. */
+function siblingRecordsOnly() {
+  const collect = h.collect.getMockImplementation()!;
+  h.collect.mockImplementation((client: unknown, actor: { programId: string }) => actor.programId === SIBLING ? collect(client, actor) : []);
+}
+const catalog = (extra: Partial<Parameters<typeof searchDataRoom>[1]> = {}) => searchDataRoom(ORG,
+  { programId: PROGRAM, programIds: [PROGRAM, SIBLING], currentOnly: true, limit: 200, offset: 0, ...extra }, { userId: USER });
+async function captureSibling() {
+  siblingRecordsOnly();
+  await searchDataRoom(ORG, { programId: SIBLING, limit: 200, offset: 0 }, { userId: USER });
+}
+function afterPage(read: () => Promise<void>) {
+  const query = h.query.getMockImplementation()!;
+  let done = false;
+  h.query.mockImplementation(async (sql: string, args?: unknown[]) => {
+    const result = await query(sql, args);
+    if (!done && sql.includes('clock_timestamp() AS processing_observed_at')) { done = true; await read(); }
+    return result;
+  });
+}
+
+describe('the Data catalog admits only its effective canonical projects', () => {
+  it.each([
+    { label: 'outside its canonical set', programIds: [PROGRAM] },
+    { label: 'outside its project facet', programIds: [PROGRAM, SIBLING], project: PROGRAM },
+    { label: 'with an empty canonical set', programIds: [] },
+    { label: 'with a facet outside its canonical set', programIds: [PROGRAM], project: SIBLING },
+  ])('does not inspect a readable stale sibling $label', async ({ label: _label, ...query }) => {
+    await captureSibling();
+    await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]);
+    h.collect.mockClear(); h.authorize.mockClear();
+    expect(await catalog(query)).toMatchObject({ total: 0, currentTotal: 0, sources: [] });
+    expect(h.authorize).not.toHaveBeenCalled();
+    expect(h.collect.mock.calls.every(([, actor]) => actor.programId === PROGRAM)).toBe(true);
+    if (!query.programIds.length || query.project === SIBLING) expect(h.collect).not.toHaveBeenCalled();
+  });
+
+  it('refreshes an included sibling and retains its immutable predecessor on the first page', async () => {
+    await captureSibling(); const before = await storedSources();
+    await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]);
+    const result = await catalog(); const retained = await storedSources();
+    expect(result).toMatchObject({ total: 1, currentTotal: 1 });
+    expect(retained).toEqual([{ ...before[0], is_current: false },
+      { id: retained[1].id, extracted_text: CHANGED, is_current: true, previous_version_id: before[0].id }]);
+    expect(result.sources.map(source => source.id)).toEqual([retained[1].id]);
+  });
+
+  it('discovers an included sibling’s existing native record before that data room has ever been opened', async () => {
+    siblingRecordsOnly();
+    expect(await catalog()).toMatchObject({ total: 1, currentTotal: 1 });
+    expect(await storedSources()).toHaveLength(1);
+  });
+
+  it('does not synchronize subsequent pages and still refuses stale records inside their scope', async () => {
+    await captureSibling();
+    await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]); queryTrace = [];
+    await expect(catalog({ offset: 1 })).rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
+    expect(queryTrace).not.toContain('BEGIN');
+  });
+
+  it('refuses a sibling changed just after its own first-page capture', async () => {
+    siblingRecordsOnly();
+    const mutate = async () => {
+      if (h.collect.mock.lastCall?.[1]?.programId !== SIBLING) { afterProjection = mutate; return; }
+      await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]);
+    };
+    afterProjection = mutate;
+    await expect(catalog()).rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
+  });
+});
+
+describe('catalogue scope preserves privacy and its final admission fence', () => {
+  it('omits a denied native object without a title or text', async () => {
+    await captureSibling(); await pg.query('UPDATE quality_fixture_state SET visible=FALSE WHERE id=9');
+    const result = await catalog();
+    expect(result).toMatchObject({ total: 0, sources: [] });
+    expect(JSON.stringify(result)).not.toContain(PRIVATE_TITLE); expect(JSON.stringify(result)).not.toContain(ORIGINAL);
+  });
+
+  it('omits a project whose private grant is no longer in the current evaluated catalog', async () => {
+    await captureSibling(); await pg.exec('UPDATE projects SET owner_id=NULL,created_by_id=NULL WHERE id=171');
+    try { expect(await catalog()).toMatchObject({ total: 0, sources: [] }); }
+    finally { await pg.exec('UPDATE projects SET owner_id=1,created_by_id=1 WHERE id=171'); }
+  });
+
+  it('still verifies the actor when the canonical catalogue set is empty', async () => {
+    await pg.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=$2', [ORG, USER]);
+    try { await expect(catalog({ programIds: [] })).rejects.toMatchObject({ status: 403 }); }
+    finally { await pg.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, USER]); }
+  });
+
+  it('refuses native content changed after the page SQL and before its final admission', async () => {
+    await captureSibling();
+    afterPage(async () => { await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]); });
+    await expect(catalog()).rejects.toMatchObject({ status: 503, code: 'SOURCE_READ_ACCESS_CHANGED' });
+  });
+
+  it('retains the actor fence if membership is revoked during the final admission of B', async () => {
+    await captureSibling(); let pageRead = false;
+    afterPage(async () => { pageRead = true; });
+    const collect = h.collect.getMockImplementation()!;
+    h.collect.mockImplementation(async (client: unknown, actor: { programId: string }) => {
+      const records = await collect(client, actor);
+      if (pageRead && actor.programId === SIBLING) {
+        pageRead = false; await pg.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=$2', [ORG, USER]);
+      }
+      return records;
+    });
+    try { await expect(catalog()).rejects.toMatchObject({ status: 403 }); }
+    finally { await pg.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, USER]); }
   });
 });
 
