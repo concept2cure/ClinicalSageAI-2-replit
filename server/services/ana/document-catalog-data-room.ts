@@ -19,6 +19,7 @@ import type { ProgramAccessExecutor } from '../c2c/current-program-access.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import { requireDocumentAccess } from './document-tools-shared.js';
 import { catalogScope } from './catalog-scope.js';
+import { NATIVE_RECORD_ORIGIN, NATIVE_RECORD_REVISION } from '../clinical-regulatory-evidence/record-source.js';
 
 /** The tool's own refusal, as the catalog tools say one. */
 const refusal = (r: { refusal?: string; error?: string; code?: string }) =>
@@ -51,6 +52,21 @@ function gradeForAna(g: { grade: string; score: number; cap: string | null; basi
     grade: g.grade, score: g.score, cap: g.cap,
     basis: g.basis.map((b) => `${b.criterion} ${b.points === null ? 'n/a' : `${b.points}/${b.max}`}: ${b.detail}`),
   };
+}
+
+/** Display only: searchDataRoom already admits and rechecks the native receipt.
+ * Match the UI's nativeRecord shape, without inferring scope from capture placement. */
+function nativeRecordForAna(provenance: Record<string, any>, version: unknown) {
+  if (provenance.origin !== NATIVE_RECORD_ORIGIN) return null;
+  const record = provenance.recordSnapshot;
+  const native = record?.native;
+  if (![record, native].every(v => v && typeof v === 'object' && !Array.isArray(v))) return null;
+  if (record.version !== 1 || record.renderer !== NATIVE_RECORD_REVISION || record.workArea !== 'quality'
+    || !['project', 'organization'].includes(record.sourceScope)
+    || ![native.kind, native.id, record.lifecycle].every(v => typeof v === 'string' && v.trim())
+    || (version != null && typeof version !== 'string')) return null;
+  return { workArea: record.workArea, sourceScope: record.sourceScope, kind: native.kind,
+    id: native.id, lifecycle: record.lifecycle, version: version ?? null };
 }
 
 /**
@@ -115,6 +131,7 @@ export async function listDataCatalogForAna(
       project: s.projectName, projectId: s.clientProgramId,
       study: s.studyName,
       kind: meta.dossier?.evidenceKind ?? null,
+      nativeRecord: nativeRecordForAna(prov, s.version),
       ctdSection: meta.dossier?.ctdSection ?? null,
       proposedFolder: meta.dossier?.suggestedFolder ?? null,
       version: s.version, revisesCapture: s.previousVersionId, isCurrent: s.isCurrent !== false,
@@ -133,8 +150,12 @@ export async function listDataCatalogForAna(
     items,
     ...vault,
     message:
-      `The data catalog: ${page.total} captured file(s)${vault.vaultTotal === undefined ? '' : ` and ${vault.vaultTotal} Vault document(s)`} across ${query.programIds.length} project(s) of this sponsor, the same list as ` +
-      'Vault → Data catalog. Each grade is computed by the data-room grade engine from recorded facts: quote it and its basis, never ' +
+      `The data catalog: ${page.total} source capture(s)${vault.vaultTotal === undefined ? '' : ` and ${vault.vaultTotal} Vault document(s)`} across ${query.programIds.length} project(s) of this sponsor, the same list as ` +
+      'Vault → Data catalog. Captures can be uploaded files or native records. For a nativeRecord, quote its recorded scope and lifecycle: ' +
+      'organization context does not establish project-specific evidence, and capture placement does not change that scope. ' +
+      'A null nativeRecord supplies no verified native classification; do not assume it is a file or project-specific evidence. ' +
+      'A native lifecycle describes that record; capture placement and grade do not establish scientific or regulatory approval of a project deliverable. ' +
+      'Each grade is computed by the data-room grade engine from recorded facts: quote it and its basis, never ' +
       'set or change one. To bring a capture into this project, PROPOSE it and say where the person confirms it: Vault → Data catalog ' +
       '(or the project’s Data room) → "Use in this project". To file a fileable capture into the Vault, use ' +
       'file_chat_upload_to_vault with its source_id; it lands suggested, for a person to confirm.',
@@ -161,7 +182,7 @@ Promise<{ vaultTotal?: number; vaultDocuments?: Array<Record<string, unknown>>; 
       })),
     };
   } catch {
-    return { vaultUnavailable: 'The Vault’s documents could not be listed for the catalog. The captured files above are complete.' };
+    return { vaultUnavailable: 'The Vault’s documents could not be listed for the catalog. The source captures above are complete.' };
   }
 }
 
