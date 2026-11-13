@@ -44,7 +44,7 @@ import { authService, type AuthUser } from '@/services/portal/authService';
 import { clearAuthToken, setAuthToken } from '@/utils/authToken';
 import { readWorkerSnapshot, type WorkerSnapshot } from '@shared/ana/turn-timeline';
 import { AGENT_ACTIVITY_POLL_MS, uniqueTeamWorkers, useAgentActivity, useProjectTeam, workerEstimate, workerMeasurement, workerState } from '../useAgentActivity';
-import { ProjectTeamPanel } from '../AnaWorkPanel';
+import { ProjectTeamPanel, TeamWorker } from '../AnaWorkPanel';
 import { TurnSummary } from '../TurnSummary';
 import type { AnaChatMessage } from '../../components/ana/useAnaChat';
 
@@ -306,13 +306,6 @@ describe('the optional project team view uses recorded project facts', () => {
     expect(screen.getByText('Awaiting AnA review')).toBeTruthy(); expect(screen.queryByText('Proposal accepted')).toBeNull();
   });
 
-  it('states a measured estimate only for remaining checks and never for whole-goal completion', () => {
-    const worker = teamWorker({ estimate: { basis: 'observed_check_durations', scope: 'remaining_checks', lowerMs: 60_000, upperMs: 120_000, sampleCount: 4, at: '2026-11-06T20:00:00Z' } });
-    expect(workerEstimate(worker)).toContain('Remaining checks: approximately 1–2 minutes');
-    expect(workerEstimate(worker)).toContain('Overall completion time is not estimated');
-    expect(workerEstimate({ ...worker, phase: 'reported', outcome: 'completed' })).toBe('Completion estimate unavailable.');
-  });
-
   it('keeps a stale parent phase historical and never turns it into current progress', () => {
     const worker = teamWorker({ parentState: 'stale', completed: 4 });
     expect(workerState(worker)).toContain('Last recorded: Checking');
@@ -325,6 +318,50 @@ describe('the optional project team view uses recorded project facts', () => {
     const parsed = readWorkerSnapshot({ ...teamWorker(), label: 'PRIVATE_CONTEXT_CANARY', objective: 'PRIVATE_CONTEXT_CANARY', report: 'PRIVATE_CONTEXT_CANARY' });
     expect(parsed?.label).toBe('Check assigned work'); expect(JSON.stringify(parsed)).not.toContain('PRIVATE_CONTEXT_CANARY');
   });
+});
+
+describe('measured remaining-check estimates', () => {
+  it('states a measured estimate only for remaining checks and never for whole-goal completion', () => {
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks', lowerMs: 60_000, upperMs: 120_000, sampleCount: 3, at: '2026-11-06T20:00:00Z' } });
+    const now = Date.parse('2026-11-06T20:00:00Z');
+    expect(workerEstimate(worker, now)).toContain('Remaining checks: approximately 1–2 minutes');
+    expect(workerEstimate(worker, now)).toContain('Overall completion time is not estimated');
+    expect(workerEstimate({ ...worker, phase: 'reported', outcome: 'completed' })).toBe('Completion estimate unavailable.');
+  });
+
+  it.each([
+    [10, 30, 'estimated under a second'], [900, 4900, 'estimated up to 5 seconds'],
+    [1000, 59_000, 'approximately 1–59 seconds'], [900, 61_000, 'estimated up to 2 minutes'],
+  ])('does not invent a minute-long lower bound for %sms–%sms of measured work', (lowerMs, upperMs, text) => {
+    const now = Date.parse('2026-11-13T12:00:00Z');
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks',
+      lowerMs: Number(lowerMs), upperMs: Number(upperMs), sampleCount: 3, at: new Date(now).toISOString() } });
+    expect(workerEstimate(worker, now)).toContain(`Remaining checks: ${text}`);
+  });
+
+  it('withdraws an expired or future-dated estimate and refuses inconsistent measurement counts', () => {
+    const now = Date.parse('2026-11-13T12:00:00Z');
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks',
+      lowerMs: 1000, upperMs: 5000, sampleCount: 3, at: new Date(now).toISOString() } });
+    for (const at of [now - 1, now + 5000, Number.NaN]) expect(workerEstimate(worker, at)).toBe('Completion estimate unavailable.');
+    expect(workerEstimate({ ...worker, completed: 1 }, now)).toBe('Completion estimate unavailable.');
+    expect(workerEstimate({ ...worker, basis: 'observed_steps' }, now)).toBe('Completion estimate unavailable.');
+    expect(workerEstimate({ ...worker, completed: 5 }, now)).toBe('Completion estimate unavailable.');
+  });
+
+  it('updates and expires the visible estimate without waiting for another server poll', () => {
+    vi.useFakeTimers(); const now = Date.parse('2026-11-13T12:00:00Z'); vi.setSystemTime(now);
+    const worker = teamWorker({ completed: 3, total: 5, estimate: { basis: 'observed_check_durations', scope: 'remaining_checks',
+      lowerMs: 2000, upperMs: 5000, sampleCount: 3, at: new Date(now).toISOString() } });
+    render(<TeamWorker worker={worker} />);
+    expect(screen.getByText(/Remaining checks: approximately 2–5 seconds/)).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(screen.getByText(/Remaining checks: estimated up to 2 seconds/)).toBeTruthy();
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(screen.getByText('Completion estimate unavailable.')).toBeTruthy();
+    expect(screen.queryByText(/Remaining checks:/)).toBeNull();
+  });
+
 });
 
 const profileReads = () => apiRequest.mock.calls.map(([, url]) => String(url)).filter((u) => u.startsWith('/api/mdx/ana/memory/profile'));

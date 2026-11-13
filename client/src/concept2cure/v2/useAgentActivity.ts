@@ -242,10 +242,33 @@ export function workerMeasurement(worker: WorkerSnapshot): { text: string; perce
     percentage: measured && !stopped && total !== null ? Math.floor(100 * worker.completed / total) : null };
 }
 
-export function workerEstimate(worker: WorkerSnapshot): string {
-  if (!worker.estimate || worker.phase !== 'checking' || worker.outcome !== null ||
-      worker.parentState !== undefined && worker.parentState !== 'running') return 'Completion estimate unavailable.';
-  const estimate = worker.estimate;
-  const minutes = (ms: number) => Math.max(1, Math.ceil(ms / 60_000));
-  return `Remaining checks: approximately ${minutes(estimate.lowerMs)}–${minutes(estimate.upperMs)} minutes, based on ${estimate.sampleCount} observed checks. Overall completion time is not estimated.`;
+function measuredWorkerEstimate(worker: WorkerSnapshot): WorkerSnapshot['estimate'] {
+  if (!worker.estimate || worker.phase !== 'checking' || worker.outcome !== null || worker.basis !== 'deterministic_checks' ||
+      worker.parentState !== undefined && worker.parentState !== 'running' || worker.completed === null || worker.total === null ||
+      worker.total <= worker.completed || worker.estimate.sampleCount < 3 || worker.estimate.sampleCount > worker.completed) return null;
+  return worker.estimate;
+}
+
+function remainingCheckEstimate(worker: WorkerSnapshot, now: number) {
+  const estimate = measuredWorkerEstimate(worker);
+  if (!estimate) return null;
+  const elapsed = now - Date.parse(estimate.at);
+  if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed >= estimate.upperMs) return null;
+  return { lowerMs: Math.max(0, estimate.lowerMs - elapsed), upperMs: estimate.upperMs - elapsed, sampleCount: estimate.sampleCount };
+}
+
+/** The text and its live clock share the same current measurement window. */
+export function workerEstimateAvailable(worker: WorkerSnapshot, now = Date.now()): boolean {
+  return remainingCheckEstimate(worker, now) !== null;
+}
+
+export function workerEstimate(worker: WorkerSnapshot, now = Date.now()): string {
+  const estimate = remainingCheckEstimate(worker, now);
+  if (!estimate) return 'Completion estimate unavailable.';
+  const { lowerMs, upperMs } = estimate;
+  const unit = upperMs < 60_000 ? 'second' : 'minute', scale = unit === 'second' ? 1000 : 60_000;
+  const lower = Math.floor(lowerMs / scale), upper = Math.ceil(upperMs / scale);
+  const range = upperMs < 1000 ? 'estimated under a second' : lower === 0 ? `estimated up to ${upper} ${unit}${upper === 1 ? '' : 's'}`
+    : `approximately ${lower}${lower === upper ? '' : `–${upper}`} ${unit}${upper === 1 ? '' : 's'}`;
+  return `Remaining checks: ${range}, based on ${estimate.sampleCount} observed checks. Overall completion time is not estimated.`;
 }
