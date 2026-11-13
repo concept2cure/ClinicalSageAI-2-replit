@@ -1,0 +1,49 @@
+{
+  "baseline": "54eaeb09688fea0e28e4de2f92d9506d1919a25d",
+  "ciRed": {
+    "runId": 43507358665,
+    "jobId": 132168388472,
+    "commit": "b9cd90c9d92e3e2058c37c0e20192409605ea56b",
+    "failedFiles": [
+      "tests/schema-contract/catalog-module-claims.contract.test.ts",
+      "tests/schema-contract/one-program-anchor-reader.contract.test.ts"
+    ],
+    "testFilesPassed": 141,
+    "testsFailed": 1,
+    "testsPassed": 1781,
+    "testsNotExecutedAfterSetupFailure": 31,
+    "failures": {
+      "catalogSetup": "relation tmf_artifact_filings does not exist",
+      "oneAnchorReader": "server/routes/ectd-compile.ts independently selected an anchor row"
+    }
+  },
+  "focused": {
+    "catalog": {
+      "testFilesPassed": 1,
+      "testsPassed": 31,
+      "testsSkipped": 0
+    },
+    "asyncAnchorAndValidate": {
+      "testFilesPassed": 4,
+      "testsPassed": 18,
+      "testsSkipped": 0
+    },
+    "countsOverlapFullProofTier": true
+  },
+  "lint": {
+    "changedTestsErrors": 0,
+    "changedTestsWarnings": 0,
+    "compileRouteErrors": 0,
+    "compileRouteExistingWarnings": 8
+  },
+  "sourceSha256": {
+    "server/routes/ectd-compile.ts": "42acda6eacc089b0ffd1c0fcea2a2c0b3ddcb7939a4401d91c9c02f0ee9ebe82",
+    "tests/routes/ectd-compile-async-job.test.ts": "2b5452600721eb3e404cf57672592421064b752488ce08b38c129927be31cde3",
+    "tests/schema-contract/catalog-module-claims.contract.test.ts": "f0071dda939e2a7909afe650b8310b706c6ddb275cb48fe82b951b6ac08839a4"
+  },
+  "fullProofTier": {
+    "command": "npm run test:proof-tier",
+    "status": "running"
+  },
+  "fullCompilerAndBuild": "owned by root; not claimed here"
+}
