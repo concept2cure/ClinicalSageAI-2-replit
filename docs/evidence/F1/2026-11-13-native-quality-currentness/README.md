@@ -38,3 +38,7 @@ The existing catalogue search now intersects its canonical project set with curr
 - Root's combined run of both modified regression files passes 38/38 cases. These runs overlap other observations and are not added together.
 
 The SQL tests use PGlite for actual project/source/disposition/catalogue statements, with the separately tested native Quality producer and capture-audit seams mocked. They do not establish a database-wide atomic snapshot, hosted Codespaces acceptance or live model behavior. No application/browser rerun or model qualification is claimed for this slice. The canonical source hashes and actual logs are retained here; normal publication gates remain mandatory.
+
+## Compiler and publication
+
+The full Node 22 compiler gate at source `99e83cb86` completes with zero errors, compiler exit 0 and baseline 0 (`TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental`). Output is retained in `typecheck-initial.txt`. Concurrent canonical updates are merged normally before publication; the normal push hook separately checks the merged tree. No baseline, ceiling, gate or protected instruction changes are part of this repair.
