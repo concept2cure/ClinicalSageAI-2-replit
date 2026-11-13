@@ -27,6 +27,7 @@ import { getSurfaceMeta } from '../registryModel';
 import { useAuthUser } from '@/services/portal/authService';
 import { canAdministerBilling } from '@shared/constants/permissions';
 import { LicensingInvoices, invoiceContext, useInvoices } from './LicensingInvoices';
+import { captureAuthoringSession } from '../editor/authoringCurrentRead';
 
 /* -- Inline helpers -- */
 
@@ -158,14 +159,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
        rather than a failure, so a real customer whose token lived somewhere this
        check could not see simply could not buy anything and was never told.
        The request now goes out; if it is refused, the refusal is what is shown. */
+    const session = captureAuthoringSession(); if (!session.sameRevision()) return;
     (model === 'dtc' ? billing.dtcCheckout(body) : billing.checkout(body)).then((r) => {
-      if (!r.error && r.data?.sessionId === 'free') {
-        if (tier === 'free') {
-          setStatusRevision((revision) => revision + 1);
-          fireToast('Free subscription activated', 'ok');
-          return;
-        }
-      } else if (!r.error && tier !== 'free' && typeof r.data?.checkoutUrl === 'string' && r.data.checkoutUrl.trim()) {
+      if (!session.sameRevision()) return;
+      if (!r.error && r.data?.sessionId === 'free' && tier === 'free') {
+        setStatusRevision((revision) => revision + 1);
+        fireToast('Free subscription activated', 'ok');
+        return;
+      } else if (!r.error && r.data?.sessionId !== 'free' && tier !== 'free' && typeof r.data?.checkoutUrl === 'string' && r.data.checkoutUrl.trim()) {
         window.open(r.data.checkoutUrl, '_blank');
         return;
       }
@@ -175,11 +176,10 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const managePortal = () => {
+    const session = captureAuthoringSession(); if (!session.sameRevision()) return;
     billing.portal(window.location.href).then((r) => {
-      if (r.data?.portalUrl) {
-        window.open(r.data.portalUrl, '_blank');
-        return;
-      }
+      if (!session.sameRevision()) return;
+      if (r.data?.portalUrl) return void window.open(r.data.portalUrl, '_blank');
       fireToast(r.error && (r.status === 409 || r.status === 503) ? r.error : r.error ? 'Billing portal unavailable · ' + r.error : 'Billing portal unavailable', 'error'); // 409/503: the server's sentence
     });
   };

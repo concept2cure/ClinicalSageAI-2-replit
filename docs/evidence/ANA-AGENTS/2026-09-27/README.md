@@ -142,6 +142,27 @@ normal refresh controls. Preserve the13 existing contract/authority cases and ad
 No new helper file, shared-helper behavior, screen, billing route, price or server authority is introduced.
 Do not broaden this repair into status/invoice reader ownership or financial fulfillment.
 
+**Follow-up verified:** the corrected regression harness loads the exact original Licensing source from
+`58fb46028` through a private test-only Vite override: **14** negatives fail at their actual response/dispatch
+assertions and **five** real refresh controls pass. Initial test setup races are corrected by waiting for the
+actual target control, preserving the earlier logs. The final existing suite passes **32/32**; the same source
+passes **50/50** with the existing invoice and enterprise-action suites (overlapping counts). These exercise
+the real auth service and unchanged session guard with simulated billing HTTP responses, not Stripe settlement.
+Changed-file lint has zero errors, the same three existing source warnings and zero test warnings. The existing
+source remains499 code lines without a new file or unrelated compaction; independent review closes with no
+in-scope finding. Free/paid mismatches, ordinary bearer refresh and same-account rereads remain covered.
+Normal publication retains the full compiler and every push gate. The follow-up's source/evidence holds release
+with that publication; the final runtime check remains the ordinary cached start at the published SHA.
+
+Reproduce the final callback and adjacent checks with Node22 and the locked dependencies:
+
+```bash
+npx vitest run --config vitest.config.ts \
+  client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx \
+  client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx \
+  client/src/concept2cure/v2/__tests__/licensingEnterpriseAction.test.tsx
+```
+
 **Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
 but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
 plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`

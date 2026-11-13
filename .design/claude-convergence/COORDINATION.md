@@ -1788,3 +1788,12 @@ AnA evidence README, integration/Git and the sole full compiler. These holds end
 **2026-11-14 01:00 UTC**, whichever comes first. No shared helper, billing backend, status/invoice reader,
 new source file, screen, provider, dependency, model or qualification gate is in scope. The rehearsal agent
 remains runtime/scratch-only, with the existing demo held stable until final version verification.
+
+**Follow-up completion:** corrected exact-baseline RED proves14 actual assertion failures and five real ordinary
+refresh controls pass; final focused32/32 and adjacent50/50 pass on the frozen source. Zero lint errors and no
+warning growth (three existing source warnings, zero test warnings), existing code-line ceiling preserved.
+Independent final review has no finding. Only the two held files change; shared helper, transport, status/invoice
+readers and server authority remain unchanged. **These two source holds and root's evidence/coordination holds
+release with canonical publication of this completion.** Root then retains only Git receipts and the ordinary
+cached exact-version/health check in the existing local Codespace-image runtime; no live-model qualification,
+hosted Codespace, Stripe settlement or broader regulatory/commercial acceptance is declared.
