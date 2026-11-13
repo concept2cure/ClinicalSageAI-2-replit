@@ -122,8 +122,18 @@ the app on port 5000 in development mode and opens it in your browser.
    Automatic setup runs the portfolio separately after the general demo succeeds.
    If it needs a retry, run `bash .devcontainer/post-start.sh`; inspect
    `~/.concept2cure-codespace/portfolio-seed.log`. The pack remains opt-in when
-   using the CLI directly: `npm run demo:seed -- --pack portfolio --base-url
-   http://127.0.0.1:5000 --email ana.author@concept2cure.pro`.
+   using the CLI directly. Keep its runtime receipt in the same private state
+   directory as automatic setup:
+
+   ```bash
+   DEMO_MANIFEST_ROOT="${C2C_CODESPACE_STATE:-$HOME/.concept2cure-codespace}/demo-manifests" \
+     npm run demo:seed -- --pack portfolio --base-url http://127.0.0.1:5000 \
+     --email ana.author@concept2cure.pro
+   ```
+
+   A fresh Codespace regenerates its project, document and task IDs. Its current
+   receipt is `${C2C_CODESPACE_STATE:-$HOME/.concept2cure-codespace}/demo-manifests/portfolio/manifest.json`.
+   The committed manifests retain historical acceptance evidence.
 6. **Optionally show live CSR drafting with a working provider key.** Choose
    **Ana Author**, then **Projects** → **Xanomeline TTS Phase 2
    (CDISCPILOT01)** → **Author** in the project's steps → open **CDISCPILOT01

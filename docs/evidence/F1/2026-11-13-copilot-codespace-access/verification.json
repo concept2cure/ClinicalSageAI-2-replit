@@ -1,0 +1,46 @@
+{
+  "relativeLinksChecked": 74,
+  "missingLinks": 0,
+  "playbookBashBlocksParsed": 2,
+  "newPolicyFileEdits": false,
+  "applicationSourceChanged": false,
+  "startupTestsPassed": 81,
+  "startupTestsFailed": 0,
+  "startupTestsSkipped": 0,
+  "instructionApplyTo": "**",
+  "instructionAndAgentFrontmatter": "passed",
+  "devcontainerJson": "passed",
+  "protectedPlanAndPolicyFiles": "unchanged",
+  "defaultBranch": "concept2cure-v2",
+  "publishedRevisionChecks": {
+    "revision": "cef271edb",
+    "tier5BrowserSmoke": "success",
+    "codespaceBootstrap": "success",
+    "fullHistorySecretScan": "success",
+    "remainingCiLint": "in_progress"
+  },
+  "liveCopilotSessionObserved": false,
+  "freshHostedCodespaceOpenedByThisHandoff": false,
+  "sourceFiles": [
+    {
+      "path": ".github/instructions/codespaces-demo.instructions.md",
+      "sha256": "e4287b10609b689e1f9ea050cb9cb6dbd37f70dff8966b89feac1fd642f27222"
+    },
+    {
+      "path": ".github/agents/cer-orchestrator.agent.md",
+      "sha256": "4cf44454157fc47fc13707f540d6d1c0bbabcf6b29cc38bd9566e2bbd36bf02d"
+    },
+    {
+      "path": ".devcontainer/devcontainer.json",
+      "sha256": "0a1c0880e892370d6c2af01e38b2ea0a5d474f7526be27b9f2dd7af03437620a"
+    },
+    {
+      "path": "docs/getting-started/CODESPACE_AGENT_PLAYBOOK.md",
+      "sha256": "9d6d16b34fca737ee4014722516224a416f4b90cbca23ca378c70a6009bd0997"
+    },
+    {
+      "path": "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md",
+      "sha256": "a303a25f83a7fb2dd220e688aed0ae4727d48a93c70e98f9e41e93aa63a4665b"
+    }
+  ]
+}
