@@ -216,8 +216,12 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     renderPicker();
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
     fireEvent.change(screen.getByRole('textbox', { name: /search filing types/i }), { target: { value: 'Health Canada' } });
-    await waitFor(() => expect(tiles().filter(t => /Health Canada/.test(t.agency))).toHaveLength(2));
+    // Three since 2026-11-13: the two device authoring classes, and the Canadian master file, which states that
+    // it is Module 3 content as the US DMF is (filing-catalog.ts PATHWAY_BY_ID ca_mf → 'dmf'). It was refused
+    // as "an NDA" while it stated nothing. The medicinal applications (NDS, ANDS, CTA) keep their refusal.
+    await waitFor(() => expect(tiles().filter(t => /Health Canada/.test(t.agency))).toHaveLength(3));
     expect(tiles().filter(t => /Health Canada/.test(t.agency)).every(t => t.authorOnly)).toBe(true);
+    expect(tiles().filter(t => /Health Canada/.test(t.agency)).map(t => t.name)).toContain('Master File (Canada)');
     const section = screen.getByTestId('rpk-not-offered');
     expect(within(section).getAllByText(/Health Canada has no governed [A-Z]+ outline here, so a project would have nothing to author/).length).toBeGreaterThan(0);
     expect(screen.getByText(/not offered, listed below with the reason/)).toBeTruthy();

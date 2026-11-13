@@ -1,0 +1,15 @@
+POST /api/c2c/projects on the local app, 2026-11-13: five of the filings outside the US.
+
+BEFORE (trunk 226fdd7b5): each sent as the wizard sends it today, programType 'nda'.
+  eu_cma             at EMA           sent as nda   -> 422 | FILING_NOT_OFFERED: EMA has no governed NDA outline here, so a project would have nothing to author and no channel to send it.
+  eu_line_extension  at EMA           sent as nda   -> 422 | FILING_NOT_OFFERED: EMA has no governed NDA outline here, so a project would have nothing to author and no channel to send it.
+  ca_mf              at Health Canada sent as nda   -> 422 | FILING_NOT_OFFERED: Health Canada has no governed NDA outline here, so a project would have nothing to author and no channel to send it.
+  uk_cta             at MHRA          sent as nda   -> 422 | FILING_NOT_OFFERED: MHRA has no governed NDA outline here, so a project would have nothing to author and no channel to send it.
+  ca_nds             at Health Canada sent as nda   -> 422 | FILING_NOT_OFFERED: Health Canada has no governed NDA outline here, so a project would have nothing to author and no channel to send it.
+
+AFTER (this change): each sent as the type it now states.
+  eu_cma             at EMA           sent as maa   -> 201 | program_type=maa | dossier: 61 sections in 5 group(s): Module 1 · Administrative (EU); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  eu_line_extension  at EMA           sent as maa   -> 201 | program_type=maa | dossier: 61 sections in 5 group(s): Module 1 · Administrative (EU); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  ca_mf              at Health Canada sent as dmf   -> 201 | program_type=dmf | dossier: 4 sections in 1 group(s): Module 3
+  uk_cta             at MHRA          sent as cta   -> 422 | FILING_NOT_OFFERED: MHRA has no governed CTA outline here, so a project would have nothing to author and no channel to send it.
+  ca_nds             at Health Canada sent as nda   -> 422 | FILING_NOT_OFFERED: Health Canada has no governed NDA outline here, so a project would have nothing to author and no channel to send it.

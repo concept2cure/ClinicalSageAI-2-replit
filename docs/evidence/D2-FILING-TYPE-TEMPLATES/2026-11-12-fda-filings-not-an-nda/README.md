@@ -71,3 +71,74 @@ yet.
 - **Neighbourhood:** every test that names the catalog, the classes, `programTypeFor` or these ids: 906 of 906 in
   27 files.
 - **Gates:** typecheck 0 errors; the ESLint ratchet changes no file's warning count.
+
+---
+
+# Part 2 (2026-11-13): the same pass over the filings outside the US, and four stated at today's value
+
+**Asked by:** the project-page session and the coordinating session on 2026-11-12, after the first part: go through the
+filings outside the US that reach 'nda' only through the wizard's default, map each one that can be mapped, and name
+the rest.
+
+## What already exists (RULE 3)
+
+- **The list:** `docs/evidence/SPINE/S12/2026-11-12-unmapped-filings/` (the project-page session's): 111 catalog
+  filings with no pathway and no document class. It computes each offer "with every rule pack treated as present".
+- **What a deployment really offers:** `real-offers-by-agency.txt`, read from the running app's market verdict.
+  **'nda' has an outline at the FDA only.** At the EMA, Health Canada, the MHRA, the TGA, the MFDS and the NMPA it is
+  not offered. So every one of these filings was already refused, for want of "a governed NDA outline", whatever it
+  was. Nothing creatable is lost by stating what each is.
+- **The rule that reads the pathway:** `programTypeFor`. It already has a rule for a trial application ('cta'), a
+  master file ('dmf'), an MAA, a generic ('anda') and a biosimilar, each ahead of the NDA line.
+- **Each filing's own registry entry** (family, stage, CTD modules, recorded authority), read on `226fdd7b5`.
+
+## The change
+
+Fifteen filings state their pathway in `PATHWAY_BY_ID`:
+
+| Filing | States | Why (its registry entry) | With today's packs |
+|---|---|---|---|
+| `eu_cma`, `eu_line_extension` | 'maa' | a conditional MA is a full MAA; a line extension is assessed as one | **now creatable**, as an MAA with EU Module 1 |
+| `ca_mf` | 'dmf' | master-file content maps to 3.2.S, as the US DMF and EU ASMF | **now creatable**, as a Module 3 master file |
+| `uk_cta`, `au_cta`, `kr_ind` | 'cta' | a regional trial application | refused, now for want of a CTA outline |
+| `ca_nds`, `uk_ma`, `uk_irp`, `au_cat1`, `au_cat2`, `kr_ma_new` | 'ctd' | the CTD M1–M5 marketing dossier under its regional name | refused as before |
+| `ca_ands`, `kr_ma_generic` | 'anda' | a generic application, with bioequivalence reports in 5.3.1 | refused, now for want of an ANDA outline |
+| `au_biosimilar` | 'biosimilar' | a biosimilar application | refused as before |
+
+Four FDA filings are **stated at today's value**, 'ctd', each awaiting its own answer, so the wizard's default can be
+removed with no exception:
+- `us_supac`: a change category, not a filing. Whether it stays creatable is with the founder.
+- `us_priority_review`, `us_ea`, `us_icsr_15day`: each gets its own document class in the change that seeds its
+  pack. Each line is removed with that change.
+
+## Deliberately not mapped
+
+These are no application and have no document class, so they state no pathway. With today's packs none was creatable.
+Each needs its own document class and pack before it can be offered:
+- **Changes to an authorisation, and renewals:** `eu_variation_ia`, `eu_variation_ib`, `eu_variation_ii`,
+  `uk_variation`, `ca_snds`, `ca_sands`, `cn_supplement`, `eu_renewal`, `cn_renewal`, `ca_cta_a`.
+- **Requests, designations and meetings:** `eu_pip`, `eu_orphan`, `eu_scientific_advice`, `eu_prime`,
+  `eu_accel_assess`, `uk_ilap`, `ca_presub_meeting`, `au_presub_meeting`.
+- **Pharmacovigilance documents and messages:** `eu_rmp`, `eu_psmf`, `eu_eudravigilance_icsr`.
+- **A module or a format, never a filing a project is created from** (the coordinating session's ruling):
+  the six `*_ctd_m1_regional` entries and `eu_nees`. The four `qms_*` entries are the device lane's.
+
+**User-visible:** a Conditional Marketing Authorisation, an EU Line Extension and a Canadian Master File can be
+started. A UK or Australian trial application and a Korean IND are refused for the right reason.
+
+## Proof
+
+- **Red:** `red-outside-us.txt`. On trunk `226fdd7b5`, 19 of 24 fail on assertions; the 5 that pass are the first
+  part's cases and the two controls.
+- **Green:** 24 of 24.
+- **In the running app:** `app-walk-outside-us.txt`.
+  - Before: all five are refused with "… has no governed NDA outline here".
+  - After: `eu_cma` and `eu_line_extension` create an MAA with 61 sections in five modules, EU Module 1.
+    `ca_mf` creates a Module 3 master file with 4 sections. `uk_cta` is refused for want of a CTA outline.
+    `ca_nds` is refused as before.
+  - Created through the API the wizard calls; the wizard screen was not walked.
+- **One pin updated:** `registryPickerOffers.test.tsx` counted two offered Health Canada filings, the device
+  classes. It now expects three and names the master file. The medicinal applications keep their refusal there.
+- **Neighbourhood:** 66 files; 1,442 of 1,443 passed on the first run, the one failure being that pin. It then
+  passes 30 of 30.
+- **Gates:** typecheck 0 errors; the ESLint ratchet changes no file's warning count.
