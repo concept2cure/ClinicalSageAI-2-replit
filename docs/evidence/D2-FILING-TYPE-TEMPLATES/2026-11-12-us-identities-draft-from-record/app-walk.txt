@@ -1,0 +1,22 @@
+A person starts a Type D meeting document from the editor's New document → Start from, then asks AnA to draft each part.
+Local app, database migrated by deploy-migrate (474 files), biotech demo project C2C-101. Chromium via Playwright at 1440x900 creates the document through the picker; each part's draft is then requested from POST /api/authoring/sections/:id/ai/draft.
+
+BEFORE (trunk f5d0d417a). The picker's row: "US · Type D Meeting — preparation worksheet"
+  document: [R1 walk] Type D Meeting before | template_id fabf9f7f-ac3a-55b0-a152-14d5a020d1c0
+  MTG-REQ-CL   Meeting Request Letter and Cover Letter                    -> 409 None | {'code': 'TEMPLATE_NOT_DRAFTABLE', 'message': 'The recorded template requires manual preparation. Use the original form, dataset or signed record and 
+  MTG-D-SCOPE  Focused Topics and Disciplines Scope Statement             -> 409 None | {'code': 'TEMPLATE_NOT_DRAFTABLE', 'message': 'The recorded template requires manual preparation. Use the original form, dataset or signed record and 
+  MTG-AGENDA   Proposed Agenda                                            -> 409 None | {'code': 'TEMPLATE_NOT_DRAFTABLE', 'message': 'The recorded template requires manual preparation. Use the original form, dataset or signed record and 
+  MTG-ATTEND   Sponsor Attendee List                                      -> 409 None | {'code': 'TEMPLATE_NOT_DRAFTABLE', 'message': 'The recorded template requires manual preparation. Use the original form, dataset or signed record and 
+  MTG-BKGD     Product Background and Development History                 -> 409 None | {'code': 'TEMPLATE_NOT_DRAFTABLE', 'message': 'The recorded template requires manual preparation. Use the original form, dataset or signed record and 
+  MTG-QUES     Numbered Questions for FDA with Sponsor Positions          -> 409 None | {'code': 'TEMPLATE_NOT_DRAFTABLE', 'message': 'The recorded template requires manual preparation. Use the original form, dataset or signed record and 
+
+AFTER (this change). The picker's row: "US · Type D Meeting"
+  document: [R1 walk] Type D Meeting after | template_id fabf9f7f-ac3a-55b0-a152-14d5a020d1c0
+  MTG-REQ-CL   Meeting Request Letter and Cover Letter                    -> 503 None | {'code': 'GATEWAY_UNAVAILABLE', 'message': 'No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.'
+  MTG-D-SCOPE  Focused Topics and Disciplines Scope Statement             -> 503 None | {'code': 'GATEWAY_UNAVAILABLE', 'message': 'No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.'
+  MTG-AGENDA   Proposed Agenda                                            -> 503 None | {'code': 'GATEWAY_UNAVAILABLE', 'message': 'No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.'
+  MTG-ATTEND   Sponsor Attendee List                                      -> 409 None | {'code': 'TEMPLATE_NOT_DRAFTABLE', 'message': 'The recorded template requires manual preparation. Use the original form, dataset or signed record and 
+  MTG-BKGD     Product Background and Development History                 -> 503 None | {'code': 'GATEWAY_UNAVAILABLE', 'message': 'No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.'
+  MTG-QUES     Numbered Questions for FDA with Sponsor Positions          -> 503 None | {'code': 'GATEWAY_UNAVAILABLE', 'message': 'No AI provider is configured for this deployment, so this section cannot be drafted. Nothing was changed.'
+
+Reading: before, every part is refused as manual (409 TEMPLATE_NOT_DRAFTABLE). After, the five narrative parts pass the template check and reach the model gateway, which answers 503 GATEWAY_UNAVAILABLE because this environment has no AI provider key (GA map, GA-D4-03); the attendee list is still refused as manual. No model output was produced or judged here.

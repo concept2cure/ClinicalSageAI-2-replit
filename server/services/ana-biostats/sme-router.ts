@@ -28,6 +28,7 @@ import type {
   RoleExplanations,
 } from './types';
 import { phaseOf } from './input-normalizer';
+import { parameterLabel } from '../../../shared/biostat-vocabulary';
 
 export class SMERouter {
 
@@ -210,7 +211,7 @@ export class SMERouter {
         if (!input.estimandStrategy && input.clientTrack === 'biotech_pharma') {
           guidance.push('SAP Strategy: Estimand framework not specified. ICH E9(R1) requires explicit estimand definition for confirmatory trials.');
         }
-        if (!input.missingDataMethod) {
+        if (!input.missingDataMethod && !input.missingDataStrategyStated) {
           guidance.push('SAP Strategy: Missing data handling method should be pre-specified. Consider MMRM for longitudinal endpoints or multiple imputation for general patterns.');
         }
         if ((input.numberOfEndpoints ?? 1) > 1 && !input.multiplicityMethod) {
@@ -250,7 +251,8 @@ export class SMERouter {
         if (judgment.fragility.fragilityIndex > 40) {
           guidance.push(`Sensitivity assessment: Design has fragility index of ${judgment.fragility.fragilityIndex}/100.`);
           for (const sp of judgment.fragility.sensitiveParameters) {
-            guidance.push(`  → ${sp.parameter}: ${sp.percentMargin}% margin to breakpoint (current: ${sp.currentValue}, break: ${sp.breakpointValue})`);
+            // The parameter as a reader says it: this guidance is merged into what AnA tells the person (T2-F8).
+            guidance.push(`  → ${parameterLabel(sp.parameter)}: ${sp.percentMargin}% margin to breakpoint (current: ${sp.currentValue}, break: ${sp.breakpointValue})`);
           }
         }
         if (comp.missingDataImpact) {
@@ -378,7 +380,7 @@ export class SMERouter {
       if (condition.includes('regulatory body') && !input.regulatoryBody) {
         notes.push(`Provisional: ${condition}`);
       }
-      if (condition.includes('missing data') && !input.missingDataMethod) {
+      if (condition.includes('missing data') && !input.missingDataMethod && !input.missingDataStrategyStated) {
         notes.push(`Provisional: ${condition}`);
       }
     }

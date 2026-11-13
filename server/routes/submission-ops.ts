@@ -151,6 +151,7 @@ import { requireEditorAccess } from '../middleware/orgMembership';
 import { authedUserId } from '../utils/authedActor';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access';
 import { getAccessibleReportProjectIds } from '../services/report-os/project-access';
+import { namedProjectsWithRoot, type NamedProject } from '../services/c2c/program-project-anchor';
 
 const router = Router();
 
@@ -1255,6 +1256,15 @@ async function readableProjects(req: Request, orgId: number): Promise<number[]> 
   return getAccessibleReportProjectIds(organizationId, actor, pool);
 }
 
+/** Each row with the project it was recorded on and that project's root, the filing project a Projects card carries
+ *  (a work project is not a card: P-111). The root is named only when the person can open it. Fields and order are
+ *  the row's own; `project` is null for a project the organization does not hold. */
+async function withNamedProjects<T>(orgId: number, readable: readonly number[], rows: readonly T[],
+  projectIdOf: (row: T) => unknown): Promise<Array<T & { project: NamedProject | null }>> {
+  const named = await namedProjectsWithRoot(pool, Number(orgId), rows.map((row) => Number(projectIdOf(row))), new Set(readable));
+  return rows.map((row) => ({ ...row, project: named.get(Number(projectIdOf(row))) ?? null }));
+}
+
 /** Whether the blocker exists and its project is one the person can open. Throws when that cannot be read. */
 async function blockerIsReadable(req: Request, orgId: number, blockerId: string): Promise<boolean> {
   const [held] = await db
@@ -1320,7 +1330,7 @@ router.get('/blockers', async (req: Request, res: Response) => {
         desc(c2cBlockers.createdAt)
       );
 
-    res.json({ data: blockers });
+    res.json({ data: await withNamedProjects(orgId, readable, blockers, (b) => b.projectId) });
   } catch (e) {
     return serverError(res, logger, 'loading blockers', e);
   }
@@ -1653,7 +1663,7 @@ router.get('/due-soon', async (req: Request, res: Response) => {
 
     res.json({
       data: {
-        canonicalTasks: canonical.dueSoon,
+        canonicalTasks: await withNamedProjects(orgId, readable, canonical.dueSoon, (task) => task.project_id),
       },
       source: 'c2c_project_work_items',
     });

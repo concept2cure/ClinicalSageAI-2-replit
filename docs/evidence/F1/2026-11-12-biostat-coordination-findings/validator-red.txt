@@ -1,0 +1,25 @@
+ × validator-admits-what-the-engine-sizes.test.ts > a design sized on its margin may state a true difference of zero > non-inferiority, true difference 0
+ × validator-admits-what-the-engine-sizes.test.ts > a design sized on its margin may state a true difference of zero > non-inferiority, a true difference slightly on the wrong side of zero
+ × validator-admits-what-the-engine-sizes.test.ts > a design sized on its margin may state a true difference of zero > equivalence, true difference 0 — and with no effect size given at all
+ × validator-admits-what-the-engine-sizes.test.ts > an ROC design is sized on its AUC > is admitted with an expected AUC and no sensitivity, specificity or effect size
+ × validator-admits-what-the-engine-sizes.test.ts > an ROC design is sized on its AUC > is not warned that it lacks the sensitivity and specificity it does not use
+ × validator-admits-what-the-engine-sizes.test.ts > an ROC design is sized on its AUC > is refused without its expected AUC, by name
+ ✓ validator-admits-what-the-engine-sizes.test.ts > what the validator still refuses > a superiority design with an effect size of zero
+ ✓ validator-admits-what-the-engine-sizes.test.ts > what the validator still refuses > a superiority design with no effect size
+ ✓ validator-admits-what-the-engine-sizes.test.ts > what the validator still refuses > a non-inferiority design with no margin: zero is not excused when there is nothing else to size on
+ ✓ validator-admits-what-the-engine-sizes.test.ts > what the validator still refuses > a diagnostic-accuracy study on sensitivity and specificity that gives neither
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > survival is sized by the engine
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > binary is sized by the engine
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > ni is sized by the engine
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > ivd is sized by the engine
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > roc is sized by the engine
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > crossover is sized by the engine
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > survival is admitted by the validator the route runs, and sized from what it normalises to
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > binary is admitted by the validator the route runs, and sized from what it normalises to
+ × biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > ni is admitted by the validator the route runs, and sized from what it normalises to
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > ivd is admitted by the validator the route runs, and sized from what it normalises to
+ × biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > roc is admitted by the validator the route runs, and sized from what it normalises to
+ ✓ biostatWorkedExamplesSize.test.ts > Biostatistics worked examples > crossover is admitted by the validator the route runs, and sized from what it normalises to
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  8 failed | 14 passed (22)
