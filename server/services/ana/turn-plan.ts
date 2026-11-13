@@ -272,6 +272,7 @@ class RunCoordinator implements RunCoordinationHost {
     }
     return this.record(input, body, events => {
       if (input.recipient === sender || !['anna', ...events.filter(event => event.operation === 'assigned').map(event => event.worker)].includes(input.recipient)) return coordinationRefused('COORDINATION_RECIPIENT_UNKNOWN');
+      if(input.recipient!=='anna')assertWorkerActive(workerAt(events,input.recipient));
       if (events.filter(event => event.operation === 'message').length >= 32 || events.filter(event => event.operation === 'message' && (event.sender ?? event.worker) === sender).length >= 8) return coordinationRefused('COORDINATION_MESSAGE_LIMIT');
       if (input.text !== undefined && (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 2000)) return coordinationRefused('COORDINATION_MESSAGE_INVALID');
       const worker = sender === 'anna' ? input.recipient : sender, before = workerAt(events, worker);
