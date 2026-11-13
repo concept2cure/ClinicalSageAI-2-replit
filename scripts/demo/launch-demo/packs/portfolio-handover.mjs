@@ -3,7 +3,7 @@
  * reopened and hashed before actual delivery task completion. Fresh projects
  * stay active so the presentation can open their records; archival is optional.
  */
-import { Document, HeadingLevel, Packer, Paragraph } from 'docx';
+import { tsImport } from 'tsx/esm/api';
 import JSZip from 'jszip';
 import { demoTitle, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { asArray } from './biotech-shared.mjs';
@@ -22,18 +22,17 @@ export const HANDOVER_FILE_LABELS = [
 ];
 
 async function wordReport(sections) {
-  const doc = new Document({
-    title: 'QLM-118-101 INTERNAL synthetic demonstration handover',
-    creator: 'Concept2Cure synthetic demo seed', lastModifiedBy: 'Concept2Cure synthetic demo seed',
-    description: INTERNAL_HANDOVER_NOTICE, revision: '1',
-    sections: [{ children: [new Paragraph({ text: 'SYNTHETIC INTERNAL DEMONSTRATION HANDOVER', heading: HeadingLevel.TITLE }),
-      new Paragraph(INTERNAL_HANDOVER_NOTICE),
-      ...sections.flatMap((s) => [new Paragraph({ text: s.heading, heading: HeadingLevel.HEADING_1 }),
-        ...s.paragraphs.map((p) => new Paragraph(p))])] }],
-  });
-  // Packer stamps ZIP entries and core properties with wall-clock time. Fix only
+  const { generateRegulatory, DEFAULT_DOCX_STYLE } = await tsImport('../../../../server/services/docx/docxFactory.ts', import.meta.url);
+  const notice = 'SYNTHETIC INTERNAL UNAPPROVED';
+  const output = await generateRegulatory({
+    metadata: { title: 'QLM-118-101 INTERNAL synthetic demonstration handover', submissionType: 'INTERNAL_DEMO',
+      sponsor: 'Quillmont Immunology (fictional)', product: 'QLM-118 (fictional)', version: 'SYNTHETIC reference 1.0',
+      date: FIXTURE_DATE.toISOString().slice(0, 10) },
+    sections: sections.map((s) => ({ title: s.heading, paragraphs: s.paragraphs })),
+  }, { ...DEFAULT_DOCX_STYLE, confidentialityNotice: notice, headerText: notice, footerText: notice });
+  // The canonical factory stamps ZIP entries and core properties with wall-clock time. Fix only
   // fixture metadata so repeat seeding compares the same document bytes.
-  const zip = await JSZip.loadAsync(await Packer.toBuffer(doc));
+  const zip = await JSZip.loadAsync(output.buffer);
   const core = zip.file('docProps/core.xml');
   if (!core) throw new Error('The synthetic Word report has no core properties.');
   const coreXml = (await core.async('string')).replace(/(<dcterms:(?:created|modified)\b[^>]*>)[^<]*(<\/dcterms:(?:created|modified)>)/g,

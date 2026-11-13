@@ -3,7 +3,7 @@
   "prefix": "[Demo · Portfolio]",
   "outcome": "seeded_unqualified",
   "browserQualification": "not_executed",
-  "startedAt": "2026-11-13T20:07:30.938Z",
+  "startedAt": "2026-11-13T20:39:37.337Z",
   "records": {
     "target": {
       "baseUrl": "http://127.0.0.1:5000",
@@ -15,7 +15,7 @@
       "session": "verified",
       "projects": "readable",
       "tasking": "readable",
-      "taskCount": 194,
+      "taskCount": 206,
       "browser": "not_executed",
       "plan": {
         "tier": "enterprise",
@@ -727,11 +727,11 @@
           "approval": "unapproved synthetic reference"
         },
         {
-          "id": "cfb32c15-7b68-4429-ba4f-8d9908b99ea8",
+          "id": "91334585-9032-4e3f-be86-65060f3db293",
           "title": "[Demo · Portfolio] QLM-118-101 internal handover reference report · SYNTHETIC Word",
           "folderId": "uf:24",
-          "sha256": "2673aa7a42d0196c250090adfc6c9ec58b640e78da32d60cd16e492821a106f2",
-          "byteLength": 11208,
+          "sha256": "72b75302a7ee4c1b2eae7bfb530d980cacd1e313d06bdff4239b1b99eb63e8fd",
+          "byteLength": 13308,
           "sameBytes": true,
           "downloadVerified": true,
           "action": "found",
@@ -749,10 +749,10 @@
           "approval": "unapproved synthetic reference"
         },
         {
-          "id": "51d6a2a8-5e22-4c30-9a15-ed679740c2e0",
+          "id": "c1977feb-da1a-4c21-bd6c-787a9fa78eef",
           "title": "[Demo · Portfolio] QLM-118-101 internal handover inventory · SYNTHETIC",
           "folderId": "uf:24",
-          "sha256": "2cc6456abe26b0168692c18896542ccbf20852418130802b57f749dc1c5e3877",
+          "sha256": "434778ea6ed16a6c6d6c7dd73fd789652baf7949187a9bc1c35c61e89ed89b71",
           "byteLength": 1140,
           "sameBytes": true,
           "downloadVerified": true,
@@ -1048,5 +1048,5 @@
     "FICTIONAL CSR portfolio: 4 invented sponsor companies, each its own client workspace (\"(fictional demo)\"), 8 CSR projects at stages a–h. SYNTHETIC demonstration data, fictional sponsor; not clinical evidence. No workspace is marked the organisation's default and no organisation setting is changed.",
     "The separate ninth example is a completed INTERNAL demonstration handover: its unapproved reference files are downloaded and hash-verified before the delivery task is completed. Fresh examples stay active for presentation; existing archived examples are validated without reopening. It is not a native CSR export or a clinical approval."
   ],
-  "finishedAt": "2026-11-13T20:08:19.054Z"
+  "finishedAt": "2026-11-13T20:40:27.395Z"
 }

@@ -2,7 +2,8 @@
   "scripts/demo/launch-demo/packs/portfolio.mjs": "7976753db140cf1c1e448dce79f5790c9cbc2d6e95c9cf2a35926d4c2eaf57f6",
   "scripts/demo/launch-demo/packs/portfolio-content.mjs": "43930addd1e7f81f3cba5e2f04130892bccac22e60826956ffcb83f1a3eac624",
   "scripts/demo/launch-demo/packs/portfolio-vault.mjs": "63af4431161cbfa6d44c28b467070a11c243aad581094e559c5a81e517590928",
-  "scripts/demo/launch-demo/packs/portfolio-handover.mjs": "0a805b545e3ef6d7041964141b426015f59a3239ac099547b9e244c3e73e17a7",
-  "scripts/demo/launch-demo/portfolio-vault.test.mjs": "0cd061698cf89cab14ebad01f7d83742ebc52373fa29e95f3d14e2d9a61bc962",
-  "tests/validation/lib/harness.mjs": "e2601fb3a063b63ffe0514385a5b7d8960e8da08b6f1cd83d5f129666cf23a8c"
+  "scripts/demo/launch-demo/packs/portfolio-handover.mjs": "625d5f3cb7bd25968531fcdfe6f2c3ef67e2917b2850272060ecc7f81474174f",
+  "scripts/demo/launch-demo/portfolio-vault.test.mjs": "f2a943f4df19d4747b50a3c7cd35041cb5bc34b053e52b8c46162005298926a6",
+  "tests/validation/lib/harness.mjs": "e2601fb3a063b63ffe0514385a5b7d8960e8da08b6f1cd83d5f129666cf23a8c",
+  "server/services/docx/docxFactory.ts": "32007f69a7ec102b5fc7e4431a3091386f857be1949fc63dcadc1190d2e2ff47"
 }

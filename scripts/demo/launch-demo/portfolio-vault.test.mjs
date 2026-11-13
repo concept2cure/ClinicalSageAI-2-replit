@@ -338,6 +338,23 @@ test('internal handover artifacts are deterministic readable files with an exact
   assert.match(text, /SYNTHETIC/);
   assert.match(text, /unapproved/i);
   assert.match(text, /not[^.]*rendition/i);
+  assert.ok(normalize(text).includes('SYNTHETIC INTERNAL UNAPPROVED'), 'the canonical cover identifies the synthetic internal reference');
+  const headerFiles = Object.keys(reopened.files).filter(name => /^word\/header\d+\.xml$/.test(name));
+  const footerFiles = Object.keys(reopened.files).filter(name => /^word\/footer\d+\.xml$/.test(name));
+  assert.ok(headerFiles.length > 0, 'canonical Word report has an actual header part');
+  assert.ok(footerFiles.length > 0, 'canonical Word report has an actual footer part');
+  const notices = [text];
+  for (const name of [...headerFiles, ...footerFiles]) {
+    const partXml = await reopened.file(name).async('string');
+    const partText = decodeXml([...partXml.matchAll(/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g)].map(match => match[1]).join(' '));
+    assert.ok(normalize(partText).includes('SYNTHETIC INTERNAL UNAPPROVED'), `${name} labels the example honestly`);
+    notices.push(partText);
+  }
+  assert.doesNotMatch(notices.join(' '), /\bCONFIDENTIAL\b|For\s+Regulatory\s+Use\s+Only/i, 'factory production defaults cannot label this synthetic handover');
+  const core = await reopened.file('docProps/core.xml').async('string');
+  for (const property of ['created', 'modified']) {
+    assert.match(core, new RegExp(`<dcterms:${property}\\b[^>]*>2026-11-13T00:00:00\\.000Z</dcterms:${property}>`), `Word ${property} metadata has the fixed fixture date`);
+  }
   assert.ok(normalize(text).includes('The project stays active so these reference files can be opened during presentation.'));
   assert.ok(normalize(text).includes('Export Completed internal handover · SYNTHETIC'));
   const reference = narrative(STUDIES.find(study => study.key === 'qlm118-101'));

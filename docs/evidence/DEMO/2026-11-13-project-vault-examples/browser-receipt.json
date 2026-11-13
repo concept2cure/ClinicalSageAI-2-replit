@@ -14,27 +14,22 @@
         {
           "name": "manifest.json",
           "bytes": 4374,
-          "sha256": "ca37f9d70a221a969d4680a26983ba9a202e25dff64206457b814fb5304eaf79"
+          "sha256": "f6efa0c0da4ede21913394312ade61d0b4db8ce58b6368d4cb8231e40105cb0f"
         },
         {
           "name": "INDEX.txt",
           "bytes": 1587,
-          "sha256": "812a199c7ce6b2b2b356b3fdf6acc9c7d5667400afccccdb27d49c0bd507e9a8"
+          "sha256": "a4fb5b8b42fcf49f218c824f33fbfc1641460e5aa2598308ae425eaadbd0ba17"
         },
         {
           "name": "audit/audit-trail.json",
-          "bytes": 16931,
-          "sha256": "939a7ad0cde1421872788636a1abc2cd0be429d14f655068e4c7777b2f31d438"
+          "bytes": 18379,
+          "sha256": "12c21c4c254cdd1e0f85bb6cc109496a8ccb75bb9cf290f55068a5158206f84c"
         },
         {
           "name": "SHA256SUMS",
           "bytes": 731,
-          "sha256": "1a0c4991eaf3d644f6e12cf0d6e5e8eec5d8320674373af7911dd4e43c4b276e"
-        },
-        {
-          "name": "documents/001-internal-handover-inventory-synthetic.json",
-          "bytes": 1140,
-          "sha256": "2cc6456abe26b0168692c18896542ccbf20852418130802b57f749dc1c5e3877"
+          "sha256": "72dc645aec9fd25b090b7f2f7c7dd2603a536d7064e6998213bce33571bfa7a2"
         },
         {
           "name": "documents/002-internal-handover-report-synthetic.pdf",
@@ -42,14 +37,19 @@
           "sha256": "79bda270ae306d4aaf17d2c6a956e8fa940fd5a2535fb2d463c2d406846b41d2"
         },
         {
-          "name": "documents/003-internal-handover-report-synthetic.docx",
-          "bytes": 11208,
-          "sha256": "2673aa7a42d0196c250090adfc6c9ec58b640e78da32d60cd16e492821a106f2"
-        },
-        {
           "name": "documents/004-internal-handover-study-data-synthetic.json",
           "bytes": 36582,
           "sha256": "63bb9a5c08e55a2ea0064467dedccc682341fe89b19fdb7c56aaa59ddec8406a"
+        },
+        {
+          "name": "documents/001-internal-handover-inventory-synthetic.json",
+          "bytes": 1140,
+          "sha256": "434778ea6ed16a6c6d6c7dd73fd789652baf7949187a9bc1c35c61e89ed89b71"
+        },
+        {
+          "name": "documents/003-internal-handover-report-synthetic.docx",
+          "bytes": 13308,
+          "sha256": "72b75302a7ee4c1b2eae7bfb530d980cacd1e313d06bdff4239b1b99eb63e8fd"
         }
       ]
     },

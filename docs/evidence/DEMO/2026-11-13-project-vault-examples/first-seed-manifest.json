@@ -3,7 +3,7 @@
   "prefix": "[Demo · Portfolio]",
   "outcome": "seeded_unqualified",
   "browserQualification": "not_executed",
-  "startedAt": "2026-11-13T20:00:13.587Z",
+  "startedAt": "2026-11-13T20:35:46.022Z",
   "records": {
     "target": {
       "baseUrl": "http://127.0.0.1:5000",
@@ -15,7 +15,7 @@
       "session": "verified",
       "projects": "readable",
       "tasking": "readable",
-      "taskCount": 59,
+      "taskCount": 205,
       "browser": "not_executed",
       "plan": {
         "tier": "enterprise",
@@ -25,21 +25,21 @@
     },
     "tally": {
       "created": {
+        "task": 1
+      },
+      "found": {
         "client-workspace": 4,
         "project": 9,
         "vault-folder": 24,
         "vault-document": 20,
         "authoring-document": 8,
-        "task": 25,
+        "task": 24,
         "study-design": 1,
         "csr-section-text": 50,
         "authoring-comment": 6,
-        "authoring-comment-resolution": 3,
         "sequence": 2,
-        "data-room-source": 1,
         "agency-communication": 1
-      },
-      "found": {}
+      }
     },
     "companies": [
       {
@@ -69,28 +69,28 @@
         "id": 6,
         "name": "Varnhollow Oncology (fictional demo)",
         "slug": "varnhollow-oncology-portfolio-demo",
-        "created": true
+        "created": false
       },
       {
         "key": "petrelline",
         "id": 7,
         "name": "Petrelline Rare Therapeutics (fictional demo)",
         "slug": "petrelline-rare-therapeutics-portfolio-demo",
-        "created": true
+        "created": false
       },
       {
         "key": "quillmont",
         "id": 8,
         "name": "Quillmont Immunology (fictional demo)",
         "slug": "quillmont-immunology-portfolio-demo",
-        "created": true
+        "created": false
       },
       {
         "key": "halcyra",
         "id": 9,
         "name": "Halcyra Vaccines (fictional demo)",
         "slug": "halcyra-vaccines-portfolio-demo",
-        "created": true
+        "created": false
       }
     ],
     "project.a.vnh310-301": {
@@ -117,7 +117,7 @@
         "byteLength": 2603,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sap": {
@@ -128,7 +128,7 @@
         "byteLength": 1710,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "csrDocument": {
@@ -162,7 +162,7 @@
         "byteLength": 2525,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "studyDesign": {
@@ -201,7 +201,7 @@
         "byteLength": 2464,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sap": {
@@ -212,7 +212,7 @@
         "byteLength": 1718,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "source": {
@@ -223,7 +223,7 @@
         "byteLength": 122125,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sourcePreview": {
@@ -262,7 +262,7 @@
         "byteLength": 2588,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "source": {
@@ -273,7 +273,7 @@
         "byteLength": 221715,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sourcePreview": {
@@ -295,7 +295,7 @@
           "plan",
           "subjects"
         ],
-        "written": 6,
+        "written": 0,
         "missing": [],
         "sections": {
           "titlePage": "1",
@@ -337,7 +337,7 @@
         "byteLength": 2457,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "source": {
@@ -348,7 +348,7 @@
         "byteLength": 68442,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sourcePreview": {
@@ -375,7 +375,7 @@
           "ethics",
           "investigators"
         ],
-        "written": 11,
+        "written": 0,
         "missing": [],
         "sections": {
           "titlePage": "1",
@@ -439,7 +439,7 @@
         "byteLength": 2585,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "source": {
@@ -450,7 +450,7 @@
         "byteLength": 15655,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sourcePreview": {
@@ -477,7 +477,7 @@
           "ethics",
           "investigators"
         ],
-        "written": 11,
+        "written": 0,
         "missing": [],
         "sections": {
           "titlePage": "1",
@@ -532,7 +532,7 @@
         "byteLength": 2540,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "source": {
@@ -543,7 +543,7 @@
         "byteLength": 36582,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sourcePreview": {
@@ -570,7 +570,7 @@
           "ethics",
           "investigators"
         ],
-        "written": 11,
+        "written": 0,
         "missing": [],
         "sections": {
           "titlePage": "1",
@@ -616,7 +616,7 @@
         "byteLength": 2617,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "source": {
@@ -627,7 +627,7 @@
         "byteLength": 35858,
         "sameBytes": true,
         "downloadVerified": true,
-        "action": "uploaded",
+        "action": "found",
         "approval": "unapproved synthetic reference"
       },
       "sourcePreview": {
@@ -654,7 +654,7 @@
           "ethics",
           "investigators"
         ],
-        "written": 11,
+        "written": 0,
         "missing": [],
         "sections": {
           "titlePage": "1",
@@ -675,14 +675,14 @@
         "reason": "file the CSR to the Vault: HTTP 409 {\"success\":false,\"error\":{\"code\":\"CSR_SCIENTIFIC_REVIEW_REQUIRED\",\"message\":\"No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released.\"}}"
       },
       "agencyLetter": {
-        "title": "[Demo - Portfolio] FDA information request (fictional) - IND HLY-09 - CSR HLY-09-101.txt",
-        "sourceId": 400,
         "eventId": "ace_1794600115404_a263281b",
+        "linkedArtifactIds": [
+          "cre_source:400"
+        ],
         "proposals": {
-          "questions": 3,
-          "commitments": [],
-          "commitmentsRecorded": 0
-        }
+          "questions": 3
+        },
+        "action": "found"
       },
       "dataRoom": {
         "total": 16,
@@ -725,18 +725,18 @@
           "byteLength": 12469,
           "sameBytes": true,
           "downloadVerified": true,
-          "action": "uploaded",
+          "action": "found",
           "approval": "unapproved synthetic reference"
         },
         {
-          "id": "cfb32c15-7b68-4429-ba4f-8d9908b99ea8",
+          "id": "91334585-9032-4e3f-be86-65060f3db293",
           "title": "[Demo · Portfolio] QLM-118-101 internal handover reference report · SYNTHETIC Word",
           "folderId": "uf:24",
-          "sha256": "2673aa7a42d0196c250090adfc6c9ec58b640e78da32d60cd16e492821a106f2",
-          "byteLength": 11208,
+          "sha256": "72b75302a7ee4c1b2eae7bfb530d980cacd1e313d06bdff4239b1b99eb63e8fd",
+          "byteLength": 13308,
           "sameBytes": true,
           "downloadVerified": true,
-          "action": "uploaded",
+          "action": "found",
           "approval": "unapproved synthetic reference"
         },
         {
@@ -747,18 +747,18 @@
           "byteLength": 36582,
           "sameBytes": true,
           "downloadVerified": true,
-          "action": "uploaded",
+          "action": "found",
           "approval": "unapproved synthetic reference"
         },
         {
-          "id": "51d6a2a8-5e22-4c30-9a15-ed679740c2e0",
+          "id": "c1977feb-da1a-4c21-bd6c-787a9fa78eef",
           "title": "[Demo · Portfolio] QLM-118-101 internal handover inventory · SYNTHETIC",
           "folderId": "uf:24",
-          "sha256": "2cc6456abe26b0168692c18896542ccbf20852418130802b57f749dc1c5e3877",
+          "sha256": "434778ea6ed16a6c6d6c7dd73fd789652baf7949187a9bc1c35c61e89ed89b71",
           "byteLength": 1140,
           "sameBytes": true,
           "downloadVerified": true,
-          "action": "uploaded",
+          "action": "found",
           "approval": "unapproved synthetic reference"
         }
       ],
@@ -899,8 +899,8 @@
     ],
     "refused": [],
     "summary": {
-      "created": 154,
-      "found": 0,
+      "created": 1,
+      "found": 149,
       "notExecuted": 20,
       "refused": 0,
       "workspaces": [
@@ -1050,5 +1050,5 @@
     "FICTIONAL CSR portfolio: 4 invented sponsor companies, each its own client workspace (\"(fictional demo)\"), 8 CSR projects at stages a–h. SYNTHETIC demonstration data, fictional sponsor; not clinical evidence. No workspace is marked the organisation's default and no organisation setting is changed.",
     "The separate ninth example is a completed INTERNAL demonstration handover: its unapproved reference files are downloaded and hash-verified before the delivery task is completed. Fresh examples stay active for presentation; existing archived examples are validated without reopening. It is not a native CSR export or a clinical approval."
   ],
-  "finishedAt": "2026-11-13T20:02:08.805Z"
+  "finishedAt": "2026-11-13T20:36:35.086Z"
 }

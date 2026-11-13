@@ -11,7 +11,7 @@
   },
   "freshPostCreate": "exit 0: npm ci, pinned private document venv, PostgreSQL16+pgvector, app_service provisioning and demo people",
   "startupTests": {
-    "passed": 71,
+    "passed": 78,
     "failed": 0,
     "skipped": 0
   },
@@ -47,6 +47,7 @@
     "portfolioHelper": "success marker and zero-created rerun verified",
     "cdisc": "source files approved by three real demo identities; study data frozen; no model build"
   },
-  "canonicalIntegration": "502ae524f969d44c2059f3f3b40345e79154e62b merged; copied its existing Show all walkthrough fix into the image rehearsal",
-  "testHostNetworkWorkaround": "Node22.16 native fetch did not use this cloud host proxy; CDISC fetch used an ephemeral Undici EnvHttpProxyAgent preload, preserved CA validation, and verified all ten canonical file hashes. No product proxy setting changed."
+  "canonicalIntegration": "cd5f9c95a7cac7c1a2a448c40fc49b3e1034dbb2 merged: existing browser recovery and Lumen report scoping retained",
+  "testHostNetworkWorkaround": "Node22.16 native fetch did not use this cloud host proxy; CDISC fetch used an ephemeral Undici EnvHttpProxyAgent preload, preserved CA validation, and verified all ten canonical file hashes. No product proxy setting changed.",
+  "canonicalReferenceWord": "Approved docxFactory used, real version check-in and subsequent browser/ZIP recheck passed"
 }
