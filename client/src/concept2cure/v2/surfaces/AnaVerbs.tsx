@@ -4,6 +4,7 @@ import { hasKeys, liveGetOrNull, type DataResult, type ShapeGuard } from '../dat
 import { marketBuildText, marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
 import { filingAskPrompt, FILING_CATEGORY_METADATA } from '@shared/regulatory/filing-catalog';
 import { filingLifecycleReferenceFor, filingReferenceFactsFor } from '@shared/regulatory/filing-lifecycle-reference';
+import { noProjectReason } from '@shared/constants/domain/filing-application-type';
 import { FilingReferenceDetails } from './FilingLifecycleReference';
 
 const SEG_ICONS: Record<string, string> = {
@@ -143,7 +144,8 @@ export interface FilingBrowseState {
 interface RegistryPickerProps {
   value: string; onChange: (id: string) => void;
   /** The application type a catalog filing creates (Projects.tsx programTypeFor):
-   *  the type the market verdict is asked about, as creation will send it. */
+   *  the type the market verdict is asked about, as creation will send it. Empty
+   *  for a filing the catalog states no type for (NO_APPLICATION_TYPE). */
   applicationTypeOf: (entry: { id: string; pathwayKey?: string | null }) => string;
   initialSegment?: string; compact?: boolean;
   /* The visible tab, reported up. The picker owned this state privately, so the
@@ -193,7 +195,8 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     const seen = new Map<string, Pair>();
     for (const e of catalog) {
       const type = typeOf.get(e.id) ?? '';
-      seen.set(`${type}|${e.agency}`, { type, agency: e.agency });
+      /* A filing with no application type is asked of nobody: there is no type to ask about. */
+      if (type) seen.set(`${type}|${e.agency}`, { type, agency: e.agency });
     }
     return [...seen.values()].sort((a, b) => `${a.type}|${a.agency}`.localeCompare(`${b.type}|${b.agency}`));
   }, [catalog, typeOf]);
@@ -209,6 +212,9 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
     const nameOf = new Map(catalog.map((e) => [e.id.toLowerCase(), e.displayName]));
     for (const e of catalog) {
       const type = typeOf.get(e.id) ?? '';
+      /* The catalog states no type for it, so no project is created from it: said in the filing's own name, never
+         as the refusal of an application it is not (it was asked as an NDA until 2026-11-13; S12 sweep items 3, 4). */
+      if (!type) { refused.push({ entry: e, reason: noProjectReason(e) }); continue; }
       const row = rowFor(offers.byType.get(type), e.agency);
       // Every pair was read, so a missing row is a defect in the read, stated as such.
       if (!row?.offer) { refused.push({ entry: e, reason: 'The server stated no offer for this filing\'s market.' }); continue; }

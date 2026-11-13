@@ -376,7 +376,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
   const segLabel = SEG_LABELS[uiSeg] || getSegment(uiSeg)?.label || uiSeg;
   const ctx = useMemo(() => tpl ? getSubmissionTypeContext(tpl) : null, [tpl]);
   const selTpl = useMemo<SelTpl | null>(() => ctx
-    ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
+    ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey ?? '' }
     : null, [ctx]);
   const programType = programTypeFor(selTpl, uiSeg);
   const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired, filingBrowser ?? { segment: regSeg ?? null, searchTerm: '', inspectedReference: null }), [step, selTpl, programType, retired, filingBrowser, regSeg]);
@@ -628,7 +628,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                 onChange={(id) => setTpl(id)}
                 /* The type creation will send for each filing, so the picker
                    asks the market verdict about exactly what it would create. */
-                applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
+                applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey ?? '' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
                 onAsk={onAsk}

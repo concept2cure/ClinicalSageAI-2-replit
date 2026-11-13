@@ -155,7 +155,9 @@ describe('GET /api/submissions/market-support with a list of application types',
     // The picker asks programTypeFor of each catalog row, with the lane the wizard is in (Projects.tsx SEG2REG keys).
     const lanes = ['biotech', 'pharma', 'medtech', 'diagnostics', 'cro', 'health'];
     const asked = new Set(FILING_CATALOG.flatMap((e) => lanes.map((lane) =>
-      programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, lane))));
+      programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey ?? '' }, lane))));
+    // A filing the catalog states no type for has none, and the picker asks nothing about it (2026-11-13).
+    asked.delete('');
     expect([...asked].filter((t) => !VALID_PROGRAM_TYPES.has(t))).toEqual([]);
     expect(asked.size).toBeLessThanOrEqual(100);
   });
