@@ -1,0 +1,25 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > batches current native reads within one actor invocation through the canonical admitted collector 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > refuses stale native selections even before a catalogue refresh supersedes the capture 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > refuses altered retained text even when the native record and recorded checksum still agree 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > does not turn failed verification into an empty successful source set 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > native source parent and freshness admission > retains historical text after change while requiring current exact-parent permission 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > current native titles come from the canonical capture > refuses a title-only parent rename regardless of caller title undefined 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > current native titles come from the canonical capture > refuses a title-only parent rename regardless of caller title Training assignment: SOP-QA-001 Deviation handling (assignment 4) 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > current native titles come from the canonical capture > refuses a title-only parent rename regardless of caller title Training assignment: SOP-QA-001 Deviation investigation (assignment 4) 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > current native titles come from the canonical capture > admits an unchanged current capture when the identity projection supplies no title 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > current native titles come from the canonical capture > admits a refreshed successor by its canonical new title, ignoring a stale caller title 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > current native titles come from the canonical capture > keeps a historical child capture readable under its old title after a parent rename 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > current native titles come from the canonical capture > keeps the captured title of an authorized historical authored source 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts > the Quality projection says in the log why it was unavailable > logs the cause of a failed projection with the project and the error code, and still answers 503 1ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  22:32:03
+   Duration  2.46s (transform 1.11s, setup 159ms, import 2.02s, tests 19ms, environment 0ms)
+
