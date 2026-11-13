@@ -1,0 +1,577 @@
+TAP version 13
+# Subtest: seed identity comes from the verified session and exercises protected project and task reads
+ok 1 - seed identity comes from the verified session and exercises protected project and task reads
+  ---
+  duration_ms: 57.495309
+  type: 'test'
+  ...
+# Subtest: refuses unauthenticated envelope before any protected read or seed write
+ok 2 - refuses unauthenticated envelope before any protected read or seed write
+  ---
+  duration_ms: 15.480937
+  type: 'test'
+  ...
+# Subtest: refuses missing user before any protected read or seed write
+ok 3 - refuses missing user before any protected read or seed write
+  ---
+  duration_ms: 14.30103
+  type: 'test'
+  ...
+# Subtest: refuses missing organization before any protected read or seed write
+ok 4 - refuses missing organization before any protected read or seed write
+  ---
+  duration_ms: 11.461636
+  type: 'test'
+  ...
+# Subtest: refuses default organization is not a session before any protected read or seed write
+ok 5 - refuses default organization is not a session before any protected read or seed write
+  ---
+  duration_ms: 10.808332
+  type: 'test'
+  ...
+# Subtest: refuses zero organization before any protected read or seed write
+ok 6 - refuses zero organization before any protected read or seed write
+  ---
+  duration_ms: 29.147591
+  type: 'test'
+  ...
+# Subtest: refuses fractional organization before any protected read or seed write
+ok 7 - refuses fractional organization before any protected read or seed write
+  ---
+  duration_ms: 26.350731
+  type: 'test'
+  ...
+# Subtest: refuses truncated organization before any protected read or seed write
+ok 8 - refuses truncated organization before any protected read or seed write
+  ---
+  duration_ms: 19.121508
+  type: 'test'
+  ...
+# Subtest: refuses missing actor before any protected read or seed write
+ok 9 - refuses missing actor before any protected read or seed write
+  ---
+  duration_ms: 13.272101
+  type: 'test'
+  ...
+# Subtest: refuses missing email before any protected read or seed write
+ok 10 - refuses missing email before any protected read or seed write
+  ---
+  duration_ms: 10.585406
+  type: 'test'
+  ...
+# Subtest: refuses missing organization record before any protected read or seed write
+ok 11 - refuses missing organization record before any protected read or seed write
+  ---
+  duration_ms: 15.940589
+  type: 'test'
+  ...
+# Subtest: refuses a different session organization than the operator requested
+ok 12 - refuses a different session organization than the operator requested
+  ---
+  duration_ms: 11.615848
+  type: 'test'
+  ...
+# Subtest: a token must not silently override the explicitly named demo account
+ok 13 - a token must not silently override the explicitly named demo account
+  ---
+  duration_ms: 21.299502
+  type: 'test'
+  ...
+# Subtest: email comparison ignores surrounding whitespace and case
+ok 14 - email comparison ignores surrounding whitespace and case
+  ---
+  duration_ms: 14.259939
+  type: 'test'
+  ...
+# Subtest: refuses unprovisioned projects, rather than treating it as an empty demo tenant
+ok 15 - refuses unprovisioned projects, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 12.431296
+  type: 'test'
+  ...
+# Subtest: refuses malformed projects, rather than treating it as an empty demo tenant
+ok 16 - refuses malformed projects, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 18.693092
+  type: 'test'
+  ...
+# Subtest: refuses unreconciled project access, rather than treating it as an empty demo tenant
+ok 17 - refuses unreconciled project access, rather than treating it as an empty demo tenant
+  ---
+  duration_ms: 17.847139
+  type: 'test'
+  ...
+# Subtest: refuses partial board, rather than accepting a broken Tasking backend
+ok 18 - refuses partial board, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 23.589534
+  type: 'test'
+  ...
+# Subtest: refuses unread task source, rather than accepting a broken Tasking backend
+ok 19 - refuses unread task source, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 17.087024
+  type: 'test'
+  ...
+# Subtest: refuses malformed board, rather than accepting a broken Tasking backend
+ok 20 - refuses malformed board, rather than accepting a broken Tasking backend
+  ---
+  duration_ms: 17.932277
+  type: 'test'
+  ...
+# Subtest: session read failures do not expose response bodies or bearer material
+ok 21 - session read failures do not expose response bodies or bearer material
+  ---
+  duration_ms: 14.995816
+  type: 'test'
+  ...
+# Subtest: invalid workspace selection is refused before authentication or HTTP
+ok 22 - invalid workspace selection is refused before authentication or HTTP
+  ---
+  duration_ms: 22.157959
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — created demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — created demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 3, found 0
+# Subtest: the fresh biotech pack supplies its recorded biologic class and explicit workspace
+ok 23 - the fresh biotech pack supplies its recorded biologic class and explicit workspace
+  ---
+  duration_ms: 29.034596
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# FAILED
+# Subtest: the biotech pack refuses an unread project list without attempting creation
+ok 24 - the biotech pack refuses an unread project list without attempting creation
+  ---
+  duration_ms: 12.245105
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — found demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — found demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 1, found 2
+# Subtest: existing demo projects are reused without a second create
+ok 25 - existing demo projects are reused without a second create
+  ---
+  duration_ms: 20.536167
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … ok — created demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — created demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 3, found 0
+# Subtest: the Module 3 build runs after the registers it compiles from
+ok 26 - the Module 3 build runs after the registers it compiles from
+  ---
+  duration_ms: 36.193109
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# ok — found demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — created demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 2, found 1
+# Subtest: a pack whose second programme is missing creates only that one
+ok 27 - a pack whose second programme is missing creates only that one
+  ---
+  duration_ms: 11.598342
+  type: 'test'
+  ...
+# Subtest: CLI refuses a mixed valid/invalid pack list before connecting
+ok 28 - CLI refuses a mixed valid/invalid pack list before connecting
+  ---
+  duration_ms: 85.041986
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … ok — found demo-program (?)
+#   • Vault: read model lists the filed documents … ok — documentCount=0, unfiled=undefined, standard=undefined
+#   • Projects: program C2C-201 (IND) … ok — found demo-program-sm (?)
+#   • CMC / Module 3: compile the dossier on C2C-201 … 
+# ok — 0 section(s) composed, 0 with recorded data
+#   • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 0); meta.chain.ok=true
+#   ⇒ biotech pack: created 1, found 2
+# Subtest: an existing demo on a later portfolio page is reused, not duplicated
+ok 29 - an existing demo on a later portfolio page is reused, not duplicated
+  ---
+  duration_ms: 36.02491
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … 
+# FAILED
+# Subtest: a stalled paginated project read cannot create a duplicate
+ok 30 - a stalled paginated project read cannot create a duplicate
+  ---
+  duration_ms: 16.498188
+  type: 'test'
+  ...
+#   • Projects: program C2C-101 (IND) … FAILED
+# Subtest: an explicit workspace does not silently reuse a project in another workspace
+ok 31 - an explicit workspace does not silently reuse a project in another workspace
+  ---
+  duration_ms: 21.548046
+  type: 'test'
+  ...
+# Subtest: a failed run manifest cannot masquerade as a seeded or browser-qualified demo
+ok 32 - a failed run manifest cannot masquerade as a seeded or browser-qualified demo
+  ---
+  duration_ms: 21.061468
+  type: 'test'
+  ...
+# Subtest: successful seeding still does not assert browser qualification
+ok 33 - successful seeding still does not assert browser qualification
+  ---
+  duration_ms: 14.196714
+  type: 'test'
+  ...
+# Subtest: an environment-named demo email must match even when a token is supplied
+ok 34 - an environment-named demo email must match even when a token is supplied
+  ---
+  duration_ms: 17.783172
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack biotech,biotech
+ok 35 - CLI refuses unsupported or incomplete arguments: --pack biotech,biotech
+  ---
+  duration_ms: 60.862609
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack biotech --base-url
+ok 36 - CLI refuses unsupported or incomplete arguments: --pack biotech --base-url
+  ---
+  duration_ms: 64.690481
+  type: 'test'
+  ...
+# Subtest: CLI refuses unsupported or incomplete arguments: --pack all --client-workspace-id 7
+ok 37 - CLI refuses unsupported or incomplete arguments: --pack all --client-workspace-id 7
+  ---
+  duration_ms: 53.21773
+  type: 'test'
+  ...
+# Subtest: biotech: C2C-201 is created under C2C-101's client workspace when the run named none
+ok 38 - biotech: C2C-201 is created under C2C-101's client workspace when the run named none
+  ---
+  duration_ms: 0.222395
+  type: 'test'
+  ...
+# Subtest: biotech: a run that named a workspace keeps it, and a C2C-101 with none sends none
+ok 39 - biotech: a run that named a workspace keeps it, and a C2C-101 with none sends none
+  ---
+  duration_ms: 0.160652
+  type: 'test'
+  ...
+# Subtest: every study's source passes the server's own CSR source schema
+ok 40 - every study's source passes the server's own CSR source schema
+  ---
+  duration_ms: 35.411753
+  type: 'test'
+  ...
+# Subtest: a generated source is the same bytes on every run, and these bytes (a change files a new Vault copy)
+ok 41 - a generated source is the same bytes on every run, and these bytes (a change files a new Vault copy)
+  ---
+  duration_ms: 13.061083
+  type: 'test'
+  ...
+# Subtest: the statistics give the published answers
+ok 42 - the statistics give the published answers
+  ---
+  duration_ms: 0.313772
+  type: 'test'
+  ...
+# Subtest: LMN-301's report states the result its source records, and the test the source states
+ok 43 - LMN-301's report states the result its source records, and the test the source states
+  ---
+  duration_ms: 13.086432
+  type: 'test'
+  ...
+# Subtest: the adverse-event and disposition counts are the source's
+ok 44 - the adverse-event and disposition counts are the source's
+  ---
+  duration_ms: 16.238847
+  type: 'test'
+  ...
+# Subtest: every section of the ICH E3 template is written, with no empty, undefined or NaN section
+ok 45 - every section of the ICH E3 template is written, with no empty, undefined or NaN section
+  ---
+  duration_ms: 6.140034
+  type: 'test'
+  ...
+# Subtest: only an empty section is written on a re-run
+ok 46 - only an empty section is written on a re-run
+  ---
+  duration_ms: 0.257458
+  type: 'test'
+  ...
+# Subtest: every study is labelled synthetic in its titles and names no real person
+ok 47 - every study is labelled synthetic in its titles and names no real person
+  ---
+  duration_ms: 0.915668
+  type: 'test'
+  ...
+# Subtest: the approver signs the digest of the change as they read it in the register
+ok 48 - the approver signs the digest of the change as they read it in the register
+  ---
+  duration_ms: 2.57696
+  type: 'test'
+  ...
+# Subtest: nothing is signed when the register does not list the change to its approver
+ok 49 - nothing is signed when the register does not list the change to its approver
+  ---
+  duration_ms: 0.432992
+  type: 'test'
+  ...
+# Subtest: nothing is signed when the register gives the change no digest
+ok 50 - nothing is signed when the register gives the change no digest
+  ---
+  duration_ms: 0.137657
+  type: 'test'
+  ...
+# Subtest: nothing is signed when the digest is not a SHA-256
+ok 51 - nothing is signed when the digest is not a SHA-256
+  ---
+  duration_ms: 0.15232
+  type: 'test'
+  ...
+# Subtest: a document counts as frozen from the CSR source only when one of its study data carries that source's bytes
+ok 52 - a document counts as frozen from the CSR source only when one of its study data carries that source's bytes
+  ---
+  duration_ms: 0.159521
+  type: 'test'
+  ...
+# Subtest: the pack files the source that carries every safety domain, under its own title
+ok 53 - the pack files the source that carries every safety domain, under its own title
+  ---
+  duration_ms: 1.51455
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP403 fails the actual seed CLI and manifest
+ok 54 - required subject intake HTTP403 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 109.48153
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP429 fails the actual seed CLI and manifest
+ok 55 - required subject intake HTTP429 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 92.4175
+  type: 'test'
+  ...
+# Subtest: required subject intake HTTP500 fails the actual seed CLI and manifest
+ok 56 - required subject intake HTTP500 fails the actual seed CLI and manifest
+  ---
+  duration_ms: 91.224268
+  type: 'test'
+  ...
+# Subtest: successful required subject intake completes without signing the optional RACT
+ok 57 - successful required subject intake completes without signing the optional RACT
+  ---
+  duration_ms: 82.361826
+  type: 'test'
+  ...
+# Subtest: an already-loaded subject extract completes without resubmitting it
+ok 58 - an already-loaded subject extract completes without resubmitting it
+  ---
+  duration_ms: 72.44155
+  type: 'test'
+  ...
+# Subtest: a snapshot the loads already scored is found, and not recomputed
+ok 59 - a snapshot the loads already scored is found, and not recomputed
+  ---
+  duration_ms: 71.75332
+  type: 'test'
+  ...
+# Subtest: a database seeded before site risk came from the study's data is rescored through the screen's own route
+ok 60 - a database seeded before site risk came from the study's data is rescored through the screen's own route
+  ---
+  duration_ms: 63.027082
+  type: 'test'
+  ...
+# Subtest: a recompute that scores fewer sites than the extracts carry fails the seed, with the count
+ok 61 - a recompute that scores fewer sites than the extracts carry fails the seed, with the count
+  ---
+  duration_ms: 56.348362
+  type: 'test'
+  ...
+# Subtest: an indicator a person added, with no reading yet, does not fail the seed
+ok 62 - an indicator a person added, with no reading yet, does not fail the seed
+  ---
+  duration_ms: 48.39603
+  type: 'test'
+  ...
+# Subtest: one of the seed's own indicators with no reading still fails it, and says how many
+ok 63 - one of the seed's own indicators with no reading still fails it, and says how many
+  ---
+  duration_ms: 60.98944
+  type: 'test'
+  ...
+# Subtest: reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+ok 64 - reuses exact LMN-201 reports beyond the organization first 100 and includes truthful partial Quality
+  ---
+  duration_ms: 4.352203
+  type: 'test'
+  ...
+# Subtest: creates missing reports with both canonical program and numeric scope, then passes those runs directly
+ok 65 - creates missing reports with both canonical program and numeric scope, then passes those runs directly
+  ---
+  duration_ms: 2.23204
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor null before writes
+ok 66 - refuses invalid canonical numeric anchor null before writes
+  ---
+  duration_ms: 0.576288
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 0 before writes
+ok 67 - refuses invalid canonical numeric anchor 0 before writes
+  ---
+  duration_ms: 0.187051
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 411 before writes
+ok 68 - refuses invalid canonical numeric anchor 411 before writes
+  ---
+  duration_ms: 0.20551
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor -1 before writes
+ok 69 - refuses invalid canonical numeric anchor -1 before writes
+  ---
+  duration_ms: 0.242575
+  type: 'test'
+  ...
+# Subtest: refuses invalid canonical numeric anchor 1.5 before writes
+ok 70 - refuses invalid canonical numeric anchor 1.5 before writes
+  ---
+  duration_ms: 0.140932
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+ok 71 - an unread or foreign exact report response is not treated as an empty result: {"unreadReport":true}
+  ---
+  duration_ms: 0.250728
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+ok 72 - an unread or foreign exact report response is not treated as an empty result: {"readFailure":true}
+  ---
+  duration_ms: 0.460413
+  type: 'test'
+  ...
+# Subtest: an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+ok 73 - an unread or foreign exact report response is not treated as an empty result: {"foreignReceipt":true}
+  ---
+  duration_ms: 0.66417
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+ok 74 - refuses a created report outside the expected settled receipt: {"scopeId":"922"}
+  ---
+  duration_ms: 0.360502
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+ok 75 - refuses a created report outside the expected settled receipt: {"scopeType":"account"}
+  ---
+  duration_ms: 0.344408
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+ok 76 - refuses a created report outside the expected settled receipt: {"reportTypeId":"other"}
+  ---
+  duration_ms: 0.278139
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"id":0}
+ok 77 - refuses a created report outside the expected settled receipt: {"id":0}
+  ---
+  duration_ms: 0.189816
+  type: 'test'
+  ...
+# Subtest: refuses a created report outside the expected settled receipt: {"status":"failed"}
+ok 78 - refuses a created report outside the expected settled receipt: {"status":"failed"}
+  ---
+  duration_ms: 1.273888
+  type: 'test'
+  ...
+# Subtest: retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+ok 79 - retains a wrong historical bundle, creates one exact snapshot, then reruns without new writes
+  ---
+  duration_ms: 3.447355
+  type: 'test'
+  ...
+# Subtest: an older four-report bundle does not suppress the current five-report pack
+ok 80 - an older four-report bundle does not suppress the current five-report pack
+  ---
+  duration_ms: 0.55789
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+ok 81 - refuses unread or incomplete bundle/schedule registers: {"unreadBundle":true}
+  ---
+  duration_ms: 0.376246
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+ok 82 - refuses unread or incomplete bundle/schedule registers: {"truncatedBundle":true}
+  ---
+  duration_ms: 0.286922
+  type: 'test'
+  ...
+# Subtest: refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+ok 83 - refuses unread or incomplete bundle/schedule registers: {"unreadSchedules":true}
+  ---
+  duration_ms: 0.345561
+  type: 'test'
+  ...
+# Subtest: refuses a returned bundle with unexpected members before scheduling
+ok 84 - refuses a returned bundle with unexpected members before scheduling
+  ---
+  duration_ms: 0.406341
+  type: 'test'
+  ...
+# Subtest: leaves foreign schedules intact and creates only platform schedules for the selected project
+ok 85 - leaves foreign schedules intact and creates only platform schedules for the selected project
+  ---
+  duration_ms: 0.437379
+  type: 'test'
+  ...
+# Subtest: an entitlement refusal stays explicitly not executed without inventing a schedule
+ok 86 - an entitlement refusal stays explicitly not executed without inventing a schedule
+  ---
+  duration_ms: 0.558121
+  type: 'test'
+  ...
+# Subtest: retains an explicitly disabled LMN-201 schedule instead of recreating active work
+ok 87 - retains an explicitly disabled LMN-201 schedule instead of recreating active work
+  ---
+  duration_ms: 0.38537
+  type: 'test'
+  ...
+# Subtest: reuses exact selected membership while preserving additional legitimate source-project provenance
+ok 88 - reuses exact selected membership while preserving additional legitimate source-project provenance
+  ---
+  duration_ms: 0.310818
+  type: 'test'
+  ...
+1..88
+# tests 88
+# suites 0
+# pass 88
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1023.350212

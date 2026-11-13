@@ -1,0 +1,45 @@
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > requires an authenticated principal and organization for reads and writes 72ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses AUTHOR grants and revokes without document-owner authority 10ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses REVIEWER grants and revokes without document-owner authority 6ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses APPROVER grants and revokes without document-owner authority 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses VIEWER grants and revokes without document-owner authority 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > allows owners and administrators to read tenant-scoped permission history 4ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > lets the manager read, but not change, access to a FROZEN document 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > lets the manager read, but not change, access to a APPROVED document 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > still refuses a non-manager the access list of a sealed document 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a foreign tenant document even to an administrator 6ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > ignores spoofed tenant, granting actor, and email from the body 3ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a principal who exists only in a different organization 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section in another tenant without mutation or audit 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section in a missing section without mutation or audit 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission management authority and scope > refuses a section belonging to another document in the same tenant 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"","role":"REVIEWER","reason":"Review assignment"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"QA","reason":"Review assignment"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER","reason":"   "} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects a malformed grant {"principalId":"22","role":"REVIEWER","reason":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry not-a-date 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry 2026-01-01T00:00:00.000Z 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > rejects malformed, expired, or non-ISO expiry 2999-01-01 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {"reason":" "} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > requires a reason for revocation {"reason":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission input validation > persists a normalized role, trimmed reason, valid expiry, and requested section 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > locks the document and verifies authority on the mutation client before granting and auditing 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > rolls back a grant when the chained audit cannot persist 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > revokes and audits on the same client before commit with server attribution 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > rolls back a revocation when its audit cannot persist 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > refuses removal of the last active document owner without an audit or write 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > does not let another section owner satisfy the last document-owner requirement 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > allows revoking a section owner while retaining the sole document owner 5ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > does not count an expired owner as a replacement for the active document owner 2ms
+ ✓ server/routes/__tests__/authoringPermissionManagement.test.ts > authoring permission changes and audit commit together > returns not found for a foreign or nonexistent permission without audit 2ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > mounts the permissions router BEFORE the authoring router 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the permissions router owns the path and never delegates 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the authoring router no longer declares the shadowed pair 1ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > the surviving permission-management implementation writes an audit row 0ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > writes doc_permissions through the canonical grant writer, never with its own INSERT 3ms
+ ✓ server/routes/__tests__/permissionsRouteShadowing.test.ts > ownership of /api/authoring/docs/:docId/permissions > drops the constant that only the deleted route used 0ms
+ Test Files  2 passed (2)
+      Tests  43 passed (43)

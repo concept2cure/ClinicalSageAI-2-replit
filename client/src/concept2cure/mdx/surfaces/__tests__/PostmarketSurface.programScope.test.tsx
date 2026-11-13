@@ -96,4 +96,34 @@ describe('PostmarketSurface — the surveillance panels, read for this project (
     await waitFor(() => expect(container.querySelector('[data-testid="pm-not-keyed-signals"]')).not.toBeNull());
     expect(text(container)).not.toMatch(/Own pump occlusion/);
   });
+
+  /* The triage queue's clearance copy now goes through the four-state
+     discriminator (v2/assessmentState.ts), as the device surface's "Nothing is
+     blocking" does. This case holds the half that is easy to break while
+     tightening the other: a read that DID run for this project and holds
+     records, whose signals simply do not qualify for triage, must still be
+     allowed to say the queue is clear. Suppressing that would be its own
+     dishonesty — a project with nothing waiting told "in the signals read".
+
+     The signal is critical AND already closed as a trend, which is the real
+     shape of a non-triage row: the queue filter is
+     `(critical || review) && state !== 'closed-trend'`. */
+  it('still says the triage queue is clear when the read ran for this project and nothing qualifies', async () => {
+    const CLOSED = {
+      ...OWN,
+      signals: [{
+        ...OWN.signals[0], id: 'SIG-OWN-CLOSED-1', summary: 'Own pump occlusion, closed as a trend',
+        state: 'closed-trend',
+      }],
+    };
+    serve({ status: 200, body: { data: CLOSED, meta: { count: 1, scope: 'program' } } });
+    const { container, getByTestId } = mount();
+    await waitFor(() => expect(container.querySelector('[data-testid="pm-signals-none"]')).not.toBeNull());
+    expect(container.querySelector('[data-testid^="pm-not-keyed-"]')).toBeNull();
+    expect(getByTestId('pm-signals-none').textContent)
+      .toBe('No critical or under-review signal is waiting for an MDR or CAPA.');
+    /* Not the narrower wording, which belongs to a read that did not run for
+       this project — asserted by name so a later edit cannot quietly swap them. */
+    expect(text(container)).not.toMatch(/in the signals read for this project/);
+  });
 });

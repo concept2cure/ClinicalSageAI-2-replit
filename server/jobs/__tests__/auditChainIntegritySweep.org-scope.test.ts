@@ -89,6 +89,8 @@ vi.mock('../../services/audit/chain-anchor.js', async (importOriginal) => ({
 }));
 
 import { runAuditChainIntegrityCheck } from '../auditChainIntegritySweep';
+// audit_events rows hashed as the trigger hashes them: the walk re-computes each one.
+import { soundChain } from '../../services/audit/__tests__/_audit-event-chain-fixtures';
 
 const RUN_AT = Date.parse('2026-10-30T02:00:00.000Z');
 const anchorOk = {
@@ -97,8 +99,6 @@ const anchorOk = {
 };
 const walk = (rows: number) => ({ ok: true, rowsChecked: rows, tenants: rows ? 1 : 0, legacyRows: 0, sequencedRows: rows });
 const seals = (verified: number) => ({ valid: true, brokenAt: null, verified, unsealed: 0, unsealedAfterSealed: 0, firstUnsealedAfterSealed: null });
-const event = (org: number, seq: number, hash: string, prev: string | null) =>
-  ({ id: org * 100 + seq, organization_id: org, sequence_number: seq, record_hash: hash, previous_hash: prev });
 const store = (r: Awaited<ReturnType<typeof runAuditChainIntegrityCheck>>, name: string) => r.stores.find((s) => s.store === name);
 const tenantOf = (opts: unknown) => (opts as { tenantId?: number } | undefined)?.tenantId;
 const originalEnv = { ...process.env };
@@ -112,7 +112,7 @@ beforeEach(() => {
   m.orgs = [7, 8];
   m.connections = 0;
   m.released = 0;
-  m.auditEvents = new Map([[7, [event(7, 1, 'a1', null), event(7, 2, 'a2', 'a1')]], [8, [event(8, 1, 'b1', null)]]]);
+  m.auditEvents = new Map([[7, soundChain(7, 2)], [8, soundChain(8, 1)]]);
   m.verifyAuditChain.mockReset().mockImplementation(async (_c: unknown, opts: unknown) => walk(tenantOf(opts) === 7 ? 3 : 2));
   m.verifyAuditChainSeals.mockReset().mockImplementation(async (_c: unknown, opts: unknown) => seals(tenantOf(opts) === 7 ? 3 : 2));
   m.verifyAuditEventsChainSeals.mockReset().mockResolvedValue(seals(1));

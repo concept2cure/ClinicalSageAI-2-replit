@@ -101,7 +101,10 @@ describe('chain-integrity answers the shape the Audit trail banner guards on', (
         {
           id: 1, organization_id: 101, sequence_number: 1, event_type: 'CREATE',
           entity_type: 'doc', entity_id: 'D1', user_id: 'u1', user_name: 'A',
-          timestamp: new Date('2026-08-14T09:00:00Z'), reason: 'r',
+          // The database's own text for the timestamp, as the route's query
+          // selects it (AUDIT_EVENT_CHAIN_COLUMNS): the walk refuses a row
+          // without it rather than guess the trigger's input.
+          timestamp_text: '2026-08-14 09:00:00', reason: 'r',
           record_hash: 'whatever', previous_hash: null,
         },
       ],

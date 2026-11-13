@@ -1,0 +1,141 @@
+=== RED: server/routes/part11-compliance.ts restored from HEAD ===
+ ✓ server/routes/__tests__/part11-chain-one-walk.pglite.test.ts > the audit trail chain verdict > control: a chain the trigger wrote is intact, and every entry is counted verified
+ × server/routes/__tests__/part11-chain-one-walk.pglite.test.ts > the audit trail chain verdict > says what the hash covers, and that the before and after values are not part of it
+ × server/routes/__tests__/part11-chain-one-walk.pglite.test.ts > the audit trail chain verdict > does not count an entry whose hash did not re-compute as verified
+ × server/routes/__tests__/part11-chain-one-walk.pglite.test.ts > the audit trail chain verdict > does not read a removal hidden by a blanked, re-hashed pointer as an intact chain
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)
+
+=== RED: server/services/audit/signedAuditExport.ts restored from HEAD ===
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > control: a chain as the trigger writes it is intact
+ × server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > counts the rows whose hash re-computed, which is what an intact verdict now rests on
+ × server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > reports a row altered with its stored hashes left alone as broken, by content
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > does not report intact over a row whose previous_hash is null after a hashed predecessor
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > calls it unverified rather than broken, because no mismatch was found
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > still reports a genuine mismatch as broken
+ × server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > says a wrong pointer is a pointer break, not altered content
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > does not count the chain's own genesis row as unlinked
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > still reports unhashed rows as the reason when there are any
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > nothing to verify is not verified
+ ✓ server/services/audit/__tests__/chain-integrity-unlinked-rows.test.ts > snapshotChainIntegrity > unavailable when the query throws
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 8 passed (11)
+
+=== RED: server/services/audit/chainIntegrityMonitor.ts restored from HEAD ===
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns nothing for an intact single-org chain
+ × server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > flags a row whose previous_hash does not match the prior record_hash
+ × server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > flags a row whose covered fields no longer match its stored hash
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > validates each org chain independently (no cross-tenant break)
+ × server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > does not let one org's hash satisfy another org's link
+ × server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > counts a null previous_hash after a hashed row as unlinked: not a break, not healthy
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > reports every break, not just the first
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns [] for an empty chain
+ × server/services/audit/__tests__/chainIntegrityMonitor.test.ts > summarizeChainLinkage > counts unhashed rows and does not compare the pointer of the row after one
+ × server/services/audit/__tests__/chainIntegrityMonitor.test.ts > summarizeChainLinkage > does not count a row that failed re-computation as verified
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 4 passed (10)
+
+=== RED: server/services/audit/compliance-reports/queries/audit-trail-integrity.ts restored from HEAD ===
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the stores > counts each store for this organisation only, with the period bounds
+ × server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > says the entries match their recorded hash, and that before and after values are not part of it
+ × server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > does not claim a re-computation for a snapshot that only compared pointers
+ × server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > says which kind of break was found
+ × server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > prints the walk's own sentence for a chain that could not be verified
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > states three intact checks when all three ran and passed
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken chain says where, as this organisation may read it
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken linkage and a failing seal are broken
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the chain walk did not run: "not verified", with the reason, never intact
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage had nothing hashed: "not verified", with the reason, never intact
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage query did not run: "not verified", with the reason, never intact
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the seal check could not run: "not verified", with the reason, never intact
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > no row carried a seal: "not verified", with the reason, never intact
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a check that could not run does not put the failure text in the report
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 10 passed (14)
+
+=== RED: server/jobs/auditChainOrganizationVerdicts.ts restored from HEAD ===
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules by default when the audit trail is enabled
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when explicitly opted out, even if the trail is on
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > schedules when explicitly opted in, even if the trail flag is unset
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule gating (on-by-default) > does NOT schedule when neither the trail nor an explicit opt-in is set
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules by default in production with nothing else configured
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production even when the audit trail flag is unset
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false)
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > startAuditChainIntegritySchedule in production (Part 11 default-ON) > schedules in production with an explicit opt-in too
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reports ok and raises no alert when every store verifies
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_logs HMAC seal raises the alert path with the failing index and no row content
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a tampered audit.tamper_proof_log row raises the alert path with the sequence number
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a broken audit_events link raises the alert path with the first broken id
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > a missing immutability trigger raises the alert path, naming the trigger
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > the plain-chain break still reports brokenAt and alerts, as before
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > one verifier throwing is an incident for that store and does not hide the others
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an absent audit.tamper_proof_log is reported as missing (an incident), never as verified
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > without AUDIT_HMAC_KEY the seals are unverifiable: not ok, not an incident, no [SECURITY] alert
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no seal at all are unverifiable, not ok
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an audit_logs row written unsealed after sealing began is unverifiable, and named
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_logs rows that all carry no seal are unverifiable, even with the key configured
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > audit_events rows that carry no record_hash are unverified, not verified
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > still never throws when the pool itself is unavailable
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > in production without AUDIT_ANCHOR_BUCKET the anchor is "not configured": never ok, never written
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a truncated chain after an anchor is an incident: alerted, and no new anchor papers over it
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > with no anchor written yet the head is "not verified" (unverifiable), and the first anchor is written
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > the anchor cannot be read: an incident for that store, and nothing is anchored
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > an incident in another store blocks the new anchor too: a tampered state is never anchored
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8) > a failed anchor write is reported, not swallowed
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > reports the age on a clean run, and a 24-hour-old anchor is not an incident
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > at exactly 48 hours the anchor is not yet stale
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor that the database also breaks is broken, and nothing is anchored over it
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor beside another incident does not get a new anchor written over that incident
+ ✓ server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > with no anchor yet there is no age to report, and the run says so
+      Tests  35 passed (35)
+
+=== RED: server/services/tenant-export/attestation-report.service.ts restored from HEAD ===
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > returns EMPTY when the chain has zero rows
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > returns INTACT when every previous_hash matches the prior record_hash
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > detects broken links and reports them in samples
+ × server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > does not attest INTACT when a removal is hidden by blanking the successor's pointer
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > still attests INTACT for a chain whose first entry names no predecessor
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > a found mismatch outranks a link that could not be compared
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > produces a verifiable HMAC signature
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > signature fails verification if the body is tampered with
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > returns UNVERIFIABLE, NOT INTACT, when no entry carries a hash
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > returns UNVERIFIABLE when the trail is only PARTIALLY hashed
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > EMPTY and UNVERIFIABLE are not the same claim
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > the UNVERIFIABLE verdict is inside the signed body, not bolted on after
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > generateAttestation > throws TenantNotFound when org does not exist
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > attestation key configuration > throws AttestationKeyMissingError when env var is absent
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > key rotation > embeds the current key id in the signature
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > key rotation > verifies a report signed under the previous key
+ ✓ server/services/tenant-export/__tests__/attestation-report.test.ts > key rotation > refuses verification when the report was signed under an unknown key
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 passed (17)
+
+=== RED: server/jobs/auditChainOrganizationVerdicts.ts restored from HEAD (re-run with the three new cases) ===
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > reads the columns the stored hash was computed over, the timestamp as the database prints it
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an audit_events row altered with its hashes left alone is an incident, and is not called a broken link
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck verifies every audit store > an audit_events row that names no predecessor after a hashed one is unverified, not ok
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 35 passed (38)
+
+=== RED: AuditEventChain.tsx, AdminSurfaces.tsx and ComplianceAttestation.tsx restored from HEAD ===
+ × client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit-event verdict says what the server found > a chain that could not be placed does not read "0 of 12 entries carry no record hash"
+ × client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit-event verdict says what the server found > without the server's sentence it names only a cause the server sent, and guesses none
+ × client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit-event verdict says what the server found > intact says what was checked and that the before and after values are not part of it, on screen and to AnA
+ × client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit-event verdict says what the server found > an altered entry is not called a broken link, and the entries that did not verify are named
+ × client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit-event verdict says what the server found > a named entry that is loaded in the table opens there; one that is not is named without a control
+ × client/src/concept2cure/v2/__tests__/auditTrailEventChainVerdict.test.tsx > Audit trail — the audit-event verdict says what the server found > says how many are listed when the server listed only the first of them
+ × client/src/concept2cure/v2/__tests__/complianceAttestation.test.tsx > the verdict > UNVERIFIABLE over a fully hashed trail does not say entries carry no hash
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 41 passed (48)
+
+=== RED: server/jobs/auditChainOrganizationVerdicts.ts restored from HEAD; the job's cases, in their own file (auditChainOrganizationVerdicts.audit-events.test.ts) ===
+ ✓ server/jobs/__tests__/auditChainOrganizationVerdicts.audit-events.test.ts > one organisation's audit_events verdict > control: a chain as the trigger writes it is ok, over every row
+ × server/jobs/__tests__/auditChainOrganizationVerdicts.audit-events.test.ts > one organisation's audit_events verdict > reads the columns the stored hash was computed over, the timestamp as the database prints it
+ × server/jobs/__tests__/auditChainOrganizationVerdicts.audit-events.test.ts > one organisation's audit_events verdict > a row altered with its hashes left alone is broken, and is not called a broken link
+ × server/jobs/__tests__/auditChainOrganizationVerdicts.audit-events.test.ts > one organisation's audit_events verdict > a row that names no predecessor after a hashed one is unverified, not ok
+ ✓ server/jobs/__tests__/auditChainOrganizationVerdicts.audit-events.test.ts > one organisation's audit_events verdict > an organisation with no audit_events row gives this store no verdict
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)
+

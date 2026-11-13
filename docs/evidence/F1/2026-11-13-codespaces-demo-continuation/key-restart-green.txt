@@ -1,0 +1,376 @@
+TAP version 13
+# Subtest: Neon owner + pooler runtime on the same database are eligible for a read-only check
+ok 1 - Neon owner + pooler runtime on the same database are eligible for a read-only check
+  ---
+  duration_ms: 3.42242
+  type: 'test'
+  ...
+# Subtest: Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime
+ok 2 - Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime
+  ---
+  duration_ms: 3.366223
+  type: 'test'
+  ...
+# Subtest: request-serving Codespaces fails closed on any inherited DB owner/maintenance secret
+ok 3 - request-serving Codespaces fails closed on any inherited DB owner/maintenance secret
+  ---
+  duration_ms: 1.22061
+  type: 'test'
+  ...
+# Subtest: a runtime-only Codespace can qualify without an owner credential in the API process
+ok 4 - a runtime-only Codespace can qualify without an owner credential in the API process
+  ---
+  duration_ms: 0.56856
+  type: 'test'
+  ...
+# Subtest: Neon connection errors are classified without returning credential-bearing messages
+ok 5 - Neon connection errors are classified without returning credential-bearing messages
+  ---
+  duration_ms: 0.535783
+  type: 'test'
+  ...
+# Subtest: read-only Neon PostgreSQL probe verifies hostname and refuses remote plaintext
+ok 6 - read-only Neon PostgreSQL probe verifies hostname and refuses remote plaintext
+  ---
+  duration_ms: 1.524627
+  type: 'test'
+  ...
+# Subtest: Codespaces startup reports missing or weak signing credentials before claiming readiness
+ok 7 - Codespaces startup reports missing or weak signing credentials before claiming readiness
+  ---
+  duration_ms: 3.724025
+  type: 'test'
+  ...
+# Subtest: Codespaces refuses a green database when tenant RLS is off or unset
+ok 8 - Codespaces refuses a green database when tenant RLS is off or unset
+  ---
+  duration_ms: 1.361736
+  type: 'test'
+  ...
+# Subtest: an app role must actually run RLS and must not own unforced RLS tables
+ok 9 - an app role must actually run RLS and must not own unforced RLS tables
+  ---
+  duration_ms: 1.765912
+  type: 'test'
+  ...
+# Subtest: OpenAI quota is distinct from a rate limit, auth failure or governance gate
+ok 10 - OpenAI quota is distinct from a rate limit, auth failure or governance gate
+  ---
+  duration_ms: 1.60256
+  type: 'test'
+  ...
+# Subtest: OpenAI auth probe is no-charge GET; billable POST requires explicit request
+ok 11 - OpenAI auth probe is no-charge GET; billable POST requires explicit request
+  ---
+  duration_ms: 0.780244
+  type: 'test'
+  ...
+# Subtest: Anthropic authentication checks models without a drafting or billable request
+ok 12 - Anthropic authentication checks models without a drafting or billable request
+  ---
+  duration_ms: 0.692012
+  type: 'test'
+  ...
+# Subtest: Anthropic missing or empty models never reports provider readiness
+ok 13 - Anthropic missing or empty models never reports provider readiness
+  ---
+  duration_ms: 0.172411
+  type: 'test'
+  ...
+# Subtest: Anthropic provider responses distinguish auth, policy, billing and rate limits
+ok 14 - Anthropic provider responses distinguish auth, policy, billing and rate limits
+  ---
+  duration_ms: 0.548668
+  type: 'test'
+  ...
+# Subtest: Anthropic model discovery is opt-in and is required only when requested
+ok 15 - Anthropic model discovery is opt-in and is required only when requested
+  ---
+  duration_ms: 0.83564
+  type: 'test'
+  ...
+# Subtest: missing key never triggers OpenAI request
+ok 16 - missing key never triggers OpenAI request
+  ---
+  duration_ms: 0.14875
+  type: 'test'
+  ...
+# Subtest: DB contract failures never imply readiness
+ok 17 - DB contract failures never imply readiness
+  ---
+  duration_ms: 0.320574
+  type: 'test'
+  ...
+# Subtest: overall startup cannot be marked ready on a missing DB even when OpenAI key exists
+ok 18 - overall startup cannot be marked ready on a missing DB even when OpenAI key exists
+  ---
+  duration_ms: 0.163446
+  type: 'test'
+  ...
+# Subtest: doctor does not probe external provider or application without explicit flags
+ok 19 - doctor does not probe external provider or application without explicit flags
+  ---
+  duration_ms: 0.252542
+  type: 'test'
+  ...
+# Subtest: a misleading 200 /readyz cannot qualify degraded, unseeded or incomplete app state
+ok 20 - a misleading 200 /readyz cannot qualify degraded, unseeded or incomplete app state
+  ---
+  duration_ms: 0.680199
+  type: 'test'
+  ...
+# Subtest: running app with simulated AnA is not accepted as real model readiness
+ok 21 - running app with simulated AnA is not accepted as real model readiness
+  ---
+  duration_ms: 0.375462
+  type: 'test'
+  ...
+# Subtest: Anthropic probe names which approved drafting versions the key can see, across pages
+ok 22 - Anthropic probe names which approved drafting versions the key can see, across pages
+  ---
+  duration_ms: 0.44879
+  type: 'test'
+  ...
+# Subtest: A working key that sees no approved drafting version is blocked, not passed
+ok 23 - A working key that sees no approved drafting version is blocked, not passed
+  ---
+  duration_ms: 0.30314
+  type: 'test'
+  ...
+# Subtest: --expect-anthropic-models reaches the Anthropic probe from the command line
+ok 24 - --expect-anthropic-models reaches the Anthropic probe from the command line
+  ---
+  duration_ms: 0.501031
+  type: 'test'
+  ...
+# Subtest: the drafting-call probe sends one small request the current API accepts, to the first approved model
+ok 25 - the drafting-call probe sends one small request the current API accepts, to the first approved model
+  ---
+  duration_ms: 1.75643
+  type: 'test'
+  ...
+# Subtest: an account with no credit is named as that, whatever the model list said
+ok 26 - an account with no credit is named as that, whatever the model list said
+  ---
+  duration_ms: 0.400193
+  type: 'test'
+  ...
+# Subtest: a model the account cannot use is tried no further than the approved list, and the result names which answered
+ok 27 - a model the account cannot use is tried no further than the approved list, and the result names which answered
+  ---
+  duration_ms: 0.951572
+  type: 'test'
+  ...
+# Subtest: no approved model answering is blocked as model access; a refused key and a rate limit keep their own codes
+ok 28 - no approved model answering is blocked as model access; a refused key and a rate limit keep their own codes
+  ---
+  duration_ms: 1.047971
+  type: 'test'
+  ...
+# Subtest: the drafting-call probe is opt-in, needs a key and a model list, and is required once asked for
+ok 29 - the drafting-call probe is opt-in, needs a key and a model list, and is required once asked for
+  ---
+  duration_ms: 1.429935
+  type: 'test'
+  ...
+# Subtest: Neon automation never silently clones the previous production/default branch
+ok 30 - Neon automation never silently clones the previous production/default branch
+  ---
+  duration_ms: 5.455355
+  type: 'test'
+  ...
+# Subtest: general C2C agent does not create a second untracked Neon PR branch
+ok 31 - general C2C agent does not create a second untracked Neon PR branch
+  ---
+  duration_ms: 0.781642
+  type: 'test'
+  ...
+# Subtest: Neon proof refuses reused branch and fails if cleanup could not delete its created ID
+ok 32 - Neon proof refuses reused branch and fails if cleanup could not delete its created ID
+  ---
+  duration_ms: 0.460313
+  type: 'test'
+  ...
+# Subtest: each PR preview validates an isolated branch and cleans its exact ID in the same run
+ok 33 - each PR preview validates an isolated branch and cleans its exact ID in the same run
+  ---
+  duration_ms: 0.497184
+  type: 'test'
+  ...
+# Subtest: enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint
+ok 34 - enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint
+  ---
+  duration_ms: 0.581432
+  type: 'test'
+  ...
+# Subtest: CI-created Neon branches are schema-only and expire if a runner or PR cleanup is lost
+ok 35 - CI-created Neon branches are schema-only and expire if a runner or PR cleanup is lost
+  ---
+  duration_ms: 0.670865
+  type: 'test'
+  ...
+# Subtest: Codespaces agent config has no committed production Neon parent or owner runtime secret
+ok 36 - Codespaces agent config has no committed production Neon parent or owner runtime secret
+  ---
+  duration_ms: 0.978248
+  type: 'test'
+  ...
+# Subtest: agent policy does not claim GPT automatically qualifies as a regulatory drafter
+ok 37 - agent policy does not claim GPT automatically qualifies as a regulatory drafter
+  ---
+  duration_ms: 0.36798
+  type: 'test'
+  ...
+# Subtest: Codespaces keeps real tenant isolation on without permitting owner credentials
+ok 38 - Codespaces keeps real tenant isolation on without permitting owner credentials
+  ---
+  duration_ms: 2.382953
+  type: 'test'
+  ...
+# Subtest: Codespaces shell hooks and startup script have valid bash syntax
+ok 39 - Codespaces shell hooks and startup script have valid bash syntax
+  ---
+  duration_ms: 37.775727
+  type: 'test'
+  ...
+# Subtest: sourcing Codespaces startup retains an injected Neon DSN, not .env or localhost
+ok 40 - sourcing Codespaces startup retains an injected Neon DSN, not .env or localhost
+  ---
+  duration_ms: 16.784671
+  type: 'test'
+  ...
+# Subtest: missing Codespaces DSNs stay missing rather than becoming postgres:postgres localhost
+ok 41 - missing Codespaces DSNs stay missing rather than becoming postgres:postgres localhost
+  ---
+  duration_ms: 19.626407
+  type: 'test'
+  ...
+# Subtest: Codespaces main path gates on the doctor before any legacy mutation
+ok 42 - Codespaces main path gates on the doctor before any legacy mutation
+  ---
+  duration_ms: 2.518888
+  type: 'test'
+  ...
+# Subtest: Codespaces local database: the owner credential never reaches the app process
+ok 43 - Codespaces local database: the owner credential never reaches the app process
+  ---
+  duration_ms: 2.920002
+  type: 'test'
+  ...
+# Subtest: Codespaces boot does not seed an admin using owner or app role
+ok 44 - Codespaces boot does not seed an admin using owner or app role
+  ---
+  duration_ms: 0.764778
+  type: 'test'
+  ...
+# Subtest: a running app started without a model key this start holds is restarted, not kept
+ok 45 - a running app started without a model key this start holds is restarted, not kept
+  ---
+  duration_ms: 0.571641
+  type: 'test'
+  ...
+# Subtest: a healthy backend from another or unknown served commit is restarted after a pull
+ok 46 - a healthy backend from another or unknown served commit is restarted after a pull
+  ---
+  duration_ms: 4.584049
+  type: 'test'
+  ...
+# Subtest: a healthy backend at the current commit is retained unless it lacks a newly supplied key
+ok 47 - a healthy backend at the current commit is retained unless it lacks a newly supplied key
+  ---
+  duration_ms: 10.445652
+  type: 'test'
+  ...
+# Subtest: a corrected ANTHROPIC_API_KEY restarts the actual healthy-app decision without revealing either value
+ok 48 - a corrected ANTHROPIC_API_KEY restarts the actual healthy-app decision without revealing either value
+  ---
+  duration_ms: 56.313156
+  type: 'test'
+  ...
+# Subtest: a corrected OPENAI_API_KEY restarts the actual healthy-app decision without revealing either value
+ok 49 - a corrected OPENAI_API_KEY restarts the actual healthy-app decision without revealing either value
+  ---
+  duration_ms: 26.42834
+  type: 'test'
+  ...
+# Subtest: matching provider values retain the running app
+ok 50 - matching provider values retain the running app
+  ---
+  duration_ms: 18.811389
+  type: 'test'
+  ...
+# Subtest: a newly supplied key still restarts an app whose process lacks it
+ok 51 - a newly supplied key still restarts an app whose process lacks it
+  ---
+  duration_ms: 25.493085
+  type: 'test'
+  ...
+# Subtest: absent terminal provider keys retain existing running keys without disclosure
+ok 52 - absent terminal provider keys retain existing running keys without disclosure
+  ---
+  duration_ms: 22.543297
+  type: 'test'
+  ...
+# Subtest: empty terminal provider keys preserve the existing absent-key behavior
+ok 53 - empty terminal provider keys preserve the existing absent-key behavior
+  ---
+  duration_ms: 19.809225
+  type: 'test'
+  ...
+# Subtest: served-commit check accepts only an exact complete matching public build stamp
+ok 54 - served-commit check accepts only an exact complete matching public build stamp
+  ---
+  duration_ms: 372.063596
+  type: 'test'
+  ...
+# Subtest: npm run dev reaches its local tsx binary after the existing startup gate
+ok 55 - npm run dev reaches its local tsx binary after the existing startup gate
+  ---
+  duration_ms: 207.701818
+  type: 'test'
+  ...
+# Subtest: npm run dev:local reaches its local tsx binary after the existing startup gate
+ok 56 - npm run dev:local reaches its local tsx binary after the existing startup gate
+  ---
+  duration_ms: 176.238509
+  type: 'test'
+  ...
+# Subtest: the demo seed is given the approver as its second signer
+ok 57 - the demo seed is given the approver as its second signer
+  ---
+  duration_ms: 0.616624
+  type: 'test'
+  ...
+# Subtest: the approver is designated as the QMS approver, through the governed route, before the demo seed
+ok 58 - the approver is designated as the QMS approver, through the governed route, before the demo seed
+  ---
+  duration_ms: 0.497714
+  type: 'test'
+  ...
+# Subtest: the Codespace installs what the document exports need, and a failed install never blocks the start
+ok 59 - the Codespace installs what the document exports need, and a failed install never blocks the start
+  ---
+  duration_ms: 166.687878
+  type: 'test'
+  ...
+# Subtest: the start says AnA answers and drafts only when the drafting call with this key was answered
+ok 60 - the start says AnA answers and drafts only when the drafting call with this key was answered
+  ---
+  duration_ms: 0.482327
+  type: 'test'
+  ...
+# Subtest: the Codespace app has an attestation signing key of its own, on a new and on an existing state
+ok 61 - the Codespace app has an attestation signing key of its own, on a new and on an existing state
+  ---
+  duration_ms: 119.788762
+  type: 'test'
+  ...
+1..61
+# tests 61
+# suites 0
+# pass 61
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1442.128289

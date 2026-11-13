@@ -1,0 +1,8 @@
+SAY[intact3] All 3 audit entries match the hash recorded when each was written, computed over its sequence, event, entity, user, timestamp, reason and predecessor hash, and each follows the entry before it. The before and after values of a change are not part of the hash, so this does not show they are unaltered.
+SAY[intact1] The one audit entry matches the hash recorded when it was written, computed over its sequence, event, entity, user, timestamp, reason and predecessor hash. The before and after values of a change are not part of the hash, so this does not show they are unaltered.
+SAY[unlinked1of3] 1 of 3 audit entries name no predecessor although one was recorded, so those links could not be checked.
+SAY[content1] 1 entry does not match the hash recorded when it was written.
+SAY[pointer1] 1 entry does not follow the entry before it.
+SAY[both] 1 entry does not match the hash recorded when it was written; 1 entry does not follow the entry before it.
+SAY[unhashed1of3] 1 of 3 audit entries carry no hash, so it could not be verified.
+SAY[unhashedAll] None of the 2 audit entries carry a hash, so the chain could not be verified.

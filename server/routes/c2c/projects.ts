@@ -49,7 +49,7 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf, type FilingCatalogEntry } from '../../../shared/regulatory/filing-catalog.js';
 import { filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes.js';
-import { programTypeFor } from '../../../shared/constants/domain/filing-application-type.js';
+import { NO_APPLICATION_TYPE, noProjectReason, programTypeFor } from '../../../shared/constants/domain/filing-application-type.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
@@ -144,7 +144,9 @@ function sendFilingNotOffered(res: Response, offer: FilingOffer, submissionTypeI
  * outline, its reason is said too, and its offer returned.
  */
 function sendFilingTypeMismatch(res: Response, entry: FilingCatalogEntry, programType: string, marketInput: MarketInput) {
-  const filingType = programTypeFor({ id: entry.id, label: entry.id, pathway: entry.pathwayKey || 'ctd' }, 'biotech');
+  const filingType = programTypeFor({ id: entry.id, label: entry.id, pathway: entry.pathwayKey ?? '' }, 'biotech');
+  // A filing the catalog states no type for creates no project, whatever type it is sent as (S12 sweep items 3, 4).
+  if (filingType === NO_APPLICATION_TYPE) return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: noProjectReason(entry) });
   if (filingType === programType) return null;
   const ownOffer = marketOfferGivenOutline({ ...marketInput, applicationType: filingType }, true);
   const refused = ownOffer.tier === 'not_offered';

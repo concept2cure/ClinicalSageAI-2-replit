@@ -23,6 +23,20 @@
  * never shown as an empty chain. "Intact" needs the server's status and its
  * integrity verdict to agree; a chain with no entries has nothing to verify,
  * whatever the route says (launch sweep finding 111, 2026-09-23).
+ *
+ * WHAT WAS FOUND, IN THE SERVER'S SENTENCE (2026-11-12,
+ * docs/evidence/D5-AUDIT-EVENT-CHAIN/2026-11-12/). The detail under each
+ * verdict is the sentence the server writes beside its walk of the chain
+ * (server/services/audit/audit-event-chain.ts, `describeAuditEventChain`), the
+ * same one the compliance report and the nightly check print. This screen used
+ * to compose its own: "N chained entries re-computed" from the total and not
+ * the count that matched; every failure as a "broken link", although an altered
+ * entry is not one; and, for a chain that could not be verified, "N carry no
+ * record hash" whatever the cause, which read "0 of 12 entries carry no record
+ * hash" when the cause was an entry that names no predecessor. The sentence
+ * also says what the hash does not cover (the before and after values of a
+ * change), so "intact" is not read as more than was checked. The entries that
+ * did not verify are listed under their trail ids and open in the table.
  */
 import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
@@ -35,15 +49,25 @@ export interface AuditEventChainIntegrity {
   chainStatus: string;
   integrityValid: boolean | null;
   totalEntries: number;
+  /** Entries whose hash re-computed and matched, not entries that carry one. */
   verifiedEntries?: number;
   unhashedEntries?: number;
+  /** Entries that name no predecessor although the entry before them was hashed. */
+  unlinkedEntries?: number;
   brokenLinks?: number;
+  pointerBreaks?: number;
+  contentBreaks?: number;
+  /** The first entries that did not verify (the route sends at most 20). */
+  brokenLinkDetails?: { id?: unknown; kind?: unknown }[];
   lastHash?: string | null;
   hashAlgorithm?: string;
   verifiedAt?: string;
+  /** `tamperEvident` is the server's sentence for what its walk found. */
+  compliance?: { tamperEvident?: unknown };
 }
 
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const entries = (n: number) => `${n} ${n === 1 ? 'entry' : 'entries'}`;
 
 /** A 200 is only evidence that something came back. A verdict carries a status
  *  and a numeric count; anything else is a failed read, never an empty chain. */
@@ -74,6 +98,43 @@ export function auditEventChainVerdictOf(c: AuditEventChainIntegrity): AuditEven
   return 'not verified';
 }
 
+/**
+ * The server's sentence for what its walk found. Used only under a verdict the
+ * sentence is about: a status this screen will not call intact ("not verified")
+ * gets this screen's own words, so the title and the detail cannot disagree.
+ */
+export function auditEventChainStatement(c: AuditEventChainIntegrity, verdict: AuditEventChainVerdict): string | null {
+  if (verdict !== 'intact' && verdict !== 'broken' && verdict !== 'not verifiable') return null;
+  const s = c.compliance?.tamperEvident;
+  return typeof s === 'string' && s.trim() ? s.trim() : null;
+}
+
+const FAILED_WORDS: Record<string, string> = {
+  content: 'does not match the hash recorded when it was written',
+  pointer: 'does not follow the entry before it',
+};
+
+/**
+ * The entries the server listed as failing, under the id the trail's table
+ * gives an audit-event entry (`AUD-<id>`, server/routes/audit-trail-ledger.routes.ts),
+ * so a person can find the entry the banner names.
+ */
+export function auditEventChainFailedEntries(c: AuditEventChainIntegrity): { entryId: string; what: string }[] {
+  const list = Array.isArray(c.brokenLinkDetails) ? c.brokenLinkDetails : [];
+  return list
+    .filter((b) => b && (typeof b.id === 'number' || (typeof b.id === 'string' && b.id !== '')))
+    .map((b) => ({ entryId: `AUD-${String(b.id)}`, what: FAILED_WORDS[String(b.kind)] ?? 'did not verify' }));
+}
+
+/** Why a chain could not be verified, when the server sent no sentence: only a cause it did send. */
+function notVerifiableBecause(c: AuditEventChainIntegrity): string {
+  const of = `of ${entries(c.totalEntries)}`;
+  if (c.unhashedEntries) return `${c.unhashedEntries} ${of} ${c.unhashedEntries === 1 ? 'carries' : 'carry'} no record hash, so the chain could not be verified`;
+  if (c.unlinkedEntries === 1) return `1 ${of} names no entry before it although one was recorded, so that link could not be checked`;
+  if (c.unlinkedEntries) return `${c.unlinkedEntries} ${of} name no entry before them although one was recorded, so those links could not be checked`;
+  return `The chain could not be verified over ${entries(c.totalEntries)}`;
+}
+
 function readOf(r: DataState<AuditEventChainIntegrity>): AuditEventChainRead {
   if (r.loading) return { state: 'loading' };
   if (r.status === 401 || r.status === 403) return { state: 'forbidden' };
@@ -90,8 +151,6 @@ export function useAuditEventChain(): { read: AuditEventChainRead; retry: () => 
   return { read, retry: () => setAttempt((n) => n + 1) };
 }
 
-const entries = (n: number) => `${n} ${n === 1 ? 'entry' : 'entries'}`;
-
 /** What AnA is told when there is no verdict: the sentence, and the fact that names why. */
 const UNREAD: Record<Exclude<AuditEventChainRead['state'], 'ready'>, [string, string]> = {
   loading: ['The separate audit-event chain is still being verified.', 'the audit-event chain is still being verified'],
@@ -102,17 +161,23 @@ const UNREAD: Record<Exclude<AuditEventChainRead['state'], 'ready'>, [string, st
   ],
 };
 
+/* AnA narrates this, so it is told what the server found in the server's
+   sentence, including what the hash does not cover; it is not left to infer
+   that "intact" covers the whole entry. */
 function readySentence(c: AuditEventChainIntegrity, verdict: AuditEventChainVerdict): string {
   const over = `over ${entries(c.totalEntries)}`;
+  const found = auditEventChainStatement(c, verdict);
   switch (verdict) {
     case 'no entries':
       return 'The separate audit-event chain holds no entries, so there is nothing to verify.';
     case 'intact':
-      return `The separate audit-event chain is verified intact ${over}.`;
+      return `The separate audit-event chain is verified intact ${over}.${found ? ` ${found}` : ''}`;
     case 'broken':
-      return `The separate audit-event chain is BROKEN${c.brokenLinks != null ? ` (${c.brokenLinks} broken link(s))` : ''} ${over}.`;
+      return found
+        ? `The separate audit-event chain is BROKEN ${over}. ${found}`
+        : `The separate audit-event chain is BROKEN${c.brokenLinks != null ? ` (${c.brokenLinks} ${c.brokenLinks === 1 ? 'entry' : 'entries'} did not verify)` : ''} ${over}.`;
     case 'not verifiable':
-      return `The separate audit-event chain is NOT VERIFIABLE ${over}: ${c.unhashedEntries ?? 'some'} carry no record hash.`;
+      return `The separate audit-event chain is NOT VERIFIABLE ${over}. ${found ?? `${notVerifiableBecause(c)}.`}`;
     default:
       return `The separate audit-event chain was reported without an integrity verdict ${over}, so it is not verified.`;
   }
@@ -126,7 +191,12 @@ function readyFacts(c: AuditEventChainIntegrity, verdict: AuditEventChainVerdict
     totalEntries: c.totalEntries,
     verifiedEntries: c.verifiedEntries ?? null,
     unhashedEntries: c.unhashedEntries ?? null,
+    unlinkedEntries: c.unlinkedEntries ?? null,
     brokenLinks: c.brokenLinks ?? null,
+    alteredEntries: c.contentBreaks ?? null,
+    outOfSequenceEntries: c.pointerBreaks ?? null,
+    failedEntries: auditEventChainFailedEntries(c).map((b) => b.entryId),
+    found: auditEventChainStatement(c, verdict),
     algorithm: c.hashAlgorithm ?? null,
     verifiedAt: c.verifiedAt ?? null,
   };
@@ -152,7 +222,9 @@ export function auditEventChainForAna(read: AuditEventChainRead): {
   };
 }
 
-const WHAT = 'A second chain, kept per organisation, that some services write to instead of the ledger';
+/* Demo walk 5.u6 (2026-11-12): this read "… that some services write to instead of the ledger", which tells a reader
+   that records bypass the audit trail. Both chains are read on this screen; the line says what this one is. */
+const WHAT = 'A separate hash chain, kept per organisation and verified on its own, for the events some services record there';
 
 function rowOf(read: Exclude<AuditEventChainRead, { state: 'error' }>) {
   const dim = 'var(--text-400)';
@@ -162,22 +234,23 @@ function rowOf(read: Exclude<AuditEventChainRead, { state: 'error' }>) {
   }
   const { chain: c, verdict } = read;
   const alg = c.hashAlgorithm ?? 'Hash';
+  const found = auditEventChainStatement(c, verdict);
   switch (verdict) {
     case 'no entries':
       return { tone: dim, icon: I.lock, title: 'Audit-event chain: no entries yet', detail: 'Nothing is recorded in this chain, so there is nothing to verify.' };
     case 'intact':
-      return { tone: 'var(--success)', icon: I.shieldCheck, title: 'Audit-event chain intact', detail: `${c.totalEntries} chained ${c.totalEntries === 1 ? 'entry' : 'entries'} re-computed on the server — ${alg}` };
+      return { tone: 'var(--success)', icon: I.shieldCheck, title: 'Audit-event chain intact', detail: found ?? `${c.totalEntries} chained ${c.totalEntries === 1 ? 'entry' : 'entries'} re-computed on the server — ${alg}` };
     case 'broken': {
       const k = c.brokenLinks;
       return {
         tone: 'var(--error)', icon: I.alertTriangle, title: 'Audit-event chain verification failed',
-        detail: `${k != null ? `${k} broken ${k === 1 ? 'link' : 'links'}` : 'A break was found'} over ${entries(c.totalEntries)}, re-computed on the server — ${alg}`,
+        detail: found ?? `${k != null ? `${k} broken ${k === 1 ? 'link' : 'links'}` : 'A break was found'} over ${entries(c.totalEntries)}, re-computed on the server — ${alg}`,
       };
     }
     case 'not verifiable':
       return {
         tone: 'var(--warning)', icon: I.alertTriangle, title: 'Audit-event chain not verifiable',
-        detail: `${c.unhashedEntries ?? 'Some'} of ${entries(c.totalEntries)} carry no record hash, so the chain could not be verified`,
+        detail: found ?? notVerifiableBecause(c),
       };
     default:
       return {
@@ -187,8 +260,54 @@ function rowOf(read: Exclude<AuditEventChainRead, { state: 'error' }>) {
   }
 }
 
+const idButton: React.CSSProperties = {
+  background: 'none', border: 0, padding: 0, cursor: 'pointer', font: 'inherit',
+  color: 'var(--accent-200)', textDecoration: 'underline',
+};
+
+/** The entries that did not verify, each opening in the trail's table when it is loaded there. */
+function FailedEntries({ chain, isLoaded, onOpenEntry }: {
+  chain: AuditEventChainIntegrity;
+  isLoaded?: (entryId: string) => boolean;
+  onOpenEntry?: (entryId: string) => void;
+}) {
+  const failed = auditEventChainFailedEntries(chain);
+  if (failed.length === 0) return null;
+  const total = finite(chain.brokenLinks) ? chain.brokenLinks : failed.length;
+  return (
+    <details style={{ margin: '8px 0 0 30px' }}>
+      <summary style={{ fontSize: 11.5, color: 'var(--text-300)', cursor: 'pointer' }}>Entries that did not verify</summary>
+      <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, fontSize: 11.5, color: 'var(--text-300)', lineHeight: 1.7 }}>
+        {failed.map((b) => (
+          <li key={`${b.entryId} ${b.what}`}>
+            {onOpenEntry && isLoaded?.(b.entryId) ? (
+              <button type="button" className="mono" style={idButton} aria-label={`Open entry ${b.entryId}`} onClick={() => onOpenEntry(b.entryId)}>
+                {b.entryId}
+              </button>
+            ) : (
+              <span className="mono">{b.entryId}</span>
+            )}{' '}
+            {b.what}
+          </li>
+        ))}
+      </ul>
+      {total > failed.length && (
+        <p style={{ fontSize: 11, color: 'var(--text-400)', margin: '6px 0 0' }}>
+          The first {failed.length} of {total} are listed.
+        </p>
+      )}
+    </details>
+  );
+}
+
 /** The second verdict of Audit trail's chain banner. */
-export function AuditEventChainBanner({ read, onRetry }: { read: AuditEventChainRead; onRetry: () => void }) {
+export function AuditEventChainBanner({ read, onRetry, isLoaded, onOpenEntry }: {
+  read: AuditEventChainRead;
+  onRetry: () => void;
+  /** Whether an entry is among those loaded in the trail's table, and how to open it there. */
+  isLoaded?: (entryId: string) => boolean;
+  onOpenEntry?: (entryId: string) => void;
+}) {
   if (read.state === 'error') {
     return (
       <section aria-label="Audit-event chain verdict" style={{ maxWidth: 680, marginBottom: 16 }}>
@@ -208,18 +327,23 @@ export function AuditEventChainBanner({ read, onRetry }: { read: AuditEventChain
       aria-label="Audit-event chain verdict"
       aria-busy={'busy' in row || undefined}
       style={{
-        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8,
+        padding: '10px 14px', borderRadius: 8,
         background: `color-mix(in srgb,${row.tone} 10%,transparent)`, border: `1px solid ${row.tone}`,
         marginBottom: 16, maxWidth: 680,
       }}
     >
-      <span style={{ fontSize: 18 }} aria-hidden="true">{row.icon}</span>
-      <div style={{ flex: 1 }} role={'busy' in row ? 'status' : undefined}>
-        <div style={{ fontWeight: 600, fontSize: 13, color: row.tone }}>{row.title}</div>
-        {row.detail && <div style={{ fontSize: 11.5, color: 'var(--text-400)', marginTop: 2 }}>{row.detail}</div>}
-        <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 2 }}>{WHAT}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontSize: 18 }} aria-hidden="true">{row.icon}</span>
+        <div style={{ flex: 1 }} role={'busy' in row ? 'status' : undefined}>
+          <div style={{ fontWeight: 600, fontSize: 13, color: row.tone }}>{row.title}</div>
+          {row.detail && <div style={{ fontSize: 11.5, color: 'var(--text-400)', marginTop: 2, lineHeight: 1.5 }}>{row.detail}</div>}
+          <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 2 }}>{WHAT}</div>
+        </div>
+        {head && <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>HEAD {head}…</span>}
       </div>
-      {head && <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>HEAD {head}…</span>}
+      {read.state === 'ready' && read.verdict === 'broken' && (
+        <FailedEntries chain={read.chain} isLoaded={isLoaded} onOpenEntry={onOpenEntry} />
+      )}
     </section>
   );
 }

@@ -1,0 +1,47 @@
+{
+  "base": "d06fb86ec904beb947e8641994f13f9eb3a0d27e",
+  "nodeVersion": "22.23.5",
+  "red": {
+    "failed": 21,
+    "passed": 8,
+    "fixtureOnly": true
+  },
+  "authTimeoutRed": {
+    "failed": 2,
+    "fixtureOnly": true
+  },
+  "green": {
+    "passed": 92,
+    "failed": 0,
+    "verifierCases": 31,
+    "existingStartupDoctorCases": 61
+  },
+  "lint": {
+    "errors": 0,
+    "testWarnings": 0,
+    "sourceWarningsBefore": 2,
+    "sourceWarningsAfter": 1
+  },
+  "runtime": {
+    "scope": "disposable local Codespaces-mode app, not actual hosted Codespaces",
+    "appStartup": "actual npm run dev",
+    "appRole": "app_service",
+    "superuser": false,
+    "bypassRls": false,
+    "ownedApplicationTables": 0,
+    "httpHealth": 200,
+    "readinessHttp": 503,
+    "anaState": "no_provider",
+    "negativeLiveProbe": "UNREACHABLE/GATEWAY_UNAVAILABLE, expected refusal; not live-provider qualification"
+  },
+  "hostedCodespacesAccess": {
+    "status": 403,
+    "detail": "Current GitHub integration cannot list/access hosted Codespaces"
+  },
+  "providerKeyAvailableHere": false,
+  "liveOpenAiQualified": false,
+  "sha256": {
+    "scripts/ops/verify-ana-answers.mjs": "7b849ace66fe87453f23cbe3aa329f24cd456228c7604a1704aa5f657ec742bd",
+    "scripts/ops/verify-ana-answers.test.mjs": "35496b36376847335e3148ccbe5ed2743e0716eb169713bd2ff10a00b851a821"
+  }
+}

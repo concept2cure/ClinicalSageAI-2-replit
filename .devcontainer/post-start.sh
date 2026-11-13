@@ -137,14 +137,21 @@ c2c_start_app() {
 $(tail -n 30 "$C2C_APP_LOG")"
 }
 
-# The model keys this start holds that the running server process does not.
-# Read by name from the process's own environment; no value is printed.
+# Supplied model keys missing or different in the running server process.
+# Compare privately against its environment; only names leave this helper.
+# An absent/empty terminal key does not remove one the app already holds.
 c2c_keys_app_lacks() {
-  local pid name missing=()
+  local pid name entry missing=()
+  local -A app_keys=()
   pid="$(pgrep -f 'tsx --inspect=0 server/index.ts' | tail -n 1)"
   [[ -n "$pid" && -r "/proc/$pid/environ" ]] || return 0
+  while IFS= read -r -d '' entry; do
+    case "$entry" in
+      ANTHROPIC_API_KEY=*|OPENAI_API_KEY=*) app_keys["${entry%%=*}"]="${entry#*=}" ;;
+    esac
+  done < "/proc/$pid/environ"
   for name in ANTHROPIC_API_KEY OPENAI_API_KEY; do
-    if [[ -n "${!name:-}" ]] && ! tr '\0' '\n' < "/proc/$pid/environ" | grep -q "^$name=."; then
+    if [[ -n "${!name:-}" && "${app_keys[$name]:-}" != "${!name:-}" ]]; then
       missing+=("$name")
     fi
   done
@@ -154,10 +161,9 @@ c2c_keys_app_lacks() {
 if c2c_app_up; then
   C2C_APP_LACKS="$(c2c_keys_app_lacks)"
   if [[ -n "$C2C_APP_LACKS" ]]; then
-    # The app was started before the key reached this Codespace (a secret added
-    # later, or a restart from a terminal opened before it). It keeps the
-    # environment it started with, so it is restarted to start with the key.
-    c2c_log "The running app was started without $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
+    # A newly supplied or corrected key is not applied to an existing process.
+    # Restart before diagnostics so the app and this start use the same keys.
+    c2c_log "The running app does not have this start's $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
     c2c_stop_app
     c2c_start_app
   elif ! c2c_app_current; then
@@ -275,6 +281,33 @@ c2c_set_idle_window() {
 c2c_set_idle_window "$DEMO_SEED_EMAIL" 120
 if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then c2c_set_idle_window "$(c2c_lumen_person lead)" 120; fi
 
+# A package can resolve while its matching browser or Linux libraries are missing.
+# Probe the same browser the preparation walk launches, without running that walk.
+c2c_csr_browser_ready() {
+  timeout 30 node -e '(async () => {
+    const browser = await require("playwright").chromium.launch({ timeout: 20000 });
+    await browser.close();
+  })().catch(() => process.exit(1));' >/dev/null 2>&1
+}
+c2c_ensure_csr_browser() {
+  local install_log="$C2C_CODESPACE_STATE/playwright-install.log"
+  if ! node -e 'process.exit(require("playwright/package.json").version === "1.56.1" ? 0 : 1)' >/dev/null 2>&1; then
+    c2c_log "Installing playwright@1.56.1 for the CSR study preparation; log: $install_log"
+    timeout 900 npm install --no-save --no-audit --no-fund playwright@1.56.1 >"$install_log" 2>&1 ||
+      { c2c_log "playwright could not be installed; CSR preparation will retry on the next start. See $install_log."; return 1; }
+  fi
+  c2c_csr_browser_ready && return 0
+  c2c_log "Repairing Chromium and its system dependencies for CSR preparation; log: $install_log"
+  { timeout 900 npx --no-install playwright install chromium &&
+    c2c_sudo timeout 900 "$(command -v npx)" --no-install playwright install-deps chromium; } >>"$install_log" 2>&1 ||
+    { c2c_log "Chromium could not be repaired; CSR preparation will retry on the next start. See $install_log."; return 1; }
+  if ! c2c_csr_browser_ready; then
+    c2c_log "Chromium still cannot launch; CSR preparation remains incomplete and will retry on the next start. See $install_log."
+    return 1
+  fi
+  return 0
+}
+
 # The CSR study (CDISCPILOT01), prepared once: the public CDISC pilot ADaM
 # files are fetched OUTSIDE the repository (CDISC's terms forbid committing or
 # altering them), uploaded and approved in Vault by three people, and the CSR
@@ -286,17 +319,7 @@ if [[ ! -f "$C2C_CODESPACE_STATE/csr-study.done" ]]; then
     node scripts/cre/fetch-cdisc-pilot-adam.mjs "$C2C_CDISC_DIR" >"$C2C_CODESPACE_STATE/cdisc-fetch.log" 2>&1 ||
       c2c_log "The CDISC pilot files could not be fetched; see $C2C_CODESPACE_STATE/cdisc-fetch.log."
   fi
-  if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]] && ! node -e "require.resolve('playwright')" >/dev/null 2>&1; then
-    # The preparation walk drives a browser with playwright, which is not a project dependency: without it every
-    # fresh Codespace stopped here with "Cannot find module 'playwright'" (2026-11-09). Installed for this checkout
-    # only (--no-save), with its browser; a failure leaves the app running and the preparation re-tried next start.
-    c2c_log "Installing playwright for the CSR study preparation; log: $C2C_CODESPACE_STATE/playwright-install.log"
-    { timeout 900 npm install --no-save --no-audit --no-fund playwright@1.56.1 &&
-      timeout 900 npx playwright install chromium &&
-      c2c_sudo timeout 900 "$(command -v npx)" playwright install-deps chromium; } >"$C2C_CODESPACE_STATE/playwright-install.log" 2>&1 ||
-      c2c_log "playwright could not be installed; see $C2C_CODESPACE_STATE/playwright-install.log."
-  fi
-  if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]]; then
+  if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]] && c2c_ensure_csr_browser; then
     c2c_log "Preparing the CSR study in the app (Vault uploads, approvals, CSR document, frozen study data)."
     if DEMO_TAG=codespace DEMO_PREPARE_UNTIL=freeze DEMO_AUTHOR_EMAIL="$DEMO_AUTHOR_EMAIL" \
         DEMO_REVIEWER_EMAIL="$DEMO_REVIEWER_EMAIL" DEMO_APPROVER_EMAIL="$DEMO_APPROVER_EMAIL" \
@@ -385,8 +408,8 @@ cat <<EOF
  Development organisation: $DEMO_SEED_EMAIL (password sign-in), with the CDISC CSR study.
  Password sign-in for the three demo people: see $C2C_CODESPACE_STATE/app.env
    (DEMO_SIGNER_PASSWORD). App log: $C2C_APP_LOG
- Restart the app: bash .devcontainer/post-start.sh (restarts it when it lacks a key this
-   terminal has). A secret added after the Codespace started is not in an open terminal:
+ Restart the app: bash .devcontainer/post-start.sh (restarts it when a supplied key is
+   missing or changed). A secret added after the Codespace started is not in an open terminal:
    stop and start the Codespace instead.
 ============================================================================
 EOF

@@ -194,8 +194,8 @@ export async function seed(ctx) {
   // (biotech-submission.mjs ensureLeaves, from each document's `stf` in lumen-vault-content.mjs).
   await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
   // Last, so the reports read everything above (Run history, the report canvas).
-  await ensureLumenReports(c, lmn201);
-  await ensureLumenReportPack(c);
+  const reporting = await ensureLumenReports(c, lmn201);
+  await ensureLumenReportPack(c, reporting);
   await ensureCompanyDetails(c);
 
   const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
@@ -307,79 +307,108 @@ async function ensureIbReview({ api, run, tally, signer }, program) {
   });
 }
 
-/** Reports run for LMN-201, from the governed record, so Reporting's Run history is not empty (2026-11-06). */
-const LMN201_REPORTS = ['readiness.executive_digest', 'ha.commitment_register', 'usa_fda.ind_safety_readiness', 'etmf.completeness_pack'];
-
-/**
- * Each report in LMN201_REPORTS run once at the project's scope, through the route Reporting's "Run" uses
- * (POST /api/report-os/runs, Insights.tsx requestRun). A report already run for this project is left as it is.
- * A run the engine reports as partial is a real answer about the record, not a failure.
- */
-async function ensureLumenReports({ api, run, tally, identity }, program) {
-  await run.step(`Reporting: ${LMN201_REPORTS.length} reports run for LMN-201`, async () => {
-    const runs = asArray(must(await api('GET', '/api/report-os/runs?limit=100'), 200, 'list report runs'), 'data');
-    const out = [];
-    for (const reportTypeId of LMN201_REPORTS) {
-      const prior = runs.find((r) => r.reportTypeId === reportTypeId && r.scopeType === 'project');
-      if (prior) { tally.found('report-run'); out.push(`${reportTypeId}: found #${prior.id}`); continue; }
-      const j = must(await api('POST', '/api/report-os/runs', {
-        organizationId: Number(identity?.organizationId) || 0, scopeType: 'project', programId: program.id, reportTypeId,
-      }), 201, `run ${reportTypeId}`);
-      const r = j.data?.run;
-      if (!Number.isSafeInteger(r?.id)) throw new Error(`run ${reportTypeId}: no run id returned`);
-      tally.created('report-run');
-      out.push(`${reportTypeId}: #${r.id} ${r.status}`);
-    }
-    return out.join('; ');
-  });
-}
-
-/**
- * Reporting's other two tabs for LMN-201 (showcase sweep, 2026-11-10: Schedules and Bundles were empty). A bundle of
- * the four runs above, and two schedules, through the routes the Reporting screen calls (POST /api/report-os/bundles,
- * POST /api/insights/subscriptions). The schedules deliver inside the platform only: no recipients, no e-mail.
- * A plan that does not include scheduled reports is refused by the server (403), and the step says so.
- */
+/** Reports read the governed record after the native Quality seed; partial is an actual result, not assurance. */
+const LMN201_REPORTS = ['readiness.executive_digest', 'ha.commitment_register', 'usa_fda.ind_safety_readiness',
+  'etmf.completeness_pack', 'compliance.audit_assurance_pack'];
 const LMN201_BUNDLE = {
   name: '[Demo · Lumen] LMN-201 monthly governance pack',
-  description: 'DEMO. The four computed reports the LMN-201 team reads each month: executive digest, commitment register, IND safety readiness and eTMF completeness.',
+  description: 'DEMO. Five recorded reports for LMN-201: executive digest, commitment register, IND safety readiness, eTMF completeness and Quality evidence. Partial and unassessed findings remain explicit.',
 };
 const LMN201_SCHEDULES = [
   { reportTypeId: 'readiness.executive_digest', schedule: { cadence: 'weekly', dayOfWeek: 1, hour: 8, minute: 0, timeZone: 'America/Los_Angeles' } },
   { reportTypeId: 'etmf.completeness_pack', schedule: { cadence: 'monthly', dayOfMonth: 1, hour: 8, minute: 0, timeZone: 'America/Los_Angeles' } },
 ];
 
-async function ensureLumenReportPack({ api, run, tally }) {
-  const runs = asArray(must(await api('GET', '/api/report-os/runs?limit=100'), 200, 'list report runs'), 'data')
-    .filter((r) => LMN201_REPORTS.includes(r.reportTypeId) && r.scopeType === 'project');
-  const runOf = (reportTypeId) => runs.find((r) => r.reportTypeId === reportTypeId);
-  await run.step('Reporting: the LMN-201 monthly governance pack (bundle)', async () => {
-    const bundles = asArray(must(await api('GET', '/api/report-os/bundles'), 200, 'list report bundles'), 'data');
-    if (bundles.some((b) => b.name === LMN201_BUNDLE.name)) { tally.found('report-bundle'); return 'found'; }
-    const runIds = LMN201_REPORTS.map((t) => runOf(t)?.id).filter(Number.isSafeInteger);
-    if (runIds.length === 0) { run.note('Reporting: no LMN-201 report run exists, so no bundle was made.'); return 'not executed — no runs'; }
-    must(await api('POST', '/api/report-os/bundles', { ...LMN201_BUNDLE, runIds }), 201, 'bundle the LMN-201 reports');
-    tally.created('report-bundle');
-    return `created from ${runIds.length} runs`;
+function reportRows(body, label) {
+  if (!Array.isArray(body?.data)) throw new Error(`${label}: the register could not be read; absence was not established.`);
+  return body.data;
+}
+function checkedReport(row, type, scopeId) {
+  if (!Number.isSafeInteger(row?.id) || row.id <= 0 || row.reportTypeId !== type || row.scopeType !== 'project'
+    || String(row.scopeId) !== scopeId || !['completed', 'partial', 'final'].includes(row.status)) {
+    throw new Error(`LMN-201 report ${type}: the returned project scope or settled report receipt could not be verified.`);
+  }
+  return row;
+}
+
+/** The same canonical numeric project anchor read by ensureProjectTeam, never the program UUID. */
+export async function ensureLumenReports({ api, run, tally, identity }, program) {
+  const team = must(await api('GET', `/api/c2c/projects/${program.id}/team`), 200, 'read LMN-201 report project');
+  if (!Number.isSafeInteger(team?.project_id) || team.project_id <= 0) throw new Error('LMN-201 has no verified numeric report project anchor.');
+  const scopeId = String(team.project_id), runs = [];
+  await run.step(`Reporting: ${LMN201_REPORTS.length} reports run for LMN-201`, async () => {
+    const out = [];
+    for (const type of LMN201_REPORTS) {
+      const query = new URLSearchParams({ scopeType: 'project', scopeId, reportTypeId: type, limit: '1' });
+      const list = must(await api('GET', `/api/report-os/runs?${query}`), 200, `list LMN-201 ${type}`);
+      const rows = reportRows(list, `list LMN-201 ${type}`);
+      if (rows.length > 1 || !Number.isSafeInteger(list.meta?.total) || list.meta.total < rows.length
+        || (list.meta.total === 0) !== (rows.length === 0)) throw new Error(`LMN-201 ${type}: incomplete report register.`);
+      const prior = rows[0];
+      const result = prior ?? must(await api('POST', '/api/report-os/runs', {
+        organizationId: Number(identity?.organizationId), scopeType: 'project', scopeId, programId: program.id, reportTypeId: type,
+      }), 201, `run ${type}`).data?.run;
+      const selected = checkedReport(result, type, scopeId);
+      runs.push(selected);
+      if (prior) tally.found('report-run'); else tally.created('report-run');
+      out.push(`${type}: ${prior ? 'found ' : ''}#${selected.id} ${selected.status}`);
+    }
+    return out.join('; ');
   });
+  run.record('reporting', { programId: program.id, scopeId, runs: runs.map(({ id, reportTypeId, status }) => ({ id, reportTypeId, status })) });
+  return { scopeId, runs };
+}
+
+function exactBundle(bundle, { scopeId, runs }) {
+  if (bundle?.name !== LMN201_BUNDLE.name || !Array.isArray(bundle.projectIds) || !bundle.projectIds.includes(Number(scopeId))
+    || !Array.isArray(bundle.runIds) || !Array.isArray(bundle.items) || bundle.runIds.length !== runs.length || bundle.items.length !== runs.length) return false;
+  const wanted = new Map(runs.map(row => [row.id, row]));
+  return new Set(bundle.runIds).size === runs.length && bundle.runIds.every(id => wanted.has(id))
+    && new Set(bundle.items.map(item => item.runId)).size === runs.length && bundle.items.every(item => {
+      const row = wanted.get(item.runId);
+      return row && item.reportTypeId === row.reportTypeId && item.scopeType === 'project' && String(item.scopeId) === scopeId;
+    });
+}
+async function ensureLumenBundle({ api, run, tally }, selection) {
+  await run.step('Reporting: the LMN-201 monthly governance pack (bundle)', async () => {
+    const register = must(await api('GET', '/api/report-os/bundles'), 200, 'list report bundles');
+    const bundles = reportRows(register, 'list report bundles');
+    if (bundles.some(bundle => exactBundle(bundle, selection))) { tally.found('report-bundle'); return 'found exact LMN-201 membership'; }
+    if (register.meta?.truncated === true) throw new Error('The report bundle register is truncated; current membership could not be established.');
+    if (bundles.some(bundle => bundle.name === LMN201_BUNDLE.name)) run.note('A historical LMN-201 bundle was retained; its membership was not reused for the current report selection.');
+    const receipt = must(await api('POST', '/api/report-os/bundles', { ...LMN201_BUNDLE, runIds: selection.runs.map(row => row.id) }), 201, 'bundle the LMN-201 reports');
+    if (!exactBundle(receipt.data, selection)) throw new Error('The created LMN-201 bundle membership could not be verified. Reconcile the saved record before retrying.');
+    tally.created('report-bundle');
+    return `created from ${selection.runs.length} selected runs`;
+  });
+}
+
+/** Retain existing snapshots and foreign schedules; only these selected LMN-201 runs inform new records. */
+export async function ensureLumenReportPack({ api, run, tally }, selection) {
+  if (!selection || !/^[1-9]\d*$/.test(selection.scopeId) || !Array.isArray(selection.runs) || selection.runs.length !== LMN201_REPORTS.length) {
+    throw new Error('No complete LMN-201 report selection was supplied.');
+  }
+  for (const type of LMN201_REPORTS) checkedReport(selection.runs.find(row => row.reportTypeId === type), type, selection.scopeId);
+  await ensureLumenBundle({ api, run, tally }, selection);
   await run.step(`Reporting: ${LMN201_SCHEDULES.length} schedules for LMN-201 (in the platform, no e-mail)`, async () => {
-    const existing = asArray(must(await api('GET', '/api/insights/subscriptions'), 200, 'list report schedules'), 'data');
+    const existing = reportRows(must(await api('GET', '/api/insights/subscriptions'), 200, 'list report schedules'), 'list report schedules');
     const out = [];
     for (const s of LMN201_SCHEDULES) {
-      const prior = runOf(s.reportTypeId);
-      if (!prior) { out.push(`${s.reportTypeId}: not executed — no run to take its scope from`); continue; }
-      const scope = { scopeType: prior.scopeType, scopeId: String(prior.scopeId) };
-      if (existing.some((e) => e.reportTypeId === s.reportTypeId && e.scopeType === scope.scopeType && String(e.scopeId) === scope.scopeId)) {
-        tally.found('report-schedule'); out.push(`${s.reportTypeId}: found`); continue;
+      const scope = { scopeType: 'project', scopeId: selection.scopeId };
+      const matches = e => e.reportTypeId === s.reportTypeId && e.scopeType === scope.scopeType && String(e.scopeId) === scope.scopeId && e.channel === 'platform' && e.format === 'in_app';
+      const prior = existing.find(matches);
+      if (prior) {
+        if (prior.enabled === false) run.note(`Reporting: the ${s.reportTypeId} schedule is disabled and was retained; no active replacement was created.`);
+        tally.found('report-schedule'); out.push(`${s.reportTypeId}: found${prior.enabled === false ? ' (disabled, retained)' : ''}`); continue;
       }
       const res = await api('POST', '/api/insights/subscriptions', { reportTypeId: s.reportTypeId, ...scope, channel: 'platform', format: 'in_app', schedule: s.schedule });
       if (res.status === 403) {
         run.note(`Reporting: the schedule for ${s.reportTypeId} was refused (403): ${String(res.text ?? '').slice(0, 200)}`);
         out.push(`${s.reportTypeId}: not executed — refused (403)`); continue;
       }
-      must(res, 201, `schedule ${s.reportTypeId}`);
-      tally.created('report-schedule');
-      out.push(`${s.reportTypeId}: ${s.schedule.cadence}`);
+      const receipt = must(res, 201, `schedule ${s.reportTypeId}`).data;
+      if (!Number.isSafeInteger(receipt?.id) || receipt.id <= 0 || !matches(receipt) || receipt.enabled === false) throw new Error('The created LMN-201 schedule receipt could not be verified. Reconcile it before retrying.');
+      tally.created('report-schedule'); out.push(`${s.reportTypeId}: ${s.schedule.cadence}`);
     }
     return out.join('; ');
   });
