@@ -1836,3 +1836,12 @@ files and comment-only index work remain untouched; the index hold below is its 
 No new source file, table, route, model, provider, dependency or human-authorization policy is introduced. This
 proves bounded message admission and pre-adapter credential use; final FDA wire freshness and broader acceptance
 retain their existing owners and evidence gates. Implementation agents make no Git/runtime/compiler changes.
+
+Gateway compatibility regression homes named before edits: existing `submission-gateways/__tests__/`
+`transmit-authorization.test.ts`, `refused-before-wire.test.ts`, `transmit-guard-reports-checks.test.ts`,
+`transmit-records-what-was-sent.test.ts`, `transmit-leaf-security.test.ts`, `sent-package-kept.test.ts`,
+`pre-transmit-check.test.ts` and `fda-esg-client-account.test.ts`. Only explicit valid-current-signer and durable
+audit fixture outcomes may be reconciled where the tightened checkpoint actually reaches them; production
+exemptions or mocking away account freshness are not allowed. Primary PGlite custody tests must keep the real
+current-signing policy, account store and chained audit. The gateway owner allocates these disjoint fixtures to
+a helper after its interface is stable; root remains the sole Git/compiler owner.
