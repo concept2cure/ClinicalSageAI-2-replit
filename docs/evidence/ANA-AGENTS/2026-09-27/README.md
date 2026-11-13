@@ -1,5 +1,50 @@
 # AnA runs multiple agents; Manual/Auto is a real run policy (row 74)
 
+## 2026-11-13 continued F1 — peer lifecycle and gateway account-use custody
+
+The founder asked to continue after canonical `917486637`; this continuation starts from current canonical
+`841c41466`, including the separately published collaboration and native Quality currentness repairs.
+It moves **F1 / W1 / D2** in the existing P-104 runtime/trust paths. No source file, screen, route, mount,
+table, dependency, provider, model or qualification evidence is added or declared approved.
+
+### What already exists
+
+`server/services/ana/turn-plan.ts` owns `RunCoordinator.message`, the existing active-worker predicate, locked
+event validation and idempotent audit intent. Text-bearing peer messages check recipient lifecycle during private
+capture preparation, while metadata-only messages lack that check. The final locked append also needs to admit
+the current recipient after asynchronous preparation. A finished or stopped worker must not receive a new
+successful help/review message. Extend the same locked callback with its existing predicate; preserve active
+waiting/held workers, sender/source/private-capture checks, message limits and historical successful retries.
+The existing `run-coordination-dispositions.test.ts` is the actual PGlite regression home. Searches included peer,
+recipient, message, stopped/reported state and deleted run-control/agent-monitor homes; none supplies another
+current recipient-admission seam.
+
+`server/services/submission-gateways/gateway-accounts.ts` owns encrypted account capture and the private WeakMap
+account fingerprint. `index.ts` rechecks that account after `archiveSentPackage` before handing it to the adapter,
+but writes no per-use credential event and does not recheck the initiating human's current standing there.
+The roadmap explicitly leaves this audit handoff open. `part11/signing-authority-gate.ts` already supplies the
+canonical active organization/member/user signing-policy check; `audit/audit-write-outcome.ts` supplies the
+persisted/chained audit outcome. Extend these existing call sites rather than duplicate their policy or ledger.
+The existing account row has actual `id`, `updated_at` and `updated_by`, **not** a credential grant/revision or
+expiry. Audit its actual account/last-change and retained-package references without inventing a grant or exposing
+the private ciphertext-derived fingerprint. No historical row means null account references, not a fabricated one.
+
+The existing transmit authorization is a server-generated typed structure whose upstream caller verifies the
+human; it is **not** an opaque signature capability at this layer. Snapshot that actor and request identity before
+awaits, require a positive safe matching request actor, and retain the upstream verification boundary. Ignore
+metadata actors and free-text reasons in the credential-use event. Require current signing standing and exact
+account identity before and after a successful chained audit; failure refuses before the adapter. Use the actual
+archive receipt for the retained package. Preserve explicit historical platform/client choices and record-only
+authority refusal. The existing `gateway-accounts.test.ts` provides the PGlite/adapter regression home; affected
+existing compatibility fixtures are named before edits. Searches covered gateway use, account/credential audit,
+archive/transmit, current membership and deleted gateway-account implementations.
+
+This is a **pre-adapter** custody checkpoint. RIM's held FDA adapter still has later asynchronous preparation;
+this slice does not claim final-wire authority freshness, new private signature issuance, immutable credential
+grant migration, real agency acceptance, live-provider qualification or complete v0.5 acceptance. RIM's account,
+filing/signature ceremony and comment-only index scopes stay intact. Only executed red/green, compiler, lint,
+publication and runtime results will be recorded as passing.
+
 ## 2026-11-13 F1 continuation — current activity and unreadable credential custody
 
 The founder asked to continue the whole existing implementation after the Codespace demo publication. This

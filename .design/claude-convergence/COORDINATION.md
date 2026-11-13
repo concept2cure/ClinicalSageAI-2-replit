@@ -1803,3 +1803,36 @@ cached exact-version/health check in the existing local Codespace-image runtime;
 hosted Codespace, Stripe settlement or broader regulatory/commercial acceptance is declared.
 
 Publication request, Codex collaboration-context repair, 2026-11-13 23:10 UTC: two canonical ref races followed every normal gate passing, including full compiler0 and 89 CI gates each time. Under rule6, a 15-minute publication window is requested from the coordinating session. No callable cross-session channel reaches it from this task; no other lane is claimed paused. Ordinary fetch/merge/retry continues, with no force or skipped hooks. Verified source279a6f144, both disjoint canonical billing/activity/connector updates preserved.
+
+### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
+
+The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical
+`841c41466`. Holds below end at publication or **2026-11-14 02:00 UTC**, whichever comes first; no other owner is
+paused and no plan/ledger or qualification status changes.
+
+#### What already exists
+
+`ana/turn-plan.ts` already owns the active-worker predicate and locked, idempotent peer-message append. Its
+metadata-only path omits recipient lifecycle admission; private text preparation checks it before later awaits.
+Extend that same locked append, preserving existing sender/private-source/limit/replay behavior. The existing
+`ana/__tests__/run-coordination-dispositions.test.ts` supplies the real PGlite fixture. Retired agent monitors and
+the deleted run-control registry supply no replacement admission boundary.
+
+`submission-gateways/gateway-accounts.ts` and `index.ts` already bind encrypted account authority across archive,
+but lack the roadmap's per-use credential event and fresh initiating-person check there. Reuse unchanged
+`part11/signing-authority-gate.ts` policy and `audit/audit-write-outcome.ts`; record actual account ID/last-change
+and retained package references, not an invented grant/revision or private fingerprint. Capture the existing
+server-generated authorization actor before awaits, matching the request actor; do not describe that plain typed
+structure as private signature proof. The existing `gateway-accounts.test.ts` is the primary regression home.
+The AnA evidence README records the full pre-edit contract, searches and limits. RIM's held FDA/ceremony/filing
+files and comment-only index work remain untouched; the index hold below is its account-use functional callsite.
+
+| Holder | Existing files and exact scope |
+|---|---|
+| Peer lifecycle agent | `server/services/ana/turn-plan.ts` recipient admission in the locked message append only; existing `server/services/ana/__tests__/run-coordination-dispositions.test.ts` |
+| Gateway custody agent | `server/services/submission-gateways/gateway-accounts.ts` account-use identity/audit checkpoint; `index.ts` functional request snapshot and existing account-use callsite only; existing `__tests__/gateway-accounts.test.ts`; any additional existing compatibility fixture named before edits |
+| Root | This inventory/coordination entry, existing `docs/evidence/ANA-AGENTS/2026-09-27/README.md`, integration, Git and the sole full compiler |
+
+No new source file, table, route, model, provider, dependency or human-authorization policy is introduced. This
+proves bounded message admission and pre-adapter credential use; final FDA wire freshness and broader acceptance
+retain their existing owners and evidence gates. Implementation agents make no Git/runtime/compiler changes.
