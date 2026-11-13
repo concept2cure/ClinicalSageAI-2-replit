@@ -19,6 +19,7 @@
  * @module server/services/cmc/ich-compliance-rules
  */
 import type { ProgramStage } from './program-stage';
+import { isAccelerated, isLongTerm, isSupportingStabilityStudy } from './ich-compliance-q1e';
 
 export type { ProgramStage } from './program-stage';
 
@@ -159,15 +160,12 @@ export function checkQ1A(inp: ProjectInputs): IchCheckFinding[] {
     return findings;
   }
 
-  const longTerm = inp.stability.filter(s =>
-    String(s.studyType ?? '').toLowerCase().includes('long')
-    || String(s.storageCondition ?? '').includes('25')
-    || String(s.storageCondition ?? '').includes('30'),
-  );
-  const accelerated = inp.stability.filter(s =>
-    String(s.studyType ?? '').toLowerCase().includes('accel')
-    || String(s.storageCondition ?? '').includes('40'),
-  );
+  /* The Q1E file's predicates, which decide by the study's TYPE first. The
+     substring test this replaced counted a 25 °C accelerated study (a
+     refrigerated product's) and a 40 °C stress study as long-term or
+     accelerated evidence. A stress study is neither. */
+  const longTerm = inp.stability.filter(s => !isSupportingStabilityStudy(s) && isLongTerm(s));
+  const accelerated = inp.stability.filter(s => !isSupportingStabilityStudy(s) && isAccelerated(s));
 
   if (longTerm.length === 0) {
     findings.push({

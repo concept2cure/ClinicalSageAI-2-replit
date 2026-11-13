@@ -155,6 +155,20 @@ export function isAccelerated(s: Record<string, unknown>): boolean {
   return ACCELERATED_CONDITION.test(String(s.storageCondition ?? ''));
 }
 
+/**
+ * A stress (forced-degradation) study: evidence of HOW the material degrades,
+ * not of how long it keeps (ICH Q1A(R2) §2.1.2, §2.2.2). The register writes
+ * `stress` for its "Stress — thermal, photostability or freeze-thaw"
+ * condition. Its results are outside their limits by design, so a section that
+ * pooled them with the long-term and accelerated studies reported every
+ * programme with a stress study as "stability NOT established".
+ */
+const SUPPORTING_TYPE = /stress|forced/i;
+
+export function isSupportingStabilityStudy(s: Record<string, unknown>): boolean {
+  return SUPPORTING_TYPE.test(String(s.studyType ?? ''));
+}
+
 export function isLongTerm(s: Record<string, unknown>): boolean {
   const type = String(s.studyType ?? '');
   if (ACCELERATED_TYPE.test(type) || INTERMEDIATE_TYPE.test(type)) return false;

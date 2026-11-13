@@ -6,6 +6,7 @@ import { appendixSectionsRequiringSourceType } from './module3-extensions';
    consumes the threshold tables in services/global-ri/impurities-thresholds.
    This composer renders the verdict; it does not restate the guideline. */
 import { assessRecordedImpurity, isMutagenicAssessment, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment'
+import { isSupportingStabilityStudy } from './cmc/ich-compliance-q1e'
 /* The recorded-stability readers and the acceptance-criterion parser: the
    stability verdict is a comparison of numbers to limits, and both live there
    already — one copy, used by the shelf-life engine and by this section. */
@@ -439,6 +440,7 @@ const STABILITY_VERDICT_TEXT: Record<string, string> = {
 function stabilityResultsTable(
   sources: CanonicalSource[],
   material: 'drug_substance' | 'drug_product',
+  kind: 'Stability Results' | 'Stress Study Results' = 'Stability Results',
 ): GeneratedTable | null {
   const rows = sources
     .filter((s) => s.sourceType === 'stability' && stabilityCovers(s, material))
@@ -447,7 +449,7 @@ function stabilityResultsTable(
   const tp = (v: string) => (Number.isFinite(Number(v)) ? Number(v) : Number.MAX_SAFE_INTEGER);
   rows.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]) || a[2].localeCompare(b[2]) || tp(a[3]) - tp(b[3]));
   return {
-    title: `Stability Results — ${material === 'drug_substance' ? 'Drug Substance' : 'Drug Product'}`,
+    title: `${kind} — ${material === 'drug_substance' ? 'Drug Substance' : 'Drug Product'}`,
     headers: ['Batch', 'Condition', 'Attribute', 'Time Point (months)', 'Result', 'Acceptance Criterion', 'Compared'],
     rows,
   };
@@ -469,6 +471,36 @@ function stabilityResultRows(payload: Record<string, unknown>): string[][] {
       pointCriterionText(point, payload) || '—',
       STABILITY_VERDICT_TEXT[pointVerdict(point, payload).kind],
     ]);
+}
+
+/* A stress study on file is evidence of degradation, not of a storage period
+   (ich-compliance-q1e.ts `isSupportingStabilityStudy`). §3.2.S.7 and §3.2.P.8
+   pooled its results into the conformance verdict, the trend and the design
+   table's first-match condition, so a forced-degradation result outside its
+   limit (by design) reported the storage period as NOT established. */
+const isStressSource = (s: CanonicalSource): boolean =>
+  s.sourceType === 'stability' && isSupportingStabilityStudy((s.sourcePayload ?? {}) as Record<string, unknown>);
+
+/** The sources a storage-period conclusion may read: every one but a stress study. */
+function withoutStressStudies(sources: CanonicalSource[]): CanonicalSource[] {
+  return sources.filter((s) => !isStressSource(s));
+}
+
+/** A side's stress studies, tabulated on their own and said to be outside the verdict. */
+function stressStudyRendering(
+  sources: CanonicalSource[],
+  material: 'drug_substance' | 'drug_product',
+): { tables: GeneratedTable[]; narrative: string } {
+  const stress = sources.filter((s) => isStressSource(s) && stabilityCovers(s, material));
+  if (stress.length === 0) return { tables: [], narrative: '' };
+  const table = stabilityResultsTable(stress, material, 'Stress Study Results');
+  return {
+    tables: table ? [table] : [],
+    narrative:
+      `${stress.length} stress (forced-degradation) ${stress.length === 1 ? 'study is' : 'studies are'} recorded` +
+      (table ? ` and tabulated separately (${table.rows.length} result(s))` : ', with no results recorded') +
+      '; stress results characterise how the material degrades and are not compared toward the storage period. ',
+  };
 }
 
 /**
@@ -2768,7 +2800,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
        generator read every stability source, so a drug-product study set the
        substance's storage condition and its pull points, and a product OOS
        result could report the substance's stability as not established. */
-    const dsOnly = m.filter((s) => s.sourceType !== 'stability' || stabilityCovers(s, 'drug_substance'));
+    const dsOnly = withoutStressStudies(m).filter((s) => s.sourceType !== 'stability' || stabilityCovers(s, 'drug_substance'));
+    const dsStress = stressStudyRendering(m, 'drug_substance');
     const timePoints = valArr(dsOnly, 'timePoints');
     const condition = val(dsOnly, 'storageCondition');
     const stabilityParameters = valArr(dsOnly, 'stabilityParameters');
@@ -2810,6 +2843,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     const dsResults = stabilityResultsTable(dsOnly, 'drug_substance');
     if (dsResults) tables.push(dsResults);
+    tables.push(...dsStress.tables);
     // Do NOT assert a passing stability conclusion the data does not establish.
     // Read a deterministic pass/concern signal from the matched stability
     // source(s); assert stability only on a clear positive signal, flag a clear
@@ -2822,7 +2856,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (dsResults
           ? `The ${dsResults.rows.length} recorded result(s) are tabulated in the stability results table. `
           : 'No stability results are recorded on the drug substance studies. ') +
-        conclusion,
+        conclusion + (dsStress.narrative ? ` ${dsStress.narrative.trim()}` : ''),
       tables,
     };
   },
@@ -3134,7 +3168,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
        first-match read over every source let a newer drug-substance retest
        study file its condition and retest period as the product's shelf life
        — the mirror of §3.2.S.7's dsOnly filter, which this section lacked. */
-    const dpOnly = m.filter((s) => s.sourceType !== 'stability' || stabilityCovers(s, 'drug_product'));
+    const dpOnly = withoutStressStudies(m).filter((s) => s.sourceType !== 'stability' || stabilityCovers(s, 'drug_product'));
+    const dpStress = stressStudyRendering(m, 'drug_product');
     const shelf = val(dpOnly, 'drugProductShelfLifeClaim') || val(dpOnly, 'shelfLifeClaim');
     const comp = val(m, 'comparabilityStatus');
     const condition = val(dpOnly, 'storageCondition');
@@ -3146,7 +3181,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     /* Only the studies the register records as DRUG PRODUCT evidence — the
        mirror of §3.2.S.7's filter. Reading every stability source pooled the
        substance's pull points into the product's storage-period conclusion. */
-    const stabilitySources = m.filter((s) => s.sourceType === 'stability' && stabilityCovers(s, 'drug_product'));
+    const stabilitySources = dpOnly.filter((s) => s.sourceType === 'stability');
     const hasStability = stabilitySources.length > 0;
     const hasComparability = m.some((s) => s.sourceType === 'comparability');
     const tables: GeneratedTable[] = [];
@@ -3162,6 +3197,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     });
     const dpResults = stabilityResultsTable(stabilitySources, 'drug_product');
     if (dpResults) tables.push(dpResults);
+    tables.push(...dpStress.tables);
     const compTable = comparabilityTable(m);
     if (compTable) tables.push(compTable);
     let narrative = '';
@@ -3173,6 +3209,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     } else {
       narrative += `No drug product stability study is present in this section; a shelf life and the stability of the drug product are not established here. `;
     }
+    narrative += dpStress.narrative;
     if (hasComparability) {
       narrative += comp
         ? `Comparability assessment status: ${comp}. `
