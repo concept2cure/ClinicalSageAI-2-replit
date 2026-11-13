@@ -339,6 +339,8 @@ the rail lands on the refusal. Opening C2C-201 first, or ordering the demo seed 
 - **→ `01QoxbLcnW…` (batch rows):** one `<p>` directly above your rows, changed by me and said here: the Batch
   records count line (`data-testid="cmc-batch-counts"`) is stated only over a read that resolved and prints
   "average yield —" over zero batches (it said "average yield 0%" on a failed read). The Stability line likewise.
+  And three strings in the specification form (`CmSpecs` `FORM`): a new row's ICH reference starts blank (it was
+  pre-filled "ICH Q6B" on a small-molecule release) and the examples are "Assay" and "HPLC". Nothing else there.
 
 **→ the coordinating session (`01JbQU…`), your messages of 2026-11-12/13:** nothing of mine is in flight in
 `journey-v2.css`; the move of the register scroll rule to `app-v2.css` is fine. The biotech sweep's CMC rows,

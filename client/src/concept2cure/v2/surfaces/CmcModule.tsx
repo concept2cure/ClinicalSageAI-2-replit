@@ -1428,12 +1428,18 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
   const FORM = (row: CmcSpecRow | null): C2CFormConfig => ({
     eyebrow: 'CMC — 3.2.S.4.1', title: row ? 'Edit specification' : 'New specification', sub: 'Release and shelf-life limits for a drug substance or drug product',
     submitLabel: row ? 'Save changes' : 'Create specification', fields: [
-      { key: 'attr', label: 'Quality attribute', type: 'text', required: true, default: row ? row.attr : '', placeholder: 'e.g. Charge variants' },
+      { key: 'attr', label: 'Quality attribute', type: 'text', required: true, default: row ? row.attr : '', placeholder: 'e.g. Assay' },
       { key: 'material', label: 'Material', type: 'select', options: ['Drug substance', 'Drug product'], required: true, default: row ? row.material : 'Drug substance', half: true },
-      { key: 'method', label: 'Analytical method', type: 'text', default: row ? row.method : '', placeholder: 'e.g. SE-HPLC', half: true },
+      { key: 'method', label: 'Analytical method', type: 'text', default: row ? row.method : '', placeholder: 'e.g. HPLC', half: true },
       { key: 'release', label: 'Release limit', type: 'text', default: row ? row.release : '', placeholder: 'e.g. <= 2.0%', half: true },
       { key: 'shelf', label: 'Shelf-life limit', type: 'text', default: row ? row.shelf : '', placeholder: 'e.g. <= 3.0%', half: true },
-      { key: 'ich', label: 'ICH reference', type: 'text', default: row ? row.ich : 'ICH Q6B', half: true },
+      /* Stated by the person, never defaulted. A new row was pre-filled
+         "ICH Q6B", the biotechnological-products guideline, beside antibody
+         examples ("Charge variants", "SE-HPLC"), on a release that composes
+         small-molecule Module 3 (ICH Q6A): a specification saved without
+         touching the field was recorded under a guideline that does not
+         govern it. */
+      { key: 'ich', label: 'ICH reference', type: 'text', default: row ? row.ich : '', placeholder: 'e.g. ICH Q6A (chemical) or ICH Q6B (biotechnological)', half: true },
       { key: 'st', label: 'Status', type: 'seg', options: ['draft', 'review'], default: row && row.st !== 'approved' ? row.st : 'draft', half: true },
       { key: 'justification', label: 'Justification', type: 'textarea', placeholder: 'Rationale for the limits and method' },
       /* An approved specification is revised in place: the server withdraws
