@@ -51,6 +51,10 @@ AnA's prompt. It now uses the existing canonical creator's UUID and integer-anch
 neutral prompt plus exact saved-section context. Its bounded capture aborts before provider transport and proves
 client request preparation only. The retired creator is not restored. Full deletion-history searches of these
 existing startup, workflow and journey paths found no deleted replacement to revive.
+The existing `tests/e2e/helpers.ts` is also the home for the journey's reusable authenticated browser request;
+its unrelated seed-file login helper remains lazy and is not used by this fixture-free path. Current UI checks
+scope Vault navigation to the active Command palette. The editor's one-use return link is checked before sending;
+the captured send consumes that origin as designed, and a fresh saved editor context is checked independently.
 
 Initial checks: all three private-state regressions fail against the preceding shell branch; the full Codespaces
 suite passes **64/64** on Node 22. The smoke identity contract fails four cases before the workflow correction and
@@ -73,6 +77,38 @@ Actual authenticated reads find three completed synthetic reports, each with **1
 contents**, frozen study/source hashes and three pending reviewer tasks. This establishes saved demo content, not
 scientific approval or model qualification. The complete host compiler passes **0 errors / baseline 0**, and the
 changed-source warning count does not grow. These are overlapping checks, not additive totals.
+
+**Completed execution, 2026-11-13:** the default Lumen browser walk passes **13/13** checks with no API or page
+errors: the ten-person chooser defaults to Lead and works by keyboard, all three exact completed reports contain
+119 nonempty sections, the synthetic-data banner and scientific-review hold remain visible, and Reviewer sees
+three tasks and opens LMN-301's exact linked document. Lead and Reviewer also fit the 390-pixel viewport without horizontal
+overflow. One actual working-copy PDF is 126,363 bytes, 19 pages, with DRAFT on every page; its SHA-256 is
+`f4fd6889ba25dabc5c78f4d3dde6a66e936e0fbaac2856483dc618899dbf63e7`.
+
+The actual browser suites pass all **22 access-boundary cases**, **2 authenticated/anonymous app cases**, and
+**10 keyboard page cases** across their focused runs. The keyboard checker separately passes **9 qualification
+controls**, including refusal of absent, transparent and zero-width focus paint. The initial combined run exposed
+the former-name greeting and two keyboard-observation false positives; these counts describe the corrected runs,
+not a sum of the initial and repeat runs. No product focus style, access gate or authentication helper is changed.
+
+The first image startup finished its ordinary demo seeds but did not finish CDISC preparation: Node 22.16's fetch
+did not use this managed runner's HTTPS proxy. The unchanged existing public-CDISC fetcher was therefore run with
+Node 22.23.4's environment-proxy support and the runner's trusted CA. All ten existing source hashes verified;
+unchanged bytes were copied to the private cache outside Git and verified again inside the image. This is a
+runner adaptation, not a product or hosted Codespace network change. The subsequent regular `post-start.sh`
+completes with exit 0 and **7/7 actual preparation steps**: canonical project, fictional IND identity, seven Vault
+uploads, three-person review/signature/approval, New document, Build from the study's data, and eleven table
+previews frozen into the document. Demo/Lumen cache and CSR-ready markers are present.
+
+For the golden browser journeys only, that second startup supplied the existing CI launcher's
+`EXPORT_REVIEW_GATE=enforce` in the process environment. This preserves the pre-review 403 assertion. Ordinary
+development Codespaces permit a labelled uncontrolled DRAFT preview; production enforces the review gate. The
+final regular startup uses the ordinary default, and no product export policy is amended for a test.
+
+This rehearsal uses the configured official-image filesystem locally; it is not a claim that this session created
+a hosted GitHub Codespace. No provider key, paid model call, real client credential, agency submission, model PQ
+pass or scientific approval was exercised. The attached architecture is already mapped in the current plan's
+Anna epic (P-104/P-105); its remaining model qualification gates (P-118) stay pending.
 
 ## Before the room
 

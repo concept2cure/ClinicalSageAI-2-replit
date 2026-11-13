@@ -1688,7 +1688,7 @@ These holds end at **2026-11-13 22:00 UTC**, or earlier on the publication recei
 |---|---|
 | Startup agent | `.devcontainer/post-start.sh`, `scripts/ops/codespaces-startup.test.mjs`, `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md` |
 | Smoke identity agent | `.github/workflows/tier5-browser-smoke.yml`, `tests/schema-contract/tier5-complete-schema.contract.test.ts`, `tests/e2e/authenticated-app-smoke.e2e.spec.ts` |
-| Journey agent | `tests/e2e/golden-customer-journey.e2e.ts` |
+| Journey agent | `tests/e2e/golden-customer-journey.e2e.ts`, existing `tests/e2e/helpers.ts` for the same browser request helper only; no seed-file fallback |
 | Keyboard verification agent | `tests/e2e/launch-surface-keyboard.e2e.spec.ts` only; actual visibility/paint checks and positive/negative controls, no product UI/CSS edit |
 | Root | This entry, existing sales-showcase evidence above, Git, the sole full compiler and integration |
 | Rehearsal agent | Disposable local runtime and scratch files only; no repository source |
