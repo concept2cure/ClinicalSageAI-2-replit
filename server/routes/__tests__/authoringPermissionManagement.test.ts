@@ -226,6 +226,30 @@ describe('authoring permission management authority and scope', () => {
     expect(writeChainedAuditRow).not.toHaveBeenCalled();
   });
 
+  /* Demo walk 1.u5 (2026-11-12): the editor's Access panel read "Document access could not be read" on every frozen or
+     approved document, because the list read took the same immutability refusal as a change. Who holds access to a
+     sealed record is part of that record, so its manager can read it; it still cannot be changed. */
+  it.each(['FROZEN', 'APPROVED'])('lets the manager read, but not change, access to a %s document', async status => {
+    h.documents[0].status = status;
+    const read = await request(app).get(path);
+    expect(read.status).toBe(200);
+    expect(read.body.permissions).toEqual([expect.objectContaining({ id: OWNER_PERMISSION_ID })]);
+    const changed = await grant();
+    expect(changed.status).toBe(403);
+    expect(changed.body.error.message).toBe('Access cannot be changed while this document is sealed or archived.');
+    expect((await revoke(OWNER_PERMISSION_ID)).status).toBe(403);
+    noMutation();
+  });
+
+  it('still refuses a non-manager the access list of a sealed document', async () => {
+    h.documents[0].status = 'FROZEN';
+    h.permissions = [permission({ role: 'REVIEWER' })];
+    const read = await request(app).get(path);
+    expect(read.status).toBe(403);
+    expect(read.body.error.message).toBe('Only a document owner or platform administrator may manage permissions.');
+    expect(h.events).not.toContain('permissions.list');
+  });
+
   it('refuses a foreign tenant document even to an administrator', async () => {
     h.user = { ...h.user, roles: ['ADMIN'] };
     const foreignPath = `/api/authoring/docs/${OTHER_DOC_ID}/permissions`;

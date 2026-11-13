@@ -18,6 +18,7 @@ vi.mock('../../background-jobs-metrics', () => ({
 }));
 
 import { runOnDemandCheck, startChainMonitor, stopChainMonitor } from '../chainIntegrityMonitor';
+import { chainRows } from './_audit-event-chain-fixtures';
 
 describe('chain integrity failure event', () => {
   it('goes to each affected organisation, with only that organisation\'s links', async () => {
@@ -26,12 +27,16 @@ describe('chain integrity failure event', () => {
       query: vi.fn(async (sql: string, params: unknown[] = []) => {
         if (/^\s*SELECT/i.test(sql) && /FROM audit_events/i.test(sql)) {
           return { rows: [
-            { id: 1, organization_id: 7, sequence_number: 1, record_hash: 'a1', previous_hash: null },
-            { id: 2, organization_id: 7, sequence_number: 2, record_hash: 'a2', previous_hash: 'TAMPERED' },
-            { id: 3, organization_id: 9, sequence_number: 1, record_hash: 'b1', previous_hash: null },
-            { id: 4, organization_id: 9, sequence_number: 2, record_hash: 'b2', previous_hash: 'b1' },
-            { id: 5, organization_id: 12, sequence_number: 1, record_hash: 'c1', previous_hash: null },
-            { id: 6, organization_id: 12, sequence_number: 2, record_hash: 'c2', previous_hash: 'WRONG' },
+            // Hashed as the trigger hashes them (the walk re-computes each row):
+            // organisations 7 and 12 each carry one wrong pointer, 9 is sound.
+            ...chainRows([
+              { id: 1, org: 7, seq: 1 },
+              { id: 2, org: 7, seq: 2, prev: 'TAMPERED' },
+              { id: 3, org: 9, seq: 1 },
+              { id: 4, org: 9, seq: 2 },
+              { id: 5, org: 12, seq: 1 },
+              { id: 6, org: 12, seq: 2, prev: 'WRONG' },
+            ]),
           ] };
         }
         if (/INSERT INTO audit_events/i.test(sql)) inserts.push({ sql, params });
