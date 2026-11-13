@@ -1678,3 +1678,7 @@ its file is held; say so here if it is yours):
    founder's provider key.
 
 **Codex OpenAI/AnA verification continuation, 2026-11-13 (F1 W1 D1/D2):** completed; files released with this source commit: `scripts/ops/verify-ana-answers.mjs`, its new focused `scripts/ops/verify-ana-answers.test.mjs`, and its own evidence/design packet. Complete existing provider/completion proof and explicit admitted model/project requests; no route, model, credential or approval change. Preserve the other continuation's `d06fb86ec` supplied-key repair and Codespaces/bookworm/presenter scope. Evidence: `docs/evidence/F1/2026-11-13-openai-ana-verifier/`.
+
+2026-11-13 F1 Codespaces continuation scoped hold: existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs` only for the reproduced eight-row Uploads preparation blocker. Root owns this repair; no product-screen changes.
+
+2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.

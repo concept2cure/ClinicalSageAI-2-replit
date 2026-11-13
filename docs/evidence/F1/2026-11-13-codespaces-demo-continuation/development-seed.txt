@@ -1,0 +1,312 @@
+(node:9244) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9257) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Signed in as ana.author@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5000
+Every demo area is open on the enterprise plan.
+
+=== seed: biotech ===
+  • Projects: program C2C-101 (IND) … ok — created f0709fae-e204-4a94-be8c-5f35c9b1f93c (C2C-101)
+  • Vault: Investigator's Brochure C2C-101 v3.0 … ok — ingested ba2b11d2-261d-4b74-840f-80e885bf4c03 → module-1 (2 pages, 7327 bytes)
+  • Vault: Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled … ok — ingested e9b1ce42-ea34-4ccb-a7bf-4550ead5e684 → module-5 (3 pages, 9712 bytes)
+  • Vault: Statistical Analysis Plan C2C-101-201 v1.0 … ok — ingested 35053b47-a453-4170-92fd-ababf14317ee → module-5 (2 pages, 6953 bytes)
+  • Vault: CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101 … ok — ingested fe4c3dbf-0e99-4f92-bea9-fef8d509c7c4 → module-2 (2 pages, 6540 bytes)
+  • Vault: Nonclinical Toxicology Summary — C2C-101 … ok — ingested 5304b13b-737d-45d5-be06-fdbafd9c6937 → module-2 (2 pages, 5843 bytes)
+  • Vault: Pre-IND Meeting Minutes — C2C-101 (Type B) … ok — ingested a3f1b24d-4578-49a2-ad6a-c495154e8958 → module-1 (2 pages, 5662 bytes)
+  • Vault: read model lists the filed documents … ok — documentCount=7, unfiled=0, standard=biotech
+  • Authoring: Protocol Synopsis C2C-101-201 … ok — created e4571caa-20ff-4d05-8cfc-c9bb3b996e3f; sections 6 (6 added)
+  • Authoring: comments on Protocol Synopsis C2C-101-201 … ok — ff41e6ee:resolved, 97f0f687:resolved
+  • Authoring: review request on Protocol Synopsis C2C-101-201 … ok — reviewer ava.approver@concept2cure.pro (pending)
+  • Authoring: freeze Protocol Synopsis C2C-101-201 v1.0 … ok — frozen v1.0 55c83979e50e…
+  • Authoring: e-signature by the second signer on Protocol Synopsis C2C-101-201 … ok — signed by ava.approver@concept2cure.pro (REVIEWER) covering freeze v1.0
+  • Authoring: Module 2.5 Clinical Overview — C2C-101 … ok — created c781d5b8-d538-49a3-808b-356e63280742; sections 6 (6 added)
+  • Authoring: review request on Module 2.5 Clinical Overview — C2C-101 … ok — reviewer ava.approver@concept2cure.pro (pending); workflow {"success":true,"workflowId":"9e1b3f73-fdd6-4179-af55-5ac4cae202cc","steps":[{"w
+  • Authoring: IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — created 93dd73b8-ef8e-41ab-9507-9f0edd6671d0; sections 4 (4 added)
+  • Authoring: comments on IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — 2b36866c:open
+  • Protocol development: C2C-101-201 document … ok — created #2
+  • Protocol development: section content … ok — 10 sections (10 written)
+  • Protocol development: objectives, eligibility, visits, team …     (429 on POST /api/protocol-development/documents/2/eligibility; waiting 43s, retry 1)
+    (429 on POST /api/protocol-development/documents/2/team; waiting 55s, retry 1)
+ok — added objectives 6, criteria 16, visits 9, team 6
+  • Protocol development: schedule of assessments matrix … ok — 10 assessments × 9 visits, 51 cells (10 rows, 51 cells added)
+  • Protocol development: risk register …     (429 on POST /api/protocol-risks/documents/2/risks; waiting 38s, retry 1)
+ok — 6 risks (6 added)
+  • Protocol development: milestones … ok — 5 milestones (5 added)
+  • Protocol development: amendment 1 … ok — #2 Amendment 1 — add Week 2 PK sampling and align stratification wording
+  • Protocol development: version snapshot … ok — snapshot 0.2
+  • Protocol development: GET /api/protocol-dev returns it … ok — #2: objectives 6, risks 6, milestones 5, amendments 1
+  • Biostatistics: study design "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis" … ok — created sd_f8c24fffb57045f787a2e2bfb2961bb9, bound to protocol document 2
+  • Biostatistics: adaptive plan "[Demo · Biotech] C2C-101-201 — group-sequential monitoring plan" … ok — plan 1, 2 interim look(s) ingested
+  • Biostatistics: raise the design's proposed tasks … ok — 6 raised, 0 already present
+  • Applicant identity: C2C-101 (anti-IL-23p19 monoclonal antibody, fictional)'s application number and sponsor (fictional) … ok — application 999101, sponsor Concept2Cure Therapeutics (fictional demo sponsor)
+  • Objective: C2C-101 … ok — created
+  • Submission Center: the program's canonical submission (IND) … ok — #5 "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #2 status draft
+  • Submission Center: place the vault documents as eCTD leaves … ok — 6 leaves (6 placed)
+  • Submission Center: sequence moves draft → assembling … ok — assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=8; shadowCriticals=0; blockers=4
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (8 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — HTTP 503
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 4; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • QMS: SOP-001 Document Control … ok — created #4 C2C-SOP-001 → effective
+  • QMS: SOP-002 Change Control … ok — created #5 C2C-SOP-002 → effective
+  • QMS: SOP-003 Deviation Management …     (429 on GET /api/mdx/qms/documents/6/editor; waiting 35s, retry 1)
+ok — created #6 C2C-SOP-003 → in_review
+  • QMS: SOP-004 Training … ok — created #7 C2C-SOP-004 → draft
+  • QMS: change-control record C2C-CC-001 … ok — #2 C2C-CC-001 (proposed)
+  • QMS: deviation record … ok — not supported by the QMS API (recorded as a finding)
+  • QMS: inspect personal acknowledgement readiness on SOP-001 … ok — A human must open SOP-001 in Quality, read the released text and choose Acknowledge this revision. Demo setup does not attest for the reader.
+  • CMC / Module 3: drug substance and drug product on C2C-101 … ok — 2 created of 2
+  • CMC / Module 3: analytical methods on C2C-101 … ok — 5 created of 5, 5 validated under signature
+  • CMC / Module 3: specifications on C2C-101 … ok — 5 created of 5
+  • CMC / Module 3: stability programme on C2C-101 … ok — 2 created of 2
+  • CMC / Module 3: batch records on C2C-101 … ok — 3 created of 3
+  • Projects: program C2C-201 (IND) … ok — created 0716e5df-03e2-4c0a-95e5-6531479a3d34 (C2C-201)
+  • Objective: C2C-201 … ok — created
+  • CMC / Module 3: drug substance and drug product on C2C-201 … ok — 2 created of 2
+  • CMC / Module 3: analytical methods on C2C-201 … ok — 4 created of 4, 4 validated under signature
+  • CMC / Module 3: specifications on C2C-201 … ok — 6 created of 6
+  • CMC / Module 3: stability programme on C2C-201 … ok — 3 created of 3
+  • CMC / Module 3: batch records on C2C-201 … ok — 3 created of 3
+  • CMC / Module 3: recorded release results on C2C-201 … ok — 5 created of 5 — second-person review is left to the register, so these compose as not reviewed
+  • CMC / Module 3: referenceStandards on C2C-201 … ok — 2 created of 2
+  • CMC / Module 3: impurities on C2C-201 … ok — 6 created of 6
+  • CMC / Module 3: dissolution on C2C-201 … ok — 2 created of 2
+  • CMC / Module 3: characterisation on C2C-201 … ok — 2 created of 2
+  • CMC / Module 3: processes on C2C-201 … ok — 2 created of 2
+  • CMC / Module 3: processValidation on C2C-201 … ok — 1 created of 1
+  • CMC / Module 3: formulations on C2C-201 … ok — 1 created of 1
+  • CMC / Module 3: materials on C2C-201 … ok — 5 created of 5
+  • CMC / Module 3: containerClosures on C2C-201 … ok — 2 created of 2
+  • CMC / Module 3: changes on C2C-201 … ok — 2 created of 2
+  • CMC / Module 3: comparability on C2C-201 … ok — 1 created of 1
+  • CMC / Module 3: compile the dossier on C2C-201 … ok — 21 section(s) composed, 21 with recorded data
+  • Tasks: 6 tasks on C2C-101 … ok — 6 created, 0 already there (board project 5)
+  • Plan: start 5 deliverables on C2C-101 … ok — 5 started, 0 already started
+  • Communication: data-room source "[Demo] FDA information request (fictional) - IND C2C-101.txt" on C2C-101 … ok — uploaded 257 (text read: completed)
+  • Communication: agency inbox entry for "FDA information request (fictional demo), IND C2C-101" on C2C-101 … ok — logged ace_1794597827199_0317dcaf
+  • Communication: the inbox reads "[Demo] FDA information request (fictional) - IND C2C-101.txt" … ok — 3 questions, 0 commitments proposed
+  • Communication: record the questions of "[Demo] FDA information request (fictional) - IND C2C-101.txt" on C2C-101 … ok — 3 recorded of 3
+  • Audit trail: ledger after the run … ok — 434 chained entries written this run (window 436); meta.chain.ok=true
+  ⇒ biotech pack: created 285, found 1
+manifest → /root/.concept2cure-codespace/demo-manifests/biotech/manifest.json
+
+=== seed: mdx ===
+  • Projects: program NeuroPanel-Dx 510(k) … ok — 3551abe3-0113-4437-a9b1-b9a4f6f98255 (created, scaffold 38 sections)
+  • Objective: NeuroPanel-Dx Multiplex CNS Pathogen Panel … ok — created
+  • Vault: read the program data room (folders offered) … ok — standard=ivd; 15 cabinet folders: cab-unfiled, cab-bn:A, cab-bn:B, cab-bn:C, cab-bn:D, cab-bn:E, cab-bn:F, cab-bn:G, cab-cer, cab-eng, cab-udi, cab-pv, cab-qms, cab-corresp, cab-shared
+  • Vault: Device Description and Principles of Operation … ok — a359aa03-e716-46d9-91c3-d09576b9e0b2 → k510 (ingested, filed (k510), 6407 bytes)
+  • Vault: Software Description and Level of Concern … ok — 0bf3a08b-b0e6-41a0-be2c-adbc75efe7e9 → eng (ingested, filed (eng), 4716 bytes)
+  • Vault: Analytical Performance Study Report … ok — 901c06b1-8079-4f2d-8086-c350c4cc7ea0 → k510 (ingested, filed (k510), 6309 bytes)
+  • Vault: Clinical Performance Study Report … ok — 10ceb3db-b893-40ca-91da-2e9136bc53db → cer (ingested, filed (cer), 5721 bytes)
+  • Vault: Risk Management File Summary (ISO 14971) … ok — d2b057d2-6ac4-48a4-9bc6-516e0db28a37 → eng (ingested, filed (eng), 4469 bytes)
+  • Vault: Labeling and Instructions for Use (Draft) … ok — a6dde23f-2799-41f1-ac35-6ba7a456ab12 → udi (ingested, filed (udi), 6317 bytes)
+  • Vault: data room after filing … ok — documentCount=7; cab-bn:A:9 cab-bn:B:3 cab-bn:C:2 cab-bn:D:6 cab-bn:E:8 cab-bn:F:1 cab-bn:G:2 cab-k510:2 cab-cer:1 cab-eng:2 cab-udi:1
+  • Authoring: 510(k) Summary (sections per 21 CFR 807.92) … ok — 77e62f19-aa14-430d-b22e-c5db414c3953 (created, 9 sections)
+  • Authoring: reviewer comment on the 510(k) Summary, resolved … ok — comment 6d9d68b4-af48-4deb-9ff5-ce6a1bf1d3e0 created and resolved
+  • Authoring: request review, submit to workflow, freeze v1.0 … ok — review → rhea.reviewer@concept2cure.pro (submitted, review signed by rhea.reviewer@concept2cure.pro); frozen v1.0 by rhea.reviewer@concept2cure.pro (REVIEWER) (d2d0fd2dc449…)
+  • Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER) … ok — signed by ava.approver@concept2cure.pro as APPROVER over freeze vapproved
+  • Authoring: Substantial Equivalence Discussion (draft with an open comment) … ok — 17894e8b-b1b6-4e9a-973c-b4d73d9edc16 draft, open comment dc26fed0-d879-4d7d-9fd0-138afe93525c
+  • Authoring: Cybersecurity and Interoperability Summary (review requested) … ok — d4af3d52-5cd4-47a1-9421-98f0cff127b4 (6 sections), review → rhea.reviewer@concept2cure.pro
+  • Authoring: does the Review board list the requested reviews? (probe) … ok — queue 4, 2 for the pack
+  • Authoring: the dossier text is written into the 510(k) filing (its editing copy, saved with a reason) … ok — doc_94f7916947d54c369c329c4a5b47d480: 9 sections filed through 3b4c00e9-1d12-41c4-9ff2-5dcd7ecf5f75 (created), 0 already filed
+  • Submission Center: 510(k) submission for the program … ok — 7 (created, 510k/ivd)
+  • Submission Center: original sequence 0000 … ok — 3 status draft (created)
+  • Submission Center: eSTAR section codes on the leaf route (probe) … ok — HTTP 200: the leaf route takes the eSTAR section code; the probe's leaf was removed again (1); the six CTD placements below are the filing's
+  • Submission Center: file the six vault documents as leaves at CTD codes … ok — 6 leaves (6 placed this run)
+  • Submission Center: sequence draft → assembling … ok — draft → assembling
+  • Submission Center: eSTAR 510(k) pathway readiness (deterministic, read-only) … ok — ready=false; present 0; missingRequired 14
+  • Submission Readiness: validation + dispatch-readiness assessment of sequence 0000 … ok — gate.cleared=false validationErrors=0 (0 UNRESOLVED_DOCUMENT) blockers=2
+  • Submission Readiness: dispatch QC (deterministic verdict; narration needs a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); narrative unavailable: PROVIDER_UNAVAILABLE
+  • Submission Readiness: readiness review orchestration (probe) … ok — HTTP 400
+  • QMS: SOP-101 Design Controls (21 CFR 820.30) … ok — 8 MDX-SOP-101 draft v1.0 (created)
+  • QMS: SOP-102 Corrective and Preventive Action … ok — 9 MDX-SOP-102 draft v1.0 (created)
+  • QMS: SOP-103 Complaint Handling and MDR Reporting … ok — 10 MDX-SOP-103 draft v1.0 (created)
+  • QMS: SOP-104 Software Change Control … ok — 11 MDX-SOP-104 draft v1.0 (created)
+  • QMS: approve MDX-SOP-101 as the second signer (e-signature) … ok — effective; signature 62 (APPROVED) by ava.approver@concept2cure.pro
+  • QMS: approve MDX-SOP-102 as the second signer (e-signature) … ok — effective; signature 63 (APPROVED) by ava.approver@concept2cure.pro
+  • QMS: SOP-103 into review; SOP-104 stays draft … ok — SOP-103 in_review; SOP-104 draft
+  • QMS: inspect personal acknowledgement readiness of SOP-101 … ok — A human must open SOP-101 in Quality, read the released text and choose Acknowledge this revision. Demo setup does not attest for the reader.
+  • QMS: change-control record for the NP-100 software release … ok — 3 MDX-CC-2026-001 under_assessment (created, 3 links)
+  • Tasks: 4 tasks on NeuroPanel-Dx … ok — 4 created, 0 already there (board project 7)
+  • Audit trail: organisation ledger and chain verdict … ok — window 594; 76 entries reference pack records (158 since run start); chain.ok=true; verify-chain ok=true
+manifest → /root/.concept2cure-codespace/demo-manifests/mdx/manifest.json
+
+=== seed: lumen ===
+  • Client workspace: Lumen Bioscience (demo — not affiliated) … ok — created 5
+  • Projects: LMN-201 … ok — a7f4da29-2e6e-4fc3-86c4-3761d3b23adc (LMN-201)
+  • Vault: LMN-201 program overview … ok — ingested 2c6c8870-0a18-4e98-992d-df2e4201d75d
+  • Tasks: 16 tasks on LMN-201 … ok — 16 created, 0 already there (board project 8)
+  • Team: LMN-201 is shared with the reviewer and the approver … ok — #3 can edit; #2 can edit
+  • Projects: LMN-801 … ok — 10bcde72-0f26-4edb-8b53-1a902cf864a6 (LMN-801)
+  • Vault: LMN-801 program overview … ok — ingested a2a690dd-749a-4d27-b5c8-0c54e3cc3bd2
+  • Tasks: 5 tasks on LMN-801 … ok — 5 created, 0 already there (board project 9)
+  • Team: LMN-801 is shared with the reviewer and the approver … ok — #3 can edit; #2 can edit
+  • Projects: LMN-301 … ok — 7739ed3f-c7d5-46db-b9a9-6c34ba539342 (LMN-301)
+  • Vault: LMN-301 program overview … ok — ingested bd7efb69-aaff-43fa-af97-515344ce0264
+  • Tasks: 5 tasks on LMN-301 … ok — 5 created, 0 already there (board project 10)
+  • Team: LMN-301 is shared with the reviewer and the approver … ok — #3 can edit; #2 can edit
+  • Projects: LMN-401 … ok — 168a11d8-9179-4d6b-b7e7-dfcb94ce096e (LMN-401)
+  • Vault: LMN-401 program overview … ok — ingested c132f4e8-0715-49ce-8e48-16d3e6b5a5b1
+  • Tasks: 3 tasks on LMN-401 … ok — 3 created, 0 already there (board project 11)
+  • Team: LMN-401 is shared with the reviewer and the approver … ok — #3 can edit; #2 can edit
+  • Vault: synthetic LMN-201 CSR source (JSON) … ok — ingested 43652ad7-ec6e-41b0-a0e6-2e552cc7f72d (sha256 44c81cc66030…)
+  • Biostatistics: study design "[Demo · Lumen] LMN-201 RePreve (NCT05330182) — Phase 2/3, recurrence prevention" … ok — created sd_aab03660ec6340b1ba6c387e0a441ea4
+  • Objective: RePreve … ok — created
+  • CMC / Module 3: drug substance and drug product on LMN-201 … ok — 2 created of 2
+  • CMC / Module 3: analytical methods on LMN-201 … ok — 5 created of 5, 5 validated under signature
+  • CMC / Module 3: specifications on LMN-201 … ok — 5 created of 5
+  • CMC / Module 3: stability programme on LMN-201 … ok — 2 created of 2
+  • CMC / Module 3: batch records on LMN-201 … ok — 3 created of 3
+  • Protocol development: a copy seeded with another study's eligibility criteria is set aside … ok — none
+  • Protocol development: LMN-201-CDI-02 document … ok — created #3
+  • Protocol development: section content … ok — 10 sections (10 written)
+  • Protocol development: objectives, eligibility, visits, team …     (429 on POST /api/protocol-development/documents/3/visits; waiting 52s, retry 1)
+ok — added objectives 5, criteria 10, visits 7, team 5
+  • Protocol development: schedule of assessments matrix …     (429 on POST /api/protocol-soa/documents/3/assessments; waiting 55s, retry 1)
+ok — 8 assessments × 7 visits, 28 cells (8 rows, 28 cells added)
+  • Protocol development: risk register … ok — 6 risks (6 added)
+  • Protocol development: milestones … ok — 5 milestones (5 added)
+  • Protocol development: amendment 1 … ok — #3 Amendment 2 — widen the Week 12 visit window and add a diary reminder call
+  • Protocol development: version snapshot … ok — snapshot 0.2
+  • Protocol development: GET /api/protocol-dev returns it … ok — #3: objectives 5, risks 6, milestones 5, amendments 1
+  • Protocol development: the RePreve study design bound to the protocol … ok — bound sd_aab03660ec6340b1ba6c387e0a441ea4
+  • Protocol development: 2 deviations, assessed, with CAPA … ok — 2 reported, 0 already there
+  • Protocol development: a reviewer and a review comment …     (429 on POST /api/protocol-reviews/documents/3/reviewers; waiting 39s, retry 1)
+ok — Ava Approver assigned; 1 comment
+  • Plan: start 4 deliverables on LMN-201 … ok — 4 started, 0 already started
+  • Communication: data-room source "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt" on LMN-201 … ok — uploaded 258 (text read: completed)
+  • Communication: agency inbox entry for "FDA approval letter (fictional demo), BLA 761901" on LMN-201 … ok — logged ace_1794598137912_707302f0
+  • Communication: the inbox reads "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt" … ok — 0 questions, 4 commitments proposed (0 recorded)
+  • Communication: data-room source "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt" on LMN-201 … ok — uploaded 259 (text read: completed)
+  • Communication: agency inbox entry for "FDA information request (fictional demo), IND 194021" on LMN-201 … ok — logged ace_1794598140503_604b175e
+  • Communication: the inbox reads "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt" … ok — 3 questions, 0 commitments proposed
+  • Review: LMN-201 Investigator's Brochure sent for review … ok — sent to ava.approver@concept2cure.pro
+  • Quality: LMN-SOP-201 on LMN-201 … ok — #12 effective
+  • Quality: LMN-SOP-202 on LMN-201 … ok — #13 effective
+  • Quality: LMN-SOP-203 on LMN-201 … ok — #14 draft
+  • Quality: deviation LMN-DEV-2026-014 on LMN-201 … ok — #5 closed
+  • Quality: deviation LMN-DEV-2026-015 on LMN-201 … ok — #6 under_investigation
+  • Quality: deviation LMN-DEV-2026-016 on LMN-201 … ok — #7 open
+  • Quality: deviation LMN-DEV-2026-017 on LMN-201 … ok — #8 pending_approval
+  • Quality: supplier LMN-SUP-001 … ok — #6 approved
+  • Quality: supplier LMN-SUP-002 … ok — #7 approved
+  • Quality: supplier LMN-SUP-003 … ok — #8 approved
+  • Quality: supplier LMN-SUP-004 … ok — #9 conditional
+  • Quality: supplier LMN-SUP-005 … ok — #10 pending
+  • Quality: nonconformance LMN-NC-2026-009 on LMN-201 … ok — #4 pending
+  • Quality: nonconformance LMN-NC-2026-007 on LMN-201 … ok — #5 rework
+  • Quality: nonconformance LMN-NC-2026-008 on LMN-201 … ok — #6 scrap
+  • Quality: internal audit LMN-IA-2026-03 … ok — #5 closed (1 major, 3 minor, 2 obs.)
+  • Quality: internal audit LMN-IA-2026-04 … ok — #6 in_progress (0 major, 1 minor, 1 obs.)
+  • Quality: internal audit LMN-IA-2026-05 … ok — #7 planned
+  • Quality: internal audit LMN-IA-2027-01 … ok — #8 planned
+  • Quality: CAPA "Visit-window control at investigator sites (from LMN-DEV-2026-014)" on LMN-201 … ok — CAPA-2026-0001 action_planned, 3 actions
+  • Quality: CAPA "TMF filing timeliness and Vault metadata completeness (from LMN-IA-2026-03)" on LMN-201 … ok — CAPA-2026-0002 investigation, 1 actions
+  • Quality: CAPA "Cold-chain shipper qualification for 2–8 °C lanes (from LMN-NC-2026-009)" on LMN-201 … ok — CAPA-2026-0003 open, 1 actions
+  • Quality: CAPA "Central-lab sample kit expiry tracking at sites" on LMN-201 … ok — CAPA-2026-0004 closed_effective, 1 actions
+  • Quality: change control LMN-CC-2026-021 on LMN-201 … ok — #4 in_implementation, linked to LMN-SOP-201, LMN-DEV-2026-014, CAPA-2026-0001
+  • Quality: management review Lumen 2026-Q3 … ok — #3, 2 open and 1 closed actions
+  • Quality: management review Lumen 2026-Q2 … ok — #4, 0 open and 1 closed actions
+  • Quality: training assignments on the Lumen SOPs in force … ok — 4 assigned on 2 SOPs; acknowledgement is each reader's own
+  • RBM: risk assessment (RACT) on LMN-201 … ok — created #2 with 8 default CtQ factors (overall risk high)
+  • RBM: 4 study-specific CtQ factors on LMN-201 … ok — 4 added, 0 already there
+  • RBM: RACT approval on LMN-201 … ok — approved by ava.approver@concept2cure.pro
+  • RBM: 8 key risk indicators on LMN-201 … ok — standard library seeded; 8 configured, 0 already there
+  • RBM: 3 quality tolerance limits on LMN-201 … ok — 3 created, 0 already there
+  • RBM: 12 monthly metric extracts on LMN-201 … ok — 12 loaded (48 KRI readings, 18 QTL values, 78 site observations), 0 already loaded
+  • RBM: subject-level extract (12 subjects) on LMN-201 … ok — loaded: 12 subject profiles
+  • RBM: patient cohort scored on LMN-201 … ok — scored 12 subjects — 1 flagged, 1 for review
+  • RBM: monitoring plan on LMN-201 … ok — created #2 v1 (draft, generated from the approved RACT)
+  • RBM: 6 central-monitoring signals on LMN-201 … ok — 6 logged, 0 already there; 5 dispositioned
+  • RBM: 6 monitoring actions on LMN-201 … ok — 6 added, 0 already there
+  • RBM: site risk scored from the site-level indicator readings on LMN-201 … ok — found 8 sites
+  • RBM: the board and roster read back on LMN-201 … ok — risk high; 12 CtQ; KRIs 1 red / 2 amber of 8; QTLs 1 approaching of 3; 5 open signals; 1 flagged / 1 review of 12; plan draft with 15 actions; 8 attention items
+  • Vault: LMN-201 LMN201-CDI02-PROT-v2.0.pdf … ok — uploaded b3462b79-35e4-423a-9c41-186211ef817b (2 pages); filed module-5 at 5.3.5.1; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-201 LMN201-IB-ED4.pdf … ok — uploaded 19f2a996-281b-4947-9cde-68057028991d (2 pages); filed module-1 at 1.14.4.1; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-201 LMN201-CDI02-SAP-v1.0.pdf … ok — uploaded b27c2900-47d8-4248-b38b-b679206135a6 (2 pages); filed module-5 at 5.3.5.1; sent, review signed by ava.approver@concept2cure.pro
+  • Vault: LMN-201 LMN201-CDI02-ICF-v2.0.pdf … ok — uploaded 7b19f9f6-8a92-432c-91d3-7e021fecf1c8 (2 pages); filed module-5 at 5.3.5.1; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-201 LMN201-CDI02-IRB-APPROVAL-2.pdf … ok — uploaded 311644ef-9374-4b8c-ba80-3ad9af36d6e5 (2 pages); filed module-5 at 5.3.5.1; draft (not sent for review)
+  • Vault: LMN-201 LMN201-FDA-PREIND-MINUTES.pdf … ok — uploaded 1d7ed080-6a2c-4a04-9772-98b660acccfd (2 pages); filed corresp at 1.12.1; draft (not sent for review)
+  • Vault: LMN-201 LMN201-DSUR-02.pdf … ok — uploaded a9d262bf-6081-4a96-b500-2e768f0589f7 (2 pages); filed module-1; sent
+  • Vault: LMN-201 LMN201-CDI02-CMP-v1.1.pdf … ok — uploaded f7806483-6cea-432c-aa1b-67193806ff38 (2 pages); filed module-5; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-201 LMN201-CDI02-DMP-v1.0.pdf … ok — uploaded cb8ff2b8-9627-4d38-8ef9-e5d7bb86e067 (2 pages); filed module-5; draft (not sent for review)
+  • Vault: LMN-201 LMN201-DP-2405-COA.pdf … ok — uploaded 7a1b2e3b-2fad-4e6b-9604-c4698fa6bbea (2 pages); filed module-3 at 3.2.P.5.4; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-201 LMN201-DP-STAB-SUMMARY-12M.pdf … ok — uploaded 6f311a5b-9519-4a7b-8cdb-d1a0d9752a03 (2 pages); filed module-3 at 3.2.P.8.1; sent, review signed by ava.approver@concept2cure.pro
+  • Vault: LMN-201 LMN201-CRO-MSA-SUMMARY.pdf … ok — uploaded 3824a22d-9606-48a8-8dd5-279547db141c (2 pages); unfiled; draft (not sent for review)
+  • Vault: LMN-201 LMN201-CDI02-MVR-SITE104-IMV3.pdf … ok — uploaded 59af74ca-7785-459b-a907-9f4a8d8d1cb2 (2 pages); filed module-5; sent
+  • Vault: LMN-201 LMN201-TOX-13WK-RAT.pdf … ok — uploaded a8296d9c-5fb0-4e62-8a0e-e61110971e24 (2 pages); filed module-4 at 4.2.3.2; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Governed artifact: endpoint_justification on LMN-201 … ok — artifact_1794598240385_8f92fce61098: created, in review, reviewed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Governed artifact: evidence_memo on LMN-201 … ok — artifact_1794598244032_4eebf09436b3: created, in review
+  • Governed artifact: risk_benefit on LMN-201 … ok — artifact_1794598245159_f57b6b505e62: created
+  • Seals & fixity: LMN-201 … ok — 16 stored versions proven; sealed 818ee040-e436-48be-8367-0e25f9f759a0 over 16 documents by rhea.reviewer@concept2cure.pro
+  • Vault read-back: LMN-201 … ok — 16 uploads, 5 of 36 required sections, 3 governed artifacts, 1 seal(s)
+  • Vault: LMN-801 LMN801-P2-SYNOPSIS-D0.3.pdf … ok — uploaded cfc6c907-6e64-45bd-816a-1ac548b276e9 (2 pages); filed module-5 at 5.3.5.1; draft (not sent for review)
+  • Vault: LMN-801 LMN801-PD-DIO-MOUSE.pdf …     (429 on POST /api/regulatory/documents; waiting 24s, retry 1)
+ok — uploaded a54f07f0-f2b0-4f0e-aaa9-5591aa4cca8c (2 pages); filed module-4 at 4.2.1.1; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-801 LMN801-DS-2502-COA.pdf … ok — uploaded 9d902cd8-c7d5-4354-954f-ecc544c95ef7 (2 pages); filed module-3 at 3.2.S.4.4; sent
+  • Vault: LMN-801 LMN801-PREIND-REQUEST-DRAFT.pdf … ok — uploaded bf3fef9d-bd1f-4fcf-95c2-faa7a76b38a1 (2 pages); filed corresp; sent, review signed by ava.approver@concept2cure.pro
+  • Governed artifact: evidence_memo on LMN-801 … ok — artifact_1794598281680_ace61edac760: created, in review
+  • Seals & fixity: LMN-801 … ok — 5 stored versions proven; sealed 4236c66c-d570-4cb6-a28d-39f9b464a18e over 5 documents by rhea.reviewer@concept2cure.pro
+  • Vault read-back: LMN-801 … ok — 5 uploads, 3 of 36 required sections, 1 governed artifacts, 1 seal(s)
+  • Vault: LMN-301 LMN301-IB-ED2.pdf … ok — uploaded 9ef3e366-c392-4610-b0a4-b53a8605b53a (2 pages); filed module-1 at 1.14.4.1; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-301 LMN301-COV01-INTERIM-SAFETY.pdf … ok — uploaded be437021-b0ca-475d-bc46-e9edb481f66c (2 pages); filed module-5 at 5.3.3.1; sent
+  • Vault: LMN-301 LMN301-TOX-NASAL-RABBIT.pdf … ok — uploaded 86be674e-2e1e-4060-b8c3-4b3fbf30d378 (2 pages); filed module-4 at 4.2.3.6; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-301 LMN301-DP-STAB-SUMMARY.pdf … ok — uploaded a87ff995-0d68-43a8-b6f0-b5e0a5d4c102 (2 pages); filed module-3 at 3.2.P.8.1; draft (not sent for review)
+  • Governed artifact: safety_evidence_brief on LMN-301 … ok — artifact_1794598293636_2cdebff5b59a: created, in review, reviewed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Seals & fixity: LMN-301 … ok — 5 stored versions proven; sealed cfbf0212-8005-4a83-97a2-31adbd4650ad over 5 documents by rhea.reviewer@concept2cure.pro
+  • Vault read-back: LMN-301 … ok — 5 uploads, 2 of 36 required sections, 1 governed artifacts, 1 seal(s)
+  • Vault: LMN-401 LMN401-PD-NEUTRALISATION.pdf … ok — uploaded 114e838f-9cd6-4c98-9ec8-43ea98ba35b4 (2 pages); filed module-4 at 4.2.1.1; sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • Vault: LMN-401 LMN401-TD02-INTERIM-SUMMARY.pdf … ok — uploaded 5e019a78-8c5a-4409-8464-2bee4fcdcbe8 (2 pages); filed module-5; sent, review signed by ava.approver@concept2cure.pro
+  • Vault: LMN-401 LMN401-PREIND-BRIEFING-OUTLINE.pdf … ok — uploaded 870fef8a-e1b0-400c-ad9d-0accbbea0858 (2 pages); filed corresp; draft (not sent for review)
+  • Governed artifact: strategy_memo on LMN-401 … ok — artifact_1794598305020_00deab57138b: created
+  • Seals & fixity: LMN-401 … ok — 4 stored versions proven; sealed c2784936-9dae-4317-841f-c3f9c871d02f over 4 documents by rhea.reviewer@concept2cure.pro
+  • Vault read-back: LMN-401 … ok — 4 uploads, 1 of 36 required sections, 1 governed artifacts, 1 seal(s)
+  • CSR LMN-201 Part B: the synthetic clinical source reviewed and approved in the Vault … ok — sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • CSR LMN-201 Part B: the clinical study report document in the one editor … ok — created 973be239-bc40-4b4b-8486-510ca2678bf2 from "GLOBAL · Clinical Study Report (CSR)" (119 sections)
+  • CSR LMN-201 Part B: the study data frozen in the document … ok — frozen 28765c96-a261-4cbb-9aef-ff263685b4ce from the approved source v1.0
+  • CSR LMN-201 Part B: every section written from the study's synthetic data … ok — 119 written, 0 already had text (of 119)
+  • CSR LMN-201 Part B: sent for review … ok — review requested from ava.approver@concept2cure.pro
+  • CSR LMN-801 Phase 1 MAD: the synthetic source in the Vault … ok — ingested d82a441c-83aa-459b-a7b2-435f95c536af (sha256 568856378f52…)
+  • CSR LMN-801 Phase 1 MAD: the synthetic clinical source reviewed and approved in the Vault … ok — sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • CSR LMN-801 Phase 1 MAD: the clinical study report document in the one editor … ok — created 9439bcc8-8c8e-4153-af8f-1e324388c3bd from "GLOBAL · Clinical Study Report (CSR)" (119 sections)
+  • CSR LMN-801 Phase 1 MAD: the study data frozen in the document … ok — frozen 978329cb-1983-462f-ace9-f7f86d9d2bf0 from the approved source v1.0
+  • CSR LMN-801 Phase 1 MAD: every section written from the study's synthetic data … ok — 119 written, 0 already had text (of 119)
+  • CSR LMN-801 Phase 1 MAD: sent for review … ok — review requested from ava.approver@concept2cure.pro
+  • CSR LMN-301 Phase 2a challenge: the synthetic source in the Vault … ok — ingested 00863ebd-a986-42e4-a04b-3ff007712b2b (sha256 7b86b1d3f855…)
+  • CSR LMN-301 Phase 2a challenge: the synthetic clinical source reviewed and approved in the Vault … ok — sent, review signed by ava.approver@concept2cure.pro, approved by rhea.reviewer@concept2cure.pro
+  • CSR LMN-301 Phase 2a challenge: the clinical study report document in the one editor … ok — created d2ce9fbc-1fab-4247-8655-613269be31c4 from "GLOBAL · Clinical Study Report (CSR)" (119 sections)
+  • CSR LMN-301 Phase 2a challenge: the study data frozen in the document … ok — frozen 0f45dc93-36ac-4a9d-b108-701b94b33f39 from the approved source v1.0
+  • CSR LMN-301 Phase 2a challenge: every section written from the study's synthetic data … ok — 119 written, 0 already had text (of 119)
+  • CSR LMN-301 Phase 2a challenge: sent for review … ok — review requested from ava.approver@concept2cure.pro
+  • Applicant identity: LMN-201's application number and sponsor (fictional) … ok — application 194021, sponsor Lumen Bioscience (fictional demo sponsor)
+  • Submission Center: the program's canonical submission (IND) … ok — #8 "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #4 status draft
+  • Submission Center: place the vault documents as eCTD leaves … ok — 5 leaves (5 placed)
+  • Submission Center: sequence moves draft → assembling … ok — assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=7; shadowCriticals=0; blockers=3
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (7 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — HTTP 503
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 3; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • Reporting: 4 reports run for LMN-201 … ok — readiness.executive_digest: #5 partial; ha.commitment_register: #6 partial; usa_fda.ind_safety_readiness: #7 partial; etmf.completeness_pack: #8 partial
+  • Reporting: the LMN-201 monthly governance pack (bundle) … ok — created from 4 runs
+  • Reporting: 2 schedules for LMN-201 (in the platform, no e-mail) … ok — readiness.executive_digest: weekly; etmf.completeness_pack: monthly
+  • Administration: the Lumen account's company details (fictional address and contact) … ok — not executed: this organisation is not the Lumen account
+  ⇒ lumen pack: created 434, found 2
+manifest → /root/.concept2cure-codespace/demo-manifests/lumen/manifest.json
+
+=== seed: project-management ===
+  • Schedule: CTD sections tracked on C2C-101, with owners, deadlines and status … ok — 107 sections newly tracked, 23 changes on 8 worked sections
+  • Schedule: milestones on C2C-101 … ok — 3 created of 3
+  • Schedule: the IND's milestone tasks on C2C-101 … ok — 12 generated, 2 moved
+  • Roll-up: work project "C2C-101 drug substance and drug product (CMC)" … ok — created, 1 tasks created
+  • Roll-up: work project "C2C-101 Phase 1 statistical analysis plan" … ok — created, 1 tasks created
+  • Schedule: CTD sections tracked on LMN-201, with owners, deadlines and status … ok — 107 sections newly tracked, 18 changes on 6 worked sections
+  • Schedule: milestones on LMN-201 … ok — 3 created of 3
+  • Schedule: the IND's milestone tasks on LMN-201 … ok — 12 generated, 5 moved
+  • Roll-up: work project "LMN-201 drug product manufacturing (CMC)" … ok — created, 1 tasks created
+  • Roll-up: work project "LMN-201 RePreve risk-based monitoring" … ok — created, 0 tasks created
+  • At risk: review work due on LMN-201 … ok — 2 created of 2
+manifest → /root/.concept2cure-codespace/demo-manifests/project-management/manifest.json
