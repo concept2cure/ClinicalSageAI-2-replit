@@ -74,5 +74,16 @@
     "hostedCodespaceOfFinalHeadClaimed": false,
     "liveProviderCalls": 0,
     "knownRemainingOffboardingCiFailures": 3
+  },
+  "latestQualityIntegration": {
+    "adoptedCanonicalRevision": "841c41466",
+    "relatedTestFilesPassed": 8,
+    "relatedTestsPassed": 113,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "productionBuildExitCode": 0,
+    "catalogSourceHashesUnchanged": true,
+    "publicationRefRacesWithAllGatesGreen": 2,
+    "finalCompilerRequiredByNormalPushHook": true
   }
 }
