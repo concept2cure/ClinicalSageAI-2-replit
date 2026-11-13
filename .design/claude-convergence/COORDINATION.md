@@ -1748,6 +1748,22 @@ tests. Connector actor propagation follows the evidence README's trusted-caller 
 credential assignment above; the agent names any additional existing regression file before changing it.
 No new source file, screen, route, table, provider, model or dependency is approved by this continuation.
 
+**2026-11-13 implementation and runtime completion:** all assigned source is committed and frozen. Existing
+credential reason suites pass90/90, connector actor suites198/198, measured-check producer suites189/189 and
+the combined activity/Reporting/estimate/Summary UI suites134/134; overlapping counts are not added. Full
+TypeScript passes0 against baseline0 at `15b41dda4`, after fixing four fixture-only type annotations; the two
+affected suites pass121/121. Changed-file lint has no errors or warning growth. Merged doctor126/126 and
+AnA verifier47/47 pass without provider requests. Normal default startup in the existing declared Codespace
+image exits0 and serves that exact candidate; all seven cached stamp/log hashes and modification times remain
+unchanged. Six actual current-account/project UI checks pass, including default-off Show team and all14 existing
+administration credential cards. Zero credential writes, provider turns or page errors. The observed project has
+no running workers and no available overall ETA; no fake progress is inserted. Database/schema/storage are
+healthy; AnA remains explicitly `no_provider`, so this is not a live-model or qualification pass. Independent
+reviews close all in-scope findings. The existing evidence README records the exact scope and limits.
+**All source and evidence holds in this continuation's table release with canonical publication of this entry.**
+Root retains only ordinary Git publication and final version/health verification; the rehearsal agent remains
+runtime/scratch-only. Other lanes' holds and broader roadmap/model acceptance remain unchanged.
+
 **Codex provider/AnA completion repair, 2026-11-13 (F1 W1 D1/D2), completed; holds released by this source commit:** repaired only `scripts/ops/codespaces-doctor.mjs`, `scripts/ops/codespaces-doctor.test.mjs`, `scripts/ops/verify-ana-answers.mjs`, `scripts/ops/verify-ana-answers.test.mjs`, the existing recovery guide's AnA-check paragraph and its own evidence/design packet. Two scoped workers split doctor and AnA verifier; the doctor split private `codespaces-provider-receipt.mjs` and focused `codespaces-doctor-receipt-cases.mjs` inside scripts/ops to preserve lint limits and the existing test command. Root owns integration/Git. Correct false-success completion receipts only; no provider call, new key, route, model or approval change.
 
 ## Codespaces and Copilot handoff — 2026-11-13

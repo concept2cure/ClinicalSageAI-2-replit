@@ -40,8 +40,8 @@ complete existing conversation suite then passes **41/41**, with zero changed-fi
 material independent-review finding. The reader now masks data immediately across actor/access/session changes,
 guards delayed JSON and dispatched actor headers, serializes/coalesces polls, stops hidden polling, and preserves
 ordinary bearer refresh. Invalid summaries or failed reads clear prior data rather than fabricate empty success.
-An adjacent run passes 63/65 checks; two Reporting same-reader refresh-notice expectations are being compared
-against the baseline separately before any change to those tests. These counts overlap and are not summed.
+An initial adjacent run passes 63/65 checks; the two Reporting same-reader refresh-notice failures are reproduced
+against the pre-change baseline and resolved as documented below. These counts overlap and are not summed.
 
 **Adjacent current-session fixture repair.** The two Reporting notice failures also occur against pre-activity
 commit `fc9fe8cf7`; the activity module is absent from their import graph. `Insights.tsx` already uses the shared
@@ -80,7 +80,37 @@ These runs overlap earlier component counts and are not summed. Independent revi
 in-scope issue in the credential reason, actor propagation, activity ownership or estimate producer paths.
 All changed paths have no lint errors and no warning-count growth; the existing knowledge-base/executor warning
 counts remain 46/93. No baseline, model admission, privacy, approval, signing or filing gate is loosened.
-Full merged compiler, normal publication and actual demo-runtime checks remain the final acceptance steps.
+The full compiler and actual demo-runtime results follow. Normal publication retains every existing push gate.
+
+### Merged build and actual Codespace-image runtime
+
+- Full TypeScript passes with **zero errors against baseline zero** at `15b41dda4`. The first run exposed four
+  fixture typing errors; tuple-table and PGlite result-row annotations fix them without changing runtime behavior,
+  assertions or baseline. The two affected suites then pass **121/121**, with zero lint errors or warnings, before
+  the successful full compiler. These counts overlap the earlier suite totals.
+- The merged canonical doctor and AnA-verifier checks pass **126/126** and **47/47** on Node 22, respectively,
+  without provider requests. Canonical `50019d14e` is then merged normally; this later delta contains operator
+  instructions and evidence only, with no application or startup-script change. Independent instruction review
+  finds no integration blocker.
+- The ordinary default post-start command in the existing declared Node 22 Codespace image exits **0** and serves
+  exact application revision `15b41dda4517e9cd93959d6dcaf77474e05b6e69`. All seven existing seed stamp/log files retain
+  their SHA-256 and modification time; the current demo tree is `e3c8ebd2de9ebc3780052b5afc93ce61af9a6e2e`.
+  There is no seed replay or installer event. Database, schema and storage are healthy; the three application
+  processes use `app_service`, with no owner credentials, superuser or RLS-bypass privilege. Forwarded Codespace
+  origin login returns 200 and foreign origin returns 403. The private verified DOCX interpreter imports
+  python-docx 1.2.0 and lxml 6.1.1 successfully.
+- **Six actual browser checks pass** against that serving revision: real synthetic Lumen Lead login; current
+  project conversation with Show team initially off; current scoped project-team read; keyboard toggle/off and
+  reload; current-account background activity read; and all **14** existing administration credential cards.
+  PRS/FDA cards retain their explicit storage-only wording. The real project goal is recorded, but there are zero
+  running workers and no available overall ETA; neither worker activity nor a time estimate is manufactured.
+  There are zero page errors, credential writes or provider-turn requests.
+
+This is actual local declared-image startup/browser evidence, not hosted Codespaces acceptance or a live-model
+run. `/readyz` reports HTTP 503 specifically for `ana/no_provider`; database/schema/storage remain healthy.
+Real model PQ, provider latency, customer KMS and regulatory release acceptance remain pending. No model, signing,
+review or filing gate is bypassed. Source holds release with canonical publication of this entry; the final
+ordinary cached restart must compare the served version with that published SHA and preserve the same caches.
 
 **Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
 but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
