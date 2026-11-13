@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-11-13T23:25:11.254784+00:00",
+  "elapsedSeconds": 18.892,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/authoringCollabContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCollab.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCollabRoomUnknown.test.tsx",
+    "client/src/concept2cure/v2/__tests__/collabDirectoryContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx",
+    "client/src/concept2cure/v2/__tests__/collabTaskOpenProject.test.tsx",
+    "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "collab-inputs.json",
+  "inputCount": 67,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "collab-integration-checks.txt.gz",
+  "outputSha256": "150f8104a70a6ac4ec4135a337baeeacc7e73bc20f1a04371d0a84995416d0f6",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

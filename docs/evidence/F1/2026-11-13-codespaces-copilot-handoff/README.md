@@ -229,6 +229,89 @@ Final publication follows the normal hooks. Afterwards the existing startup
 will update the app to that published documentation revision, and the
 operator's version/readiness procedure will be checked again.
 
+## Concurrent AnA integration and publication retry
+
+The attempted push of `4d181db1e` passed all 89 normal lint gates, then Git
+rejected the update because canonical work advanced. This rejected attempt
+is not a publication receipt. Canonical `c36ec97e9` was merged normally at
+`a10861e8c`; no incoming source or baseline was rewritten. Its changes cover
+current-account activity/ETA reads and trusted actor/credential attribution.
+The prior editor, export, bootstrap and demo files remain unchanged. The
+incoming owner's detailed checks stay in
+`../../ANA-AGENTS/2026-09-27/README.md`; they are not relabelled as this run.
+
+`concurrent-source-bridge.json` names the incoming paths and changed measured
+inputs. The 58 delta/test/compiler/package inputs are pinned separately, with
+the earlier full manifest and bridge retaining the other measured source
+identities. The first focused-test launch stopped before any test because
+installed Vitest rejects `--minWorkers` (`concurrent-checks.json`, exit 1).
+The corrected command retains `--maxWorkers=1` and passes **444/444 tests in
+17 suites**, zero failed (`concurrent-checks-corrected.json`). These tests
+exercise component, mocked transport and synthetic database boundaries; no
+live provider or customer credential acceptance is claimed.
+
+The unchanged startup exits 0 in 32.9 seconds at `a10861e8c`
+(`concurrent-start.json`), retaining the prepared records. The CSR browser
+rehearsal was repeated against that app: native exit 0 in 48.1 seconds,
+119/119 saved bodies, real Word/PDF downloads (34-page PDF), matching hashes
+and draft notices, and scientific preview. Zero HTTP, page, transport or
+functional failures are recorded (`concurrent-browser.json`).
+`merged-reviewer-*` outputs preserve all previous successful files. The helper
+adds only an optional sanitized filename prefix; all assertions and request
+classification remain in place, and scoped lint passes. This walk does not
+exercise live worker countdowns, model drafting or scientific approval.
+
+The full Node 22 compiler check passes at `a10861e8c`: **zero errors against
+the unchanged zero baseline**, native exit 0 in 484.4 seconds
+(`concurrent-typecheck.json`). Source and execution inputs did not drift.
+No compiler baseline or gate was changed.
+
+## Later billing response-ownership repair
+
+While that compiler ran, canonical `917486637` added the existing licensing
+surface's delayed account/session response guard. The normal merge at
+`a5c92a646` preserves both coordination histories. The only additional runtime
+change is in Licensing; shared session helpers, editor, backend, exports,
+dependencies and startup are unchanged (`postbilling-source-bridge.json`).
+No further CSR browser replay is attributed to this isolated delta.
+
+The same three billing suites now pass **50/50**, and scoped lint has zero
+errors with the same three existing surface warnings (`postbilling-checks.json`,
+`postbilling-lint.json`). Their source/config inputs are pinned in
+`postbilling-inputs.json`; no source/execution drift occurred. Billing responses
+are fixtures, not a live Stripe settlement. The further full-program
+incremental compiler check passes at `a5c92a646`: **zero errors against the
+unchanged zero baseline**, native exit 0 in 407.8 seconds, no source/execution
+drift (`postbilling-typecheck.json`). The normal publication retry and
+exact-stamp check follow these completed checks.
+
+## Published collaboration-context integration
+
+Canonical `532cf4145` carried the existing collaboration-context repair and
+source-owned tests/evidence. It was merged normally at `75247cc6d`.
+`collab-source-bridge.json` confirms the actual production TypeScript,
+compiler config and package delta against that published canonical tree is
+empty. The local changes are this packet's documentation and nonproduct
+rehearsal code. The two earlier full-compiler results remain attached to
+`a10861e8c` and `a5c92a646`; the incoming owner's compiler and ordinary-push
+proof stay in its own packet. They are not relabelled as another compiler run.
+
+The documented seven collaboration suites pass **66/66**, and scoped lint
+exits 0 with the owner's existing warning boundary
+(`collab-integration-checks.json`, `collab-integration-lint.json`). These unit
+cases use controlled responses; the incoming owner's intercepted lock/account
+browser fixtures do not establish real holder displacement or cross-sponsor
+authorization. No message or notification is sent by this manual rehearsal.
+
+Normal startup exits 0 in 33.8 seconds, and `/api/version` matches
+`75247cc6d` (`collab-integration-start.json`, `collab-runtime.json`). The real
+CSR browser walk then exits **0** in 34.1 seconds
+(`collab-integration-browser.json`): 119/119 saved bodies, downloaded Word/PDF
+with matching hashes and draft notices, and scientific preview. It records
+56 client-cancelled GETs, zero transport/HTTP/page/functional failures.
+`collab-reviewer-*` outputs preserve all earlier attempts. The same no-provider
+and scientific/hosted/large-document limitations below remain in force.
+
 This local image/browser rehearsal does not exercise GitHub-hosted creation,
 VS Code extension sign-in, a live AnA turn, model qualification, real scientific
 approval, submission delivery or 10,000-page performance.

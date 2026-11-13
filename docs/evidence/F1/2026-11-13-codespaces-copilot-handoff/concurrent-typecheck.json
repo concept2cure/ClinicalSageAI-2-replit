@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-11-13T23:04:49.402175+00:00",
+  "elapsedSeconds": 484.361,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "concurrent-inputs.json",
+  "inputCount": 58,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "scripts/ci/typecheck-no-regression.mjs": "13df7cc80c7e2c935a8c245b555eac97e7ad5ade59c785258eee63901a5890bd"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "concurrent-typecheck.txt.gz",
+  "outputSha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}
