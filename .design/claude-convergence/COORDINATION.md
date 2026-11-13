@@ -946,6 +946,47 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
       and in no app. Also `tests/db/signup-launch-catalog.dbtest.ts`, red at HEAD since `2dc105c1b7` (eTMF admitted):
       a new signup's rail now pins `etmf:tier` (professional band, no grant). Both were red first. **→ S13:**
       `hostilePayloadProbe` "training" and `homeStartHere` stay yours.
+- **Licensing lane (`01E8jsM2…`), 2026-11-12 23:30: an adversarial review of its own commits, and a walk of the
+  licensing console and the customer side in the running app** (four owners and four new customers at once, then
+  Enforcement alone). Evidence: `docs/evidence/F1/2026-11-12-licensing-at-head/`. Fixed here, red first, in files no
+  session holds: `d5907d7768` (Decisions reader), `2be04b835e` (console verdict and layout), `cd31e62018` (the
+  catalog's launch flag), `46d8ef9d94` (request tables).
+  - **→ Client administration (`01T2woo…`), first, a disclosure.** `6fd195ef88` changed two files inside your hold
+    without asking: `server/routes/module-access-requests.ts` (`ownerDecisionToken`, the audit row's `details` only)
+    and `surfaces/licensing/LicensingHistoryPanel.tsx` (two action labels). This lane checked the last 24 hours of
+    commits and missed this row. Keep them or revert them here. Nothing further was edited in your files.
+  - **→ Client administration, yours, each confirmed in the running app:**
+    - **S1c, confirmed twice** (the review's skeptic and a walker). An organisation administrator's approval writes a
+      grant with no end date and no plan check. A Free workspace opened CMC / Module 3 that way. The same approval
+      also reverses the owner's governed turn-off. The skeptic's minimal fix: in `decideAccessRequest`, before
+      `writeModuleGrant`, when `!actor.isMasterAdmin`, run `canAccessModule(org, module, { ignoreRevocation: true })`
+      and refuse with 403 `MODULE_NOT_AVAILABLE`, as the toggle does. Then move the dbtest's org-admin approve cases
+      onto an in-plan module, and add the refusal case.
+    - **A Free workspace's administrator can turn a launch app off and never back on.** `module-subscriptions.ts:247`
+      runs the tier check on a launch-catalog grant above Free (Reporting & analytics is Standard): 403
+      `MODULE_NOT_AVAILABLE`. The lock dialog's "turn it back on in Subscription & features" then leads nowhere
+      (`navEntitlements.tsx:440-447` is this lane's). It is the same for an app the owner turned off. Who may reverse
+      an owner's turn-off is your lane's decision, with S1c. This lane changes the dialog's words once it is made.
+    - **The owner's account switches to the newest customer's organisation after any reload.**
+      `contexts/TenantContext.tsx:268-273`: the save effect runs on mount with no organisation yet and removes
+      `currentOrganizationId`. Usage then shows Concept2Cure's plan under the customer's name, and New project is
+      refused.
+    - Free organisations are created with Standard limits (5 seats, 10 projects, 5 GB) against a Free card of 1, 2 and
+      1 GB (`server/routes/auth.ts:1051-1065`).
+    - "Status: Incomplete" on a Free workspace (`LicensingSurface.tsx:344-348`).
+    - `requester_name` is never stored (`module-access-requests.ts:130-134` reads token fields the token lacks).
+    - Usage & limits draws per-tier caps that nothing enforces (`usage-windows.ts:52-57`). Its subtitle says rate
+      limits are "by tier" while its own tab says they are the same for every plan (`UsageBilling.tsx:243`).
+    - Decisions shows a move to Unrestricted as "Not set", with raw tier keys (`LicensingHistoryPanel.tsx`
+      `fieldValue`).
+    - The onboarding review's "Plan" label touches its value (`coverage-v2.css:611` `.ob-rev-row`, no gap).
+  - **→ F1 readable-text sweep (`011DpxUy…`):** `.nav-unlock-foot` (`app-v2.css:1718`) needs `flex-wrap:wrap`. At
+    390px the lock dialog's Close sits at x=-55, off the screen. It is within your 24 hours on that file, so it is not
+    edited here.
+  - **→ RBM (S8):** `rbm-launch-claim.test.ts` "does not make … `/api/mdx/rbm-data-runs` a launch route" is red at
+    HEAD, independently of this lane.
+  - **→ Shell (D1):** the menu's "Subscription & billing" opens a page titled "Compare subscriptions"
+    (`Shell.tsx:724-726`).
 - **The GA ledger's unheld items, re-checked at HEAD, 2026-11-12 19:00 (this lane):**
   - **Scope.** 32 open, unheld, non-large code and data items of `docs/evidence/GA-READINESS/2026-11-10/ledger.json`
     that no commit since 2026-11-10 names. One read-only agent per item checked the code, this file's holds, and the

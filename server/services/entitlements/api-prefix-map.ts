@@ -33,6 +33,10 @@ export const NEVER_GATED: readonly string[] = [
   '/api/users', // identity
   '/api/tenant-users/invitations', // an existing account's own membership consent inbox
   '/api/notifications',
+  // The shell's bell reads here on every page. Without this the broad '/api/mdx'
+  // claim (labeling-pi, a Standard module) refused the unread count to a Free
+  // workspace in 'enforce' and the bell showed '?' (2026-11-12).
+  '/api/mdx/notifications',
 ];
 
 /**

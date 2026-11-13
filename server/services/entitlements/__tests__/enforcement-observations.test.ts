@@ -54,11 +54,26 @@ describe('enforcement observations', () => {
   });
 
   it('takes the NEWEST reasoning, because a verdict changes under the operator', () => {
-    recordObservation(obs({ reasons: ['old'], enforced: false, now: '2026-08-01T10:00:00.000Z' }));
+    recordObservation(obs({ reasons: ['old'], enforced: true, now: '2026-08-01T10:00:00.000Z' }));
     recordObservation(obs({ reasons: ['new'], enforced: true, now: '2026-08-01T11:00:00.000Z' }));
-    const row = enforcementReport('enforce').observations[0];
-    expect(row.reasons).toEqual(['new']);
-    expect(row.enforced).toBe(true);
+    const rows = enforcementReport('enforce').observations;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].reasons).toEqual(['new']);
+    expect(rows[0].enforced).toBe(true);
+  });
+
+  // One row used to hold both, and the latest verdict relabelled the whole
+  // count "Refused": served requests were reported as refused (2026-11-12).
+  it('keeps a request served while observing apart from one refused after the switch', () => {
+    recordObservation(obs({ enforced: false, now: '2026-08-01T10:00:00.000Z' }));
+    recordObservation(obs({ enforced: false, now: '2026-08-01T10:30:00.000Z' }));
+    recordObservation(obs({ enforced: true, now: '2026-08-01T11:00:00.000Z' }));
+    const rows = enforcementReport('enforce').observations;
+    expect(rows).toHaveLength(2);
+    const served = rows.find((r) => !r.enforced)!;
+    const refused = rows.find((r) => r.enforced)!;
+    expect(served.count).toBe(2);
+    expect(refused.count).toBe(1);
   });
 
   it('separates workspaces that hit the same path', () => {
