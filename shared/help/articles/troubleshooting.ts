@@ -74,12 +74,12 @@ One part can fail while the rest loads. The part that failed carries its own mes
     slug: 'ana-cannot-answer',
     title: 'AnA says no AI provider is configured, or cannot answer',
     collection: 'troubleshooting',
-    summary: 'What each of AnA’s refusals means; your earlier turns are kept in every case.',
+    summary: 'What each of AnA’s refusals means, and whether your message was saved.',
     keywords: ['ana not working', 'no ai provider', 'ai unavailable', 'weekly limit', 'ana error', 'assistant down', 'cannot draft', 'conversation too long'],
     surfaces: ['conversation-thread', 'usage'],
     related: ['meet-ana', 'too-many-requests', 'you-are-signed-out'],
-    checked: '2026-11-12',
-    body: `When AnA cannot take a request she says why, and ends with "Prior turns are preserved": nothing in the conversation is lost.
+    checked: '2026-11-13',
+    body: `When AnA cannot take a request she says why, and whether your message was saved. A message she refuses before she takes it is not saved; one she took and could not answer stays in the conversation without an answer. Earlier turns in the conversation stay as they were.
 
 **"No AI provider is configured for this deployment, so AnA cannot answer."**
 
@@ -89,11 +89,11 @@ Screens that show figures and verdicts still work: those come from Concept2Cure'
 
 **"This organization has reached its weekly limit for AnA requests"**
 
-The request was not sent. An administrator can review the limit. **Usage & limits** in the account menu shows your organisation's usage.
+The request was not sent or saved. An administrator can review the limit. **Usage & limits** in the account menu shows your organisation's usage.
 
 **"Too many AnA requests in the last minute"**
 
-The request was not taken. Wait a moment and ask again.
+The request was not taken or saved. Wait a moment and ask again.
 
 **"Your sign-in could not be verified"**
 
