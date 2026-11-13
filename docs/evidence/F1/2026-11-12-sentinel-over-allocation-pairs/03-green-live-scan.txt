@@ -1,0 +1,33 @@
+# Green in the running app, on PostgreSQL: POST /api/sentinel/scan/cross_project as an administrator, 2026-11-12, with the fix.
+# What the analyzer answered (HTTP 200): each affected item, its label beside the name of the project that id belongs to (read from projects).
+
+"JM Smith is spread across 5 active projects"
+  id 3 | label: [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) | correct
+  id 5 | label: [Demo · MDX] NeuroPanel-Dx 510(k) | correct
+  id 6 | label: [Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) | correct
+  id 7 | label: [Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) | correct
+  id 8 | label: [Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND) | correct
+  details.projectIds [3,5,6,7,8] and details.projectNames agree position by position: true
+
+"Ava Approver is spread across 5 active projects"
+  id 3 | label: [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) | correct
+  id 5 | label: [Demo · MDX] NeuroPanel-Dx 510(k) | correct
+  id 6 | label: [Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) | correct
+  id 7 | label: [Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) | correct
+  id 9 | label: [Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND) | correct
+  details.projectIds [3,5,6,7,9] and details.projectNames agree position by position: true
+
+"Rhea Reviewer is spread across 5 active projects"
+  id 2 | label: Xanomeline TTS Phase 2 (CDISCPILOT01) | correct
+  id 5 | label: [Demo · MDX] NeuroPanel-Dx 510(k) | correct
+  id 6 | label: [Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND) | correct
+  id 7 | label: [Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND) | correct
+  id 8 | label: [Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND) | correct
+  details.projectIds [2,5,6,7,8] and details.projectNames agree position by position: true
+
+15 affected items in 3 findings; 0 with a label that is not its project's name.
+
+# Not changed by this: the rows already stored. The analyzer does not store a finding again while an open one with the same project,
+# analyzer and title is under 24 hours old (persistFinding), so the findings stored at 21:11 UTC keep the labels they were stored with
+# (02-red-stored-finding.txt). Nothing in the client or in AnA reads those labels; the Projects screen names a row's projects from the
+# project list, by id.

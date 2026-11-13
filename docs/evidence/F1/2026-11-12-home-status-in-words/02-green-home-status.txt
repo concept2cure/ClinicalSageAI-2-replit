@@ -1,0 +1,3 @@
+ ✓ client/src/concept2cure/v2/__tests__/homeProjectStatusInWords.test.tsx > Home project rows > say the status in the words Projects uses, never the stored value 105ms
+ ✓ client/src/concept2cure/v2/__tests__/homeProjectStatusInWords.test.tsx > Home project rows > say nothing for a status that is not recorded 30ms
+      Tests  2 passed (2)

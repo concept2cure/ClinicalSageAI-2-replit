@@ -25,8 +25,17 @@ const stated = (column: StatedColumn): string => `CASE WHEN ${column} ~ '[^[:spa
  * `program_type`, each a regulatory_programs column
  * (migrations/20260524_program_workbench_schema.sql). Each is NULL when
  * nothing is stated; none is defaulted here. Additive: the earlier keys are
- * unchanged, and GET /api/c2c/projects/:id still carries the full detail. */
+ * unchanged, and GET /api/c2c/projects/:id still carries the full detail.
+ *
+ * `project_id` (F1, 2026-11-12) is the numeric id of the program's anchor row
+ * in `projects`, from the join `projectAnchorFrom` already makes. `id` stays
+ * the program's uuid. Sentinel's findings, the blockers and the work due carry
+ * the project row's number, so without it the Projects screen could not say
+ * which project an "at risk this week" row belongs to. It is in the shared
+ * projection, so the list card and the creator's 201 card keep the same keys.
+ * The same number is `project_id` on GET /api/c2c/projects/:id/team. */
 const PROJECT_CARD_SELECT = `SELECT p.id::text AS id,
+  anchor.id AS project_id,
   p.name AS title,
   ${workstreamSqlCase('p.program_type', 'p.product_type')} AS ws,
   ${pathwaySqlCase('p.program_type', 'p.regulatory_path')} AS pathway,

@@ -1,0 +1,39 @@
+# Red: the new cases against the unchanged panel and the unchanged card projection
+# trunk as merged at 19cbeca84, 2026-11-12; npx vitest run <the two files>
+
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > one click reads Sentinel’s open findings, the blockers and the work due within 7 days 294ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > an empty register says what was looked at, never "no risk" 74ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > lists the blockers and the due work the server returned 90ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > a failed read is said, never shown as an empty answer 54ms
+ ✓ client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > closes, and asks again on the next click 93ms
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > reads the names from the whole list, once the person asks 5058ms
+   → expected [] to deeply equal [ '/api/c2c/projects?limit=200' ]
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > names the project of a finding, a blocker and a due item 5065ms
+   → Unable to find role="button" and name "Open RR5 acceptance IND (synthetic)"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > opens the project from its row, by the program’s id and never by the number 5068ms
+   → Unable to find role="button" and name "Open Vorelinib NDA"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > names every project a cross-project finding is about, and never the label stored beside an id 5066ms
+   → Unable to find role="button"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > gives a row whose project the list does not hold no name and no reason 5056ms
+   → Unable to find role="button" and name "Open RR5 acceptance IND (synthetic)"
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > says a failed read of the project list once, and still gives the three answers 5047ms
+   → Unable to find an element with the text: /The project list could not be read, so the rows below do not name their projects/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher
+ × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > does not make a card with no project number, or a number with no card, into a name 5064ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads a stated description, indication, agency and filing type as stored, in the list 18ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads the same four facts in the creator’s 201 projection 6ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default 12ms
+ × server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > carries the anchor project’s numeric id, in the list and in the creator’s 201 9ms
+   → the list card of 11111111-1111-4111-8111-111111111111: expected undefined to be 101 // Object.is equality
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > is additive: every key the card carried before is still there, with its value 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the list card of 11111111-1111-4111-8111-111111111111: expected undefined to be 101 // Object.is equality
+AssertionError: expected [] to deeply equal [ '/api/c2c/projects?limit=200' ]
+TestingLibraryElementError: Unable to find role="button" and name "Open RR5 acceptance IND (synthetic)"
+TestingLibraryElementError: Unable to find role="button" and name "Open Vorelinib NDA"
+TestingLibraryElementError: Unable to find role="button"
+TestingLibraryElementError: Unable to find role="button" and name "Open RR5 acceptance IND (synthetic)"
+TestingLibraryElementError: Unable to find an element with the text: /The project list could not be read, so the rows below do not name their projects/. This could be because the text is broken up by multiple elements. In this case, you can provide a function 
+AssertionError: expected [] to have a length of 1 but got +0
+ Test Files  2 failed (2)
+      Tests  8 failed | 9 passed (17)
