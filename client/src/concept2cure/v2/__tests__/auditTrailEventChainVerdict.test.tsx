@@ -127,6 +127,18 @@ describe('Audit trail — the audit_events chain verdict in the chain banner', (
     expect(seen.current?.summary).not.toMatch(/audit-event chain is verified intact/);
   });
 
+  /* Demo walk 5.u6 (2026-11-12): the line under the second chain read "A second chain, kept per organisation, that
+     some services write to instead of the ledger". To a Part 11 buyer that says records bypass the audit trail. The
+     ledger and this chain are both read on this screen; the line says what the chain is and that it is verified on
+     its own, and makes no claim about where any service should write. */
+  it('describes the second chain as a separate, separately verified chain, not as writes that bypass the ledger', async () => {
+    serve({ [CHAIN]: () => ok(EMPTY_PRE_FIX) });
+    mount();
+    await screen.findByText('Audit-event chain: no entries yet');
+    expect(region().textContent).not.toMatch(/instead of the ledger/);
+    expect(region().textContent).toMatch(/A separate hash chain, kept per organisation and verified on its own/);
+  });
+
   it('an unhashed chain reads "not verifiable", not the raw key, and is not intact', async () => {
     serve({ [CHAIN]: () => ok({ ...INTACT, chainStatus: 'unverifiable', integrityValid: null, totalEntries: 3, unhashedEntries: 3, verifiedEntries: 0 }) });
     const { seen } = mount();

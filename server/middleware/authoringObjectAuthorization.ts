@@ -61,6 +61,10 @@ function actionFromPath(path: string): AuthoringPermissionAction {
   // action in authoring-permissions.ts (2026-09-28).
   // A working copy is produced the same way and needs the same permission.
   if (/(?:^|\/)(?:export|file-to-vault|send-to-packager|working-copy)(?:\/|$)/.test(lower)) return 'export';
+  // The editor's Check reads the saved section and writes nothing (authoring.router.ts, POST
+  // /sections/:id/ai/deficiency-scan). As an `edit` it was refused on every frozen or approved document (demo walk
+  // 1.u4, 2026-11-12). Only this exact route: the section's other ai/ routes write.
+  if (/^\/sections\/[^/]+\/ai\/deficiency-scan$/.test(lower)) return 'view';
   return 'edit';
 }
 
