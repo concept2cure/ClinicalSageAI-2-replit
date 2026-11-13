@@ -26,11 +26,13 @@
  * pretends live cursors exist. No project/user → the component renders nothing
  * rather than joining with fabricated identity.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { apiCall, apiErrorText } from '../apiCall';
 import { getAuthToken } from '@/utils/authToken';
 import { useAuth } from '@/services/portal/authService';
+import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
+import { captureShellProjectGuard, useShellProject } from '../shellProject';
 
 interface RoomUser { userId: string; displayName?: string; email?: string; }
 interface SectionLock {
@@ -57,15 +59,46 @@ function initials(name: string): string {
   return name.split(/\s+/).map((x) => x[0]).join('').slice(0, 2).toUpperCase() || '·';
 }
 
-export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringCollabProps) {
+export function AuthoringCollab(props: AuthoringCollabProps) {
   const { user } = useAuth();
-  const userId = user?.email || null;
-  const displayName = user?.displayName || user?.email || '';
-  const projectId = (() => {
-    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
-    return p?.id != null ? String(p.id) : null;
-  })();
+  const session = useAuthoringReadSession(user);
+  const project = useShellProject();
+  const projectId = project?.id != null ? String(project.id) : null;
+  const visit = useRef({ current: captureShellProjectGuard(), key: 0 });
+  if (!visit.current.current()) visit.current = { current: captureShellProjectGuard(), key: visit.current.key + 1 };
+  const projectVisit = visit.current;
+  const scope = JSON.stringify([props.documentId, props.sectionId, projectId, projectVisit.key, session.actor, session.key, user?.email]);
+  const selected = useRef({ scope });
+  if (selected.current.scope !== scope) selected.current = { scope };
+  const owner = selected.current;
+  const current = useCallback(() => selected.current === owner && projectVisit.current() && session.sameRevision(),
+    [owner, projectVisit, session]);
+  if (!projectId || !user?.email || !session.sameRevision()) return null;
+  // A new editor target owns fresh presence, locks and takeover intent on its
+  // first render; an effect-only reset briefly left the previous intent live.
+  return <AuthoringCollabScope key={scope} {...props} projectId={projectId} userId={user.email}
+    ownsContext={current} sessionCurrent={session.sameRevision} />;
+}
 
+interface ScopedCollabProps extends AuthoringCollabProps {
+  projectId: string;
+  userId: string;
+  ownsContext: () => boolean;
+  sessionCurrent: () => boolean;
+}
+
+function AuthoringCollabScope({ documentId, sectionId, fireToast, projectId, userId, ownsContext, sessionCurrent }: ScopedCollabProps) {
+  const lifetime = useRef({ active: true });
+  useEffect(() => {
+    const owner = { active: true };
+    lifetime.current = owner;
+    return () => { owner.active = false; };
+  }, []);
+  const captureCurrent = useCallback(() => {
+    const owner = lifetime.current;
+    return () => owner.active && lifetime.current === owner && ownsContext();
+  }, [ownsContext]);
+  const lockRequest = useRef(0);
   const [peers, setPeers] = useState<RoomUser[]>([]);
   const [locks, setLocks] = useState<SectionLock[]>([]);
   const [joined, setJoined] = useState(false);
@@ -76,22 +109,25 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
   const sectionParam = sectionId ? `?sectionId=${encodeURIComponent(sectionId)}` : '';
 
   const loadLocks = useCallback(async () => {
-    const res = await apiCall<{ data?: SectionLock[] }>('GET', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`);
-    // Lock roster stays as-is on failure; actions report their own errors.
-    if (res.ok && Array.isArray(res.body?.data)) setLocks(res.body.data);
-  }, [documentId]);
+    const generation = ++lockRequest.current, owned = captureCurrent();
+    const current = () => owned() && generation === lockRequest.current;
+    const res = await apiCall<{ data?: SectionLock[] }>('GET', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`, undefined, current);
+    // Retired or older reads cannot replace the current target's lock roster.
+    if (res?.ok && Array.isArray(res.body?.data)) setLocks(res.body.data);
+  }, [documentId, captureCurrent]);
 
   // Join the section room; leave on unmount / section change. Without a
   // project or an authenticated identity there is nothing honest to join with.
   useEffect(() => {
     if (!projectId || !userId) { setJoined(false); setPeers([]); return; }
     let cancelled = false;
+    const current = captureCurrent();
     void (async () => {
       const res = await apiCall<{ success?: boolean; data?: { room?: { connectedUsers?: RoomUser[] } } }>(
         'POST', '/api/realtime-collab/rooms',
-        { documentId, projectId, sectionId: sectionId || undefined },
+        { documentId, projectId, sectionId: sectionId || undefined }, current,
       );
-      if (cancelled) return;
+      if (cancelled || !res) return;
       if (res.ok && res.body?.success) {
         setJoined(true);
         setPeers(Array.isArray(res.body.data?.room?.connectedUsers) ? res.body.data!.room!.connectedUsers! : []);
@@ -105,6 +141,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
       // Best-effort leave with keepalive so a navigation/tab-close actually
       // reaches the server (a plain fetch is usually cancelled mid-unload —
       // assessment D29). The server's idle sweep (90s TTL) is the backstop.
+      if (!sessionCurrent()) return;
       try {
         const token = getAuthToken();
         void fetch(`/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`, {
@@ -114,11 +151,10 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         }).catch(() => {});
       } catch {
-        void apiCall('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`);
+        void apiCall('DELETE', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/users/me${sectionParam}`, undefined, sessionCurrent);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documentId, sectionId, projectId, userId]);
+  }, [documentId, sectionId, projectId, userId, sectionParam, loadLocks, captureCurrent, sessionCurrent]);
 
   // Awareness heartbeat: while joined, periodically PUT our focus to the room's
   // awareness endpoint and adopt the SERVER's returned connectedUsers as the
@@ -132,16 +168,17 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
       // A hidden tab does not claim presence — the server's idle sweep then
       // ages it out honestly instead of a background tab looking "present".
       if (typeof document !== 'undefined' && document.hidden) return;
+      const current = captureCurrent();
       const res = await apiCall<{ connectedUsers?: RoomUser[]; roomKnown?: boolean }>(
         'PUT', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/awareness`,
-        { sectionId: sectionId || undefined, focusedField: sectionId || null, isTyping: false },
+        { sectionId: sectionId || undefined, focusedField: sectionId || null, isTyping: false }, current,
       );
       // Roster keeps its last server value on failure, and when the answering
       // server says it did not know the room (`roomKnown: false`, only sent on
       // its not-durable fallback). That empty list is not "nobody is here":
       // behind two API tasks it was the other task answering, and adopting it
       // made co-authors vanish on every other heartbeat (audit U16).
-      if (!cancelled && res.ok && res.body?.roomKnown !== false && Array.isArray(res.body?.connectedUsers)) {
+      if (!cancelled && res?.ok && res.body?.roomKnown !== false && Array.isArray(res.body?.connectedUsers)) {
         setPeers(res.body.connectedUsers);
       }
     };
@@ -152,7 +189,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     const onVis = () => { if (!document.hidden) void beat(); };
     document.addEventListener('visibilitychange', onVis);
     return () => { cancelled = true; clearInterval(t); document.removeEventListener('visibilitychange', onVis); };
-  }, [joined, userId, documentId, sectionId]);
+  }, [joined, userId, documentId, sectionId, captureCurrent]);
 
   const myLock = locks.find((l) => l.mine === true && (l.sectionId ?? null) === (sectionId ?? null));
   const otherLock = locks.find((l) => l.mine !== true && (l.sectionId ?? null) === (sectionId ?? null));
@@ -173,6 +210,8 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
   // No auto-disarm timer here any more: it would wipe a part-written reason.
 
   const takeover = useCallback(async () => {
+    const current = captureCurrent();
+    if (!current()) return;
     if (!confirmTakeover) { setConfirmTakeover(true); return; }
     if (!takeoverReasonOk) return;
     setConfirmTakeover(false);
@@ -180,14 +219,15 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
       documentId, sectionId: sectionId || undefined,
       lockType: 'section-edit', takeover: true,
       reason: takeoverReason.trim(),
-    });
+    }, current);
+    if (!res) return;
     if (!res.ok || !res.body?.success) {
       fireToast('Couldn’t take over the lock — ' + apiErrorText(res, `HTTP ${res.status}`) + '.', 'error');
       return;
     }
     fireToast('Lock taken over — the previous holder has been notified.');
     void loadLocks();
-  }, [confirmTakeover, takeoverReasonOk, takeoverReason, documentId, sectionId, loadLocks, fireToast]);
+  }, [confirmTakeover, takeoverReasonOk, takeoverReason, documentId, sectionId, loadLocks, fireToast, captureCurrent]);
 
   /** Minutes until a lock expires — the chip's honesty about staleness. */
   const expiresIn = (iso?: string): string => {
@@ -200,10 +240,12 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
 
   const acquire = useCallback(async () => {
     if (!userId) return;
+    const current = captureCurrent();
     const res = await apiCall<{ success?: boolean }>('POST', '/api/realtime-collab/locks', {
       documentId, sectionId: sectionId || undefined,
       lockType: 'section-edit', reason: 'Editing in the authoring canvas',
-    });
+    }, current);
+    if (!res) return;
     if (res.status === 409) {
       fireToast('Section is locked — ' + apiErrorText(res, 'another author holds the lock') + '.', 'error');
       void loadLocks();
@@ -215,17 +257,19 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     }
     fireToast('Section locked for your edit.');
     void loadLocks();
-  }, [documentId, sectionId, userId, loadLocks, fireToast]);
+  }, [documentId, sectionId, userId, loadLocks, fireToast, captureCurrent]);
 
   const release = useCallback(async () => {
     if (!userId) return;
+    const current = captureCurrent();
     const res = await apiCall<{ released?: boolean }>('DELETE', `/api/realtime-collab/locks/${encodeURIComponent(documentId)}`, {
       sectionId: sectionId || undefined,
-    });
+    }, current);
+    if (!res) return;
     if (!res.ok) { fireToast(apiErrorText(res, `Couldn’t release the lock (HTTP ${res.status}).`), 'error'); return; }
     fireToast(res.body?.released ? 'Lock released.' : 'No lock of yours to release.');
     void loadLocks();
-  }, [documentId, sectionId, userId, loadLocks, fireToast]);
+  }, [documentId, sectionId, userId, loadLocks, fireToast, captureCurrent]);
 
   if (!projectId || !userId) return null;
 

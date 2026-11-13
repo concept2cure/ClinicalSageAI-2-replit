@@ -4,6 +4,8 @@ import { liveGetOrNull } from '../dataConnect';
 import { useDialog } from '../useDialog';
 import { getSurfaceMeta } from '../registryModel';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { captureAuthoringSession, useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import {
   SURFACE_CTX, CL_MOD, CL_MOD_OPTIONS, CL_TYPE, CL_PRI, CL_PRI_LABEL, clModLabel,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
@@ -83,6 +85,7 @@ interface CollabLayerProps {
 
 interface ToastState {
   type: 'task' | 'msg';
+  scope: number;
   t?: C2CTask;
 }
 
@@ -126,7 +129,7 @@ function emit(): void {
   });
 }
 
-let ctx: C2CContext = {
+const emptyContext = (): C2CContext => ({
   surfaceId: 'home',
   surfaceLabel: 'Home',
   // No project until the shell reports one. This used to initialise to
@@ -139,7 +142,8 @@ let ctx: C2CContext = {
   entityId: null,
   entityLabel: null,
   moduleType: 'Regulatory',
-};
+});
+let ctx = emptyContext();
 
 /* ── Live org directory ──────────────────────────────────────────────────────
    These two lists used to be fixtures: TB_TEAM, a roster of seven invented
@@ -165,6 +169,23 @@ let team: Record<string, TeamMember> = {};
 let projects: ProjectEntry[] = [];
 let dirState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
 
+interface DirectoryScope { id: number; owner: ReturnType<typeof captureAuthoringSession>; blocked: boolean }
+let directoryScope: DirectoryScope | null = null;
+let directorySerial = 0;
+
+/** Retire cached intake state by the existing account/access guard, not bearer text. */
+function currentDirectoryScope(): DirectoryScope {
+  if (directoryScope?.owner.sameRevision()) return directoryScope;
+  const owner = captureAuthoringSession();
+  // One fenced owner for the whole adoption window; no render/read loop while
+  // the replacement session is still being verified by the auth service.
+  if (directoryScope?.blocked && !owner.sameRevision()) return directoryScope;
+  directoryScope = { id: ++directorySerial, owner, blocked: !owner.sameRevision() };
+  team = {}; projects = []; tasks = []; ctx = emptyContext(); dirState = 'idle';
+  return directoryScope;
+}
+const directoryCurrent = (scope: DirectoryScope) => scope === currentDirectoryScope() && scope.owner.sameRevision();
+
 interface AssigneeRow { id: string; name: string; label?: string }
 interface ProjectRow {
   id: number | string; name?: string; code?: string; projectType?: string; status?: string;
@@ -174,12 +195,14 @@ interface ProjectRow {
 
 /** Load the org directory once per session. Re-entrant-safe; emits on settle. */
 async function loadDirectory(): Promise<void> {
-  if (dirState === 'loading' || dirState === 'ready') return;
+  const scope = currentDirectoryScope();
+  if (!directoryCurrent(scope) || ['loading', 'ready'].includes(dirState)) return;
   dirState = 'loading';
   const [people, progs] = await Promise.all([
     liveGetOrNull<{ data?: AssigneeRow[] } | AssigneeRow[]>('/api/task-management/assignees'),
     liveGetOrNull<ProjectRow[]>('/api/projects'),
   ]);
+  if (!directoryCurrent(scope)) return;
 
   const peopleRows: AssigneeRow[] = Array.isArray(people.data)
     ? people.data
@@ -274,9 +297,9 @@ export const C2C = {
   /* Real org roster and programme list — see the note above. Exposed as getters
      so every existing `C2C.team` / `C2C.projects` read picks up the loaded
      directory without threading state through the components. */
-  get team(): Record<string, TeamMember> { return team; },
-  get projects(): ProjectEntry[] { return projects; },
-  get directoryState(): 'idle' | 'loading' | 'ready' | 'error' { return dirState; },
+  get team(): Record<string, TeamMember> { currentDirectoryScope(); return team; },
+  get projects(): ProjectEntry[] { currentDirectoryScope(); return projects; },
+  get directoryState(): 'idle' | 'loading' | 'ready' | 'error' { currentDirectoryScope(); return dirState; },
   loadDirectory,
   mod: CL_MOD,
 
@@ -284,6 +307,7 @@ export const C2C = {
     return CL_MOD[m] || MODULE_COLOR_UNKNOWN;
   },
   list(): C2CTask[] {
+    currentDirectoryScope();
     return tasks;
   },
   subscribe(fn: Subscriber): () => void {
@@ -312,6 +336,7 @@ export const C2C = {
   /* Surface context -- App calls this on every navigation; surfaces may
      refine it for entity-level granularity (a section, a case, a filing). */
   setSurface(id: string, label?: string): void {
+    currentDirectoryScope();
     const d = SURFACE_CTX[id] || SURFACE_CTX.home;
     ctx = {
       surfaceId: id,
@@ -325,6 +350,7 @@ export const C2C = {
     emit();
   },
   setContext(patch: Partial<C2CContext>): void {
+    currentDirectoryScope();
     ctx = { ...ctx, ...patch };
     emit();
   },
@@ -350,6 +376,7 @@ export const C2C = {
    * work and still win, they are just no longer the only writer.
    */
   getContext(): C2CContext {
+    currentDirectoryScope();
     const live: C2CContext = { ...ctx };
 
     try {
@@ -382,6 +409,7 @@ export const C2C = {
   },
 
   addTask(task: Partial<C2CTask> & Record<string, unknown>): C2CTask {
+    currentDirectoryScope();
     const id = (task.taskId as string) || ('C2C-TASK-' + (2300 + Math.floor(Math.random() * 699)));
     const t: C2CTask = {
       status: 'pending', progress: 0, comments: 0, attachments: 0,
@@ -412,6 +440,7 @@ export const C2C = {
     emit();
   },
   open(mode?: string, patch?: Partial<C2CContext>): void {
+    currentDirectoryScope();
     if (patch) ctx = { ...ctx, ...patch };
     window.dispatchEvent(new CustomEvent('c2c:open-collab', { detail: { mode: mode || 'task' } }));
   },
@@ -434,6 +463,7 @@ function clAvatar(id: string): string {
 /* ── Quick task -- unifiedTasks intake, context pre-filled ── */
 
 function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTaskProps) {
+  const [owner] = useState(captureAuthoringSession);
   // The open project, as the task project it is. `surfaceCtx.project` is the
   // shell's regulatory_programs UUID, never a projects.id, so it is resolved
   // against the loaded list (taskProjectFor) and not used as the value. With no
@@ -492,7 +522,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
    *     any the client can compute.
    */
   const create = async (another: boolean) => {
-    if (!f.title.trim() || saving) return;
+    if (!owner.sameRevision() || !f.title.trim() || saving) return;
     // A task belongs to a project. With projects to choose from and none
     // chosen, nothing is sent: the server would store it under no project.
     if (C2C.projects.length > 0 && !C2C.projects.some(p => p.id === f.project)) {
@@ -542,6 +572,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
     try {
       const res = await apiRequest('POST', '/api/tasks/tasks', body);
       const json = await res.json().catch(() => null);
+      if (!owner.sameRevision()) return;
       const serverTask = (json as { data?: Record<string, unknown> } | null)?.data;
       if (!res.ok || !serverTask?.taskId) {
         // `json.error` was read first and rendered as-is, so an envelope of the
@@ -581,6 +612,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
       onCreated?.(t);
       if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
     } catch (e) {
+      if (!owner.sameRevision()) return;
       // Only ApiRequestError carries an already-reduced message; anything else
       // is a browser-native throw ("Failed to fetch") that must not be shown.
       const known = (e as { name?: unknown })?.name === 'ApiRequestError';
@@ -590,7 +622,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           : 'Couldn’t reach the task service. Nothing was saved.',
       );
     } finally {
-      setSaving(false);
+      if (owner.sameRevision()) setSaving(false);
     }
   };
 
@@ -738,6 +770,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
 /* ── Collaborate -- post a message / @mention / route, optionally -> task ── */
 
 function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussProps) {
+  const [owner] = useState(captureAuthoringSession);
   /* No recipient until one is picked from the REAL roster.
      This initialised to `'sm'` — one of the retired TB_TEAM fixture short-ids
      ('jc' / 'mw' / 'sm' / …). Those keys no longer exist: `C2C.team` is keyed by
@@ -781,7 +814,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
      GET /api/task-management/assignees (see the loader above, `team[String(r.id)]`),
      so the picked key IS `recipientUserId`. */
   const send = async () => {
-    if (!body.trim() || sending || submitted.current) return;
+    if (!owner.sameRevision() || !body.trim() || sending || submitted.current) return;
     const recipientUserId = Number(to);
     if (!Number.isInteger(recipientUserId) || recipientUserId <= 0) {
       setSendErr('Pick who this goes to — a message with no recipient cannot be delivered.');
@@ -798,8 +831,10 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         sourceEntityType: surfaceCtx.entityType || undefined,
         sourceEntityId: (surfaceCtx.entityId || surfaceCtx.surfaceId || '').slice(0, 200) || undefined,
       });
+      if (!owner.sameRevision()) return;
       if (!res.ok) {
         const b = await res.json().catch(() => null);
+        if (!owner.sameRevision()) return;
         setSending(false);
         if (!knownRefusal(res.status)) {
           setDelivery('unknown');
@@ -815,6 +850,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       }
       setDelivery('confirmed');
     } catch (e) {
+      if (!owner.sameRevision()) return;
       setSending(false);
       if (e instanceof ApiRequestError && knownRefusal(e.status)) {
         submitted.current = false;
@@ -865,6 +901,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       try {
         const tres = await apiRequest('POST', '/api/tasks/tasks', taskBody);
         const tjson = await tres.json().catch(() => null);
+        if (!owner.sameRevision()) return;
         const serverTask = (tjson as { data?: Record<string, unknown> } | null)?.data;
         if (!tres.ok || !serverTask?.taskId) {
           setSending(false);
@@ -888,6 +925,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         });
         onCreated?.();
       } catch (e) {
+        if (!owner.sameRevision()) return;
         setSending(false);
         taskFailure(e instanceof ApiRequestError && (knownRefusal(e.status) || e.code === 'AUDIT_WRITE_FAILED'),
           e instanceof Error ? e.message : String(e));
@@ -1020,8 +1058,11 @@ function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
    Removed 2026-09-28; every entry it had is one click away in the header. ── */
 
 export function CollabLayer({ onNav }: CollabLayerProps) {
+  useAuthoringReadSession(authService.getUser());
+  const scope = currentDirectoryScope();
   const [, setTick] = useState(0);
   const [open, setOpen] = useState(false);
+  const [openScope, setOpenScope] = useState(0);
   const [tab, setTab] = useState('task');
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -1032,19 +1073,24 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   // needed by these forms. loadDirectory is re-entrant-safe and emits when it
   // settles, which re-renders through the subscription above.
   useEffect(() => {
-    if (open) void C2C.loadDirectory();
-  }, [open]);
+    if (open && openScope === scope.id) void C2C.loadDirectory();
+  }, [open, openScope, scope]);
 
   useEffect(() => {
+    const openCurrent = () => {
+      const current = currentDirectoryScope();
+      if (!current.owner.sameRevision()) return;
+      setOpenScope(current.id); setOpen(true);
+    };
     const openH = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       setTab((detail && detail.mode) || 'task');
-      setOpen(true);
+      openCurrent();
     };
     const keyH = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.shiftKey && e.key.toLowerCase() === 't') {
-        e.preventDefault(); setTab('task'); setOpen(true);
+        e.preventDefault(); setTab('task'); openCurrent();
       }
     };
     window.addEventListener('c2c:open-collab', openH);
@@ -1065,15 +1111,17 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   // Both callers report a task the server saved, so an open task board re-reads
   // (TaskBoard listens) instead of showing it only after a reload.
   const created = (t?: C2CTask) => {
-    setToast(t ? { type: 'task', t } : { type: 'msg' });
+    if (!directoryCurrent(scope)) return;
+    setToast(t ? { type: 'task', t, scope: scope.id } : { type: 'msg', scope: scope.id });
     try { window.dispatchEvent(new CustomEvent(TASK_SAVED_EVENT)); } catch { /* no window */ }
   };
 
   return (
     <>
       {/* the modal */}
-      {open && (
+      {open && openScope === scope.id && scope.owner.sameRevision() && (
         <CollabModal
+          key={scope.id}
           tab={tab}
           setTab={setTab}
           onClose={() => setOpen(false)}
@@ -1088,7 +1136,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
           the title (2026-10-31 client demo); it names the task and the
           assignee the server chose. The 'msg' toast follows "Send & assign",
           which saved its task too — it said "not saved to the org board yet". */}
-      {toast && (
+      {toast && toast.scope === scope.id && (
         <div className="cl-toast" role="status">
           <span className="cl-toast-ic">{I.check}</span>
           {toast.type === 'task' && toast.t
