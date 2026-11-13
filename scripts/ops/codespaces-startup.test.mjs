@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync, statSync, existsSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
 import { resolve, join } from 'node:path';
@@ -15,6 +15,60 @@ test('Codespaces shell hooks and startup script have valid bash syntax', () => {
     const run = spawnSync('bash', ['-n', file], { encoding: 'utf8' });
     assert.equal(run.status, 0, file + ': ' + run.stderr);
   }
+});
+
+function dependencyStart(state) {
+  const post = readFileSync(postStart, 'utf8');
+  const start = post.indexOf('echo "No database or AI secret is printed."');
+  const end = post.indexOf('\nc2c_blocked()', start);
+  assert.ok(start >= 0 && end > start, 'exercise the actual state preparation and dependency branch');
+  return spawnSync('bash', ['-c', `
+    set -u
+    C2C_CODESPACE_STATE="$C2C_TEST_STATE"
+    c2c_log() { printf '%s\\n' "$*"; }
+    c2c_deps_current() { return 1; }
+    pkill() { printf 'STOP_APP_CALLED\\n'; }
+    c2c_install_deps() { printf 'INSTALL_REACHED\\n'; }
+    ${post.slice(start, end)}
+  `], { cwd: root, env: { ...process.env, C2C_TEST_STATE: state }, encoding: 'utf8' });
+}
+
+test('post-start creates private state before redirecting its first dependency install', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-cold-start-'));
+  try {
+    const state = join(dir, 'new state');
+    const run = dependencyStart(state);
+    assert.equal(run.status, 0, run.stderr);
+    assert.ok(existsSync(join(state, 'npm-ci.log')), 'the first install reached its actual log redirection');
+    assert.match(readFileSync(join(state, 'npm-ci.log'), 'utf8'), /INSTALL_REACHED/);
+    assert.equal(statSync(state).mode & 0o777, 0o700);
+    assert.doesNotMatch(run.stdout + run.stderr, /BLOCKED|No such file or directory/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('post-start keeps existing state and restores its private directory permissions', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-existing-start-'));
+  try {
+    const state = join(dir, 'state'); mkdirSync(state); chmodSync(state, 0o755);
+    writeFileSync(join(state, 'retained-marker'), 'preserve-existing-state');
+    const run = dependencyStart(state);
+    assert.equal(run.status, 0, run.stderr);
+    assert.equal(readFileSync(join(state, 'retained-marker'), 'utf8'), 'preserve-existing-state');
+    assert.equal(statSync(state).mode & 0o777, 0o700);
+    assert.match(readFileSync(join(state, 'npm-ci.log'), 'utf8'), /INSTALL_REACHED/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('post-start holds before stopping or installing when private state cannot be prepared', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'c2c-blocked-start-'));
+  try {
+    const state = join(dir, 'not-a-directory'); writeFileSync(state, 'retained-file');
+    const run = dependencyStart(state);
+    assert.equal(run.status, 0, 'a blocked hook leaves the editor open');
+    assert.match(run.stdout, /BLOCKED: the private local state directory could not be prepared\./);
+    assert.doesNotMatch(run.stdout + run.stderr, /STOP_APP_CALLED|INSTALL_REACHED|Not a directory/);
+    assert.equal(readFileSync(state, 'utf8'), 'retained-file');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('sourcing Codespaces startup retains an injected Neon DSN, not .env or localhost', () => {

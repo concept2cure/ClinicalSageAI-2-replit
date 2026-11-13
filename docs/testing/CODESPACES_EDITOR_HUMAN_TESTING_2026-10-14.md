@@ -41,13 +41,15 @@ and limitations are recorded in the
 [regional template evidence](../evidence/D2-EDITOR-INTEGRATION/2026-10-14/global-biotech-templates/README.md)
 and [human-review evidence](../evidence/D2-WORKFLOW-CONTINUATION/2026-10-14/README.md).
 
-## Open a Codespace (updated 2026-11-06)
+## Open a Codespace (updated 2026-11-13)
 
 The Codespace now sets itself up. Opening one installs everything, creates a
 local PostgreSQL 16 database, seeds the demo projects and the CSR study, starts
 the app on port 5000 in development mode and opens it in your browser.
 
-1. **Add your model keys as Codespaces secrets, once.** On GitHub: your
+1. **For live AnA and search, add model keys as Codespaces secrets, once.**
+   The seeded projects, deterministic engines and three full synthetic Lumen
+   CSRs can be demonstrated without a model key. For live model calls, on GitHub: your
    repository → **Settings** → **Secrets and variables** → **Codespaces** →
    **New repository secret**. Add **both** keys:
    - `ANTHROPIC_API_KEY`: AnA drafts regulatory documents with an approved
@@ -60,8 +62,10 @@ the app on port 5000 in development mode and opens it in your browser.
    **Secrets**, and give the secret access to this repository.) A Codespace
    reads its secrets when it starts. After adding one, **stop and start** the
    Codespace (Codespaces menu → Stop Current Codespace, then open it again);
-   reloading the page is not enough. The start then restarts the app if the
-   running app had no key, and says what the app itself sees for AnA.
+   reloading the page is not enough. The start then restarts the app if a
+   supplied key is missing or changed in the running process, and says what
+   the app itself sees for AnA. A working provider key does not qualify a
+   model for regulatory approval, freezing or filing.
    Do **not** add a `DATABASE_URL` or any other database secret. This Codespace
    uses its own local database, and it does not pass such a secret to the app.
 2. **Create the Codespace on `concept2cure-v2`.** Repository page → **Code** →
@@ -74,21 +78,37 @@ the app on port 5000 in development mode and opens it in your browser.
    itself. If it does not, open **Ports** and click the globe beside port 5000.
    Keep the port **Private**. A restart takes a minute or two, and it applies
    any new migrations first.
-4. **Sign in.** On the sign-in page press **Demo access** (under **Dev only**).
-   It signs you in as `ana.author@concept2cure.pro`, the demo author, in the
-   organisation "Concept2Cure Therapeutics". Two more demo people exist for
-   reviews and approvals: `rhea.reviewer@concept2cure.pro` and
-   `ava.approver@concept2cure.pro`. Their password is `DEMO_SIGNER_PASSWORD`
-   in `~/.concept2cure-codespace/app.env`, in the Codespace's terminal:
-   `grep DEMO_SIGNER_PASSWORD ~/.concept2cure-codespace/app.env`.
-5. **See AnA draft a CSR.** **Projects** → **Xanomeline TTS Phase 2
+4. **Choose a demo person and sign in.** Under **Sign in as**, the sign-in page
+   lists ten people grouped by account: the Lumen lead, reviewer and approver,
+   then the development organisation's seven people. **Demo access** signs in
+   as the selected person. It defaults to **Lumen Lead** (or the configured
+   lead's name) in **Lumen Bioscience (demo)**. Choose **Lumen Reviewer** for
+   the three CSR reviews, **Cal CMC** for C2C-201's Module 3, or **Ana Author**
+   for the CDISC study and the diagnostic project. The demo people's password
+   is `DEMO_SIGNER_PASSWORD` in `~/.concept2cure-codespace/app.env`; it is used
+   for password sign-in and the actual signature ceremony.
+5. **Show the three full synthetic CSRs, with no model required.** As a Lumen
+   person, open **Projects** → **LMN-201**, **LMN-801** or **LMN-301** →
+   **Author**, then open its report in the one editor. Each has all 119 ICH E3
+   sections written, with results computed from its frozen synthetic source
+   and an explicit fictional-data banner. As **Lumen Reviewer**, **Tasks**
+   lists the three reviews. The scientific evidence check is a person's
+   action: the reports stop at review and are not pre-approved or filed.
+   The [three-CSR evidence](../evidence/DEMO/2026-11-12-three-completed-csrs/README.md)
+   and [existing sales run of show](../evidence/DEMO/2026-11-10-sales-showcase/README.md)
+   give the report names and the other demo scenes.
+6. **Optionally show live CSR drafting with a working provider key.** Choose
+   **Ana Author**, then **Projects** → **Xanomeline TTS Phase 2
    (CDISCPILOT01)** → **Author** in the project's steps → open **CDISCPILOT01
    Clinical Study Report**. In the editor, open **Build from the study's data**.
    The study's datasets are uploaded and approved in Vault, and its tables are
    frozen in the document. Press **Build CSR draft**. AnA drafts each section
-   with your key, and you review, edit and approve the sections in the same
-   editor. The Codespace never starts a build by itself, so it never spends
-   your key without you.
+   with your key, and you review and edit the sections in the same editor.
+   No model is yet qualified under the approved qualification protocol, so a
+   model-drafted CSR cannot be approved, frozen or filed; those release gates
+   remain enforced. The Codespace never starts a CSR build by itself. Its
+   startup diagnostic does make one small billable drafting probe when the
+   configured Anthropic key passes the model-list check, as described below.
 
 What the setup did, and where to look when something is wrong:
 
@@ -108,8 +128,9 @@ What the setup did, and where to look when something is wrong:
   `git pull --ff-only origin concept2cure-v2` and
   `bash .devcontainer/post-start.sh`. The start checks the running backend's
   public `/api/version` stamp against the checkout and restarts an older or
-  unverified backend. It also restarts when the running app lacks a key the
-  terminal has. A healthy backend already serving this commit is retained.
+  unverified backend. It also restarts when a supplied key is missing or
+  different in the running app. A healthy backend already serving this commit
+  with the same supplied keys is retained.
   To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
   A terminal opened before a secret was added does not hold that secret; stop and start the Codespace instead.
 - **Check it:** `set -a; . ~/.concept2cure-codespace/app.env; set +a; npm run codespaces:doctor -- --check-app --probe-anthropic`.

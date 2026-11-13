@@ -22,6 +22,13 @@ cd "$C2C_REPO_ROOT" || exit 0
 echo "C2C Codespace post-start. Branch: $(git branch --show-current 2>/dev/null || echo unknown)"
 echo "No database or AI secret is printed."
 
+# The first dependency log is opened before the installer runs. Prepare its
+# private parent even when an earlier post-create never reached state setup.
+install -d -m 700 "$C2C_CODESPACE_STATE" 2>/dev/null || {
+  c2c_log "BLOCKED: the private local state directory could not be prepared."
+  exit 0
+}
+
 # Dependencies first: a pull that changed package-lock.json since the last
 # install would otherwise start the app on the old tree.
 if ! c2c_deps_current; then
