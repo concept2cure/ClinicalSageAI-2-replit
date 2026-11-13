@@ -49,5 +49,15 @@
     "missingLinks": 0,
     "bashSyntax": "passed",
     "runtimeChanges": false
+  },
+  "finalCanonicalIntegration": {
+    "upstreamRevision": "255ad51f4",
+    "relativeLinksChecked": 92,
+    "missingLinks": 0,
+    "startupTestsPassed": 126,
+    "anaReplyTestsPassed": 47,
+    "testsFailed": 0,
+    "testsSkipped": 0,
+    "liveProviderCalls": 0
   }
 }
