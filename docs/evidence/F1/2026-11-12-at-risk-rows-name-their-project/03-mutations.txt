@@ -1,0 +1,42 @@
+M1 a finding names only its own project_id, not the projects among its affected items
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 11 passed (12)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > names every project a cr
+
+M2 the row opens its project by the number, not the program id
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  2 failed | 10 passed (12)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > opens the project from i
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > names every project a cr
+
+M3 a failed read of the project list is not said
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 11 passed (12)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > says a failed read of th
+
+M4 a card with no project number is keyed by position instead of being dropped
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  1 failed | 11 passed (12)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > does not make a card wit
+
+M5 the names are read before the person asks
+  file: client/src/concept2cure/v2/surfaces/ProjectsAtRisk.tsx
+  result: CAUGHT Tests  12 failed (12)
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > one click reads
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > an empty regist
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > lists the block
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > a failed read i
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: which projects are at risk this week, answered by the server (P-122 §3.2) > closes, and ask
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > reads the names from the
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > names the project of a f
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > opens the project from i
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > names every project a cr
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > gives a row whose projec
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > says a failed read of th
+    × client/src/concept2cure/v2/__tests__/p122ProjectsAtRisk.test.tsx > Projects: each at-risk row names its project and opens it (F1, 2026-11-12) > does not make a card wit
+
+M6 the card carries the program id text as project_id, not the anchor row number
+  file: server/services/c2c/project-portfolio.ts
+  result: CAUGHT Tests  1 failed | 4 passed (5)
+    × server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > carries the anchor project
+

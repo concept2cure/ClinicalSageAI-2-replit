@@ -1,0 +1,7 @@
+GET /api/investigator-brochure   (no project named)
+  -> 200  completeness 36  provisioned true  source cmc_module3_sections  availability {"product":true,"nonclinical":false,"clinical":false,"safety":false}
+  sections marked rendered: 0, 0a, 0b, 2, 3, 7
+GET /api/investigator-brochure?programId=66277053-752f-4806-8112-85be3e9d1aea   (C2C-101 named (a biologic with no Module 3 section of its own))
+  -> 200  completeness 36  provisioned true  source cmc_module3_sections  availability {"product":true,"nonclinical":false,"clinical":false,"safety":false}
+  sections marked rendered: 0, 0a, 0b, 2, 3, 7
+cmc_module3_sections rows by project: [Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)|21
