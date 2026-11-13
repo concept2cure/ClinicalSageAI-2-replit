@@ -15,9 +15,14 @@ capture preparation, while metadata-only messages lack that check. The final loc
 the current recipient after asynchronous preparation. A finished or stopped worker must not receive a new
 successful help/review message. Extend the same locked callback with its existing predicate; preserve active
 waiting/held workers, sender/source/private-capture checks, message limits and historical successful retries.
+Independent review also finds that the host retains a caller-owned message object across awaits. Snapshot its
+primitive fields, basis rows and model metadata at entry so the intent hash, private capture and locked event all
+describe the same original request. Production's current parsed caller supplies a fresh object; this repairs the
+host contract rather than claiming a demonstrated external exploit. Keep the same source/private-capture policy.
 The existing `run-coordination-dispositions.test.ts` is the actual PGlite regression home. Searches included peer,
 recipient, message, stopped/reported state and deleted run-control/agent-monitor homes; none supplies another
-current recipient-admission seam.
+current recipient-admission seam. The existing `turn-plan-and-context.test.ts` private-capture fixture may cover
+the prepared-text/append lifecycle and input-snapshot controls; it is named before any test edit.
 
 `server/services/submission-gateways/gateway-accounts.ts` owns encrypted account capture and the private WeakMap
 account fingerprint. `index.ts` rechecks that account after `archiveSentPackage` before handing it to the adapter,

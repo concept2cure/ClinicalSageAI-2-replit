@@ -1818,6 +1818,13 @@ Extend that same locked append, preserving existing sender/private-source/limit/
 `ana/__tests__/run-coordination-dispositions.test.ts` supplies the real PGlite fixture. Retired agent monitors and
 the deleted run-control registry supply no replacement admission boundary.
 
+Peer review follow-up, named before edits: the same agent may snapshot message input primitives, basis rows and
+model metadata before any preparation/append await, preserving one intent/capture/event identity even if an
+internal caller mutates its input object. Existing production parsed callers provide fresh objects; no external
+exploit is claimed. This remains inside `turn-plan.ts`'s message method and its existing coordinator regression
+home; the existing `turn-plan-and-context.test.ts` is also reserved for a private-text race/snapshot control if its
+fixture supports one without changing production source or policy elsewhere.
+
 `submission-gateways/gateway-accounts.ts` and `index.ts` already bind encrypted account authority across archive,
 but lack the roadmap's per-use credential event and fresh initiating-person check there. Reuse unchanged
 `part11/signing-authority-gate.ts` policy and `audit/audit-write-outcome.ts`; record actual account ID/last-change
