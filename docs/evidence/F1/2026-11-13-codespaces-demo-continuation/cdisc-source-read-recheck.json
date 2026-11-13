@@ -1,0 +1,14 @@
+{
+  "path": "/api/c2c/projects/ae6120f0-07ea-4756-ac7f-b14c43a1d3bd/sources?limit=200&offset=0",
+  "status": 200,
+  "responseKeys": [
+    "projectId",
+    "sources",
+    "unscoped",
+    "total",
+    "currentTotal",
+    "page",
+    "window",
+    "usageScope"
+  ]
+}

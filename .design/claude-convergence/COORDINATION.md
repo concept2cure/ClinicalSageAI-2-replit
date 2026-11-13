@@ -1696,3 +1696,8 @@ These holds end at **2026-11-13 22:00 UTC**, or earlier on the publication recei
 What already exists, the defect/repair boundaries and red-first checks are recorded in
 `docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`, dated 2026-11-13. No source file, mount, table, tool, model,
 screen or production dependency is added. Current model PQ, independent review, source and filing gates remain.
+### Canonical CDISC preparation handoff — 4b2ed1cba
+
+2026-11-13 F1 Codespaces continuation scoped hold: existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs` only for the reproduced eight-row Uploads preparation blocker. Root owns this repair; no product-screen changes.
+
+2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.
