@@ -718,9 +718,14 @@ describe('license-manager with real rows, under the per-user scope of the org th
         license.canAccessModule(ORG_MISSING, MOD.perp),
       ),
     ).toEqual({ allowed: false, reason: 'Organization not found' });
+    // Still a refusal, so a guard naming an id the catalog lacks never opens.
+    // `notCatalogued` is how the route gate tells a surface the catalog does not
+    // sell from an unlicensed module (2026-11-12); the missing ORGANISATION
+    // above carries no such flag, so the gate still refuses it.
     expect(await asLicensee(() => license.canAccessModule(ORG_LICENSE, 'dbta-no-such-module'))).toEqual({
       allowed: false,
       reason: "Module 'dbta-no-such-module' does not exist",
+      notCatalogued: true,
     });
   });
 

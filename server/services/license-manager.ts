@@ -449,7 +449,7 @@ export async function canAccessModule(
      */
     ignoreRevocation?: boolean;
   } = {},
-): Promise<{ allowed: boolean; reason?: string; heldThrough?: string }> {
+): Promise<{ allowed: boolean; reason?: string; heldThrough?: string; notCatalogued?: true }> {
   const access = await licenseForAccess(organizationId, moduleId);
   if ('denied' in access) return access.denied;
   const { license } = access;
@@ -472,7 +472,12 @@ export async function canAccessModule(
   );
 
   if (moduleResult.rows.length === 0) {
-    return { allowed: false, reason: `Module '${moduleId}' does not exist` };
+    // Still a refusal here: a guard naming a module the catalog lacks (a typo,
+    // a retired id) must not open. `notCatalogued` lets the route gate tell
+    // "the catalog does not sell this surface" from "not licensed": a shell
+    // surface such as project-home or conversation-thread claims API prefixes
+    // and has no catalog row (moduleEntitlementGate).
+    return { allowed: false, reason: `Module '${moduleId}' does not exist`, notCatalogued: true };
   }
 
   const row = moduleResult.rows[0];
