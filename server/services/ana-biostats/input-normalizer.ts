@@ -90,6 +90,13 @@ function phaseWarning(raw: unknown): InputWarning | null {
   return null;
 }
 
+/** A stated missing-data strategy as it is carried: trimmed, bounded, or absent. */
+function statedStrategy(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const text = raw.trim();
+  return text ? text.slice(0, 500) : undefined;
+}
+
 export class InputNormalizer {
 
   /**
@@ -146,8 +153,21 @@ export class InputNormalizer {
     if (!raw.allocationRatio) prefilled.push('allocationRatio');
 
     // Effect size validation
+    /* Not every design is sized on its effect size, and those that are not usually state it as zero.
+       A non-inferiority design is sized on (δ − Δ_NI) and most assume a true difference of 0; an
+       equivalence design is sized on its margin with the true difference taken as 0; an ROC design is
+       sized on its AUC and never reads the effect size (computation-engine.ts, in as many words).
+       Until 2026-11-12 "Effect size must be positive" refused all three here, in front of an engine
+       that sizes them — so the "Non-inferiority" and "ROC / AUC" worked examples answered a red
+       refusal on the Biostatistics screen. The margin, or the AUC, is still required below. */
+    const sizedOnSomethingElse =
+      (raw.studyType === 'non_inferiority' && Boolean(raw.nonInferiorityMargin)) ||
+      (raw.studyType === 'equivalence' && Boolean(raw.equivalenceMargin)) ||
+      raw.endpointType === 'auc_roc';
     if (raw.effectSize === undefined || raw.effectSize === null) {
-      if (raw.controlRate !== undefined && raw.treatmentRate !== undefined) {
+      if (sizedOnSomethingElse) {
+        prefilled.push('effectSize (not used: the design is sized on its margin or its AUC)');
+      } else if (raw.controlRate !== undefined && raw.treatmentRate !== undefined) {
         // Derive effect size from rates
         prefilled.push('effectSize (derived from rates)');
       } else if (raw.sensitivity !== undefined && raw.specificity !== undefined) {
@@ -156,7 +176,7 @@ export class InputNormalizer {
       } else {
         errors.push({ field: 'effectSize', message: 'Effect size is required. Provide directly or via controlRate/treatmentRate.', required: true });
       }
-    } else if (raw.effectSize <= 0) {
+    } else if (raw.effectSize <= 0 && !sizedOnSomethingElse) {
       errors.push({ field: 'effectSize', message: 'Effect size must be positive', required: true });
     }
 
@@ -215,6 +235,8 @@ export class InputNormalizer {
       multiplicityMethod: raw.multiplicityMethod,
       estimandStrategy: raw.estimandStrategy,
       missingDataMethod: raw.missingDataMethod,
+      // The design's own words for a strategy the engine does not model; never beside a modelled method.
+      missingDataStrategyStated: raw.missingDataMethod ? undefined : statedStrategy(raw.missingDataStrategyStated),
       expectedMissingRate: raw.expectedMissingRate,
       numberOfMeasurements: raw.numberOfMeasurements,
       compoundSymmetryRho: raw.compoundSymmetryRho,
@@ -269,7 +291,8 @@ export class InputNormalizer {
         break;
 
       case 'diagnostics_ivd':
-        if (!raw.sensitivity && !raw.specificity) {
+        // An ROC design is sized on its AUC; it has no sensitivity or specificity target to give.
+        if (raw.endpointType !== 'auc_roc' && !raw.sensitivity && !raw.specificity) {
           warnings.push({ field: 'sensitivity/specificity', message: 'Diagnostic studies typically require sensitivity and specificity targets' });
         }
         if (!raw.prevalence) {
@@ -298,7 +321,12 @@ export class InputNormalizer {
         break;
 
       case 'diagnostic_accuracy':
-        if (!raw.sensitivity && !raw.specificity) {
+        if (raw.endpointType === 'auc_roc') {
+          // The engine refuses this too, in its own words; saying it here names the field beside the inputs.
+          if (typeof raw.aucTarget !== 'number') {
+            errors.push({ field: 'aucTarget', message: 'An ROC / AUC design needs the expected AUC (aucTarget).', required: true });
+          }
+        } else if (!raw.sensitivity && !raw.specificity) {
           errors.push({ field: 'sensitivity/specificity', message: 'At least sensitivity or specificity target is required for diagnostic accuracy studies', required: true });
         }
         break;

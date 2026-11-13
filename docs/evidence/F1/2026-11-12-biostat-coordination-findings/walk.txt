@@ -1,0 +1,39 @@
+# The running app (npm run dev), a fresh browser context per width; Home -> the rail -> Biostatistics -> each worked-example chip.
+
+## BEFORE: trunk (7a0ca928aa)
+[before-chips 1440] Pivotal OS (survival)    sized; document 2087 chars
+[before-chips 1440] ORR (binary)             sized; document 2115 chars
+[before-chips 1440] Non-inferiority          REFUSED: The statistical engine did not size this design Effect size must be positive Try again
+[before-chips 1440] Diagnostic accuracy      sized; document 2587 chars
+[before-chips 1440] ROC / AUC                REFUSED: The statistical engine did not size this design Effect size must be positive At least sensitivity or specificity target is required for diagnostic accuracy studies Try ag
+[before-chips 1440] 2×2 crossover            sized; document 2594 chars
+[before-chips 390] Pivotal OS (survival)    sized; document 2087 chars
+[before-chips 390] ORR (binary)             sized; document 2115 chars
+[before-chips 390] Non-inferiority          REFUSED: The statistical engine did not size this design Effect size must be positive Try again
+[before-chips 390] Diagnostic accuracy      sized; document 2587 chars
+[before-chips 390] ROC / AUC                REFUSED: The statistical engine did not size this design Effect size must be positive At least sensitivity or specificity target is required for diagnostic accuracy studies Try ag
+[before-chips 390] 2×2 crossover            sized; document 2594 chars
+
+## AFTER: with the change
+[after-chips 1440] Pivotal OS (survival)    sized; document 2087 chars
+[after-chips 1440] ORR (binary)             sized; document 2115 chars
+[after-chips 1440] Non-inferiority          sized; document 1838 chars
+[after-chips 1440] Diagnostic accuracy      sized; document 2587 chars
+[after-chips 1440] ROC / AUC                sized; document 2660 chars
+[after-chips 1440] 2×2 crossover            sized; document 2594 chars
+[after-chips 390] Pivotal OS (survival)    sized; document 2087 chars
+[after-chips 390] ORR (binary)             sized; document 2115 chars
+[after-chips 390] Non-inferiority          sized; document 1838 chars
+[after-chips 390] Diagnostic accuracy      sized; document 2587 chars
+[after-chips 390] ROC / AUC                sized; document 2660 chars
+[after-chips 390] 2×2 crossover            sized; document 2594 chars
+
+## AFTER: 'ROC / AUC', Power 0.9, 'Design Assumption Note' -> its Recommendations
+[after-revise 1440] example: ["ROC / AUC"], power field: 0.9, document: Design Assumption Note
+[after-revise 1440]   <P> Revision recommended before proceeding. Key concerns:
+[after-revise 1440]   <UL> 1 item(s): ["Design fragility: The design is fragile. Small changes in assumptions could undermine study conclusions. Strongly recommend formal sensitivity analysis and contingency planning. Sensitivity to the effect size and the dropout rate was not assessed: the design could not be recomputed at 80% power."]
+[after-revise 390] example: ["ROC / AUC"], power field: 0.9, document: Design Assumption Note
+[after-revise 390]   <P> Revision recommended before proceeding. Key concerns:
+[after-revise 390]   <UL> 1 item(s): ["Design fragility: The design is fragile. Small changes in assumptions could undermine study conclusions. Strongly recommend formal sensitivity analysis and contingency planning. Sensitivity to the effect size and the dropout rate was not assessed: the design could not be recomputed at 80% power."]
+
+## BEFORE, the same steps on trunk: the example was refused, so there was no document to read (screenshots/before-roc-example-*.png).

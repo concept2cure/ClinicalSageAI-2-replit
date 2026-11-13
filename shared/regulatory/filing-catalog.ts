@@ -124,6 +124,11 @@ const PATHWAY_BY_ID: Record<string, string> = {
   eu_cta: 'cta', au_ctn: 'cta', ca_cta: 'cta', jp_ctn: 'cta', cn_cta: 'cta',
   us_nda: 'ctd', us_bla: 'bla', eu_maa: 'maa', jp_mkt_approval: 'jnda',
   us_nda_supp: 'ctd', us_bla_supp: 'bla',
+  /* 2026-11-12 (S12 sweep item 3): stated, where it was the New project wizard's
+     `|| 'ctd'` default. An accelerated approval application is the NDA/BLA dossier
+     (21 CFR 314 subpart H, 601 subpart E), and a rolling review is the same dossier
+     submitted in completed units; the registry gives both CTD M1–M5. */
+  us_accel_approval: 'ctd', us_rolling: 'ctd',
   us_dmf: 'dmf', us_anda: 'anda', us_505b2: '505b2', us_351k: 'biosimilar',
   ich_csr: 'csr', ich_clin_overview: 'ctd',
   us_513g: 'device', us_qsub: 'device', us_breakthrough_device: 'device', us_rfd: 'device',

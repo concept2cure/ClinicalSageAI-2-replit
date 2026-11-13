@@ -1,0 +1,30 @@
+ × statistical-review.test.ts > a fragile design names its sensitive parameters as a reader says them (T2-F8) > writes "sensitive to effect size, attrition rate", not the names as stored
+ ✓ statistical-review.test.ts > buildStatisticalReview > produces one row per element, in the review order, each traceable to codes
+ ✓ statistical-review.test.ts > buildStatisticalReview > a clean design reads low across the board with a low challenge likelihood
+ ✓ statistical-review.test.ts > buildStatisticalReview > routes each gate code to its element
+ ✓ statistical-review.test.ts > buildStatisticalReview > LOCF without sensitivity analyses is a high-risk missing-data row with the fix named
+ ✓ statistical-review.test.ts > buildStatisticalReview > interims with no spending function make the verdict high and name the element
+ ✓ statistical-review.test.ts > buildStatisticalReview > a design the engine cannot size is a high-risk sample-size row naming the blocking gap
+ ✓ statistical-review.test.ts > buildStatisticalReview > the engine judgment can only raise sample-size risk, never lower a gate finding
+ ✓ task-blueprint.test.ts > tasksFromAssessment > an adequate, robust, proceed judgment with no filing raises no tasks
+ ✓ task-blueprint.test.ts > tasksFromAssessment > an inadequate verdict raises a critical, critical-path revision task
+ ✓ task-blueprint.test.ts > tasksFromAssessment > escalate raises a review task naming the reasons
+ × task-blueprint.test.ts > tasksFromAssessment > fragility and a weak method fit each raise their own task
+ × task-blueprint.test.ts > tasksFromAssessment > names every sensitive parameter as a reader says it, in the order the engine gave
+ ✓ task-blueprint.test.ts > tasksFromAssessment > a blocking gap becomes a design-completion task even when nothing could be judged
+ ✓ task-blueprint.test.ts > tasksFromAssessment > a non-inferiority frame and planned interims raise their obligations
+ ✓ task-blueprint.test.ts > tasksFromAssessment > the filing checklist proposes only required/expected deliverables not already persisted
+ ✓ task-blueprint.test.ts > tasksFromAssessment > critical and major gate findings become tasks keyed by their code; minors do not
+ ✓ task-blueprint.test.ts > tasksFromAssessment > is deterministic and de-duplicated across re-runs
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'Single primary endpoint with a comple…' to contain 'Fragility index 82/100 (very fragile)…'
+Expected: "Fragility index 82/100 (very fragile) — sensitive to effect size, attrition rate."
+Received: "Single primary endpoint with a complete ICH E9(R1) estimand. Frame, control and structural design are specified and justified. Fragility index 82/100 (very fragile) — sensitive to effect_size, attrition_rate. Sized at 86 subjects for 90% power (Tw
+AssertionError: expected 'Run sensitivity scenarios on effect_s…' to be 'Run sensitivity scenarios on effect s…' // Object.is equality
+Expected: "Run sensitivity scenarios on effect size"
+Received: "Run sensitivity scenarios on effect_size"
+AssertionError: expected 'Run sensitivity scenarios on effect_s…' to be 'Run sensitivity scenarios on effect s…' // Object.is equality
+Expected: "Run sensitivity scenarios on effect size, attrition rate"
+Received: "Run sensitivity scenarios on effect_size, attrition_rate"
+ Test Files  2 failed (2)
+      Tests  3 failed | 15 passed (18)
