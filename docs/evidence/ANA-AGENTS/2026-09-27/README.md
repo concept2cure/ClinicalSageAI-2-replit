@@ -112,6 +112,13 @@ Real model PQ, provider latency, customer KMS and regulatory release acceptance 
 review or filing gate is bypassed. Source holds release with canonical publication of this entry; the final
 ordinary cached restart must compare the served version with that published SHA and preserve the same caches.
 
+**Canonical integration during publication:** the first normal push passes all existing hooks, including all
+89 CI lint gates (zero red), warning-count comparison and full TypeScript (zero errors), then Git refuses the
+ref update because another contributor published `1cddec661`. That disjoint self-service checkout repair is
+inspected and merged normally; its existing billing-control suite passes **13/13** at merged `73e798338`.
+Review finds no integration issue. The first refused update is retained as a failed publication attempt, not a
+successful push. Publication retries all normal hooks; no force push, hook bypass or baseline change is used.
+
 **Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
 but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
 plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`
