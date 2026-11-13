@@ -1,0 +1,280 @@
+TAP version 13
+# Subtest: a present Playwright package recovers missing browser through the actual shell preparation
+ok 1 - a present Playwright package recovers missing browser through the actual shell preparation
+  ---
+  duration_ms: 229.502736
+  type: 'test'
+  ...
+# Subtest: a failed browser repair skips preparation and recovers on the next start
+ok 2 - a failed browser repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 193.483937
+  type: 'test'
+  ...
+# Subtest: a present Playwright package recovers missing deps through the actual shell preparation
+ok 3 - a present Playwright package recovers missing deps through the actual shell preparation
+  ---
+  duration_ms: 157.64611
+  type: 'test'
+  ...
+# Subtest: a failed deps repair skips preparation and recovers on the next start
+ok 4 - a failed deps repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 210.989721
+  type: 'test'
+  ...
+# Subtest: healthy browser preparation and an already prepared restart install nothing
+ok 5 - healthy browser preparation and an already prepared restart install nothing
+  ---
+  duration_ms: 66.696531
+  type: 'test'
+  ...
+# Subtest: an installed wrong Playwright version is replaced by the existing exact pin
+ok 6 - an installed wrong Playwright version is replaced by the existing exact pin
+  ---
+  duration_ms: 78.272291
+  type: 'test'
+  ...
+# Subtest: a successful installer is followed by a real launch check before claiming preparation ready
+ok 7 - a successful installer is followed by a real launch check before claiming preparation ready
+  ---
+  duration_ms: 156.052387
+  type: 'test'
+  ...
+# Subtest: Neon owner + pooler runtime on the same database are eligible for a read-only check
+ok 8 - Neon owner + pooler runtime on the same database are eligible for a read-only check
+  ---
+  duration_ms: 2.002223
+  type: 'test'
+  ...
+# Subtest: Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime
+ok 9 - Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime
+  ---
+  duration_ms: 2.147131
+  type: 'test'
+  ...
+# Subtest: request-serving Codespaces fails closed on any inherited DB owner/maintenance secret
+ok 10 - request-serving Codespaces fails closed on any inherited DB owner/maintenance secret
+  ---
+  duration_ms: 0.632773
+  type: 'test'
+  ...
+# Subtest: a runtime-only Codespace can qualify without an owner credential in the API process
+ok 11 - a runtime-only Codespace can qualify without an owner credential in the API process
+  ---
+  duration_ms: 0.423787
+  type: 'test'
+  ...
+# Subtest: Neon connection errors are classified without returning credential-bearing messages
+ok 12 - Neon connection errors are classified without returning credential-bearing messages
+  ---
+  duration_ms: 0.274733
+  type: 'test'
+  ...
+# Subtest: read-only Neon PostgreSQL probe verifies hostname and refuses remote plaintext
+ok 13 - read-only Neon PostgreSQL probe verifies hostname and refuses remote plaintext
+  ---
+  duration_ms: 0.69741
+  type: 'test'
+  ...
+# Subtest: Codespaces startup reports missing or weak signing credentials before claiming readiness
+ok 14 - Codespaces startup reports missing or weak signing credentials before claiming readiness
+  ---
+  duration_ms: 2.200751
+  type: 'test'
+  ...
+# Subtest: Codespaces refuses a green database when tenant RLS is off or unset
+ok 15 - Codespaces refuses a green database when tenant RLS is off or unset
+  ---
+  duration_ms: 0.644961
+  type: 'test'
+  ...
+# Subtest: an app role must actually run RLS and must not own unforced RLS tables
+ok 16 - an app role must actually run RLS and must not own unforced RLS tables
+  ---
+  duration_ms: 0.562337
+  type: 'test'
+  ...
+# Subtest: OpenAI quota is distinct from a rate limit, auth failure or governance gate
+ok 17 - OpenAI quota is distinct from a rate limit, auth failure or governance gate
+  ---
+  duration_ms: 0.636738
+  type: 'test'
+  ...
+# Subtest: OpenAI auth probe is no-charge GET; billable POST requires explicit request
+ok 18 - OpenAI auth probe is no-charge GET; billable POST requires explicit request
+  ---
+  duration_ms: 0.793394
+  type: 'test'
+  ...
+# Subtest: Anthropic authentication checks models without a drafting or billable request
+ok 19 - Anthropic authentication checks models without a drafting or billable request
+  ---
+  duration_ms: 0.506522
+  type: 'test'
+  ...
+# Subtest: Anthropic missing or empty models never reports provider readiness
+ok 20 - Anthropic missing or empty models never reports provider readiness
+  ---
+  duration_ms: 0.209375
+  type: 'test'
+  ...
+# Subtest: Anthropic provider responses distinguish auth, policy, billing and rate limits
+ok 21 - Anthropic provider responses distinguish auth, policy, billing and rate limits
+  ---
+  duration_ms: 0.144728
+  type: 'test'
+  ...
+# Subtest: Anthropic model discovery is opt-in and is required only when requested
+ok 22 - Anthropic model discovery is opt-in and is required only when requested
+  ---
+  duration_ms: 0.401033
+  type: 'test'
+  ...
+# Subtest: missing key never triggers OpenAI request
+ok 23 - missing key never triggers OpenAI request
+  ---
+  duration_ms: 0.084858
+  type: 'test'
+  ...
+# Subtest: DB contract failures never imply readiness
+ok 24 - DB contract failures never imply readiness
+  ---
+  duration_ms: 0.201143
+  type: 'test'
+  ...
+# Subtest: overall startup cannot be marked ready on a missing DB even when OpenAI key exists
+ok 25 - overall startup cannot be marked ready on a missing DB even when OpenAI key exists
+  ---
+  duration_ms: 0.173441
+  type: 'test'
+  ...
+# Subtest: doctor does not probe external provider or application without explicit flags
+ok 26 - doctor does not probe external provider or application without explicit flags
+  ---
+  duration_ms: 0.325891
+  type: 'test'
+  ...
+# Subtest: a misleading 200 /readyz cannot qualify degraded, unseeded or incomplete app state
+ok 27 - a misleading 200 /readyz cannot qualify degraded, unseeded or incomplete app state
+  ---
+  duration_ms: 0.5778
+  type: 'test'
+  ...
+# Subtest: running app with simulated AnA is not accepted as real model readiness
+ok 28 - running app with simulated AnA is not accepted as real model readiness
+  ---
+  duration_ms: 0.236356
+  type: 'test'
+  ...
+# Subtest: Anthropic probe names which approved drafting versions the key can see, across pages
+ok 29 - Anthropic probe names which approved drafting versions the key can see, across pages
+  ---
+  duration_ms: 0.291188
+  type: 'test'
+  ...
+# Subtest: A working key that sees no approved drafting version is blocked, not passed
+ok 30 - A working key that sees no approved drafting version is blocked, not passed
+  ---
+  duration_ms: 0.274633
+  type: 'test'
+  ...
+# Subtest: --expect-anthropic-models reaches the Anthropic probe from the command line
+ok 31 - --expect-anthropic-models reaches the Anthropic probe from the command line
+  ---
+  duration_ms: 0.497649
+  type: 'test'
+  ...
+# Subtest: the drafting-call probe sends one small request the current API accepts, to the first approved model
+ok 32 - the drafting-call probe sends one small request the current API accepts, to the first approved model
+  ---
+  duration_ms: 0.614535
+  type: 'test'
+  ...
+# Subtest: an account with no credit is named as that, whatever the model list said
+ok 33 - an account with no credit is named as that, whatever the model list said
+  ---
+  duration_ms: 0.240362
+  type: 'test'
+  ...
+# Subtest: a model the account cannot use is tried no further than the approved list, and the result names which answered
+ok 34 - a model the account cannot use is tried no further than the approved list, and the result names which answered
+  ---
+  duration_ms: 0.253832
+  type: 'test'
+  ...
+# Subtest: no approved model answering is blocked as model access; a refused key and a rate limit keep their own codes
+ok 35 - no approved model answering is blocked as model access; a refused key and a rate limit keep their own codes
+  ---
+  duration_ms: 0.278969
+  type: 'test'
+  ...
+# Subtest: the drafting-call probe is opt-in, needs a key and a model list, and is required once asked for
+ok 36 - the drafting-call probe is opt-in, needs a key and a model list, and is required once asked for
+  ---
+  duration_ms: 0.384579
+  type: 'test'
+  ...
+# Subtest: Neon automation never silently clones the previous production/default branch
+ok 37 - Neon automation never silently clones the previous production/default branch
+  ---
+  duration_ms: 5.193756
+  type: 'test'
+  ...
+# Subtest: general C2C agent does not create a second untracked Neon PR branch
+ok 38 - general C2C agent does not create a second untracked Neon PR branch
+  ---
+  duration_ms: 0.772593
+  type: 'test'
+  ...
+# Subtest: Neon proof refuses reused branch and fails if cleanup could not delete its created ID
+ok 39 - Neon proof refuses reused branch and fails if cleanup could not delete its created ID
+  ---
+  duration_ms: 0.300612
+  type: 'test'
+  ...
+# Subtest: each PR preview validates an isolated branch and cleans its exact ID in the same run
+ok 40 - each PR preview validates an isolated branch and cleans its exact ID in the same run
+  ---
+  duration_ms: 0.386041
+  type: 'test'
+  ...
+# Subtest: enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint
+ok 41 - enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint
+  ---
+  duration_ms: 0.390337
+  type: 'test'
+  ...
+# Subtest: CI-created Neon branches are schema-only and expire if a runner or PR cleanup is lost
+ok 42 - CI-created Neon branches are schema-only and expire if a runner or PR cleanup is lost
+  ---
+  duration_ms: 0.56498
+  type: 'test'
+  ...
+# Subtest: Codespaces agent config has no committed production Neon parent or owner runtime secret
+ok 43 - Codespaces agent config has no committed production Neon parent or owner runtime secret
+  ---
+  duration_ms: 1.03028
+  type: 'test'
+  ...
+# Subtest: agent policy does not claim GPT automatically qualifies as a regulatory drafter
+ok 44 - agent policy does not claim GPT automatically qualifies as a regulatory drafter
+  ---
+  duration_ms: 0.329326
+  type: 'test'
+  ...
+# Subtest: Codespaces keeps real tenant isolation on without permitting owner credentials
+ok 45 - Codespaces keeps real tenant isolation on without permitting owner credentials
+  ---
+  duration_ms: 2.354493
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1172.895255
