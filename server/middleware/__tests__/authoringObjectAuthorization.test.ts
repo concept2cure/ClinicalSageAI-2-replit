@@ -356,6 +356,37 @@ describe('mandatory authoring object authorization middleware', () => {
     },
   );
 
+  /* Demo walk 1.u4 (2026-11-12). The editor's Check (POST /sections/:id/ai/deficiency-scan) reads the saved
+     section and the document's figures and writes nothing. It fell through to `edit`, so on a FROZEN or APPROVED
+     document, the one a reviewer most wants checked, it answered 409 "Document status FROZEN does not permit this
+     action." It is a read: any status, and any grant that may view the document. */
+  it.each(['FROZEN', 'APPROVED'])('lets the editor Check a section of a %s document', async status => {
+    for (const role of ['OWNER', 'AUTHOR', 'REVIEWER', 'VIEWER']) {
+      installQueryBehavior({ status, roles: [role] });
+      const next = vi.fn();
+      const res = response();
+      await authoringObjectAuthorization(
+        request({ method: 'POST', path: `/authoring/sections/${SECTION_ID}/ai/deficiency-scan`, user: author }),
+        res,
+        next,
+      );
+      expect(next, `${role} refused Check on a ${status} document (${res.statusCode})`).toHaveBeenCalledOnce();
+    }
+  });
+
+  it('still refuses Check to a same-tenant member with no grant on the document', async () => {
+    installQueryBehavior({ status: 'FROZEN', roles: [] });
+    const next = vi.fn();
+    const res = response();
+    await authoringObjectAuthorization(
+      request({ method: 'POST', path: `/authoring/sections/${SECTION_ID}/ai/deficiency-scan`, user: author }),
+      res,
+      next,
+    );
+    expect(next).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(403);
+  });
+
   it('blocks content mutation after the document becomes immutable', async () => {
     installQueryBehavior({ status: 'APPROVED', roles: ['OWNER', 'AUTHOR'] });
     const req = request({

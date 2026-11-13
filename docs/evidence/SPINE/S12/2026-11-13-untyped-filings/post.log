@@ -1,0 +1,10 @@
+== qms_dmr sent as nda at FDA
+{"error":"FILING_NOT_OFFERED","message":"Not offered: Device Master Record (DMR) is a quality system record, not a filing, so no project is created from it."}
+HTTP 422
+== eu_variation_ii sent as maa at EMA
+{"error":"FILING_NOT_OFFERED","message":"Not offered: no project type is stated for Type II Variation (Major), so no project is created from it."}
+HTTP 422
+== us_ctd_m1_regional sent as nda at FDA
+{"error":"FILING_NOT_OFFERED","message":"Not offered as its own project: CTD Module 1 — US Regional is a module of an application's dossier, so it is written in that application's project."}
+HTTP 422
+projects before 50 after 50

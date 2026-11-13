@@ -1,0 +1,26 @@
+signed in: true
+market-support reads: 2 statuses 200,200 empty type asked: false
+
+== search "Device Master Record"
+ offered tiles: []
+ not offered: Not offered 1 Device Master Record (DMR) · FDA. Not offered: Device Master Record (DMR) is a quality system record, not a filing, so no project is created from it. Cross-Cutting Documents Reference details for Device Master Record (DMR)
+
+== search "us_ctd_m1_regional"
+ offered tiles: []
+ not offered: Not offered 1 CTD Module 1 — US Regional · FDA. Not offered as its own project: CTD Module 1 — US Regional is a module of an application's dossier, so it is written in that application's project. Cross-Cutting Documents Reference details for CTD Module 1 — US Regional
+
+== search "Type II Variation"
+ offered tiles: []
+ not offered: Not offered 1 Type II Variation (Major) · EMA. Not offered: no project type is stated for Type II Variation (Major), so no project is created from it. Pharma & Biotech Reference details for Type II Variation (Major)
+
+== search "SUPAC"
+ offered tiles: ["SUPAC Supplement"]
+ not offered: (no not-offered section)
+
+== search "Conditional Marketing"
+ offered tiles: ["Conditional Marketing Authorisation"]
+ not offered: (no not-offered section)
+
+== search "Accelerated Approval"
+ offered tiles: ["Accelerated Approval Application","Post-Marketing Requirement (PMR) / PMC"]
+ not offered: (no not-offered section)
