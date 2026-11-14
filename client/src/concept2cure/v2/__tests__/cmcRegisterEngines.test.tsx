@@ -64,6 +64,23 @@ describe('the impurity register says what each impurity is against its guideline
     expect(screen.getByText('Not assessed: No maximum daily dose is recorded.')).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'Against the guideline' })).toBeTruthy();
   });
+
+  /* Found by another lane's suite: a mock answered this read with an object,
+     `read.data ?? []` kept it, and `.map` threw out of the memo (every test
+     green, the run exits 1). A payload that is not a list is a failed read,
+     and never "not assessed" on every row. */
+  it('treats an assessments payload that is not a list as a failed read, not an empty register', async () => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url.startsWith('/api/cmc/impurity-profiles/assessment')) return res({ success: true, data: { rows: [] } });
+      if (url.startsWith('/api/cmc/impurity-profiles')) {
+        return res({ success: true, data: [{ id: 1, impurityName: 'Impurity A', materialName: 'C2C-201', scope: 'drug_substance', impurityType: 'process-related', status: 'draft' }] });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmImpurityProfiles />);
+    expect(await screen.findByText('The assessments read did not return a list of impurities.')).toBeTruthy();
+    expect(screen.queryByText('not assessed')).toBeNull();
+  });
 });
 
 describe('two recorded dissolution profiles can be compared', () => {

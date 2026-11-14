@@ -56,6 +56,42 @@ describe('§3.2.R.1.US for an IND', () => {
   });
 });
 
+/* 21 CFR 312.23(a)(7)(iv)(a) and (b) ask for each manufacturer separately.
+   One row used to name the first site found on any source for both, and
+   cross-reference both sections whichever half was recorded. */
+describe('§3.2.R.1.US names each manufacturer from its own record', () => {
+  const substance = (payload: Record<string, unknown>) =>
+    ({ id: 'ds-1', sourceType: 'drug_substance', sourceKey: 'drug_substance:1', sourceHash: 'h0', sourcePayload: { name: 'BX-701', ...payload } }) as any;
+  const row = (rows: ReturnType<typeof usIndRegionalRows>, side: string) => rows.find((r) => r.item.startsWith(side))!;
+
+  it('a substance made at one site and a product at another are two rows, each with its own', () => {
+    const rows = usIndRegionalRows([substance({ manufacturer: 'API Works GmbH', manufacturingSite: 'Visp, Switzerland' }), ...SOURCES]);
+    expect(row(rows, 'Drug substance').item).toBe('Drug substance manufacturer name and address — API Works GmbH, Visp, Switzerland');
+    expect(row(rows, 'Drug substance').status).toEqual({ kind: 'cross-referenced', section: '3.2.S.2.1' });
+    expect(row(rows, 'Drug substance').basis).toBe('21 CFR 312.23(a)(7)(iv)(a)');
+    expect(row(rows, 'Drug product').item).toBe('Drug product manufacturer name and address — Contract Pharma, Raleigh NC');
+    expect(row(rows, 'Drug product').status).toEqual({ kind: 'cross-referenced', section: '3.2.P.3.1' });
+    expect(row(rows, 'Drug product').recordRequirementId).toBe('fda-req-004');
+  });
+
+  it('the product’s site does not stand in for a substance manufacturer nobody recorded', () => {
+    const rows = usIndRegionalRows(SOURCES);
+    expect(row(rows, 'Drug substance').item).toBe('Drug substance manufacturer name and address');
+    expect(row(rows, 'Drug substance').status).toEqual({ kind: 'not-recorded' });
+    expect(row(rows, 'Drug product').status).toEqual({ kind: 'cross-referenced', section: '3.2.P.3.1' });
+  });
+
+  it('§3.2.S.2 carries the manufacturer and site the leaf cross-references', async () => {
+    const { composeModule3FromCanonicalSources } = await import('../../module3Composer');
+    const s2 = composeModule3FromCanonicalSources([substance({ manufacturer: 'API Works GmbH', manufacturingSite: 'Visp, Switzerland' })] as never)
+      .find((s) => s.sectionKey === '3.2.S.2')!;
+    expect(s2.tables.find((t) => t.title === 'Manufacturer(s)')?.rows).toEqual([
+      ['Manufacturer', 'API Works GmbH'],
+      ['Manufacturing Site', 'Visp, Switzerland'],
+    ]);
+  });
+});
+
 describe('§3.2.R.1.US for a marketing application is unchanged', () => {
   it('an NDA keeps the marketing obligations', () => {
     const [nda] = composeRegional(SOURCES, 'US', { applicationType: 'nda' });
