@@ -1,0 +1,12 @@
+# Rail order, red: the tests as changed, against trunk's registryModel.ts (RAIL_CORE: CMC, then Biostatistics).
+ × shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order
+ × shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading
+ × cmdkPlaces.test.tsx > ⌘K: places, the open project's steps, and features already shown > "Go to" lists the places, in the rail's order
+ × registryModel.test.ts > ui-v2 registry model ↔ shared registry parity > CMC / Module 3 is a launch app, reachable, and a rail place beside Quality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'Home', 'Projects', 'Tasks', …(8) ] to deeply equal [ 'Home', 'Projects', 'Tasks', …(8) ]
+AssertionError: Biostatistics opens the work areas: expected 'cmc' to be 'biostatistics' // Object.is equality
+AssertionError: expected [ 'Home', 'Projects', 'Tasks', …(8) ] to deeply equal [ 'Home', 'Projects', 'Tasks', …(8) ]
+AssertionError: expected [ 'CMC / Module 3', …(4) ] to deeply equal [ 'Biostatistics', …(4) ]
+ Test Files  3 failed (3)
+      Tests  4 failed | 85 passed (89)

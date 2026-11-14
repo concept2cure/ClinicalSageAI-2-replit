@@ -1,0 +1,16 @@
+# Finding 60, red: the test as written, against the normalizer on trunk (6853cb4ce9).
+ × the normalized effect size of a binary design with both rates > is the difference between the rates, not a stated figure that disagrees with them
+ × the normalized effect size of a binary design with both rates > says so, naming both figures, when the stated effect size disagrees
+ × the normalized effect size of a binary design with both rates > carries no float noise: 0.30 − 0.08 is 0.22, not 0.21999999999999997
+ ✓ the normalized effect size of a binary design with both rates > raises no warning when the stated effect size is the difference
+ × the normalized effect size of a binary design with both rates > refuses a superiority design whose rates are equal: there is no difference to size on
+ ✓ the normalized effect size of a binary design with both rates > leaves a non-binary design’s stated effect size alone
+ × the Sample Size Rationale states the difference the study was sized on > prints 0.22 in the assumptions, the scenarios and the sensitivity line — and 0.47 nowhere
+ ✓ the Sample Size Rationale states the difference the study was sized on > sizes the same study whether the stale figure is stated or not
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 0.47 to be 0.22 // Object.is equality
+AssertionError: expected 0.21999999999999997 to be 0.22 // Object.is equality
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected '# Sample Size Rationale\n\n## Study C…' to match /\| Effect size \| 0\.22 \|/
+ Test Files  1 failed (1)
+      Tests  5 failed | 3 passed (8)

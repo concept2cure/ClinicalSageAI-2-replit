@@ -164,7 +164,27 @@ export class InputNormalizer {
       (raw.studyType === 'non_inferiority' && Boolean(raw.nonInferiorityMargin)) ||
       (raw.studyType === 'equivalence' && Boolean(raw.equivalenceMargin)) ||
       raw.endpointType === 'auc_roc';
-    if (raw.effectSize === undefined || raw.effectSize === null) {
+    /* A binary design that gives both rates is sized on their difference: the engine's test reads the
+       two rates and never the stated effect size (computation-engine.ts, binaryRates). Until
+       2026-11-13 a stated effect size was kept beside them, so a design re-rated from 0.55 to 0.30
+       was sized on 0.22 and documented as "Effect size 0.47" in the assumptions, the scenarios and the
+       sensitivity line (S12 biotech sweep, finding 60). The figure every reader sees is now the one
+       the study was sized on, and a stated figure that disagrees is named. */
+    const fromRates = this.binaryRatesDifference(raw);
+    if (fromRates !== undefined) {
+      if (raw.effectSize === undefined || raw.effectSize === null) {
+        prefilled.push('effectSize (derived from rates)');
+      } else if (Math.abs(raw.effectSize - fromRates) > 1e-9) {
+        warnings.push({
+          field: 'effectSize',
+          message: `The stated effect size ${raw.effectSize} is not the difference between the rates (${raw.treatmentRate} − ${raw.controlRate} = ${fromRates}). The design is sized, judged and documented on ${fromRates}.`,
+          suggestion: 'Correct the stated effect size or the rates so they agree.',
+        });
+      }
+      if (fromRates <= 0 && !sizedOnSomethingElse) {
+        errors.push({ field: 'effectSize', message: 'The control and treatment rates are equal, so there is no difference to size the study on.', required: true });
+      }
+    } else if (raw.effectSize === undefined || raw.effectSize === null) {
       if (sizedOnSomethingElse) {
         prefilled.push('effectSize (not used: the design is sized on its margin or its AUC)');
       } else if (raw.controlRate !== undefined && raw.treatmentRate !== undefined) {
@@ -203,7 +223,7 @@ export class InputNormalizer {
       endpointType: raw.endpointType as EndpointType ?? 'continuous',
       alpha,
       powerTarget,
-      effectSize: raw.effectSize ?? this.deriveEffectSize(raw),
+      effectSize: fromRates ?? raw.effectSize ?? this.deriveEffectSize(raw),
       variance: raw.variance,
       eventRate: raw.eventRate,
       controlRate: raw.controlRate,
@@ -254,9 +274,18 @@ export class InputNormalizer {
     };
   }
 
+  /** |p_T − p_C| for a binary design that gives both rates, to six decimals (0.30 − 0.08 is 0.22, not
+   *  0.21999999999999997 — the rounding design-adapter.ts applies to the same difference). */
+  private binaryRatesDifference(raw: Partial<StatisticalInput>): number | undefined {
+    const { controlRate: c, treatmentRate: t } = raw;
+    if (raw.endpointType !== 'binary' || typeof c !== 'number' || typeof t !== 'number') return undefined;
+    if (!Number.isFinite(c) || !Number.isFinite(t)) return undefined;
+    return Number(Math.abs(t - c).toFixed(6));
+  }
+
   private deriveEffectSize(raw: Partial<StatisticalInput>): number {
     if (raw.controlRate !== undefined && raw.treatmentRate !== undefined) {
-      return Math.abs(raw.treatmentRate - raw.controlRate);
+      return Number(Math.abs(raw.treatmentRate - raw.controlRate).toFixed(6));
     }
     if (raw.sensitivity !== undefined && raw.specificity !== undefined) {
       // For diagnostic studies, use sensitivity as the primary metric target

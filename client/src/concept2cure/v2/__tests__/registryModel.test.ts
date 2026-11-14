@@ -175,12 +175,14 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     // from the project (RULE 4, P-79) until the founder, 2026-11-06: "Our core
     // modules are … CMC, biostatistics, RBM … the left rail should be a navigation
     // point for all of those entry points" (one-product-baseline founderDecisions).
+    // Biostatistics opens the work areas, directly above CMC: the founder, 2026-11-14 (P-132), "place on left
+    // rail above cmc". Until then CMC opened them and Biostatistics followed it.
     const workAreas = RAIL_CORE.filter((s) => (s as { group?: string }).group === 'work-areas').map((s) => s.id);
-    expect(workAreas[0], 'CMC opens the work areas').toBe('cmc');
-    expect(workAreas.indexOf('quality'), 'Quality is in the work areas beside CMC').toBeGreaterThan(0);
+    expect(workAreas[0], 'Biostatistics opens the work areas').toBe('biostatistics');
+    expect(workAreas.indexOf('cmc'), 'CMC is directly below Biostatistics').toBe(workAreas.indexOf('biostatistics') + 1);
+    expect(workAreas.indexOf('quality'), 'Quality is in the work areas below CMC').toBeGreaterThan(workAreas.indexOf('cmc'));
     expect(NAV_HIDDEN.has('cmc')).toBe(false);
     expect(getSurface('cmc')).toBeDefined();
-    expect(workAreas.indexOf('biostatistics'), 'Biostatistics is a work area on the rail, after CMC').toBe(workAreas.indexOf('cmc') + 1);
     expect(isLaunchSurface('biostatistics'), 'Biostatistics stays in the launch catalog').toBe(true);
   });
 

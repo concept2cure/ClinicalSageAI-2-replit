@@ -553,8 +553,9 @@ licensed equivalent.
 **Sidebar.** The sidebar is collapsible and holds, in order:
 1. the brand and the primary "New conversation" action;
 2. the places: Home, Projects, Tasks, Communication, Vault and Submission Center;
-3. the work areas: CMC / Module 3, Risk-based monitoring, Quality, Reporting & analytics (Biostatistics is reached
-   from the project, §1a; RULE 4 admits no new rail entry);
+3. the work areas: Biostatistics, CMC / Module 3, Risk-based monitoring, Quality, Reporting & analytics.
+   Biostatistics joined the rail by the founder's words of 2026-11-06, confirmed by P-107. It opens the work areas,
+   directly above CMC, by P-132 (2026-11-14);
 4. Recents: recent conversations and projects, as Claude lists them;
 5. the account, at the bottom.
 

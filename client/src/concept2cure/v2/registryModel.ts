@@ -154,7 +154,8 @@ export const NAV_GROUP_OF: Record<string, string> = {
  * Risk-based monitoring and Biostatistics are work areas by the founder's model. Biostatistics joined the rail on
  * 2026-11-06, by the founder: "Our core modules are project management, Vault, CMC, biostatistics, RBM, submission
  * center, tasking, and collaboration, and reporting … the left rail should be a navigation point for all of those
- * entry points" (recorded in scripts/ci/one-product-baseline.json founderDecisions).
+ * entry points" (recorded in scripts/ci/one-product-baseline.json founderDecisions). It opens the work areas, above
+ * CMC, by the founder's decision of 2026-11-14 (P-132, docs/LAUNCH_DEFINITION_OF_DONE.md).
  *
  * `target` is the screen an entry opens when it is not its own id. `applies`
  * is a screen action the entry asks of that screen as it opens it, through the
@@ -177,8 +178,9 @@ export const RAIL_CORE = [
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
-  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
+  // Biostatistics opens the work areas, directly above CMC: the founder, 2026-11-14 (P-132), "place on left rail above cmc".
   { id: 'biostatistics', label: 'Biostatistics', icon: 'sigma', group: 'work-areas' as const },
+  { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'activity', group: 'work-areas' as const },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart', group: 'work-areas' as const },

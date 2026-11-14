@@ -3526,3 +3526,34 @@ separate decision under the working agreement.
 briefing), and each producing area's own package. The rail entry in `registryModel.ts` is in no scoped package and
 is carried by R1.
 
+
+### P-132 — Biostatistics opens the rail's work areas, directly above CMC
+
+**The founder's words, 2026-11-14** (to the Biostatistics session `01KiDof7…`):
+
+> "Continue expanding biostatistics- also place on left rail above cmc"
+
+**What was already decided, and is already true.** Biostatistics is a rail entry: the founder's words of 2026-11-06
+(`scripts/ci/one-product-baseline.json` `founderDecisions["rail:biostatistics"]`), confirmed by P-107 item 1. It sat
+in the work areas directly below CMC / Module 3, which had opened them since the founder's decision of 2026-10-22
+("add QS to the left rail next to CMC, Vault, Tasking").
+
+**What this decides.** In the rail's work areas, Biostatistics comes first and CMC / Module 3 directly below it. The
+order of the work areas is Biostatistics, CMC / Module 3, Risk-based monitoring, Quality, Reporting & analytics. ⌘K's
+"Go to" follows the rail's order, as it already does.
+
+**Readings this session made. Each is reversible by the founder.**
+
+- "Above cmc" is read as directly above it: Biostatistics moves up one place and nothing else in the rail moves.
+- "Continue expanding biostatistics" is read as continuing the open Biostatistics work inside the plan (S3, D5, F1,
+  P-101). It decides nothing about new screens, tables, routes or tools.
+
+**Unchanged.** The rail's entries: none is added or removed, so `one-product-baseline.json` is unchanged. Biostatistics'
+door stays project-scoped. The project's own document start and "Start work in this project" are not reordered by
+this decision. P-28's composition boundary and CMC's professional-tier licensing are untouched.
+
+**Plan text.** `docs/design/ONE_DESIGN_PLAN.md` §2's sidebar paragraph listed the work areas without Biostatistics and
+said it "is reached from the project, §1a; RULE 4 admits no new rail entry". That had been out of date since
+2026-11-06. It now lists the work areas in this order.
+
+**Packages.** The rail entry in `registryModel.ts` is in no scoped package and is carried by R1, as P-131 records.

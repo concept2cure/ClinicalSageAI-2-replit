@@ -1,0 +1,10 @@
+[rail 1440] New conversation · Search · Home · Projects · Tasks · Communication · Vault · Submission Center · Biostatistics · CMC / Module 3 · Risk-based monitoring · Quality · Reporting & analytics · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)
+[rail 1440] Biostatistics directly above CMC: true
+[rail 390] New conversation · Search · Home · Projects · Tasks · Communication · Vault · Submission Center · Biostatistics · CMC / Module 3 · Risk-based monitoring · Quality · Reporting & analytics · [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)
+[rail 390] Biostatistics directly above CMC: true
+[bio] page title: Biostatistics
+[bio 60] Delta rate with 0.08/0.55: 0.47; after treatment 0.30: 0.22; read-only: true
+[bio 60] sample size document states "| Effect size | 0.22": true; states 0.47 anywhere: false
+[bio 64] says "No interim efficacy analysis is planned": true; prints 50%: false; prints a boundary (±): false; Stopping Rules section: false
+[calc 67] table cells: 117; a JSON cell: false; float noise (0.0250000000000000 or 0.97500000000000): false
+[calc 67] "Type I error": true; "Type IError": false; "Characteristics · Per look": true

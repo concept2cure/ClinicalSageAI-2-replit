@@ -123,8 +123,8 @@ const tableLabels = (): string[] =>
     .map((d) => (d.firstChild?.nodeType === 3 ? (d.textContent ?? '') : ''))
     .filter((t) => t && t.length < 60);
 
-/** Every table cell, as rendered. Cells carry the raw value (String(v)), not
- *  the six-decimal `fmt` the scalar rows use. */
+/** Every table cell, as rendered. Cells carry the engine's value to fifteen significant digits
+ *  (engineResultCellText), not the six-decimal `fmt` the scalar rows use. */
 const cellTexts = (): string[] =>
   Array.from(document.querySelectorAll('td.mono')).map((t) => t.textContent ?? '');
 
@@ -133,8 +133,9 @@ describe('the two-arm RMST result', () => {
     await computeTwoArmRmst();
 
     const labels = tableLabels();
-    expect(labels, 'no per-arm survival table was rendered').toContain('Treatment · Survival Curve');
-    expect(labels).toContain('Control · Survival Curve');
+    // Labels come from the shared label helper since 2026-11-13 (sentence case; finding 67 below).
+    expect(labels, 'no per-arm survival table was rendered').toContain('Treatment · Survival curve');
+    expect(labels).toContain('Control · Survival curve');
   });
 
   it('renders each arm’s OWN rows, so one table is not drawn twice', async () => {
@@ -143,7 +144,8 @@ describe('the two-arm RMST result', () => {
     const cells = cellTexts();
     // The treatment arm's t = 3 survival and the control arm's t = 2 survival.
     // They differ, so a single table rendered under two labels would fail here.
-    expect(cells).toContain(String(0.5333333333333334));
+    // Fifteen significant digits (engineResultCellText): 0.5333333333333334 prints 0.533333333333333.
+    expect(cells).toContain('0.533333333333333');
     expect(cells).toContain('0.4');
     // And the at-risk / event counts that distinguish the arms at t = 1:
     // treatment had 1 event there, control had 2.
@@ -180,6 +182,70 @@ describe('the two-arm RMST result', () => {
 
     await waitFor(() => expect(screen.getByText('3.133333')).toBeTruthy());
     // Top level, so no arm prefix.
-    expect(tableLabels()).toContain('Survival Curve');
+    expect(tableLabels()).toContain('Survival curve');
+  });
+});
+
+/* S12 biotech sweep, finding 67 (2026-11-09): the group-sequential result's "Per Look" column printed
+   the raw per-look array as JSON ('[{"look":1,"informationFraction":0.5,…}]'), cells printed binary
+   noise (0.025000000000000005, 0.9750000000000004) and labels read "Type IError". The per-look rows are a
+   table of their own, cells carry fifteen significant digits, and labels come from the one label helper
+   (shared/biostat-vocabulary.ts humanizeKey). */
+describe('the group-sequential result', () => {
+  const GS = '/api/biostat/adaptive/oc-exact';
+  const look = (k: number, fraction: number, boundary: number, cum: number) => ({
+    look: k, informationFraction: fraction, efficacyBoundary: boundary, futilityBoundary: null,
+    efficacyStopProbability: cum, futilityStopProbability: 0, stopProbability: cum, cumulativeRejectProbability: cum,
+  });
+  const RESULT = {
+    boundaries: { informationFractions: [0.5, 1], efficacyBoundaries: [2.962707240193933, 1.968902671346611] },
+    spending: { spendingFunction: 'obrien-fleming', alpha: 0.025, cumulativeAlpha: [0.0015, 0.025], incrementalAlpha: [0.0015, 0.0235] },
+    characteristics: [
+      { drift: 0, rejectProbability: 0.025000000000000005, futilityStopProbability: 0.9750000000000004, expectedInformationFraction: 0.9992,
+        perLook: [look(1, 0.5, 2.962707240193933, 0.0015), look(2, 1, 1.968902671346611, 0.025000000000000005)] },
+      { drift: 2.8, rejectProbability: 0.7965, futilityStopProbability: 0.2035, expectedInformationFraction: 0.91,
+        perLook: [look(1, 0.5, 2.962707240193933, 0.1617), look(2, 1, 1.968902671346611, 0.7965)] },
+    ],
+    typeIError: 0.025000000000000005,
+    assurance: null,
+    provenance: { method: 'gs-oc:exact', seed: 0, inputs: {}, note: 'deterministic' },
+  };
+
+  async function computeGs() {
+    apiRequest.mockImplementation(async (_m: string, u: string) => {
+      if (u === GS) return { ok: true, status: 200, json: async () => ({ success: true, data: RESULT }) } as Response;
+      return { ok: true, status: 200, json: async () => ({ success: true, data: [] }) } as Response;
+    });
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.click(await screen.findByText(/Group-sequential operating characteristics/i));
+    const node = screen.getAllByText(/^Information fractions/).find((n) => n.closest('label'))!;
+    fireEvent.change(node.closest('label')!.querySelector('input, textarea')!, { target: { value: '0.5, 1' } });
+    fireEvent.click(screen.getByRole('button', { name: /compute/i }));
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === GS)).toBe(true));
+    await waitFor(() => expect(cellTexts().length).toBeGreaterThan(0));
+  }
+
+  it('renders the per-look rows as a table, not as JSON in a cell', async () => {
+    await computeGs();
+    expect(cellTexts().some((c) => c.startsWith('[{') || c.startsWith('{"'))).toBe(false);
+    expect(tableLabels()).toContain('Characteristics · Per look');
+    // Each per-look row says which scenario it belongs to.
+    expect(cellTexts()).toContain('2.8');
+    expect(cellTexts()).toContain('2.96270724019393');
+  });
+
+  it('prints the engine’s figures without binary noise', async () => {
+    await computeGs();
+    const text = document.body.textContent ?? '';
+    expect(text).not.toMatch(/0\.025000000000000005|0\.9750000000000004/);
+    expect(cellTexts()).toContain('0.025');
+    expect(cellTexts()).toContain('0.975');
+  });
+
+  it('keeps acronyms and Type I whole in its labels', async () => {
+    await computeGs();
+    const text = document.body.textContent ?? '';
+    expect(text).toMatch(/Type I error/);
+    expect(text).not.toMatch(/Type IError/);
   });
 });
