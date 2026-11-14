@@ -155,7 +155,7 @@ it.each(['account', 'session', 'project', 'unmount'] as const)('retires pending 
     act(() => { authService.setToken(token('7', 'original'), AUTHOR, 'return-refresh'); page.rerender(); });
   }
   expect((call[4] as AbortSignal).aborted).toBe(true);
-  await act(async () => exact.resolve(ok({ projectId: A, sources: [source] })));
+  await act(async () => exact.resolve(ok({ projectId: A, selection: { scope: 'verified-accessible-sources', sourceIds: [source.id] }, sources: [source] })));
   expect(props.onAsk).not.toHaveBeenCalled();
   expect(window.C2C_SOURCE_PINS ?? []).toEqual([]);
   expect(screen.queryByTestId('source-assembly-dialog')).toBeNull();

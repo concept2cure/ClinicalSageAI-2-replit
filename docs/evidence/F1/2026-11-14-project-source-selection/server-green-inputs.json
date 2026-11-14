@@ -1,0 +1,14 @@
+{
+  "head": "5a552f1428e5ee8d474353ac6095242b1bab97c2",
+  "scope": "Frozen implemented server source and server RED suites/config; client implementation intentionally excluded.",
+  "files": {
+    "server/routes/c2c/projects.ts": "291e1be31376c7e237c4f366d5e812c99033ebfa386b084db4ebe926c7d9e3df",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "e864407318bc4468f9acd4043e48cc4bde656e0531bf62964bf810f988c5aff3",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "4846a43b8ec0c2b7abcc0a9c65d0ac3be510c091f9e9a61e5dbf8a22949df5c7",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": "1f6117411ca7b832d6dcb57e901f35650380fe573653f2d631e7388629b0f68a",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "44216892cee2657ab026d13b2337026758db9803d3349c7d1ba3238d276e0cc4",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd"
+  }
+}

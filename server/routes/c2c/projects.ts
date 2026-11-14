@@ -2183,7 +2183,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
     );
-    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError, catalogProgramIds } = await import(
+    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError, catalogProgramIds, requireExactDataRoomSelection } = await import(
       '../../services/clinical-regulatory-evidence/data-room-search.js'
     );
     const { gradeSources } = await import('../../services/clinical-regulatory-evidence/data-room-grade.js');
@@ -2205,7 +2205,8 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     if (catalog && !(await scopeToCatalog(query, { organizationId: orgId, userId: userId }, programId, catalogProgramIds))) {
       return send404(res);
     }
-    const { total, currentTotal, sources, facets: captureFacets } = await searchDataRoom(orgId, query, { userId: userId });
+    const sourcePage = await searchDataRoom(orgId, query, { userId: userId });
+    const { total, currentTotal, sources, facets: captureFacets } = sourcePage;
     // The catalog also lists the Vault's current documents of the same projects, paged with the captures (S2, 2026-11-11/12).
     const vault = await vaultForCatalog(catalog, orgId, query, programId);
     const facets = await catalogFacetsWithVault(captureFacets, vault);
@@ -2236,8 +2237,16 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const grades = await gradeOrUnavailable(gradeSources, [...sources, ...unscoped], programId);
     const shape = (s: ShapeableSource) => ({ ...shapeSource(s, usage), grade: gradeOf(grades, s.id) });
 
+    const selection = requireExactDataRoomSelection(query, sourcePage);
+    if (selection) {
+      const { requireSourceReadScopeStillCurrent } = await import('../../services/clinical-regulatory-evidence/source-read-access');
+      await requireSourceReadScopeStillCurrent(pool, { organizationId: orgId, userId, programId, sourceIds: selection.sourceIds },
+        { ...selection, unverified: [] });
+    }
+
     return res.json({
       projectId: programId,
+      ...(selection ? { selection } : {}),
       sources: sources.map(shape),
       unscoped: unscoped.map(shape),
       total,

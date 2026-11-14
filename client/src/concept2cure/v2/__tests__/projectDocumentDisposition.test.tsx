@@ -7,6 +7,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<Record<string, unknown>>()), apiRequest }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { authService } from '@/services/portal/authService';
@@ -59,7 +60,7 @@ describe('reachable project document lifecycle controls', () => {
   it.each(['keep_data', 'remove_data'] as const)('DataRoom refresh applies %s eligibility to both local and handed-off pins', async choice => {
     let disposition: DocumentDispositionChoice | null = null;
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (url.includes('?sourceIds=')) return ok({ projectId: PID, sources: [{ ...source({ disposition,
+      if (url.includes('?sourceIds=')) return ok({ projectId: PID, selection: { scope: 'verified-accessible-sources', sourceIds: [1] }, sources: [{ ...source({ disposition,
         dataEligible: disposition !== 'remove_data', originalFileAvailable: disposition === null }), projectId: PID }] });
       if (url === `/api/c2c/projects/${PID}/sources`) return ok({ sources: [source({ disposition, dataEligible: disposition !== 'remove_data', originalFileAvailable: disposition === null })] });
       if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Program', code: 'PRG' });

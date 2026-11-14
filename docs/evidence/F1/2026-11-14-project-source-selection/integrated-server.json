@@ -1,0 +1,30 @@
+{
+  "startedAt": "2026-11-14T02:12:20.713883+00:00",
+  "elapsedSeconds": 30.63,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
+    "server/routes/c2c/__tests__/projects-sources-processing.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "integrated-server-inputs.json",
+  "inputCount": 12,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "integrated-server.txt.gz",
+  "outputSha256": "273e1e8b7b142879a74d4dcbc8bb69ef338655832675873788d00511a2d72f61",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

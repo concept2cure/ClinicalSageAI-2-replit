@@ -1,0 +1,15 @@
+{
+  "head": "8e5c9140fafb0f01244818ac1f21a13619c4038f",
+  "served": {
+    "commit": "8e5c9140fafb0f01244818ac1f21a13619c4038f",
+    "startedAt": "2026-11-14T01:34:35.647Z"
+  },
+  "readyzStatus": 503,
+  "ready": false,
+  "failed": [
+    "ana"
+  ],
+  "schemaState": "ready",
+  "anaState": "no_provider",
+  "capabilityRegistry": "seeded"
+}
