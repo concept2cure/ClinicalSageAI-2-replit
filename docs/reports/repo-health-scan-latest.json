@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T08:35:58.426Z",
+  "generatedAt": "2026-11-14T08:51:38.824Z",
   "git": {
-    "sha": "1ca522fc952beb161131d57a566593e0ff4a927a",
+    "sha": "fd3a6442cfd96841461b02bc9a119665d8375f80",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2439,7 +2439,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 211859
+        "bytes": 213707
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2669,7 +2669,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3723
+        "lines": 3751
       },
       {
         "file": "server/routes/authoring-actions.ts",
