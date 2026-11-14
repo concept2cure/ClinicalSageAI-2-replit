@@ -197,7 +197,8 @@ export function HomeTasks({ onNav }: { onNav: (id: string) => void }) {
   const scope = taskActorScope(user);
   const { myWork, queue, approvals, assigned, approvalRows } = useOpenWorkReads(true, 0);
   const openMine = () => {
-    const res = resolveSurfaceAction('tasking.filter', { mine: 'true' });
+    // Across every project, as the rail opens Tasks (P-131 item 1): this list spans them all.
+    const res = resolveSurfaceAction('tasking.filter', { mine: 'true', project: 'all' });
     if (res.ok) applySurfaceAction(res.directive, () => onNav('tasks'));
     else onNav('tasks');
   };

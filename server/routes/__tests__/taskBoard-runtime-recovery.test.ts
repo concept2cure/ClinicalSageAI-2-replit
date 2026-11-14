@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { requestDb, type RequestDb } from '../../db/requestDb';
 
 const state = vi.hoisted(() => ({ loadUnifiedWork: vi.fn() }));
-vi.mock('../../services/unified-work/unified-work-view', () => ({ loadUnifiedWork: state.loadUnifiedWork }));
+// Only the store read is replaced; the pure order of need (sortByNeed, P-131 item 3) is the real one.
+vi.mock('../../services/unified-work/unified-work-view', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/unified-work/unified-work-view')>()),
+  loadUnifiedWork: state.loadUnifiedWork,
+}));
 vi.mock('../../utils/tenantContext', () => ({ getSecureOrgId: () => 7 }));
 import createTaskBoardRoutes from '../taskBoard.routes';
 
@@ -50,7 +54,8 @@ describe('task board runtime recovery', () => {
     expect(observedFailure?.code).toBeUndefined();
     expect(observedFailure?.cause?.code).toBe('42P01');
     expect(result.status).toBe(200);
-    expect(result.body.meta).toEqual({ partial: true, unreadSources: ['unified_tasks'] });
+    // `unassigned` (P-131 item 6): the open schedule task records no owner, so it is the one piece of work needing one.
+    expect(result.body.meta).toEqual({ partial: true, unreadSources: ['unified_tasks'], unassigned: 1 });
     expect(result.body.data).toEqual([expect.objectContaining({ taskId: 'schedule:41', title: schedule.title, readOnly: true })]);
     expect(state.loadUnifiedWork.mock.calls[0]?.[0]).toEqual({ organizationId: 7, includeCompleted: true });
     expect(state.loadUnifiedWork.mock.calls[0]?.[1] === database).toBe(true);
@@ -67,7 +72,7 @@ describe('task board runtime recovery', () => {
   it('passes the same request database to the cross-store reader on a successful read', async () => {
     const result = await request(app()).get('/api/task-management/board');
     expect(result.status).toBe(200);
-    expect(result.body.meta).toEqual({ partial: false, unreadSources: [] });
+    expect(result.body.meta).toEqual({ partial: false, unreadSources: [], unassigned: 1 });
     expect(state.loadUnifiedWork.mock.calls[0]?.[0]).toEqual({ organizationId: 7, includeCompleted: true });
     expect(state.loadUnifiedWork.mock.calls[0]?.[1] === database).toBe(true);
   });

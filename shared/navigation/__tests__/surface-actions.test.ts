@@ -162,6 +162,15 @@ describe('resolveSurfaceAction — fail closed', () => {
     }
   });
 
+  it('the task board’s whose-work filter takes Mine, Everyone and Needs an owner, and nothing else (P-131 item 2)', () => {
+    for (const mine of ['true', 'false', 'unassigned']) {
+      expect(resolveSurfaceAction('tasking.filter', { mine }).ok, mine).toBe(true);
+    }
+    const res = resolveSurfaceAction('tasking.filter', { mine: 'someone' });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.code).toBe('invalid_param');
+  });
+
   it('discovery filters by surface', () => {
     const vaultActions = surfaceActionsForSurface('vault').map((a) => a.id);
     expect(vaultActions).toContain('vault.search');

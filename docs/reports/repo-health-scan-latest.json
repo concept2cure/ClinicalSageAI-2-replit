@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T08:15:32.217Z",
+  "generatedAt": "2026-11-14T08:24:42.490Z",
   "git": {
-    "sha": "98e776d538f12ba8ab3766a69f08e4b8696c6258",
+    "sha": "efdbfed930de7431611877087409b5a18358ab1c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2518,10 +2518,6 @@
         "bytes": 140097
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "bytes": 139831
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 139697
       },
@@ -2532,6 +2528,10 @@
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 138268
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "bytes": 137063
       },
       {
         "file": "server/routes/submissions.ts",
@@ -2768,16 +2768,16 @@
         "lines": 2487
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 2479
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
         "lines": 2467
       },
       {
         "file": "server/routes/submissions.ts",
         "lines": 2459
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 2453
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -3004,12 +3004,12 @@
         "lines": 1756
       },
       {
-        "file": "tests/services/ana-biostats.test.ts",
-        "lines": 1720
+        "file": "server/routes/taskManagement.routes.ts",
+        "lines": 1732
       },
       {
-        "file": "server/routes/taskManagement.routes.ts",
-        "lines": 1719
+        "file": "tests/services/ana-biostats.test.ts",
+        "lines": 1720
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",

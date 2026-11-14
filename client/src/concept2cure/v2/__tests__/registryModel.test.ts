@@ -46,7 +46,8 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
   });
   it('a rail entry that applies a screen action names a registered, ungoverned action on its own screen', () => {
     // Tasks (one entry since 2026-10-25, where Tasking and My work were two)
-    // asks the board for everyone's tasks as it opens it (Shell.tsx Rail). An
+    // asks the board for the person's own tasks, across every project, as it
+    // opens it (Shell.tsx Rail; P-131). An
     // action that no longer resolves, or that lands on another screen, would
     // open the board under a label that says otherwise.
     const applying = RAIL_CORE.filter((s) => 'applies' in s && s.applies);
@@ -59,6 +60,12 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
       expect(res.directive.params).toEqual(a.params);
       expect(resolveSurfaceIdForTarget(res.directive.surfaceId)).toBe(resolveSurfaceIdForTarget(s.target ?? s.id));
     }
+  });
+
+  it('Tasks opens on the person’s own work across every project (P-131 item 1; D6.md §A.7 item 1)', () => {
+    // It opened on everyone's tasks and then narrowed itself to the open project.
+    const tasking = RAIL_CORE.find((s) => s.id === 'tasking') as { applies?: { actionId: string; params: Record<string, string> } };
+    expect(tasking.applies).toEqual({ actionId: 'tasking.filter', params: { mine: 'true', project: 'all' } });
   });
 
   it('every rail entry opens Home or a registered surface', () => {

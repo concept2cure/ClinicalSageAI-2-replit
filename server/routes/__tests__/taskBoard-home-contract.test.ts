@@ -9,7 +9,8 @@ vi.mock('../../db/requestDb', () => {
   return { requestDb: () => chain, requestPgClient: () => ({ query: state.query }) };
 });
 vi.mock('../../utils/tenantContext', () => ({ getSecureOrgId: () => 7 }));
-vi.mock('../../services/unified-work/unified-work-view', () => ({ loadUnifiedWork: async () => ({
+// Only the store read is replaced; the pure order of need (sortByNeed, P-131 item 3) is the real one.
+vi.mock('../../services/unified-work/unified-work-view', async (importOriginal) => ({ ...(await importOriginal<typeof import('../../services/unified-work/unified-work-view')>()), loadUnifiedWork: async () => ({
   items: [{ id: 'schedule:41', nativeId: '41', source: 'schedule', projectId: 12, title: 'Owned task', status: 'open', dueAt: null, priority: 'high', detail: null }],
   sources: { project_tasks: { ran: true } },
 }) }));

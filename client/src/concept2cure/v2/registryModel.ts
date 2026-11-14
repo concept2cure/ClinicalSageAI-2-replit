@@ -147,8 +147,8 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *  - Workflows (the module catalog) is "Subscription & features" in the account menu,
  *    for organization administrators. Features open from inside a project.
  *  - Submission Center opens from a project's Submit step.
- *  - Tasking and My work are one entry, Tasks; the board's own "My tasks"
- *    filter, and Home's "Your tasks", give the person's own.
+ *  - Tasking and My work are one entry, Tasks, which opens on the person's own
+ *    work ("Mine"); Home's "Your open items" lists the same.
  *  - Conversation: Home lists the person's recent conversations, and each
  *    project lists its own.
  * Risk-based monitoring and Biostatistics are work areas by the founder's model. Biostatistics joined the rail on
@@ -160,7 +160,12 @@ export const NAV_GROUP_OF: Record<string, string> = {
  * `target` is the screen an entry opens when it is not its own id. `applies`
  * is a screen action the entry asks of that screen as it opens it, through the
  * same validated bus AnA's moves use (surfaceActions.applySurfaceAction): Tasks
- * opens the board on everyone's tasks, whatever filter it was last left on.
+ * opens on the person's own work across every project, whatever filter it was
+ * last left on (P-131, 2026-11-12: "when I log in to my tasking page I should see
+ * everything needed"). It used to open on everyone's tasks and then narrow itself
+ * to whichever project was open; `project: 'all'` is a choice the board keeps, so
+ * its open-project filter (kept for Tasks opened any other way) does not override
+ * it. Everyone's work and the work with no owner are one press away on the page.
  * `group` puts an entry under a heading; entries without one are the places.
  */
 export const RAIL_WORK_AREAS_LABEL = 'Work areas';
@@ -169,7 +174,7 @@ export interface SurfaceApplies { actionId: string; params: Record<string, strin
 export const RAIL_CORE = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'projects', label: 'Projects', icon: 'folder' },
-  { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } satisfies SurfaceApplies },
+  { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'true', project: 'all' } } satisfies SurfaceApplies },
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
@@ -1193,7 +1198,8 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   'document-authoring': ['Draft §2.5 from the predicate', 'Check claims against evidence', 'Rewrite for FDA tone'],
   projects: ['Which projects are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
   vault: ['Find the latest biocompat report', 'What is still unfiled in the cabinet?', 'Search by SHA-256'],
-  tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
+  /* The Tasks page's own starters (TaskPageHeader.tsx), so the two never disagree. */
+  tasks: ['What needs me first?', 'What is on the critical path?', 'Who is carrying the most work?'],
   'crl-library': [
     'Findings on this endpoint class',
     'What did FDA ask for after this deficiency?',
