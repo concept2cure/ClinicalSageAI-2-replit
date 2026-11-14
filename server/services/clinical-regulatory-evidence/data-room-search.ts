@@ -21,12 +21,14 @@ import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositio
 import { adaptSource, visibleOrgClause } from './evidence-spine.service.js';
 import { EXTRACTION_STATUSES, type EvidenceSource, type ExtractionStatus } from './types.js';
 import { syncQualityProjectSources } from './record-source';
-import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent } from './source-read-access';
+import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent, SourceReadAccessError } from './source-read-access';
 import { persistedTextAvailableSql } from './data-room-processing-state.js';
 import { getCurrentAccessibleProgramScope, requireCurrentProgramAccess, requireProgramScopeStillCurrent } from '../c2c/current-program-access.js';
 
 export interface DataRoomQuery {
   programId: string;
+  /** Exact selected captures, admitted and returned as a complete set without list filters. */
+  sourceIds?: number[];
   /**
    * The catalog across projects (S2, 2026-11-06): every project in this set,
    * which the route takes from the person's verified accessible projects (of
@@ -117,8 +119,31 @@ function checkDate(value: string, name: string): string | null {
   return value || null;
 }
 
+/** Exact mode cannot inherit paging or a list filter that would hide a selected lifecycle row. */
+function selectedSourcesQuery(programId: string, raw: Record<string, unknown>): DataRoomQuery | null {
+  if (Object.keys(raw).some(key => key.startsWith('sourceIds[') || key.startsWith('sourceIds.'))) {
+    throw new DataRoomQueryError('sourceIds must be a single comma-separated list, not a nested query parameter.');
+  }
+  if (!Object.hasOwn(raw, 'sourceIds')) return null;
+  const filters = ['q', 'status', 'kind', 'from', 'to', 'current', 'scope', 'project', 'study', 'ctd', 'folder',
+    'limit', 'offset', 'includeUnscoped'];
+  if (filters.some(field => Object.hasOwn(raw, field))) {
+    throw new DataRoomQueryError('sourceIds cannot be combined with list filters or paging.');
+  }
+  const value = raw.sourceIds;
+  const invalid = () => new DataRoomQueryError('sourceIds must contain one to twenty distinct positive PostgreSQL integer IDs.');
+  if (typeof value !== 'string' || value.length > 219) throw invalid();
+  const parts = value.split(',');
+  if (parts.length > 20 || parts.some(part => !/^[1-9]\d{0,9}$/.test(part))) throw invalid();
+  const sourceIds = parts.map(Number);
+  if (new Set(sourceIds).size !== sourceIds.length || sourceIds.some(id => id > 2147483647)) throw invalid();
+  return { programId, sourceIds, limit: sourceIds.length, offset: 0 };
+}
+
 /** Validate what a request asked for; an unreadable filter is refused, not ignored. */
 export function parseDataRoomQuery(programId: string, raw: Record<string, unknown>): DataRoomQuery {
+  const selected = selectedSourcesQuery(programId, raw);
+  if (selected) return selected;
   const q = param(raw, 'q');
   if (q.length > 200) throw new DataRoomQueryError('The search is longer than 200 characters.');
   const kind = param(raw, 'kind');
@@ -171,12 +196,25 @@ function filterClauses(p: DataRoomQuery, args: unknown[]): string[] {
   return out;
 }
 
+/** Requested IDs cannot stand in for a complete canonical admission result. */
+function confirmSelectedScope(selected: number[] | undefined, admitted: Awaited<ReturnType<typeof getCurrentReadableSourceScope>>): void {
+  if (!selected) return;
+  if (admitted.scope !== 'verified-accessible-sources' || !Array.isArray(admitted.sourceIds) || !Array.isArray(admitted.unverified)
+    || admitted.unverified.length || admitted.sourceIds.length !== selected.length
+    || new Set(admitted.sourceIds).size !== selected.length || admitted.sourceIds.some(id => !selected.includes(id))) {
+    throw new SourceReadAccessError(503, 'SOURCE_READ_ACCESS_CHANGED', 'Selected source access could not be verified. Refresh the Data room before continuing.');
+  }
+}
+
 /**
  * Admit only the requested canonical projects before reading native facts. The catalog's
  * actor/program bracket still covers the whole loop, including an empty effective set.
  */
 async function prepareSourceScope(orgId: number, p: DataRoomQuery, actor?: { userId: number | undefined }) {
-  if (!actor) return null;
+  if (!actor) {
+    if (p.sourceIds) throw new SourceReadAccessError(503, 'SOURCE_ACCESS_UNAVAILABLE', 'Current source access could not be verified.');
+    return null;
+  }
   const identity = { organizationId: orgId, userId: actor.userId };
   const programs = Array.isArray(p.programIds) ? await getCurrentAccessibleProgramScope(pool, identity) : null;
   if (programs) await requireCurrentProgramAccess(pool, { ...identity, programId: p.programId });
@@ -185,8 +223,11 @@ async function prepareSourceScope(orgId: number, p: DataRoomQuery, actor?: { use
     : [p.programId];
   const admissions: Array<{ programId: string; scope: Awaited<ReturnType<typeof getCurrentReadableSourceScope>> }> = [];
   for (const programId of programIds) {
-    if ((p.offset ?? 0) === 0) await syncQualityProjectSources({ ...identity, programId });
-    admissions.push({ programId, scope: await getCurrentReadableSourceScope(pool, { ...identity, programId }) });
+    if (!p.sourceIds && (p.offset ?? 0) === 0) await syncQualityProjectSources({ ...identity, programId });
+    const scope = await getCurrentReadableSourceScope(pool, { ...identity, programId,
+      ...(p.sourceIds ? { sourceIds: p.sourceIds } : {}) });
+    confirmSelectedScope(p.sourceIds, scope);
+    admissions.push({ programId, scope });
   }
   if (programs) await requireProgramScopeStillCurrent(pool, identity, programs);
   return { sourceIds: [...new Set(admissions.flatMap(admission => admission.scope.sourceIds))], admissions };
@@ -200,7 +241,8 @@ async function confirmSourceScope(orgId: number, p: DataRoomQuery, actor: { user
   const programs = Array.isArray(p.programIds) ? await getCurrentAccessibleProgramScope(pool, identity) : null;
   if (programs) await requireCurrentProgramAccess(pool, { ...identity, programId: p.programId });
   for (const { programId, scope } of readable.admissions) {
-    await requireSourceReadScopeStillCurrent(pool, { ...identity, programId }, scope);
+    await requireSourceReadScopeStillCurrent(pool, { ...identity, programId,
+      ...(p.sourceIds ? { sourceIds: p.sourceIds } : {}) }, scope);
   }
   if (programs) await requireProgramScopeStillCurrent(pool, identity, programs);
 }
@@ -210,14 +252,26 @@ function roomWhere(orgId: number, p: DataRoomQuery, readable: { sourceIds: numbe
   const c = visibleOrgClause(orgId, 1);
   const catalog = Array.isArray(p.programIds);
   const args: unknown[] = [c.param, catalog ? (p.programIds as string[]).map((id) => id.toLowerCase()) : p.programId];
+  const sourceIds = readable?.sourceIds;
   const where = [
     c.sql.replace(/organization_id/g, 's.organization_id'),
     's.deleted_at IS NULL', `s.source_type = 'client_document'`,
     catalog ? 's.client_program_id::text = ANY($2::text[])' : 's.client_program_id = $2',
     ...filterClauses(p, args),
-    ...(readable ? [`s.id=ANY($${args.push(readable.sourceIds)}::int[])`] : []),
+    ...(sourceIds ? [`s.id=ANY($${args.push(sourceIds)}::int[])`] : []),
   ].join(' AND ');
   return { args, where };
+}
+
+/** No partial exact receipt: every projected identity still belongs to the recorded project and tenant. */
+function confirmSelectedPage(orgId: number, p: DataRoomQuery, rows: Array<Record<string, any>>, total: number): void {
+  if (!p.sourceIds) return;
+  const selected = new Set(p.sourceIds);
+  if (total !== selected.size || rows.length !== selected.size || new Set(rows.map(row => row.id)).size !== selected.size
+    || rows.some(row => !selected.has(row.id) || Number(row.organization_id) !== orgId
+      || String(row.client_program_id).toLowerCase() !== p.programId.toLowerCase())) {
+    throw new SourceReadAccessError(503, 'SOURCE_READ_ACCESS_CHANGED', 'Selected source facts changed during the read. Refresh the Data room before continuing.');
+  }
 }
 
 export async function searchDataRoom(orgId: number, p: DataRoomQuery, actor?: { userId: number | undefined }): Promise<DataRoomPage> {
@@ -246,6 +300,7 @@ export async function searchDataRoom(orgId: number, p: DataRoomQuery, actor?: { 
       GROUP BY f.facet, f.value) x) AS facets`,
     args,
   );
+  const total = Number(counted.rows[0]?.total ?? 0);
   // The query's own placeholder, when there is one: rank and snippet reuse it.
   const qParam = p.q ? `$${args.indexOf(p.q) + 1}` : null;
   const page = [...args, p.limit ?? 200, p.offset ?? 0];
@@ -271,11 +326,12 @@ export async function searchDataRoom(orgId: number, p: DataRoomQuery, actor?: { 
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
+  confirmSelectedPage(orgId, p, rows, total);
   await confirmSourceScope(orgId, p, actor, readable);
   const facets = catalog ? await catalogFacets(counted.rows[0]?.facets ?? []) : undefined;
   return {
     ...(facets ? { facets } : {}),
-    total: Number(counted.rows[0]?.total ?? 0),
+    total,
     currentTotal: Number(counted.rows[0]?.current_total ?? 0),
     sources: rows.map(r => ({
       ...adaptSource(r),

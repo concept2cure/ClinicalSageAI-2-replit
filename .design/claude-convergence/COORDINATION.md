@@ -1811,3 +1811,24 @@ Publication request, Codex project-management/intelligence repair, 2026-11-13 23
 2026-11-13 F1 Codespaces/Copilot integration closure: later canonical actor/activity, billing-session and collaboration-context repairs are preserved by normal merges. This continuation records full compiler0/baseline0 at `a10861e8c` and `a5c92a646`, plus separate444/50/66 focused runs and real119-section CSR working-copy/preview browser reruns. The final collaboration merge `75247cc6d` has no production TS/config/package delta against canonical `532cf4145`; prior and incoming compiler receipts retain their own revisions. All source/evidence holds are released; root retains only ordinary publication and final exact-version/readiness verification. No live provider, clinical qualification, agency delivery, hosted Codespace or10,000-page claim is made.
 
 Publication request, Codex Codespaces/Copilot handoff, 2026-11-13 23:36 UTC: two canonical ref races followed all 89 normal lint gates passing. Under rule 6, this continuation requests a 15-minute publication window (23:36–23:51 UTC) from the coordinating session. No callable cross-session channel reaches that session here, and no other lane is claimed paused. The ordinary merge/push path continues. Latest native Quality source is preserved at merge `f774de54a`; its 40 focused cases, clean lint and real CSR browser pass. Earlier compiler, source and browser receipts remain named; no hosted/live-provider/clinical release claim.
+
+### Codex fix-all continuation — 2026-11-13 23:58 UTC
+
+The founder asked to fix all remaining findings after publication `5a552f142`.
+This F1/W1 continuation reserves only the existing Data Room selection owners below,
+until publication or 2026-11-14 02:00 UTC, whichever comes first. Other lanes are not
+paused. The pre-edit inventory and exact-ID/all-or-nothing completion contract are
+in `docs/evidence/F1/2026-11-13-project-source-pin-read-audit/README.md`.
+
+| Holder | Existing files and scope |
+|---|---|
+| Server worker | `server/routes/c2c/projects.ts` existing sources GET only, `server/services/clinical-regulatory-evidence/data-room-search.ts` exact-ID query parsing/projection only, and existing source-route/search tests; canonical source admission is reused, no new reader or route |
+| Client worker | `client/src/concept2cure/v2/surfaces/ProjectHome.tsx` existing Data Room selection/actions only, `surfaces/projectSources.ts`, and existing Data Room/source-read/ownership/disposition tests; no other ProjectHome feature |
+| Root | This record, existing audit/evidence, isolated synthetic database reproduction, integration/Git and sole whole-program compiler/build |
+
+The separate private-profile offboarding finding is being reproduced against the
+existing isolated UTF8 PostgreSQL fixture database with `app_service` and enforced
+RLS. The founder has been asked to choose the export/erasure treatment explicitly
+left open at lines 721–730; no disclosure, erasure-policy, private-profile RLS,
+plan/ledger, purge door or test-acceptance change is authorized by this reservation.
+No provider call, new screen/service/table/tool/dependency or filing/PQ claim.
