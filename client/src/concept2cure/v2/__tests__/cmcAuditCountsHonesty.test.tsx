@@ -170,3 +170,44 @@ describe('Stability and Batch records — the counts lines', () => {
     expect(text('cmc-batch-counts')).not.toContain('0%');
   });
 });
+
+/* The register says what is due (P-122 inventory B2): the next pull and its
+   planned date from the server's schedule, and how many pulls are overdue. */
+describe('Stability — what is due', () => {
+  const STABILITY = `/api/cmc/stability-studies?projectId=${PROJECT}`;
+  const study = (id: number, pullSchedule: unknown) => ({
+    id, studyTitle: `Study ${id}`, productName: 'C2C-201 tablets', studyType: 'long-term', storageConditions: ['LT'],
+    duration: 24, status: 'ACTIVE', timePoints: ['0', '3', '6'], testParameters: ['Assay'], stabilityData: { results: [] }, pullSchedule,
+  });
+  function openStability(rows: unknown[]) {
+    apiRequest.mockImplementation(async (method: string, u: string) =>
+      (method === 'GET' && u === STABILITY ? res({ success: true, data: rows }) : res({ success: true, data: [] })));
+    render(
+      <CmcModule
+        surface={{ id: 'cmc', label: 'CMC' } as unknown as SurfaceViewProps['surface']}
+        onAsk={vi.fn()}
+        onNav={vi.fn()}
+        segment="biotech"
+      />,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Stability' }));
+  }
+
+  it('shows each study’s next pull and its date, and counts what is behind', async () => {
+    openStability([
+      study(1, { overdue: 2, incomplete: 1, next: { label: '12', plannedDate: '2027-02-01', state: 'planned', outstanding: ['Assay'] },
+        points: [{ label: '6', plannedDate: '2026-08-01', state: 'overdue', outstanding: ['Assay'] }] }),
+      study(2, { overdue: 0, incomplete: 0, next: { label: '9', plannedDate: '2026-12-01', state: 'planned', outstanding: ['Assay'] },
+        points: [{ label: '9', plannedDate: '2026-12-01', state: 'planned', outstanding: ['Assay'] }] }),
+      study(3, { overdue: 0, incomplete: 0, next: null, reason: 'No pull points are recorded on this study.', points: [] }),
+    ]);
+    expect(await screen.findByRole('columnheader', { name: 'Next pull' })).toBeTruthy();
+    const behind = await screen.findByText('· 2 overdue · 1 incomplete');
+    expect(behind.getAttribute('data-tone')).toBe('warn');
+    expect(behind.parentElement?.textContent).toContain('12 mo · 2027-02-01');
+    expect(behind.parentElement?.getAttribute('title')).toContain('6 mo (2026-08-01): Assay');
+    expect(screen.getByText('9 mo · 2026-12-01')).toBeTruthy();
+    expect(screen.getByText('no pull points')).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId('cmc-stability-counts').textContent).toContain('2 pulls overdue · 1 pull incomplete'));
+  });
+});
