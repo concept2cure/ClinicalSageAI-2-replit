@@ -49,10 +49,18 @@ export function engineResultTableColumns(table: EngineResultTable): Array<{ key:
   return columns;
 }
 
-/** Shared screen/file table text. No rounding of the engine's numeric values. */
+/**
+ * Shared screen/file table text. A finite non-integer prints to fifteen significant digits: every decimal
+ * of fifteen or fewer digits round-trips exactly, and the binary noise in the sixteenth and seventeenth
+ * (0.025000000000000005, 0.30000000000000004) does not reach the screen or the filed section. It did until
+ * 2026-11-13, under "no rounding" (S12 biotech sweep, finding 67). Integers, NaN and Infinity print as they are.
+ */
 export function engineResultCellText(value: unknown): string {
   if (value === null || value === undefined) return '—';
   if (typeof value === 'boolean') return value ? 'yes' : 'no';
+  if (typeof value === 'number' && Number.isFinite(value) && !Number.isInteger(value)) {
+    return String(Number(value.toPrecision(15)));
+  }
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }

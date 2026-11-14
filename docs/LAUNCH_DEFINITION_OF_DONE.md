@@ -3527,7 +3527,40 @@ briefing), and each producing area's own package. The rail entry in `registryMod
 is carried by R1.
 
 
-### P-132 — A personal rule a turn cannot protect is left out of that turn, and the turn says so
+### P-132 — Biostatistics opens the rail's work areas, directly above CMC
+
+**The founder's words, 2026-11-14** (to the Biostatistics session `01KiDof7…`):
+
+> "Continue expanding biostatistics- also place on left rail above cmc"
+
+**What was already decided, and is already true.** Biostatistics is a rail entry: the founder's words of 2026-11-06
+(`scripts/ci/one-product-baseline.json` `founderDecisions["rail:biostatistics"]`), confirmed by P-107 item 1. It sat
+in the work areas directly below CMC / Module 3, which had opened them since the founder's decision of 2026-10-22
+("add QS to the left rail next to CMC, Vault, Tasking").
+
+**What this decides.** In the rail's work areas, Biostatistics comes first and CMC / Module 3 directly below it. The
+order of the work areas is Biostatistics, CMC / Module 3, Risk-based monitoring, Quality, Reporting & analytics. ⌘K's
+"Go to" follows the rail's order, as it already does.
+
+**Readings this session made. Each is reversible by the founder.**
+
+- "Above cmc" is read as directly above it: Biostatistics moves up one place and nothing else in the rail moves.
+- "Continue expanding biostatistics" is read as continuing the open Biostatistics work inside the plan (S3, D5, F1,
+  P-101). It decides nothing about new screens, tables, routes or tools.
+
+**Unchanged.** The rail's entries: none is added or removed, so `one-product-baseline.json` is unchanged. Biostatistics'
+door stays project-scoped. The project's own document start and "Start work in this project" are not reordered by
+this decision. P-28's composition boundary and CMC's professional-tier licensing are untouched.
+
+**Plan text.** `docs/design/ONE_DESIGN_PLAN.md` §2's sidebar paragraph listed the work areas without Biostatistics and
+said it "is reached from the project, §1a; RULE 4 admits no new rail entry". That had been out of date since
+2026-11-06. It now lists the work areas in this order.
+
+**Packages.** The rail entry in `registryModel.ts` is in no scoped package and is carried by R1, as P-131 records.
+
+### P-133 — A personal rule a turn cannot protect is left out of that turn, and the turn says so
+
+**Numbering.** Recorded locally as P-132 and P-133 on 2026-11-13; another session took P-132 on trunk first (2026-11-14, Biostatistics on the rail), so these are P-133 and P-134. Commit messages of 2026-11-13 and 11-14 by session `01KZK3…` that say "P-132" mean this P-133, and "P-133" this P-134.
 
 **The question.** P-104 (2026-11-06) made a person's private rules and saved personal profile owner-private: their
 text reaches a model only through the protected path, which needs owner-private capture (the tenant's key) and a model
@@ -3560,7 +3593,7 @@ send the rule to Claude.
 7. **Nothing is added:** no screen, route, table, service or AnA tool. The mechanism is S4's
    (`server/routes/ana-ri/stream.ts`, `server/services/ana-context-router.ts`).
 
-### P-133 — Offboarding erases members' private AnA profiles through the purge's own door; the export leaves them out and says so
+### P-134 — Offboarding erases members' private AnA profiles through the purge's own door; the export leaves them out and says so
 
 **The question.** P-58 (D6) says an organization's offboarding export returns every row the purge will erase, and then
 the purge erases. P-104 (2026-11-06) says a member's private AnA profile admits only its owner, "even inside the tenant

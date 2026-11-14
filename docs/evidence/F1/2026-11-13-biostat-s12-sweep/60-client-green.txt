@@ -1,0 +1,5 @@
+# Finding 60 (client), green.
+ ✓ biostatServerEngine.test.tsx > Biostatistics — a binary design’s delta is the difference between its rates > follows the rates as they are typed, and is sent as the figure the study is sized on
+ ✓ biostatServerEngine.test.tsx > Biostatistics — a binary design’s delta is the difference between its rates > is read-only while both rates are given, and says why
+ Test Files  1 passed (1)
+      Tests  2 passed | 13 skipped (15)

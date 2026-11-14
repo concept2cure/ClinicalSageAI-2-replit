@@ -440,6 +440,37 @@ describe('Biostatistics — an engine refusal is shown as the engine’s own sen
     expect(rendered()).toBe('');
   });
 
+  /* S12 biotech sweep, finding 59 (2026-11-09): the normalizer's sentences were joined with a bare
+     space, and several carry no closing full stop, so two refusals read as one run-on sentence
+     ("…must be positive Non-inferiority margin is required…") in the panel and in what AnA was told. */
+  it('keeps two of the normalizer’s sentences two sentences', async () => {
+    serveEngine((m, u) =>
+      m === 'POST' && u === COMPUTE
+        ? res({
+            validation: {
+              valid: false,
+              normalizedInput: VALID.normalizedInput,
+              warnings: [],
+              errors: [
+                { field: 'effectSize', message: 'Effect size must be positive', required: true },
+                { field: 'nonInferiorityMargin', message: 'Non-inferiority margin is required for non-inferiority studies', required: true },
+                { field: 'aucTarget', message: 'An ROC / AUC design needs the expected AUC (aucTarget).', required: true },
+              ],
+              prefilled: [],
+            },
+          })
+        : null,
+    );
+    mount();
+    expect(
+      await screen.findByText(
+        'Effect size must be positive. Non-inferiority margin is required for non-inferiority studies. An ROC / AUC design needs the expected AUC (aucTarget).',
+      ),
+    ).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/positive Non-inferiority/);
+    expect(document.body.textContent).not.toMatch(/\(aucTarget\)\.\./);
+  });
+
   it('says the session is not signed in rather than showing an empty design', async () => {
     serveEngine((m, u) =>
       m === 'POST' && u === COMPUTE ? res({ error: 'Authentication required' }, 401) : null,
@@ -463,5 +494,39 @@ describe('Biostatistics — an engine refusal is shown as the engine’s own sen
     answer(res(COMPUTE_OK));
     await engineAnswered();
     expect(screen.queryByText(/Computing the design/i)).toBeNull();
+  });
+});
+
+/* S12 biotech sweep, finding 60 (2026-11-09): on a binary design the 'Delta rate' field was an
+   independent input the two rates never updated, so the form showed and sent a delta the engine did not
+   size on — the engine's binary test reads the rates. With both rates given, the delta is their
+   difference: shown, sent, and not separately editable. */
+describe('Biostatistics — a binary design’s delta is the difference between its rates', () => {
+  const delta = () => screen.getByLabelText(/^Delta rate$/) as HTMLInputElement;
+  const toBinary = async () => {
+    mount();
+    await engineAnswered();
+    fireEvent.change(screen.getByLabelText(/^Endpoint$/), { target: { value: 'binary' } });
+    await waitFor(() => expect(screen.getByLabelText(/^Control rate$/)).toBeTruthy());
+  };
+
+  it('follows the rates as they are typed, and is sent as the figure the study is sized on', async () => {
+    await toBinary();
+    fireEvent.change(screen.getByLabelText(/^Control rate$/), { target: { value: '0.08' } });
+    fireEvent.change(screen.getByLabelText(/^Treatment rate$/), { target: { value: '0.55' } });
+    await waitFor(() => expect(delta().value).toBe('0.47'));
+    const before = computeCalls().length;
+    fireEvent.change(screen.getByLabelText(/^Treatment rate$/), { target: { value: '0.30' } });
+    await waitFor(() => expect(delta().value).toBe('0.22'));
+    await waitFor(() => expect(computeCalls().length).toBeGreaterThan(before));
+    expect(computeCalls().at(-1)![2]).toMatchObject({ controlRate: 0.08, treatmentRate: 0.3, effectSize: 0.22 });
+  });
+
+  it('is read-only while both rates are given, and says why', async () => {
+    await toBinary();
+    fireEvent.change(screen.getByLabelText(/^Control rate$/), { target: { value: '0.08' } });
+    fireEvent.change(screen.getByLabelText(/^Treatment rate$/), { target: { value: '0.30' } });
+    await waitFor(() => expect(delta().readOnly).toBe(true));
+    expect(delta().title).toMatch(/difference between the treatment and control rates/i);
   });
 });

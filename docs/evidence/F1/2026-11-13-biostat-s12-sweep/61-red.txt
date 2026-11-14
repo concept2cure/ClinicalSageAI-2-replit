@@ -1,0 +1,12 @@
+# Finding 61, red: the new cases against Biostatistics.tsx on trunk (6853cb4ce9).
+ × Biostatistics — a design the engine cannot size yet > chosen after a sized design, it shows what it lacks and none of that design’s figures, and asks the engine nothing
+ × Biostatistics — a design the engine cannot size yet > loaded first, it is not covered by a worked example rated by the engine
+ × Biostatistics — a design the engine cannot size yet > its inputs are not offered as its own: the fields are inert until a worked example or a sized design is chosen
+ × Biostatistics — a design the engine cannot size yet > choosing the sized design again sizes it
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element with the text: /BX-204 OS study is not sized yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+TestingLibraryElementError: Unable to find an element with the text: /BX-204 OS study is not sized yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+TestingLibraryElementError: Unable to find an element with the text: /BX-204 OS study is not sized yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+TestingLibraryElementError: Unable to find an element with the text: /BX-204 OS study is not sized yet/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  4 failed | 17 skipped (21)
