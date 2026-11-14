@@ -1,0 +1,7 @@
+{
+  "beforeSha256": "1d097387f7935d4da44702f5c7b0aa6569011da6bcc2a54b4a1d0202e734aede",
+  "afterSha256": "2c98f8aff52f19f946984339b6dd204155d89c03f7c35cef6fed610c04eebfaa",
+  "change": "Type SQL document/section snapshot rows as Record<string,unknown>[]; test bodies and assertions unchanged",
+  "exactReversalRestoresPriorBytes": true,
+  "compilerFailure": "../root/typecheck.json"
+}

@@ -12,7 +12,7 @@
   "lintWarnings": 2,
   "lintWarningCountsUnchanged": true,
   "review": "retained/independent-review.json",
-  "compiler": "pending",
+  "compiler": "pending_corrected_test_declarations",
   "build": "pending",
   "publication": "pending",
   "humanAcceptance": "not_executed",
@@ -22,5 +22,8 @@
     "Static template recommendation has no recorded product context",
     "Retained numeric drafts require deliberate governed remediation",
     "Durable section evidence attachment linking remains in the prior packet backlog"
-  ]
+  ],
+  "testMatrix": "current-test-matrix.json",
+  "sourceBridge": "type-correction/bridge.json",
+  "compilerFailureReport": "root/typecheck.json"
 }

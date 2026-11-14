@@ -107,8 +107,8 @@ describe('saved template guidance binds actor identity to the captured tenant', 
     })]);
 
     const snapshot = async () => ({
-      documents: (await db.pool.query('SELECT * FROM authoring_documents ORDER BY id')).rows,
-      sections: (await db.pool.query('SELECT * FROM authoring_sections ORDER BY id')).rows,
+      documents: (await db.pool.query('SELECT * FROM authoring_documents ORDER BY id')).rows as Array<Record<string, unknown>>,
+      sections: (await db.pool.query('SELECT * FROM authoring_sections ORDER BY id')).rows as Array<Record<string, unknown>>,
       revisions: (await db.pool.query('SELECT * FROM doc_revisions ORDER BY id')).rows,
       audit: (await db.pool.query('SELECT * FROM authoring_audit_trail ORDER BY id')).rows,
     });
