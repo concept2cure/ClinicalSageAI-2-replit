@@ -212,3 +212,14 @@ EOF whitespace is preserved byte-for-byte; source/coordination whitespace checks
 pass rather than rewriting another owner's recorded outputs.
 
 Canonical publication remains pending until its native receipt is recorded.
+
+The third reference race (`publication-attempt-4.json`) also follows full
+compiler0 and all89 gates passing at `dfb389f66`. The winning canonical source
+contains an independent repair to the same source-selection flow. Integration
+therefore reconciles the existing owners, rather than keeping competing guards:
+preserve its strict parent/digest, cancellation/debounce, admission/unverified
+and raw tenant/count checks, together with this continuation's attested full
+selection, pending-store refusal, after-grading scope recheck and deliberate
+Clear selection. Both regression sets remain; all prior receipts retain their
+own actual source revisions. The integrated source must pass new checks before
+publication, and the earlier401-case claim does not attest this merge yet.
