@@ -74,5 +74,31 @@
       "integration-final-build.txt.gz"
     ],
     "wholeProgramCompiler": "Required again by the normal push hook on this final combined tree; no baseline or gate changed."
+  },
+  "qualityTaskCanonicalRefresh": {
+    "sourceHead": "c9c632136a4226324e8b8ceef55fa5c87133d1a0",
+    "canonicalThrough": "3692f44ad",
+    "previousNormalPush": {
+      "sourceHead": "5fb1189b6",
+      "compilerErrors": 0,
+      "compilerExitCode": 0,
+      "lintGates": 89,
+      "redGates": 0,
+      "pushExitCode": 1,
+      "reason": "remote-ref advanced to3692f44ad during gates; no force or hook bypass"
+    },
+    "checks": {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "files": 2,
+      "seconds": 11.76
+    },
+    "build": {
+      "exitCode": 0,
+      "viteSeconds": 25.19
+    },
+    "allElevenSelectionSourceAndTestHashesUnchanged": true,
+    "finalCompiler": "Normal push hook runs again on the final merged tree."
   }
 }

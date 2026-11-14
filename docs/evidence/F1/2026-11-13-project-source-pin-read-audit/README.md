@@ -127,3 +127,16 @@ skips, in 64.97 seconds; the refreshed complete production build exits **0**
 hashes separately from the earlier pre-annotation receipts, with the adjacent
 `integration-final-*.txt.gz` logs. The normal push hook checks the final whole
 program again before publication. The private-profile choice remains pending.
+
+### Verified compiler and Quality task integration — 2026-11-14
+
+The normal hook at `5fb1189b6` passes all **89** lint-job gates and the complete
+compiler with **0 errors / exit0**. The upload then loses a real ref race to
+canonical `3692f44ad`; the actual mixed outcome is retained in
+`integration-compiler-green-ref-race.txt.gz`, not represented as a successful push.
+The ordinary merge `c9c632136` preserves the incoming native Quality audit-task
+repair. Its two focused suites pass **67/67**, zero skips, and the refreshed
+complete production build exits **0** (Vite25.19s). All eleven selection source
+and test hashes remain unchanged. The integration JSON and adjacent Quality
+logs identify those separate revisions; the next normal hook checks the final
+combined compiler again. No force, gate/baseline bypass or privacy-policy change.
