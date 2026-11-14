@@ -62,6 +62,7 @@ import type { Request, Response } from 'express';
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { recordAuditRow } from '../services/audit/audit-write-outcome.js';
+import { createNotification } from '../services/notifications/notification-service.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { resolveMasterAdmin } from '../services/entitlements/master-admin.js';
 import { writeModuleGrant } from '../services/entitlements/module-grants.js';
@@ -147,6 +148,46 @@ const SELECT_REQUEST = `
     LEFT JOIN available_modules am ON am.module_id = r.module_id
     LEFT JOIN organizations o ON o.id = r.organization_id`;
 
+/**
+ * Tell the workspace's administrators that an ask waits on them (P-131 item 5).
+ *
+ * The ask went into the queue and nothing told anyone: an administrator found
+ * it only by opening Access requests. The notice is addressed by role, to the
+ * members whose role is `admin` (notification-service's audience rule reads
+ * organization_users), which is the role the queue and the decision admit
+ * (`isOrgAdmin` above). It is a notice, not a task: the queue is the list of
+ * what is owed, and no task type is invented for it.
+ *
+ * Sent after the ask is recorded and never undoes it. True when it landed,
+ * false when it did not; the ask stands and the queue still shows it.
+ */
+async function notifyAdministrators(request: ReturnType<typeof mapRow>): Promise<boolean> {
+  const feature = request.moduleName ?? 'a feature';
+  const who = request.requesterName ?? request.requesterEmail ?? 'A member';
+  try {
+    await createNotification(
+      {
+        organizationId: request.organizationId,
+        recipientUserId: null,
+        recipientRole: 'admin',
+        category: 'admin',
+        severity: 'info',
+        title: `Access requested for ${feature}`,
+        body: `${who} asked for ${feature}. Answer it in Access requests.`,
+        metadata: { accessRequestId: request.id, moduleId: request.moduleId },
+      },
+      pool,
+    );
+    return true;
+  } catch (err) {
+    logger.warn('access request recorded; the administrators were not told', {
+      requestId: request.id,
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
+}
+
 // ─── POST / — record a request ───────────────────────────────────────────────
 //
 // THE DE-DUPLICATION RULE. A second request for the same module by the same
@@ -226,7 +267,12 @@ router.post('/', async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(alreadyOpen ? 200 : 201).json({ request, alreadyOpen, auditTrail });
+    // A repeated ask was already told to the administrators: null, not sent again.
+    const administratorsNotified = alreadyOpen ? null : await notifyAdministrators(request);
+
+    return res
+      .status(alreadyOpen ? 200 : 201)
+      .json({ request, alreadyOpen, auditTrail, administratorsNotified });
   } catch (err) {
     logger.error('access request create failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Your request was not recorded. Please try again.' });

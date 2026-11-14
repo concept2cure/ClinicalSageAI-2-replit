@@ -82,12 +82,16 @@ export class CreateTaskHandler implements ActionHandler {
         assigneeId = assignee.rows[0]?.id || null;
       }
 
+      // 'pending', the task store's open status (task-state-machine.ts). This
+      // wrote 'todo', which unified_tasks never holds: my-work, the cross-store
+      // read and the board's columns all passed over it, so the task was
+      // created and nobody saw it.
       const result = await this.pool.query(
         `INSERT INTO unified_tasks (
            task_id, organization_id, title, description, priority, status, project_id,
            assignee_id, due_date, created_by_id, module_type,
            metadata, created_at, updated_at
-         ) VALUES ($1, $2, $3, $4, $5, 'todo', $6, $7, $8, $9, $10, $11, NOW(), NOW())
+         ) VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8, $9, $10, $11, NOW(), NOW())
          RETURNING id, title`,
         [
           uuidv4(),
