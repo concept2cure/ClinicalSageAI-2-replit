@@ -468,13 +468,24 @@ const knownRefusal = (status: number) => status >= 400 && status < 500 && status
 const taskCreateRefused = (status: number, code: unknown) => code !== 'OUTCOME_UNKNOWN' &&
   (code === 'AUDIT_WRITE_FAILED' || knownRefusal(status));
 
-/** Adopt only a persisted task identity, never a truthy value or an invented id. */
-function acknowledgedTask(payload: unknown): Record<string, unknown> | null {
+/** A receipt must name an object row without contradicting successful storage. */
+function acknowledgedRow(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
   const { data, success } = payload as { data?: unknown; success?: unknown };
   if ((success !== undefined && success !== true) || !data || typeof data !== 'object' || Array.isArray(data)) return null;
-  const row = data as Record<string, unknown>;
-  return typeof row.taskId === 'string' && row.taskId.trim() ? row : null;
+  return data as Record<string, unknown>;
+}
+
+/** Adopt only a persisted task identity, never a truthy value or an invented id. */
+function acknowledgedTask(payload: unknown): Record<string, unknown> | null {
+  const row = acknowledgedRow(payload);
+  return row && typeof row.taskId === 'string' && row.taskId.trim() ? row : null;
+}
+
+function acknowledgedMessage(payload: unknown): boolean {
+  const row = acknowledgedRow(payload);
+  // notification-service.requiredNumber returns a nonnegative safe integer.
+  return !!row && typeof row.id === 'number' && Number.isSafeInteger(row.id) && row.id >= 0;
 }
 
 function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard, intakeCurrent }: QuickTaskProps) {
@@ -852,18 +863,19 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated, intakeCurrent }: C
         sourceEntityId: (surfaceCtx.entityId || surfaceCtx.surfaceId || '').slice(0, 200) || undefined,
       });
       if (!owner.sameRevision()) return;
-      if (!res.ok) {
-        const b = await res.json().catch(() => null);
-        if (!owner.sameRevision()) return;
+      const receipt = await res.json().catch(() => null);
+      if (!owner.sameRevision()) return;
+      if (!res.ok || !acknowledgedMessage(receipt)) {
         setSending(false);
-        if (!knownRefusal(res.status)) {
+        // HTTP success alone cannot confirm delivery or admit the second write.
+        if (res.ok || !knownRefusal(res.status)) {
           setDelivery('unknown');
           setSendErr('Whether your message was sent is unknown. Check with the recipient before sending it again.');
           return;
         }
         submitted.current = false;
         setSendErr(
-          'Not sent — ' + (serverMessage(b) ?? `the server refused the message (HTTP ${res.status})`) +
+          'Not sent — ' + (serverMessage(receipt) ?? `the server refused the message (HTTP ${res.status})`) +
             '. Nothing was delivered.',
         );
         return;
@@ -922,10 +934,11 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated, intakeCurrent }: C
         const tres = await apiRequest('POST', '/api/tasks/tasks', taskBody);
         const tjson = await tres.json().catch(() => null);
         if (!owner.sameRevision()) return;
-        const serverTask = (tjson as { data?: Record<string, unknown> } | null)?.data;
-        if (!tres.ok || !serverTask?.taskId) {
+        const serverTask = acknowledgedTask(tjson);
+        if (!tres.ok || !serverTask) {
           setSending(false);
-          taskFailure(knownRefusal(tres.status), serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`);
+          taskFailure(!tres.ok && taskCreateRefused(tres.status, errorCodeOf(tjson)),
+            serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`);
           return;
         }
         // Adopt the SERVER's row, exactly as the create modal does — the id in
@@ -947,7 +960,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated, intakeCurrent }: C
       } catch (e) {
         if (!owner.sameRevision()) return;
         setSending(false);
-        taskFailure(e instanceof ApiRequestError && (knownRefusal(e.status) || e.code === 'AUDIT_WRITE_FAILED'),
+        taskFailure(e instanceof ApiRequestError && taskCreateRefused(e.status, e.code ?? errorCodeOf(e.payload)),
           e instanceof Error ? e.message : String(e));
         return;
       }
