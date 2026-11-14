@@ -44,7 +44,7 @@ function mount() {
 }
 async function start(kind?: string) {
   fireEvent.click(await screen.findByRole('button', { name: /^Start (?:a protocol|study & protocol design)$/i }));
-  const form = within(await screen.findByRole('dialog'));
+  const form = within(await screen.findByRole('region', { name: 'Start a protocol' }));
   fireEvent.change(form.getByLabelText(/Protocol title/), { target: { value: 'New trial protocol' } });
   if (kind) fireEvent.click(form.getByRole('radio', { name: kind }));
   fireEvent.change(form.getByLabelText(/Reason for change/), { target: { value: REASON } });
@@ -103,7 +103,7 @@ describe('clinical trial design begins in the existing combined workflow', () =>
     expect((screen.getByRole('combobox', { name: 'Protocol scope' }) as HTMLSelectElement).value).toBe(PROGRAM);
     expect(h.api.mock.calls.filter(([method]) => method !== 'GET')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Create a study design' }));
-    const form = within(await screen.findByRole('dialog', { name: 'Create a study design' }));
+    const form = within(await screen.findByRole('region', { name: 'Create a study design' }));
     expect(form.getByLabelText(/Primary objective/)).toBeTruthy();
     expect(form.getByLabelText(/Primary endpoint name/)).toBeTruthy();
     expect(form.getByLabelText(/Target population/)).toBeTruthy();

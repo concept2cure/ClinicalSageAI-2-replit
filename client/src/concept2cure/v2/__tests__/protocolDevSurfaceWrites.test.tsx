@@ -500,7 +500,7 @@ describe('empty state', () => {
     expect(String(p.onAsk.mock.calls[0][0])).toMatch(/project open in this workspace/);
     expect(String(p.onAsk.mock.calls[0][0])).not.toContain('C2C-101');
     fireEvent.click(screen.getByRole('button', { name: 'Start study & protocol design' }));
-    expect(await screen.findByRole('dialog')).toBeTruthy();
+    expect(await screen.findByRole('region', { name: 'Start a protocol' })).toBeTruthy();
   });
 });
 

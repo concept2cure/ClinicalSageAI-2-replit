@@ -69,7 +69,7 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
     setError(reason);
     if (!reason) act();
   };
-  return <div className="pde-note" style={{ margin: 16 }}>
+  return <section className="pde-workflow-entry" aria-label="Study and protocol initiation">
     <h2 className="pde-work-heading">{APP_REGISTRY.study_protocol_design.label}</h2>
     <p>Start or select a protocol, create or bind its study design, then use its statistics, assessments, design checks and review tools.
       {' '}Ask AnA to draft from project evidence and continue in the shared document canvas and editor.</p>
@@ -96,21 +96,21 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
     {!programId && <p>Open a project to create a protocol. Existing protocols remain available for review.</p>}
     {selection.doc && !selection.doc.programId && <p>This protocol is unfiled. It has no recorded project association.</p>}
     {error && <div className="pde-refusal" role="alert">{error}</div>}
-    <SelectionDialogs starting={starting} filing={filing} selection={selection} programId={programId} programName={programName}
-      onCreated={onCreated} onStarted={onStarted} closeStart={() => setStarting(false)} closeFile={() => setFiling(false)}
+    <SelectionForms starting={starting} filing={filing} selection={selection} programId={programId} programName={programName}
+      onCreated={onCreated} onStarted={onStarted} closeStart={() => { setStarting(false); setError(null); }} closeFile={() => { setFiling(false); setError(null); }}
       failed={(message) => { setStarting(false); setError(message); }} />
 
-  </div>;
+  </section>;
 }
 
-function SelectionDialogs({ starting, filing, selection, programId, programName, onCreated, onStarted, closeStart, closeFile, failed }: {
+function SelectionForms({ starting, filing, selection, programId, programName, onCreated, onStarted, closeStart, closeFile, failed }: {
   starting: boolean; filing: boolean; selection: ReturnType<typeof useProtocolSelection>;
   programId: string | null; programName: string | null; onCreated: (id?: number | null) => void;
   onStarted?: (intent: ProtocolStartIntent) => void;
   closeStart: () => void; closeFile: () => void; failed: (message: string) => void;
 }) {
   return <>
-    {starting && programId && <StartProtocolDialog programId={programId} programName={programName}
+    {starting && programId && <StartProtocolForm programId={programId} programName={programName}
       onCancel={closeStart} onCreated={onCreated} onStarted={onStarted} onError={failed} />}
     {filing && programId && selection.doc && <FileProtocolProgramDrawer documentId={Number(selection.doc.id)} programId={programId}
       programName={programName} onCancel={closeFile}
@@ -119,7 +119,7 @@ function SelectionDialogs({ starting, filing, selection, programId, programName,
 }
 
 /** Closing a successful form retires only its callback, not the admitted read-back continuation. */
-function StartProtocolDialog({ programId, programName, onCancel, onCreated, onStarted, onError }: {
+function StartProtocolForm({ programId, programName, onCancel, onCreated, onStarted, onError }: {
   programId: string; programName: string | null; onCancel: () => void;
   onCreated: (id?: number | null) => void; onStarted?: (intent: ProtocolStartIntent) => void; onError: (message: string) => void;
 }) {
