@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const mode = process.argv[2];
 if (!['baseline', 'repaired'].includes(mode)) throw Error('Choose baseline or repaired');
-const result = { mode, startedAt: new Date().toISOString(), sourceReads: [], blockedPosts: [], pageErrors: [], passed: false };
+const result = { mode, startedAt: new Date().toISOString(), sourceReads: [], presenceRequests: [], blockedPosts: [], pageErrors: [], passed: false };
 const check = (ok, message) => { if (!ok) throw Error(message); };
 (async () => {
   const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -15,8 +15,15 @@ const check = (ok, message) => { if (!ok) throw Error(message); };
   await page.route('**/api/**', route => {
     const request = route.request();
     if (blockPosts && request.method() !== 'GET' && request.method() !== 'HEAD') {
-      result.blockedPosts.push({ method: request.method(), path: new URL(request.url()).pathname });
-      return route.abort();
+      const pathname = new URL(request.url()).pathname;
+      const presence = request.method() === 'POST' && pathname === '/api/realtime-collab/rooms'
+        || request.method() === 'DELETE' && /^\/api\/realtime-collab\/rooms\/[a-f0-9-]+\/users\/me$/.test(pathname)
+        || request.method() === 'PUT' && /^\/api\/realtime-collab\/rooms\/[a-f0-9-]+\/awareness$/.test(pathname);
+      if (presence) result.presenceRequests.push({ method: request.method(), path: pathname });
+      else {
+        result.blockedPosts.push({ method: request.method(), path: pathname });
+        return route.abort();
+      }
     }
     return route.continue();
   });

@@ -117,5 +117,72 @@ no work. `accepted-inputs.json`, `accepted-scoped-lint.json` and
 errors/no warning growth. This yields 365 distinct passing focused/adjacent cases
 across the retained runs; no whole-repository test pass is claimed.
 
-Full compiler/normal push gates, real repaired browser flow and canonical
-publication remain pending until their receipts are recorded.
+## Actual repaired local flow
+
+`repaired-start.json` records normal startup in the existing declared-image local
+verifier, native exit 0 in 31.7 seconds, serving merge `e24e26eab`.
+`repaired-browser.json` / `repaired-browser-observation.json` pass with no
+source/runner drift. Actual Lumen Lead selects two native captured sources
+across a real search, clears them deliberately, reselects both across searches,
+and receives HTTP 200 for the complete exact selection. Both titles and original
+SHA-256 values appear in the unchanged SourceAssemblyDialog. New document
+opens the existing creation form inside the one editor with its two-source
+notice. The captured screenshots show the existing layout and controls.
+
+Two repaired-observer attempts are retained as `attempt-1-repaired-*` and
+`attempt-2-repaired-*`. They reached the correct chooser and document start but
+incorrectly treated editor presence joins/leaves, then its awareness heartbeat,
+as document writes. The corrected observer allows only those three existing
+presence operations and blocks every other non-GET/HEAD request after login.
+The passing run has no blocked document/model write and no page errors; it does
+not create, draft, amend, approve or submit a document. Existing live provider
+configuration and wider qualification remain outside this repair.
+
+Source commit is `edb756c2e`; the normal merge
+preserves incoming collaboration, peer-message and gateway-account work, with
+the accepted source/config hashes unchanged.
+
+## Remaining downstream audit candidates
+
+A separate read-only trace confirms existing actor/parent access, immutable
+source IDs, upload-byte SHA-256, retained-text hash/disposition checks and stored
+turn lineage. No checksum-substitution defect was identified. Two narrower
+candidates still require their own reproduced RED before any repair or claim:
+
+- `V2App.tsx` prefills the human's composer; `useAnaChat.ts` consumes bare source
+  pins at the later send. ProjectHome's mounted owner clears changed-project
+  pins, but a project change through unmount/remount may leave an earlier
+  accessible project's pins for another project. Existing owner/reset paths and
+  requested-project admission need an explicit remount/dispatch test.
+- The existing native retained-source callback rechecks lifecycle/access at
+  dispatch. Ordinary uploaded bytes and legacy retained-data excerpts appear
+  to lack the same final callback after reading; test withdrawal/revocation
+  between read and dispatch before changing the existing authority boundary.
+
+These are static context/currentness findings, not runtime proof of unauthorized
+disclosure. This packet's click-boundary and existing-editor pass does not claim
+deferred AnA dispatch acceptance. The additional existing
+`projectHomeDocuments.test.tsx` automatic-ten/newest fixture cases are being
+reconciled with the fresh-read contract; its original failures are retained.
+
+## Compiler and automatic-drafting compatibility follow-up
+
+The first normal publication attempt (`publication-attempt-1.json`) is correctly
+blocked: all89 CI lint-job gates pass, then the full compiler finds two test
+typing errors. The synthetic user now supplies the actual required AuthUser
+fields through a typed object; the unsupported `exact` role-query option is
+removed. No cast-through-unknown, compiler/baseline edit or bypass is used.
+
+The additional automatic-drafting test home has three old synchronous,
+unauthenticated positives (`automatic-compatibility-before.json` has two actual
+failures, `automatic-window-before.json` has the third). Its existing sign-in
+helper is reused only for those cases; the same source-page fixture now returns
+a complete exact attestation while preserving non-OK responses. Asynchronous
+assertions keep the exact-ten/newest/no-editor expectations.
+`compatibility-final.json` passes82/82, including all36 document tests and all46
+selected-source tests, with no drift. Scoped lint passes. Combined with the
+unchanged production and earlier adjacent suites,401 distinct cases pass in the
+retained runs. This is still not a whole-repository test-suite claim.
+
+The final normal full compiler and canonical publication remain pending until
+their native receipts are recorded.

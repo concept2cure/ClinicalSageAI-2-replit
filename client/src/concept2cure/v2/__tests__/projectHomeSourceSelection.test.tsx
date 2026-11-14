@@ -28,8 +28,9 @@ import type { SourceRow } from '../surfaces/projectSources';
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
-const AUTHOR = { id: '7', organizationId: '4', displayName: 'Synthetic author', email: 'author@example.test',
-  roles: ['member'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false } as AuthUser;
+const AUTHOR: AuthUser = { id: '7', organizationId: '4', organizationName: 'Synthetic sponsor',
+  firstName: 'Synthetic', lastName: 'Author', displayName: 'Synthetic author', email: 'author@example.test',
+  roles: ['member'], permissions: [], mfaEnabled: false, mfaMethods: [], mustChangePassword: false };
 const props = { surface: { id: 'project-home', label: 'Project home' } as never,
   segment: 'biopharma', onNav: vi.fn(), onAsk: vi.fn() };
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
@@ -116,7 +117,7 @@ describe('the checked set belongs to the Data Room, not its current page', () =>
       await waitFor(() => expect(screen.queryByRole('checkbox', { name: 'Use Source 11.pdf as context' })).toBeNull());
     }
     window.C2C_SOURCE_PINS = ['11'];
-    fireEvent.click(screen.getByRole('button', { name: 'Clear selection', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
     expect(screen.queryByRole('button', { name: /Draft with \d+ pinned source/ })).toBeNull();
     expect(window.C2C_SOURCE_PINS).toEqual([]);
     await act(async () => pending.resolve(ok(exact())));

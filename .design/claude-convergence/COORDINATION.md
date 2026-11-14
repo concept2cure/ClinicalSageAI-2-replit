@@ -1824,6 +1824,8 @@ F1 / W1 / D2, baseline `5a552f142`. Complete the published source-pin audit: sel
 
 2026-11-14 source-selection implementation completion: all worker files are frozen. Fourteen focused/adjacent suites pass363/363; the root-owned existing-button recovery increment adds two controls and passes all five affected client suites. Explicit Clear selection retires local/global pins and pending selected-set ownership when an off-page source becomes unavailable. Scoped/differential lint passes with no errors or warning growth. Independent review confirms unchanged canonical source-access and chooser/target ownership; final runtime/publication verification remains root-owned. Source/test holds release upon canonical publication; no other lane is paused and no live provider or regulatory acceptance is claimed.
 
+2026-11-14 source-selection compatibility follow-up: root also reserves only `v2/__tests__/projectHomeDocuments.test.tsx` three existing automatic-AnA positive fixtures (real synthetic session, exact response and asynchronous assertions), retaining the automatic-ten/newest/no-editor checks. No source/test change is made during the first push's full compiler. The compatibility RED cases and subsequent checks stay in the same evidence packet. Ends at publication or03:00UTC. A read-only downstream AnA audit records separate static follow-up candidates; it changes no production owner or qualification status.
+
 ### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
 
 The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical
