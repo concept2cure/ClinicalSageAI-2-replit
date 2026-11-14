@@ -29,7 +29,7 @@ type Assessment = { side: 'drug_substance' | 'drug_product' } & (
   | { ok: false; code: string; message: string; routeTo?: string }
   | { ok: true; basis: 'ICH Q3A(R2)/Q3B(R2)'; disposition: string; thresholds: { reporting: Threshold; identification: Threshold; qualification: Threshold }; outstanding: string[] }
   | { ok: true; basis: 'ICH Q3C(R8)'; solventClass: number; limitPpm: number; withinLimit: boolean; disposition: string; outstanding: string[] }
-  | { ok: true; basis: 'ICH Q3D(R2)'; elementClass: string; pdeMicrogramsPerDay: number; observedMicrogramsPerDay: number; withinLimit: boolean; route: string; outstanding: string[] }
+  | { ok: true; basis: 'ICH Q3D(R2)'; elementClass: string; pdeMicrogramsPerDay: number; observedMicrogramsPerDay: number; exposureBasis?: string; withinLimit: boolean; route: string; outstanding: string[] }
   | { ok: true; basis: 'ICH M7(R2)'; impurityClass: number; className: string; controlApproach: string; acceptableIntakeUgPerDay: number | null; concentrationLimitPpm: number | null; withinLimit: boolean | null; disposition: string; outstanding: string[] }
 );
 export interface ImpurityAssessmentRow { id: number; impurityName: string; assessments: Assessment[] }
@@ -59,7 +59,11 @@ function q3c(a: Of<'ICH Q3C(R8)'>): Verdict {
 function q3d(a: Of<'ICH Q3D(R2)'>): Verdict {
   return {
     tone: a.withinLimit ? 'ok' : 'err',
-    text: `Q3D ${a.elementClass}: ${num(a.observedMicrogramsPerDay)} of ${num(a.pdeMicrogramsPerDay)} µg/day ${a.route} PDE · ${a.withinLimit ? 'within' : 'above'}`,
+    /* A derived exposure (ppm × the recorded daily dose) is ONE material's
+       contribution; the PDE is the whole product's. Said with the figure, so
+       "within" is not read as the product's verdict. */
+    text: `Q3D ${a.elementClass}: ${num(a.observedMicrogramsPerDay)} of ${num(a.pdeMicrogramsPerDay)} µg/day ${a.route} PDE · ${a.withinLimit ? 'within' : 'above'}` +
+      (a.exposureBasis ? ' · this material’s contribution, from its concentration and daily dose' : ''),
   };
 }
 function m7(a: Of<'ICH M7(R2)'>): Verdict {
@@ -85,8 +89,17 @@ export function useImpurityAssessments(projectId: string | undefined) {
   const read = useLiveData<ImpurityAssessmentRow[]>(
     '/api/cmc/impurity-profiles/assessment' + (projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''),
   );
-  const byId = React.useMemo(() => new Map((read.data ?? []).map((r) => [r.id, r])), [read.data]);
-  return { byId, loading: read.loading, error: read.error ?? null };
+  /* A payload that is not a list is a failed read, never an empty register:
+     `read.data ?? []` threw on one (an unhandled TypeError out of the memo), and
+     treating it as "no rows" would print "not assessed" on every impurity. */
+  const rows = Array.isArray(read.data) ? read.data : null;
+  const byId = React.useMemo(() => new Map((rows ?? []).map((r) => [r.id, r])), [rows]);
+  const malformed = !read.loading && !read.error && read.data != null && rows === null;
+  return {
+    byId,
+    loading: read.loading,
+    error: read.error ?? (malformed ? 'The assessments read did not return a list of impurities.' : null),
+  };
 }
 
 /** The "Against the guideline" cell for one impurity. */

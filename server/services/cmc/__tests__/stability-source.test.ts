@@ -20,12 +20,13 @@ import {
   STABILITY_SOURCE_TYPE,
 } from '../stability-source';
 import {
-  checkQ1A, checkQ3AandQ3B, checkQ3D,
+  checkQ1A, checkQ3AandQ3B,
   checkQ6AandQ6B, checkQ8, checkQ9, checkQ10,
   blockedInputs, notEvaluatedFinding,
   type ProjectInputs,
 } from '../ich-compliance-rules';
 import { checkQ2 } from '../ich-compliance-q2';
+import { checkQ3D } from '../ich-compliance-q3d';
 
 // ─── Test doubles ────────────────────────────────────────────────────────────
 

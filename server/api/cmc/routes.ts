@@ -2643,6 +2643,7 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
         storageConditions: stabilityStudies.storageConditions,
         duration: stabilityStudies.duration,
         stabilityData: stabilityStudies.stabilityData,
+        shelfLife: stabilityStudies.shelfLife,
         projectId: stabilityStudies.projectId,
       })
       .from(stabilityStudies)
@@ -2657,7 +2658,12 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
     if (!outcome.ok) {
       return res.status(409).json({ success: false, error: outcome.error });
     }
-    return res.json({ success: true, data: outcome.data });
+    /* The study's RECORDED shelf life against this estimate, judged here so
+       the register states a verdict it was given (ich-compliance-q1e.ts). The
+       register printed "21.9 mo" beside "24 months retest" and said nothing. */
+    const { judgeRecordedShelfLifeClaim } = await import('../../services/cmc/ich-compliance-q1e');
+    const recordedClaim = judgeRecordedShelfLifeClaim(study.shelfLife, outcome.data);
+    return res.json({ success: true, data: { ...outcome.data, ...(recordedClaim ? { recordedClaim } : {}) } });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to estimate shelf life');
   }

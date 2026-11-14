@@ -395,10 +395,26 @@ const NITROSAMINE_SPECIFIC_AI: Record<string, { name: string; ai_ng_per_day: num
  * 2026-10-15: a name not in the table fell back to the default 18 ng/day while
  * the text called it "Compound-specific AI for <name>".
  */
+/*
+ * 2026-11-13: matched by abbreviation OR by the name the table holds, in any
+ * case and spelling of hyphens and spaces. The lookup upper-cased the identity
+ * and tested it against mixed-case keys, so `NMPhA` could never match itself,
+ * and the impurity register passes the impurity's NAME: a row named
+ * "N-Nitrosodimethylamine" got the 18 ng/day default instead of NDMA's
+ * 96 ng/day, a false "above" for any level between the two. The verdict's
+ * basis names the entry that was applied.
+ */
+const nitrosamineKey = (v: string): string => v.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 function compoundSpecificNitrosamineAI(identity: string | undefined): (typeof NITROSAMINE_SPECIFIC_AI)[string] | null {
-  const key = identity?.trim().toUpperCase();
-  if (!key || key === 'DEFAULT' || !Object.hasOwn(NITROSAMINE_SPECIFIC_AI, key)) return null;
-  return NITROSAMINE_SPECIFIC_AI[key];
+  const wanted = nitrosamineKey(identity ?? '');
+  if (!wanted) return null;
+  for (const [abbreviation, entry] of Object.entries(NITROSAMINE_SPECIFIC_AI)) {
+    if (abbreviation === 'DEFAULT') continue;
+    const names = [abbreviation, ...entry.name.split(/[()]/)].map(nitrosamineKey).filter(Boolean);
+    if (names.includes(wanted)) return entry;
+  }
+  return null;
 }
 
 /** Purge mechanism scoring per Teasdale (2019) */
