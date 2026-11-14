@@ -1301,7 +1301,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   testId="cmc-portfolio-unreadable"
                 />
               ) : port.length === 0 ? (
-                <EmptyState icon={I.fileText} title="No submissions yet" hint="Your regulatory submissions (BLA / MAA / NDA / J-NDA) appear here with their preparedness index and overdue information requests." />
+                /* The hint named only marketing applications (BLA / MAA / NDA / J-NDA), every one of which this
+                   release refuses to compose (services/cmc/composition-scope.ts), and not the US IND it composes. */
+                <EmptyState icon={I.fileText} title="No submissions yet" hint="Your submissions appear here with their Module 3 state, preparedness index and overdue agency questions. This release composes Module 3 for a small-molecule US IND." />
               ) : (
                 /* "RPI" and "IR overdue" were abbreviations defined nowhere on
                    screen (§WA.4.2 rule 10). Same two columns, same values. */

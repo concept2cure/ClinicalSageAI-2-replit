@@ -660,3 +660,16 @@ describe('CmOverview — the next section is not named twice', () => {
     expect(next.textContent).toBe('Next to approve: §3.1.');
   });
 });
+
+/* The empty portfolio named only marketing applications, each of which the
+   release refuses to compose, and not the US IND it composes (P-28). */
+describe('CmOverview — an empty portfolio names what this release composes', () => {
+  it('names the small-molecule US IND and no refused application type', async () => {
+    wire(board({ portfolio: [], kpis: { submissions: 0, rpiAverage: null, sectionsApproved: null, sectionsTotal: null, readyPercent: null } }));
+    renderOverview();
+    await screen.findByText('No submissions yet');
+    const hint = screen.getByText(/Your submissions appear here/).textContent ?? '';
+    expect(hint).toContain('small-molecule US IND');
+    expect(hint).not.toMatch(/BLA|MAA|NDA|J-NDA/);
+  });
+});
