@@ -1,0 +1,25 @@
+{
+  "scope": "Actual local app, fictional account and intercepted task/roster/error responses; no assignment or other mutation forwarded.",
+  "cases": [
+    {
+      "status": 408,
+      "writes": 1,
+      "automaticWrites": 0,
+      "rosterReads": 3,
+      "automaticHeld": true,
+      "explicitRefreshRecovered": true,
+      "warning": "Could not confirm the assignment. Refresh assignment before retrying; the change may have reached the server."
+    },
+    {
+      "status": 403,
+      "writes": 1,
+      "automaticWrites": 0,
+      "rosterReads": 2,
+      "automaticHeld": false,
+      "explicitRefreshRecovered": false,
+      "warning": "Current project permissions do not allow this assignment."
+    }
+  ],
+  "pageErrors": [],
+  "status": "passed"
+}
