@@ -1,0 +1,21 @@
+GET /api/authoring/templates (signed in, local app on trunk 462855c80 + item 15): 469 rows
+- b4322975-198f-5a3a-ae9d-d6843360aef4 | 2.3.S.2 · Manufacture | aiDraftable True | kind narrative | 0 sections
+- ba2d3b56-eeb3-57ff-99f4-3a9d6773e5ae | 2.3.P.3 · Manufacture | aiDraftable True | kind narrative | 0 sections
+- a5dd65f6-6f2c-56ec-886a-c35ce5da864f | 3.2.S.2 · Manufacture | aiDraftable True | kind narrative | 0 sections
+- 4eaf846e-6290-59bf-b058-7b9709221cf2 | 3.2.P.3 · Manufacture | aiDraftable True | kind narrative | 0 sections
+- 70b9ffd1-9a8f-5fbb-96e9-de561f3c1b3f | Pre-IND briefing document | aiDraftable True | kind narrative | 0 sections
+- 6b864aae-f1e5-5257-a36d-80c39bad23e1 | 3.2.S.2 · Manufacture | aiDraftable True | kind narrative | 0 sections
+- 6aeb7492-ff51-5354-8533-f301a43f3efe | 3.2.P.3 · Manufacture | aiDraftable True | kind narrative | 0 sections
+- registry:EU_MIR | EU · Manufacturer Incident Report (MIR) — preparation worksheet | aiDraftable False | kind preparation | 0 sections
+POST /api/authoring/docs (template 70b9ffd1-…, the demo IND project d1538750-…) → 201, document 3c7a3987-7201-40eb-941b-bd61c033a4a2; then GET its sections:
+   8 sections
+    work:pre_ind_meeting:MTG-REQ-CL · Meeting Request Letter and Cover Letter
+    work:pre_ind_meeting:MTG-AGENDA · Proposed Agenda
+    work:pre_ind_meeting:MTG-ATTEND · Sponsor Attendee List
+    work:pre_ind_meeting:MTG-BKGD · Product Background and Development Rationale
+    work:pre_ind_meeting:MTG-NONCLIN · Nonclinical Pharmacology and Toxicology Summary
+    work:pre_ind_meeting:MTG-CMC · Chemistry, Manufacturing, and Controls (CMC) Summary
+    work:pre_ind_meeting:MTG-CLIN · Proposed Clinical Development Plan and First-in-Human Protocol Synopsis
+    work:pre_ind_meeting:MTG-QUES · Numbered Questions for FDA with Sponsor Positions
+
+Before (trunk 462855c80, the same template): 1 section, code 'preparation', titled 'Pre-IND briefing document' (red.txt, and the snapshot delta).

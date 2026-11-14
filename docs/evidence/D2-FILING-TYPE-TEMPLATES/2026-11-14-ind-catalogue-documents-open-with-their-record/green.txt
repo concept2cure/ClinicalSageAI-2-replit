@@ -1,0 +1,7 @@
+Item 15 neighbourhood: 29 test files naming the IND catalogue or the built-in templates.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 27 passed (29)
+      Tests  2 failed | 898 passed (900)
+First run, before the digest re-record: 2 failing.
+- cross-sector digest: moved as the delta file records; re-recorded, then 28 of 28 with the new test.
+- clientNamesSlice1.test.tsx (protocol-dev label): red on an unmodified archive of 462855c80 too, not this change.

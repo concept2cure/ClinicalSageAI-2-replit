@@ -61,6 +61,20 @@ function preparationRow(d: IndDocumentCatalogDeliverable): IndTemplateOutlineSec
   } };
 }
 
+/** Catalogue documents whose parts the record already holds; none of them is a CTD placement here. */
+const RECORDED_DOCUMENTS: Readonly<Record<string, { templateId: string; key: string; label: string }>> = {
+  'phase5.design:deliverable:1': { templateId: 'statistical_analysis_plan', key: 'sap', label: 'SAP' },
+  // F1 (2026-11-14), sweep item 15: it opened as one empty section; the Pre-IND meeting record has its eight parts.
+  'phase2.briefing_package:deliverable:0': { templateId: 'us_lifecycle_pre_ind_meeting', key: 'pre_ind_meeting', label: 'Pre-IND briefing document' },
+};
+
+function recordedDocumentRows(doc: { templateId: string; key: string; label: string }): IndTemplateOutlineSection[] {
+  const record = getDocumentTemplate(doc.templateId);
+  if (!record) throw new Error(`The recorded ${doc.label} structure is unavailable.`);
+  return documentTemplateOutlineSections(record).map(row => ({ ...row, code: `work:${doc.key}:${row.code}`,
+    guidance: { ...row.guidance, guidance_text: `${row.guidance.guidance_text}\n\nDocument-local ${doc.label} working heading; no CTD placement is established.` } }));
+}
+
 function deliverableTemplate(d: IndDocumentCatalogDeliverable, canonical: INDSection[]): IndAuthoringTemplate {
   const bound = canonical.filter(s => d.sectionCodes.some(code => normalizeCtdCode(code) === normalizeCtdCode(s.code)));
   let rows: IndTemplateOutlineSection[];
@@ -69,15 +83,16 @@ function deliverableTemplate(d: IndDocumentCatalogDeliverable, canonical: INDSec
   if ((d.id === 'phase5.protocol_outline:deliverable:0' || d.id === 'phase5.protocol_finalize:deliverable:0') && bound[0]) {
     const section = { ...bound[0], title: d.title };
     rows = [indSectionOutlineRow(section), ...buildModule4Or5Outline(section)];
-  } else if (d.id === 'phase5.design:deliverable:1') {
-    const sap = getDocumentTemplate('statistical_analysis_plan');
-    if (!sap) throw new Error('The recorded SAP planning structure is unavailable.');
-    rows = documentTemplateOutlineSections(sap).map(row => ({ ...row, code: `work:sap:${row.code}`,
-      guidance: { ...row.guidance, guidance_text: `${row.guidance.guidance_text}\n\nDocument-local SAP working heading; no CTD placement is established.` } }));
+  } else if (RECORDED_DOCUMENTS[d.id]) {
+    rows = recordedDocumentRows(RECORDED_DOCUMENTS[d.id]);
   } else rows = bound.flatMap(s => outline({ ...s, title: d.title }));
   const selected = rows.length ? rows : [preparationRow(d)];
   const mode = d.aiDraftable ? 'ai_draft' : 'manual';
-  return template({ entryId: d.id, title: d.title, module: d.module as CTDModule | null, aiDraftable: d.aiDraftable, mode, format: 'source-dependent', description: d.description ?? d.taskName }, selected);
+  // A subtask named by its CTD section's own title carries the code, as the section row does: ICH titles both
+  // 3.2.S.2 and 3.2.P.3 "Manufacture" (F1, 2026-11-14).
+  const own = d.id.includes(':subtask:') && d.sectionCodes.length === 1 && bound.length === 1 && bound[0].title === d.title;
+  const title = own ? `${normalizeCtdCode(bound[0].code)} · ${d.title}` : d.title;
+  return template({ entryId: d.id, title, module: d.module as CTDModule | null, aiDraftable: d.aiDraftable, mode, format: 'source-dependent', description: d.description ?? d.taskName }, selected);
 }
 
 export function getIndAuthoringTemplates(): IndAuthoringTemplate[] {
