@@ -3,14 +3,14 @@
     {
       "file": "tests/regulatory/registryCoverage.test.ts",
       "passed": 186,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "latest-template-consumers-tests.json",
+      "reportSha256": "9c21c4f5818df4c18536a0d3a5e53e27f7fb3c88c19faa7a4cebd4762c4243f6"
     },
     {
       "file": "tests/regulatory/template-library-truth.test.ts",
       "passed": 7,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "latest-template-consumers-tests.json",
+      "reportSha256": "9c21c4f5818df4c18536a0d3a5e53e27f7fb3c88c19faa7a4cebd4762c4243f6"
     },
     {
       "file": "tests/schema-contract/c2c-project-scaffold.contract.test.ts",
@@ -27,8 +27,8 @@
     {
       "file": "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
       "passed": 6,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "latest-filing-integration-tests.json",
+      "reportSha256": "41ceedb20d458a82e98c851bcbec134eb968c7980a1273e46ac5e8e8c83cf505"
     },
     {
       "file": "tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts",
@@ -39,8 +39,8 @@
     {
       "file": "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
       "passed": 9,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "latest-filing-integration-tests.json",
+      "reportSha256": "41ceedb20d458a82e98c851bcbec134eb968c7980a1273e46ac5e8e8c83cf505"
     },
     {
       "file": "server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts",
@@ -63,8 +63,8 @@
     {
       "file": "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
       "passed": 31,
-      "report": "selector-correction-tests.json",
-      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
+      "report": "latest-filing-integration-tests.json",
+      "reportSha256": "41ceedb20d458a82e98c851bcbec134eb968c7980a1273e46ac5e8e8c83cf505"
     },
     {
       "file": "server/routes/c2c/__tests__/projects-create.test.ts",
@@ -75,8 +75,8 @@
     {
       "file": "server/services/c2c/__tests__/ivd-510k-rule-pack-selection.test.ts",
       "passed": 13,
-      "report": "selector-correction-tests.json",
-      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
+      "report": "latest-filing-integration-tests.json",
+      "reportSha256": "41ceedb20d458a82e98c851bcbec134eb968c7980a1273e46ac5e8e8c83cf505"
     },
     {
       "file": "server/services/c2c/__tests__/regional-device-document-class.test.ts",
@@ -87,8 +87,8 @@
     {
       "file": "server/services/market-specs/__tests__/document-template-library.test.ts",
       "passed": 41,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "latest-template-consumers-tests.json",
+      "reportSha256": "9c21c4f5818df4c18536a0d3a5e53e27f7fb3c88c19faa7a4cebd4762c4243f6"
     },
     {
       "file": "server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts",
@@ -105,8 +105,8 @@
     {
       "file": "server/services/regulatory/__tests__/market-support.test.ts",
       "passed": 30,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "latest-template-consumers-tests.json",
+      "reportSha256": "9c21c4f5818df4c18536a0d3a5e53e27f7fb3c88c19faa7a4cebd4762c4243f6"
     },
     {
       "file": "server/services/regulatory/__tests__/regional-device-market-support.test.ts",
@@ -117,8 +117,8 @@
     {
       "file": "server/services/vault/__tests__/ivd-retained-binder.test.ts",
       "passed": 4,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "latest-filing-integration-tests.json",
+      "reportSha256": "41ceedb20d458a82e98c851bcbec134eb968c7980a1273e46ac5e8e8c83cf505"
     },
     {
       "file": "server/services/vault/__tests__/vault-folders.test.ts",
