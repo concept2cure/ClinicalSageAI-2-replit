@@ -140,3 +140,15 @@ complete production build exits **0** (Vite25.19s). All eleven selection source
 and test hashes remain unchanged. The integration JSON and adjacent Quality
 logs identify those separate revisions; the next normal hook checks the final
 combined compiler again. No force, gate/baseline bypass or privacy-policy change.
+
+### Collaboration receipt integration — 2026-11-14
+
+The next ordinary push at `3e7c90d9b` again passes all89 gates and compiler0,
+then loses a second ref race to canonical `cd407d470`. The actual outcome is
+retained in `integration-second-compiler-green-ref-race.txt.gz`. Ordinary merge
+`0a2c957ae` preserves its collaboration message/task receipt and shell fixture
+repair; the three affected suites pass **63/63**, zero skips, and the refreshed
+production build exits **0** (Vite23.62s). All eleven selection source/test
+hashes remain unchanged. The final hook checks the complete merged tree again.
+The coordination record requests a publication slot without pausing any lane;
+normal merge/push continues. The private-profile policy choice stays pending.

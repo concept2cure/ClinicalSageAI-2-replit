@@ -1855,13 +1855,13 @@ explicitly pending the founder's profile export/disposal choice; no profile
 RLS, export, purge, plan, gate or assertion was changed to hide them.
 
 Publication request, project selection continuation, 2026-11-14 01:51 UTC:
-two normal retries passed all89 gates and the full compiler0, then lost ref
-races to3692f44ad andcd407d470. Under rule6, a15-minute publication slot is
-requested for02:10–02:25UTC (at least15minutes ahead) if the coordinating session
+two normal retries passed all 89 gates and the full compiler with 0 errors,
+then lost ref races to 3692f44ad and cd407d470. Under rule 6, a 15-minute publication
+slot is requested for 02:10–02:25 UTC (at least 15 minutes ahead) if the coordinating session
 can allocate it. No callable cross-session channel reaches that session here;
 no other lane is claimed paused. Ordinary fetch/merge/push continues without
 force or skipped hooks. This continuation's frozen selection-file reservation
-extends only through02:30UTC or publication, whichever comes first, for Git
+extends only through 02:30 UTC or publication, whichever comes first, for Git
 integration; no additional implementation scope is taken. The request ends
 on successful publication.
 

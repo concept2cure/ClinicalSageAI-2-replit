@@ -100,5 +100,31 @@
     },
     "allElevenSelectionSourceAndTestHashesUnchanged": true,
     "finalCompiler": "Normal push hook runs again on the final merged tree."
+  },
+  "collaborationReceiptCanonicalRefresh": {
+    "sourceHead": "0a2c957aefd75b578c91904fffb94105c5708bb0",
+    "canonicalThrough": "cd407d470",
+    "previousNormalPush": {
+      "sourceHead": "3e7c90d9b",
+      "compilerErrors": 0,
+      "compilerExitCode": 0,
+      "lintGates": 89,
+      "redGates": 0,
+      "pushExitCode": 1,
+      "reason": "remote-ref advanced tocd407d470 during gates; no force or hook bypass"
+    },
+    "checks": {
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "files": 3,
+      "seconds": 8.39
+    },
+    "build": {
+      "exitCode": 0,
+      "viteSeconds": 23.62
+    },
+    "allElevenSelectionSourceAndTestHashesUnchanged": true,
+    "finalCompiler": "Normal push hook checks final merged tree again."
   }
 }
