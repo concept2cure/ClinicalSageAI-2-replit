@@ -399,3 +399,22 @@ the incoming TaskAssignmentControls/taskAssignmentRequest changes keep their
 existing interfaces and are disjoint from ProjectHome, source admission and
 editor callbacks. The normal merge preserves those changes and their evidence.
 No successful publication is inferred from this passing hook.
+
+
+Merge `0df1d40ae` preserves both coordination entries and the canonical task
+assignment repair without changing the32 frozen selection/editor inputs.
+`assignment-merge-focused.json` passes57/57 cases across its two affected
+control/request suites, no source or runner drift. The36-file manifest adds
+those four task implementation/test files. This is targeted integration evidence,
+not a replacement for the earlier502-case selection or74-case editor checks.
+The next normal authenticated push records its own complete compiler/gates and
+actual remote outcome.
+
+
+`publication-attempt-11.json` verifies `0df1d40ae`: full compiler0/baseline0,
+all89 normal lint gates0red and no named input/runner drift. Its normal upload
+loses a reference race to `641494ffe`. Incoming changes are a Vault taxonomy
+proof fixture, exact historical secret-scan fingerprint classifications and
+coordination/evidence; the selected-source product inputs remain unchanged.
+Preserve those canonical changes by ordinary merge and run the affected proof
+before the next authenticated normal push.
