@@ -1,0 +1,355 @@
+{
+  "scope": "Current execution workspace only; not a production deployment assessment. No development env loaded, no network/database reads.",
+  "generatedAt": "2026-11-14T03:05:26.343Z",
+  "summary": {
+    "generatedAt": "2026-11-14T03:05:26.343Z",
+    "nodeEnv": "(unset)",
+    "localEnvLoaded": false,
+    "localEnvPath": null,
+    "localEnvKeys": [],
+    "total": 42,
+    "ready": 8,
+    "blocked": 34,
+    "unknown": 0,
+    "blockersOutstanding": 18,
+    "advisoriesOutstanding": 16
+  },
+  "rows": [
+    {
+      "id": "estar-templates",
+      "group": "Licensed agency artifacts",
+      "label": "Official FDA eSTAR / PreSTAR interactive PDFs",
+      "status": "ready",
+      "severity": "blocker",
+      "owner": "Procurement / Regulatory Ops"
+    },
+    {
+      "id": "estar-field-maps",
+      "group": "Licensed agency artifacts",
+      "label": "eSTAR canonical \u2192 official form field maps",
+      "status": "ready",
+      "severity": "blocker",
+      "owner": "Engineering (Regulatory pathway), after Procurement vendors the PDF"
+    },
+    {
+      "id": "prestar-request-automation",
+      "group": "Licensed agency artifacts",
+      "label": "PreSTAR request-specific automated filing qualification",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Engineering / Regulatory QA"
+    },
+    {
+      "id": "ectd-dtds",
+      "group": "Licensed agency artifacts",
+      "label": "eCTD v3.2.2 supportive files (ICH backbone + 4 regional DTDs, ICH + FDA stylesheets)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Procurement / Regulatory Ops (acquire) + Engineering (commit + checksums)"
+    },
+    {
+      "id": "ectd-dtd-checksums",
+      "group": "Licensed agency artifacts",
+      "label": "eCTD supportive-file SHA-256 manifest (checksums.txt in the drop-point)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Engineering (same commit as the DTD drop)"
+    },
+    {
+      "id": "ectd-v4-rps-schema",
+      "group": "Licensed agency artifacts",
+      "label": "eCTD v4.0 RPS message XSD (rps-message.xsd)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Procurement (ICH implementation package licence)"
+    },
+    {
+      "id": "fda-recognized-standards",
+      "group": "Licensed agency artifacts",
+      "label": "FDA recognized consensus standards dataset (product code \u2192 standards)",
+      "status": "ready",
+      "severity": "advisory",
+      "owner": "Procurement / Regulatory Ops (acquire + normalize the FDA export)"
+    },
+    {
+      "id": "evalidator-licence",
+      "group": "Licensed engines & dictionaries",
+      "label": "Agency-grade eCTD validator (LORENZ eValidator)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Procurement (licence) + Ops (deploy the engine)"
+    },
+    {
+      "id": "meddra-licence",
+      "group": "Licensed engines & dictionaries",
+      "label": "MedDRA dictionary (licensed)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Procurement (MSSO / UMC subscription)"
+    },
+    {
+      "id": "whodrug-licence",
+      "group": "Licensed engines & dictionaries",
+      "label": "WHODrug dictionary (licensed)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Procurement (MSSO / UMC subscription)"
+    },
+    {
+      "id": "gateway:fda:esg",
+      "group": "Agency gateway credentials (production)",
+      "label": "FDA ESG (AS2)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:ema:cesp",
+      "group": "Agency gateway credentials (production)",
+      "label": "EMA CESP",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:ema:eudamed",
+      "group": "Agency gateway credentials (production)",
+      "label": "EUDAMED",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:pmda:pmda_gateway",
+      "group": "Agency gateway credentials (production)",
+      "label": "PMDA gateway",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:ca:hc_cesg",
+      "group": "Agency gateway credentials (production)",
+      "label": "Health Canada CESG",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:uk:mhra_gateway",
+      "group": "Agency gateway credentials (production)",
+      "label": "MHRA gateway",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:cn:nmpa_gateway",
+      "group": "Agency gateway credentials (production)",
+      "label": "NMPA gateway",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:au:tga_ebs",
+      "group": "Agency gateway credentials (production)",
+      "label": "TGA eBS",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:ch:swissmedic_egateway",
+      "group": "Agency gateway credentials (production)",
+      "label": "Swissmedic eGov",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:br:anvisa_gateway",
+      "group": "Agency gateway credentials (production)",
+      "label": "ANVISA gateway",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:in:cdsco_sugam",
+      "group": "Agency gateway credentials (production)",
+      "label": "CDSCO SUGAM",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:kr:mfds_dbio",
+      "group": "Agency gateway credentials (production)",
+      "label": "MFDS dBIO",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "gateway:sg:hsa_prism",
+      "group": "Agency gateway credentials (production)",
+      "label": "HSA PRISM",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency account) + Ops (secrets manager)"
+    },
+    {
+      "id": "icsr-gateway",
+      "group": "Agency gateway credentials (production)",
+      "label": "E2B(R3) ICSR gateway",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Regulatory Ops (agency gateway account + AS2 identity/certs) + Ops (secrets manager)"
+    },
+    {
+      "id": "flag-rls",
+      "group": "Production enforcement flags",
+      "label": "RLS enforcement (RLS_ENFORCE=on)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops (deploy env)"
+    },
+    {
+      "id": "flag-estar-template",
+      "group": "Production enforcement flags",
+      "label": "eSTAR template enforcement (ESTAR_REQUIRE_TEMPLATE=true)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops (deploy env)"
+    },
+    {
+      "id": "flag-dtd",
+      "group": "Production enforcement flags",
+      "label": "eCTD DTD self-containment enforcement (ECTD_REQUIRE_DTD=true)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops (deploy env)"
+    },
+    {
+      "id": "flag-evalidator",
+      "group": "Production enforcement flags",
+      "label": "Agency-validator enforcement (ECTD_REQUIRE_EVALIDATOR=true)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops (deploy env)"
+    },
+    {
+      "id": "flag-pdfa",
+      "group": "Production enforcement flags",
+      "label": "PDF/A submission-grade enforcement (ECTD_REQUIRE_PDFA=true)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Product (decide the rule), then Ops (deploy env)"
+    },
+    {
+      "id": "flag-rps-schema",
+      "group": "Production enforcement flags",
+      "label": "eCTD v4.0 RPS schema enforcement (ECTD_REQUIRE_RPS_SCHEMA=true)",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Ops (deploy env)"
+    },
+    {
+      "id": "tenant-seat-limit-enforcement",
+      "group": "Tenant entitlement switches",
+      "label": "Seat licensing enforcement (SEAT_LIMIT_ENFORCEMENT)",
+      "status": "ready",
+      "severity": "advisory",
+      "owner": "Ops (deploy env) + Commercial (who is over their limit)"
+    },
+    {
+      "id": "tenant-storage-limit-enforcement",
+      "group": "Tenant entitlement switches",
+      "label": "Storage quota enforcement (STORAGE_LIMIT_ENFORCEMENT)",
+      "status": "ready",
+      "severity": "advisory",
+      "owner": "Ops (deploy env) + Commercial (who is over their limit)"
+    },
+    {
+      "id": "tenant-scim-provisioning-on-suspended-tenant",
+      "group": "Tenant entitlement switches",
+      "label": "SCIM provisioning on a suspended tenant (SCIM_PROVISIONING_ON_SUSPENDED_TENANT)",
+      "status": "ready",
+      "severity": "advisory",
+      "owner": "Ops (deploy env) + Commercial (who is over their limit)"
+    },
+    {
+      "id": "audit-hmac-key",
+      "group": "Boot-posture secrets",
+      "label": "Audit HMAC seal key (AUDIT_HMAC_KEY, \u226532 chars)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops / Security (secrets manager)"
+    },
+    {
+      "id": "mfa-encryption-key",
+      "group": "Boot-posture secrets",
+      "label": "MFA secret encryption key (MFA_ENCRYPTION_KEY, \u226532 chars)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops / Security (secrets manager)"
+    },
+    {
+      "id": "smtp-otp",
+      "group": "Boot-posture secrets",
+      "label": "SMTP transport for login OTP (mandatory 2FA)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops"
+    },
+    {
+      "id": "high-risk-model-pq",
+      "group": "AI governance",
+      "label": "PQ executed for the models approved for high-risk drafting (Opus 5 + one fallback)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Engineering (execute the PQ) + Ops (a product provider key)"
+    },
+    {
+      "id": "sentry-dsn",
+      "group": "Observability & operational posture",
+      "label": "Error monitoring (SENTRY_DSN)",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Ops"
+    },
+    {
+      "id": "corpus-ingestion",
+      "group": "Observability & operational posture",
+      "label": "Precedent corpus ingestion sweep",
+      "status": "blocked",
+      "severity": "advisory",
+      "owner": "Ops (schedule) + Product (choose the indication set)"
+    },
+    {
+      "id": "ai-governance-posture",
+      "group": "Observability & operational posture",
+      "label": "AI content-safety gates strict in production (AI_PII_ENFORCEMENT=block, AI_GROUNDEDNESS_ENFORCE=1)",
+      "status": "ready",
+      "severity": "advisory",
+      "owner": "Ops + AI governance owner"
+    },
+    {
+      "id": "ci-coverage-gate",
+      "group": "CI posture",
+      "label": "Coverage enforced in CI (ratchet; 70/60/70/70 still the target)",
+      "status": "ready",
+      "severity": "advisory",
+      "owner": "Engineering"
+    },
+    {
+      "id": "backup-restore-rehearsal",
+      "group": "CI posture",
+      "label": "Database backup / restore rehearsal (DR runbook + a proven restore)",
+      "status": "blocked",
+      "severity": "blocker",
+      "owner": "Ops / DB owner"
+    }
+  ]
+}
