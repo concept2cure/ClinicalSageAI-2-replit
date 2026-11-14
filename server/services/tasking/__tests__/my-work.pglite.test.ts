@@ -17,7 +17,9 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'fs';
 import { extractTableDdl } from '../../../../tests/golden-journeys/harness';
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import type { RequestDb } from '../../../db/requestDb';
+import { projectTasks, c2cProjectWorkItems } from '../../../../shared/schema';
 import { readMyWork } from '../my-work';
 
 const SQL_SOURCES = {
@@ -63,6 +65,38 @@ beforeAll(async () => {
       ('T-OTHERUSER', 1, 25, 'Plan', 'Someone else''s', 'pending', 4, NULL, 3, NULL, now()),
       ('T-OTHERORG', 2, 60, 'Plan', 'Other organisation''s', 'pending', 3, NULL, 3, NULL, now());
   `);
+  // The other stores the cross-store view reads (P-131 item 6), with every column the Drizzle model names.
+  for (const table of [projectTasks, c2cProjectWorkItems]) {
+    const config = getTableConfig(table);
+    await pg.exec(`CREATE TABLE ${config.name} (id serial PRIMARY KEY)`);
+    for (const column of config.columns) if (column.name !== 'id') {
+      await pg.exec(`ALTER TABLE ${config.name} ADD COLUMN "${column.name}" ${column.getSQLType()}`);
+    }
+  }
+  // A second person in the same organisation, whose work spans the stores. User 3's rows above are untouched by it.
+  await pg.exec(`
+    INSERT INTO users (id, email, name, password_hash) VALUES (5, 'planner@example.test', 'Planner', 'x');
+    INSERT INTO unified_tasks (task_id, organization_id, project_id, module_type, title, status, priority, assignee_id, due_date, created_by_id, created_at, source_entity_type, source_entity_id) VALUES
+      ('U5-LOW-OVER', 1, 25, 'Plan', 'Low and overdue', 'pending', 'low', 5, '2026-10-20T17:00:00Z', 3, '2026-10-01T09:00:00Z', NULL, NULL),
+      ('U5-CRIT-OVER', 1, 25, 'Plan', 'Critical and overdue', 'pending', 'critical', 5, '2026-10-24T17:00:00Z', 3, '2026-10-01T09:00:00Z', NULL, NULL),
+      ('U5-URG-WEEK', 1, 25, 'Plan', 'Urgent this week', 'in-progress', 'urgent', 5, '2026-10-30T17:00:00Z', 3, '2026-10-01T09:00:00Z', NULL, NULL),
+      ('U5-HIGH-LATER', 1, 25, 'Plan', 'High and later', 'pending', 'high', 5, '2026-12-30T17:00:00Z', 3, '2026-10-01T09:00:00Z', NULL, NULL),
+      ('U5-MIRROR', 1, 25, 'Plan', 'AnA task mirrored from the schedule', 'pending', 'medium', 5, NULL, 3, '2026-10-01T09:00:00Z', 'project_task', '504');
+    INSERT INTO project_tasks (id, organization_id, project_id, name, status, priority, assignee_id, due_date) VALUES
+      (501, 1, 25, 'Schedule: pre-IND briefing book', 'todo', 'high', 5, '2026-10-23T17:00:00Z'),
+      (502, 1, 25, 'Schedule: finished', 'done', 'high', 5, NULL),
+      (503, 1, 25, 'Schedule: a colleague''s', 'todo', 'high', 4, NULL),
+      (504, 1, 25, 'AnA task mirrored from the schedule', 'todo', 'medium', 5, NULL),
+      (505, 2, 60, 'Schedule: another organisation''s', 'todo', 'high', 5, NULL);
+    INSERT INTO c2c_project_work_items (work_item_id, org_id, project_id, source_type, source_id, owner_id, title, status, priority, due_at) VALUES
+      ('pwi_corr', 1, 26, 'correspondence', 0, 5, 'Answer the information request', 'open', 'high', '2026-10-28T17:00:00Z'),
+      ('pwi_thread', 1, 26, 'review_thread', 1, 5, 'Review thread the tray lists from its own store', 'open', 'high', NULL),
+      ('pwi_task', 1, 26, 'review_task', 2, 5, 'Review task the tray lists from its own store', 'open', 'high', NULL),
+      ('pwi_legal', 1, 26, 'company_legal_renewal', 0, 5, 'Renew company legal document: licence', 'open', 'medium', NULL),
+      ('pwi_done', 1, 26, 'correspondence', 0, 5, 'Answered', 'resolved', 'high', NULL),
+      ('pwi_other', 1, 26, 'correspondence', 0, 4, 'A colleague''s letter', 'open', 'high', NULL),
+      ('pwi_foreign', 2, 60, 'correspondence', 0, 5, 'Another organisation''s letter', 'open', 'high', NULL);
+  `);
   rdb = drizzle(pg) as unknown as RequestDb;
 }, 60_000);
 
@@ -93,5 +127,50 @@ describe('readMyWork — the caller’s open tasks, each with its project’s na
     expect(work.items.map((i) => i.taskId)).toEqual(['T-B', 'T-A2', 'T-A', 'T-NOPROJ', 'T-FOREIGN']);
     expect(work.total).toBe(5);
     expect(work.overdue).toBe(0);
+  });
+});
+
+/**
+ * P-131 items 2, 3 and 6: everything needed of the person, in the order of need. Their own board tasks, and the work
+ * another store records as theirs (a schedule task, a letter, a renewal), each once, never a colleague's and never
+ * another organisation's.
+ */
+describe('readMyWork — every store, in the order of need (P-131)', () => {
+  it('orders overdue, due this week, later, no date; within each critical, urgent, high, medium, low', async () => {
+    const work = await readMyWork(rdb, 1, 5, NOW);
+    expect(work.items.map((i) => i.taskId)).toEqual([
+      'U5-CRIT-OVER', 'schedule:501', 'U5-LOW-OVER',
+      'U5-URG-WEEK', 'correspondence:pwi_corr',
+      'U5-HIGH-LATER',
+      'U5-MIRROR', 'review:pwi_legal',
+    ]);
+    expect(work.total).toBe(8);
+    expect(work.overdue).toBe(3);
+  });
+
+  it('carries a schedule task assigned to the person, read-only, with its project and where it lives', async () => {
+    const work = await readMyWork(rdb, 1, 5, NOW);
+    expect(work.items.find((i) => i.taskId === 'schedule:501')).toMatchObject({
+      title: 'Schedule: pre-IND briefing book', projectId: 25, projectName: 'FS-101 — first IND', moduleType: 'Schedule',
+      status: 'pending', priority: 'high', overdue: true, dueSoon: false, blocked: false, waitingOn: null, reviewRole: null,
+      approvalRequired: false, home: { source: 'schedule', nativeId: '501', projectId: 25 },
+    });
+  });
+
+  it('leaves out finished work, a colleague’s, another organisation’s, a mirrored schedule task and the review items the tray reads elsewhere', async () => {
+    const ids = (await readMyWork(rdb, 1, 5, NOW)).items.map((i) => i.taskId);
+    for (const id of ['schedule:502', 'schedule:503', 'schedule:504', 'schedule:505', 'review:pwi_thread', 'review:pwi_task',
+      'correspondence:pwi_done', 'correspondence:pwi_other', 'correspondence:pwi_foreign']) {
+      expect(ids, id).not.toContain(id);
+    }
+  });
+
+  it('fails closed when another store cannot be read, rather than listing less as everything', async () => {
+    await pg.exec('ALTER TABLE c2c_project_work_items RENAME TO c2c_project_work_items_away');
+    try {
+      await expect(readMyWork(rdb, 1, 5, NOW)).rejects.toThrow(/could not be read/);
+    } finally {
+      await pg.exec('ALTER TABLE c2c_project_work_items_away RENAME TO c2c_project_work_items');
+    }
   });
 });

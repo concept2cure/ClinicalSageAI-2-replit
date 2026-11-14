@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { and, eq, desc, asc, isNull, sql } from 'drizzle-orm';
+import { and, eq, asc, isNull, sql } from 'drizzle-orm';
+import { compareByNeed } from '../services/unified-work/unified-work-view';
 import {
   unifiedTasks,
   taskTemplates,
@@ -55,7 +56,7 @@ import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectForTaskSource, PROJECT_TELLING_SOURCES, requireTaskProjectId,
   admitParentTask, admitTaskCreationActor, admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
 import { requireAssignedVaultFamily, VaultFamilyRefusal } from '../services/clinical-regulatory-evidence/vault-citation-changes';
-import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, rescheduleSchema, rescheduleTask, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
+import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, rescheduleSchema, rescheduleTask, TaskAssignmentUnknown, unassignSchema, unassignTask } from '../services/tasking/task-assignment';
 
 const router = Router();
 const storage = { db };
@@ -429,28 +430,35 @@ function transitionChanges(t: {
   };
 }
 
+/** The governed actions PATCH /tasks/:taskId carries: each admits its writer itself (task-assignment.ts admission),
+ *  with the project's write access, and commits its change with its reason and ledger row. */
+const GOVERNED_ACTIONS = new Set(['assign', 'reschedule', 'unassign']);
+
+/** One governed action: a reassignment, a return to unassigned (P-131 item 6) or a new due date. */
+async function governedTaskAction(req: Request, res: Response) {
+  const taskId = String(req.params.taskId);
+  try {
+    if (req.body.action === 'assign') {
+      const input = namedAssignmentSchema.parse(req.body);
+      return res.json({ success: true, data: await assignTask(req, { ...input, taskId, method: 'named' }) });
+    }
+    if (req.body.action === 'unassign') {
+      const input = unassignSchema.parse(req.body);
+      return res.json({ success: true, data: await unassignTask(req, { taskId, expectedAssigneeId: input.expectedAssigneeId, expectedVersion: input.expectedVersion, reason: input.reason }) });
+    }
+    const input = rescheduleSchema.parse(req.body);
+    return res.json({ success: true, data: await rescheduleTask(req, { taskId, dueDate: input.dueDate, expectedDueDate: input.expectedDueDate, reason: input.reason }) });
+  } catch (error) {
+    if (req.body.action === 'reschedule' && error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The new due date');
+    return assignmentFailure(res, error);
+  }
+}
+
 router.patch('/tasks/:taskId', (req, res, next) => {
-  if (req.body?.action === 'assign' || req.body?.action === 'reschedule') return next();
+  if (GOVERNED_ACTIONS.has(req.body?.action)) return next();
   return requireEditorAccess(req, res, next);
 }, async (req: Request, res: Response) => {
-  if (req.body?.action === 'assign') {
-    try {
-      const input = namedAssignmentSchema.parse(req.body);
-      const data = await assignTask(req, { ...input, taskId: String(req.params.taskId), method: 'named' });
-      return res.json({ success: true, data });
-    } catch (error) { return assignmentFailure(res, error); }
-  }
-  // A new due date, with its reason and its ledger row (task-assignment.ts rescheduleTask).
-  if (req.body?.action === 'reschedule') {
-    try {
-      const input = rescheduleSchema.parse(req.body);
-      const data = await rescheduleTask(req, { taskId: String(req.params.taskId), dueDate: input.dueDate, expectedDueDate: input.expectedDueDate, reason: input.reason });
-      return res.json({ success: true, data });
-    } catch (error) {
-      if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The new due date');
-      return assignmentFailure(res, error);
-    }
-  }
+  if (GOVERNED_ACTIONS.has(req.body?.action)) return governedTaskAction(req, res);
   if (req.body && ['assigneeId','expectedAssigneeId','expectedVersion','action'].some(key => key in req.body)) {
     return res.status(400).json({ success: false, code: 'VALIDATION_ERROR', error: 'Assignment and status changes must be separate requests.' });
   }
@@ -1060,11 +1068,16 @@ router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => 
       conditions.push(eq(unifiedTasks.priority, priority));
     }
 
-    const tasks = await storage.db
+    // The order of need (P-131 item 3; unified-work-view.ts compareByNeed). `priority` is text, so the
+    // desc(priority) this replaced sorted it alphabetically, and only as a tie-break on the date.
+    const rows = await storage.db
       .select()
       .from(unifiedTasks)
       .where(and(...conditions))
-      .orderBy(asc(unifiedTasks.dueDate), desc(unifiedTasks.priority));
+      .orderBy(asc(unifiedTasks.dueDate), asc(unifiedTasks.taskId));
+    const now = Date.now();
+    const need = (t: (typeof rows)[number]) => ({ dueAt: t.dueDate, priority: t.priority, key: String(t.taskId) });
+    const tasks = [...rows].sort((a, b) => compareByNeed(need(a), need(b), now));
 
     res.json({
       success: true,

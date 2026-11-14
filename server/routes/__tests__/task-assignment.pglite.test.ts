@@ -263,3 +263,73 @@ describe("a task's due date is changed with a reason, on the ledger", () => {
     expect(h.notifications).not.toHaveBeenCalled();
   });
 });
+
+// P-131 item 6 (R4): a task returned to unassigned, so triage of needed work can be recorded. The same admission and
+// compare-and-set as a reassignment, and a task.assign ledger row (assignee: none) with the stated reason, in the
+// same transaction.
+describe('a task is returned to unassigned with a reason, on the ledger', () => {
+  const unassign = (meta: { assigneeId: number | null; assignmentVersion: string }, over: Record<string, unknown> = {}) => ({
+    action: 'unassign', expectedAssigneeId: meta.assigneeId, expectedVersion: meta.assignmentVersion, reason: '  Needs an owner from the CMC team  ', ...over });
+  const assignee = async () => (await pg.query<{ assignee_id: number | null }>("SELECT assignee_id FROM unified_tasks WHERE task_id='T1'")).rows[0].assignee_id;
+
+  it('clears only the assignment, and commits its ledger row with the reason and who held it', async () => {
+    const meta = await snapshot();
+    const before = (await pg.query<Record<string, unknown>>('SELECT * FROM unified_tasks WHERE task_id=$1', ['T1'])).rows[0];
+    const r = await request(app(5, 'viewer')).patch(taskPath).send(unassign(meta));
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    expect(r.body.data).toMatchObject({ taskId: 'T1', previousAssigneeId: 6, assigneeId: null });
+    expect(r.body.data.assignmentVersion).toMatch(/^[a-f0-9]{64}$/);
+    const after = (await pg.query<Record<string, unknown>>('SELECT * FROM unified_tasks WHERE task_id=$1', ['T1'])).rows[0];
+    const changed = ['assignee_id', 'assignee_name', 'assigned_by', 'assigned_at', 'last_modified_by', 'updated_at', 'metadata'];
+    for (const key of Object.keys(before).filter(k => !changed.includes(k))) expect(after[key], key).toEqual(before[key]);
+    expect([after.assignee_id, after.assignee_name, after.assigned_by, after.assigned_at]).toEqual([null, null, null, null]);
+    expect((await pg.query('SELECT command,decision_reason,payload FROM c2c_ana_actions')).rows).toEqual([expect.objectContaining({
+      command: 'task.assign', decision_reason: 'Needs an owner from the CMC team',
+      payload: expect.objectContaining({ previousAssigneeId: 6, assigneeId: null, method: 'unassign', previousAssignedBy: 5 }) })]);
+    expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n FROM audit_logs')).rows[0].n).toBe(1);
+    expect(trace.indexOf('COMMIT')).toBeGreaterThan(trace.findIndex(s => s.includes('INSERT INTO c2c_ana_actions')));
+  });
+
+  it('refuses a stale snapshot, an unassigned task, a missing reason and a mixed body, changing nothing', async () => {
+    const meta = await snapshot();
+    expect((await request(app()).patch(taskPath).send(unassign(meta, { expectedAssigneeId: 7 }))).status).toBe(409);
+    expect((await request(app()).patch(taskPath).send(unassign(meta, { reason: ' ' }))).status).toBe(400);
+    expect((await request(app()).patch(taskPath).send({ ...unassign(meta), status: 'completed' })).status).toBe(400);
+    expect((await request(app()).patch(taskPath).send({ ...unassign(meta), assigneeId: 7 })).status).toBe(400);
+    expect(await assignee()).toBe(6);
+    await pg.exec("UPDATE unified_tasks SET assignee_id=NULL WHERE task_id='T1'");
+    const none = await request(app()).patch(taskPath).send(unassign(await snapshot()));
+    expect(none.status).toBe(409); expect(none.body.code).toBe('ASSIGNMENT_UNCHANGED');
+    expect(none.body.error).toBe('The task has no owner already. Nothing was changed.');
+    expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n FROM c2c_ana_actions')).rows[0].n).toBe(0);
+  });
+
+  it('refuses a project reader and another client scope, changing nothing', async () => {
+    const meta = await snapshot();
+    expect((await request(app(6)).patch(taskPath).send(unassign(meta))).status).toBe(403);
+    expect((await request(app(5, 'admin', 72)).patch(taskPath).send(unassign(meta))).status).toBe(403);
+    expect(await assignee()).toBe(6);
+  });
+
+  it.each(['completed', 'cancelled'])('protects %s tasks', async status => {
+    const meta = await snapshot(); await pg.query('UPDATE unified_tasks SET status=$1', [status]);
+    expect((await request(app()).patch(taskPath).send(unassign(meta))).status).toBe(409);
+    expect(await assignee()).toBe(6);
+  });
+
+  it('keeps the owner when the ledger row cannot be written', async () => {
+    const meta = await snapshot();
+    await pg.exec("ALTER TABLE c2c_ana_actions ADD CONSTRAINT fail_unassign CHECK(command <> 'task.assign') NOT VALID");
+    try {
+      const r = await request(app()).patch(taskPath).send(unassign(meta));
+      expect(r.status).toBe(500); expect(r.body.error).toBe('AUDIT_WRITE_FAILED');
+      expect(await assignee()).toBe(6);
+    } finally { await pg.exec('ALTER TABLE c2c_ana_actions DROP CONSTRAINT fail_unassign'); }
+  });
+
+  it('says the outcome is unknown when the COMMIT loses its acknowledgement', async () => {
+    const meta = await snapshot(); loseCommit = true;
+    const r = await request(app()).patch(taskPath).send(unassign(meta));
+    expect(r.status).toBe(500); expect(r.body.error).toBe('OUTCOME_UNKNOWN'); expect(discard).toHaveBeenCalledOnce();
+  });
+});

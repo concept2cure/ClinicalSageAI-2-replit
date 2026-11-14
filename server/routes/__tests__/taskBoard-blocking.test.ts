@@ -39,6 +39,7 @@ import {
   summarizeUnifiedWork,
   taskToUnified,
   workItemToUnified,
+  filingToUnified,
   type UnifiedWorkItem,
 } from '../../services/unified-work/unified-work-view';
 
@@ -87,5 +88,62 @@ describe("task board: another store's blocking work", () => {
     const cards = await board();
     expect(cards.filter((c) => c.blocking).length).toBe(summarizeUnifiedWork(ITEMS).blocking);
     expect(summarizeUnifiedWork(ITEMS).blocking).toBe(3);
+  });
+});
+
+/**
+ * P-131 items 3 and 6 on the board: another store's work carries the owner that store records (so "Mine" includes
+ * it), the board comes in the order of need, and work with no owner is answered by the same read: an `unassigned`
+ * option and a count in `meta`.
+ */
+describe('task board: owners, order of need and work with no owner (P-131)', () => {
+  const DAY = 86_400_000;
+  const at = (days: number) => new Date(Date.now() + days * DAY).toISOString();
+  const OWNED: UnifiedWorkItem[] = [
+    taskToUnified({ id: 51, projectId: null, name: 'Later, high, mine', status: 'todo', priority: 'high', dueDate: at(30), assigneeId: 31 }),
+    workItemToUnified({ id: 52, workItemId: 'WI-52', projectId: null, sourceType: 'correspondence', title: 'Overdue letter, nobody', status: 'open', priority: 'medium', dueAt: at(-2), ownerId: null }),
+    workItemToUnified({ id: 53, workItemId: 'WI-53', projectId: null, sourceType: 'correspondence', title: 'Overdue letter, critical', status: 'open', priority: 'critical', dueAt: at(-1), ownerId: 32 }),
+    taskToUnified({ id: 54, projectId: null, name: 'This week, no owner', status: 'todo', priority: 'low', dueDate: at(3) }),
+    taskToUnified({ id: 55, projectId: null, name: 'Finished, no owner', status: 'done', priority: 'low', dueDate: at(-5) }),
+    filingToUnified({ id: 'f-56', projectId: null, title: 'Tracked filing', status: 'under_review', decisionDueAt: at(10) }),
+  ];
+  type Card = { taskId: string; assignee: string; readOnly?: boolean };
+  const get = async (q = '') => request(app()).get(`/api/task-management/board${q}`);
+
+  beforeEach(() => { state.items = OWNED; });
+
+  it("carries the owner another store records as the card's assignee, and none it does not record", async () => {
+    const r = await get();
+    const cards = r.body.data as Card[];
+    expect(byId(cards as never, 'schedule:51').assignee).toBe('31');
+    expect(byId(cards as never, 'correspondence:WI-53').assignee).toBe('32');
+    expect(byId(cards as never, 'correspondence:WI-52').assignee).toBe('');
+    expect(byId(cards as never, 'filing:f-56').assignee).toBe('');
+  });
+
+  it('returns the board in the order of need: overdue, this week, later, no date; priority within each; finished work last', async () => {
+    const r = await get();
+    expect((r.body.data as Card[]).map((c) => c.taskId)).toEqual([
+      'correspondence:WI-53', 'correspondence:WI-52', 'schedule:54', 'schedule:51', 'filing:f-56',
+      // Finished work is not overdue, whatever its date said: it follows the open work.
+      'schedule:55',
+    ]);
+  });
+
+  it('answers the work with no owner from the same read: a count on every read, and an unassigned option', async () => {
+    const all = await get();
+    expect(all.body.meta.unassigned).toBe(2);
+    const r = await get('?assignee=unassigned');
+    expect(r.status).toBe(200);
+    // Open work, in a store that records an owner, with none recorded. Finished work and a filing are not counted.
+    expect((r.body.data as Card[]).map((c) => c.taskId)).toEqual(['correspondence:WI-52', 'schedule:54']);
+    expect(r.body.total).toBe(2);
+    expect(r.body.meta.unassigned).toBe(2);
+  });
+
+  it('refuses an assignee option it does not know, in words, rather than ignoring it', async () => {
+    const r = await get('?assignee=someone');
+    expect(r.status).toBe(400);
+    expect(r.body.error).toBe('The board can be narrowed only to work that has no owner.');
   });
 });
