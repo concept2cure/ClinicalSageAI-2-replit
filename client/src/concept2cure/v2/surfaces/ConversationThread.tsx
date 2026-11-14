@@ -1975,7 +1975,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           it, loaded later, collapsed the audit trail's and six other tables'
           column headers into the first 270px (launch sweep finding 47). */}
       <div className="ct-thread-head">
-        <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} Project</button>
+        {/* Back to the open project, named; with none open (a conversation started from Home) there is nowhere to go
+            back to, so no link (S12 sweep, finding 99), as dataConnect.tsx ProjectBack does on the other screens. */}
+        {shellProjectId !== null && (
+          <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} {shellProgramName() ?? 'Project'}</button>
+        )}
         <div className="ct-head-mid">
           <div className="ct-head-t">{title}</div>
           <div className="ct-head-m">{I.messageSquare} Conversation</div>

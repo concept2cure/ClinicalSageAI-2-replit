@@ -28,6 +28,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 
+import { publishShellProject, clearShellProject } from '../shellProject';
 import type { AnaChatMessage, UseAnaChatReturn } from '../../components/ana/useAnaChat';
 
 /* Live reads held offline: what is under test is the mount's handling of the
@@ -172,6 +173,17 @@ describe('arriving with nothing to ask shows the conversation in progress', () =
     // Finding 86: a question refused before it was saved is not kept, so the empty state does not promise every turn.
     expect(document.body.textContent).not.toContain('every turn is saved');
     expect(document.body.textContent).toContain('Each question AnA accepts is kept in your governed conversation store');
+    // Finding 99: started from Home, no project is open, so there is no project to go back to.
+    expect(document.querySelector('.ct-back')).toBeNull();
+  });
+
+  it('with a project open, the back link names it (finding 99; P-122 keeps it where it is true)', async () => {
+    publishShellProject({ id: '11111111-2222-4333-8444-555555555555', title: 'BX-301 IND', product: 'BX-301' });
+    try {
+      setConvo(undefined);
+      await mount(shellChat({ messages: [], isStreaming: false, runStatus: null, threadId: null }));
+      expect(document.querySelector('.ct-back')?.textContent).toContain('BX-301');
+    } finally { clearShellProject(); }
   });
 });
 
