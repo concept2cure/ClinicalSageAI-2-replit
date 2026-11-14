@@ -1,0 +1,129 @@
+{
+  "scope": "PlanF1;W1/D2; existing AnA CSR authoring/writing repair on current canonical product",
+  "build": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "node": "22.22.0",
+    "environment": {
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-11-14T01:16:18.782349+00:00",
+    "exitCode": 0,
+    "processSeconds": 28.846,
+    "selectedSourceFiles": 11926,
+    "sourceStable": true
+  },
+  "publication": "Not claimed by this pre-publication packet; observed only after ordinary direct canonical gates and remote verification.",
+  "compiler": "Pending full ordinary pre-push with unchanged zero baseline.",
+  "independentNarratorReview": "No concrete blocker found by read-only independent review of current core/handler/schema; no clinical qualification inferred.",
+  "derivativeBoundary": "Exact approved derivative payload and verification retained; only local explicit CSR original-record refusal precedes dispatch.",
+  "heldRoute": "authoring.router.ts unchanged; validated E3 prefix explains document structure separately from receiving-application metadata; global filing resolver not changed.",
+  "qualification": "Protocol approved P-118; modelPQ pending; actual CSR capture/verification incomplete; no training/clinical/deployment claim.",
+  "preIntakeBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "node": "22.22.0",
+    "environment": {
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-11-13T23:57:13.437519+00:00",
+    "exitCode": 0,
+    "processSeconds": 31.353,
+    "selectedSourceFiles": 11924,
+    "sourceStable": true
+  },
+  "intakeReview": "intake-review.json.gz",
+  "intakeQualification": {
+    "passed": 57,
+    "files": 3,
+    "processSeconds": 10.412,
+    "sourcePins": 20,
+    "sourceStable": true,
+    "packet": "../intake-compat/README.md"
+  },
+  "preSizeBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "node": "22.22.0",
+    "environment": {
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-11-14T00:04:30.553338+00:00",
+    "exitCode": 0,
+    "processSeconds": 28.189,
+    "selectedSourceFiles": 11926,
+    "sourceStable": true
+  },
+  "firstNormalPush": {
+    "pushExitCode": 1,
+    "published": false,
+    "compilerStarted": false,
+    "compilerCompleted": false,
+    "reason": "Existing clinical skill file crossed unchanged100000-byte repository ceiling by89bytes after addedwritingmethod. Tighten onlynewwording; retainallguidance and originalrule12/currentlaterrecords. No ceiling/baselinechange.",
+    "file": "server/services/ana/skills/library/clinical.ts",
+    "bytes": 100089,
+    "sha256": "d46234bdf19d089b00d9208b227ec55a4c86f75115276f861d525ab22aac7700",
+    "originalCanonicalBytes": 98738,
+    "ceilingBytes": 100000,
+    "sourceHead": "60224daa8ea935eaa1524a1f8c8b7296d7df677b",
+    "raw": "push1.txt.gz",
+    "successor": "../method/README.md"
+  },
+  "sizeSuccessor": {
+    "clinicalBytes": 99881,
+    "unchangedCeilingBytes": 100000,
+    "changedSource": "Only newly added compose/revise paragraph tightened, preserving its meaning/currentstep12/laterrecords.",
+    "passed": 56,
+    "files": 4,
+    "processSeconds": 27.398,
+    "sourcePins": 73,
+    "sourceStable": true,
+    "lintErrors": 0,
+    "lintWarnings": 0
+  },
+  "preGatewayBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "node": "22.22.0",
+    "environment": {
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-11-14T00:13:25.681329+00:00",
+    "exitCode": 0,
+    "processSeconds": 29.247,
+    "selectedSourceFiles": 11926,
+    "sourceStable": true
+  },
+  "secondPushPreflight": {
+    "normalPushStarted": false,
+    "hooksStarted": false,
+    "preflightExitCode": 78,
+    "knownRemote": "0e6b15b100939d5728b50bc34e70b823a6bbab09",
+    "observedRemote": "985559c5b5cf952b3cc2934b45df20e2ff19266e"
+  },
+  "gatewayCompatibility": {
+    "passed": 165,
+    "files": 6,
+    "processSeconds": 80.648,
+    "sourcePins": 20,
+    "sourceStable": true,
+    "packet": "../gateway-compat/README.md",
+    "independentReadOnlyReview": "No blocker found; no model/clinical qualification inferred."
+  }
+}

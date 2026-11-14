@@ -35,7 +35,13 @@ vi.mock('../fda-esg', () => ({
 // The guard reads the organisation's gateway-account choice (gateway-accounts.ts,
 // 2026-10-01); no row is the platform account. Unstubbed, that read reached the
 // tenant-scoped pool and both cases above failed closed before the gateway.
-vi.mock('../../../db', () => ({ pool: { query: async () => ({ rows: [], rowCount: 0 }) } }));
+vi.mock('../../../db', () => ({ pool: { query: async (sql: string, params: unknown[] = []) =>
+  /SELECT ou\.role FROM organization_users ou/.test(sql) && params[0] === 11 && params[1] === 7 &&
+    params[2] === 'active' && JSON.stringify(params[3]) === '["active"]'
+    ? { rows: [{ role: 'admin' }], rowCount: 1 } : { rows: [], rowCount: 0 } } }));
+// Fixture only for the durable receipt; standing and fresh account resolution
+// remain the actual checkpoint's SQL reads before and after this outcome.
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: async () => ({ persisted: true, chained: true }) }));
 
 import { getGateway, preTransmitFindings, ValidationError } from '../index';
 import type { SubmissionBundle } from '../types';

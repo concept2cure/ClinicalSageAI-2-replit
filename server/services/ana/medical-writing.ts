@@ -85,14 +85,14 @@ export interface AudienceRegister {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const GLOBAL_STYLE_RULES: string[] = [
-  'Lead with the conclusion; structure top-down (BLUF). Every section answers a regulatory or scientific question.',
+  'Lead with the answer appropriate to the section purpose: methods describe sourced design and conduct, results state supported observations, and discussion interprets with limitations. A conclusion leads only where that section is meant to conclude.',
   'One claim per sentence; prefer the active voice and past tense for completed methods/results.',
   'Report supplied, method-appropriate estimates with denominators, precision and uncertainty (frequentist confidence intervals/p-values or Bayesian posterior summaries/credible intervals as prespecified); never invent or demand absent statistics.',
   'Define each abbreviation at first use; keep a single abbreviation list; do not abbreviate terms used <3 times.',
   'Numbers: numerals for data; consistent decimal places justified by the measurement precision; SI units (with conventional units where the region expects them).',
   'Never overstate: distinguish statistical significance from clinical relevance; label post-hoc and exploratory analyses as such; do not imply causation from association.',
-  'Every data statement is traceable to a source table/figure/listing (source-data verification) — no orphan numbers.',
-  'Consistency is law: a value, term, or claim must be identical everywhere it appears (cross-reference integrity).',
+  'Every data statement is traceable to its source table, figure, listing or retained record; traceability alone is not source-data verification. Preserve the source identity, version and location and resolve verification gaps separately.',
+  'Compare like with like: the same quantity on the same population, time point, analysis and source version must agree across the report. Different estimands, populations or analyses can legitimately differ; label that context rather than forcing the values to match. Keep defined terms and cross-references consistent.',
   'Benefit–risk is framed explicitly and even-handedly; limitations are stated, not buried.',
   'GPP 2022: disclose authorship, contributorship, funding, and medical-writing support; follow ICMJE authorship criteria for manuscripts.',
 ];
@@ -286,18 +286,18 @@ const THERAPEUTIC_AREAS: TherapeuticAreaConvention[] = [
     id: 'oncology', label: 'Oncology',
     endpoints: ['OS (gold standard)', 'PFS', 'ORR', 'DoR', 'DFS/EFS (adjuvant)', 'pCR (neoadjuvant)', 'PRO/QoL'],
     terminology: ['RECIST 1.1', 'iRECIST (immunotherapy)', 'Lugano (lymphoma)', 'RANO (CNS tumors)', 'CTCAE v5.0 (AEs)'],
-    reportingConventions: ['Kaplan–Meier with median + 95% CI and HR (Cox)', 'Censoring rules pre-specified', 'Swimmer/waterfall plots for response', 'Data maturity (events/% ) reported'],
+    reportingConventions: ['Kaplan–Meier summaries and Cox estimates only when specified by the retained SAP and analysis outputs; copy the recorded estimator, analysis population, confidence level and interval from those outputs, never supply a default method or confidence level', 'Censoring rules pre-specified', 'Swimmer/waterfall plots for response', 'Data maturity (events/% ) reported'],
     keyGuidances: ['FDA oncology endpoints guidance', 'Project Optimus (dose optimization)', 'ICH E9(R1) estimands'],
-    csrVocabulary: ["Response by RECIST 1.1 (complete response, partial response, stable disease, progressive disease) as assessed by the investigator or by blinded independent central review (BICR); say which", "iRECIST for immunotherapy: unconfirmed progression (iUPD) needs confirmation (iCPD); pseudoprogression is not progression until confirmed", "PFS, OS, ORR (confirmed responses only, unless the SAP says otherwise), duration of response (DoR, among responders), DCR; medians with confidence intervals from Kaplan–Meier, hazard ratios from the stratified Cox model the SAP names; state data maturity and the data cutoff date", "Safety: CTCAE grade (name the version); Grade ≥3 TEAEs, dose interruptions, reductions and discontinuations; immune-mediated adverse events for checkpoint inhibitors; deaths within 30 days of last dose"],
+    csrVocabulary: ["Response by RECIST 1.1 (complete response, partial response, stable disease, progressive disease) as assessed by the investigator or by blinded independent central review (BICR); name the assessor only when supported by retained records", "iRECIST for immunotherapy: apply the recorded response criteria and confirmation rules; do not infer pseudoprogression or a confirmed outcome from an isolated observation", "PFS, OS, ORR, duration of response (DoR, among responders), DCR: use the endpoint definition, confirmation status, estimator and analysis population the retained protocol, SAP and outputs actually supply; name data maturity and the data cutoff date when recorded", "Safety: use the retained grading scale and version, TEAE threshold, dose interruptions, reductions and discontinuations; describe immune-mediated adverse events where recorded. The death observation window comes from the retained protocol, SAP and analysis outputs; do not assume or invent that window when unavailable"],
     aliases: ['cancer', 'onc', 'tumor', 'tumour', 'hematology-oncology'],
   },
   {
     id: 'cardiology', label: 'Cardiology / Cardiovascular',
     endpoints: ['MACE (3-point/4-point — define components)', 'CV death', 'HF hospitalization', 'LVEF', 'KCCQ (PRO)'],
     terminology: ['NYHA class', 'Standardized CV endpoint definitions (2017/2018 ACC/AHA)', 'Adjudicated events (CEC)'],
-    reportingConventions: ['Time-to-first-event + recurrent-event analyses', 'Independent endpoint adjudication', 'Non-inferiority margins justified for CV outcomes/safety'],
+    reportingConventions: ['Time-to-first-event and recurrent-event analyses where specified in the retained SAP', 'Endpoint adjudication only when established by retained records', 'Non-inferiority margins and their justification as recorded for CV outcomes/safety'],
     keyGuidances: ['FDA CV outcomes (incl. diabetes CVOT history)', 'ICH E14 (QT)'],
-    csrVocabulary: ["MACE: name every component (3-point: CV death, non-fatal MI, non-fatal stroke) and say it was adjudicated by the clinical events committee (CEC); report time to first event and, where planned, total events", "Heart failure: HF hospitalisation or urgent HF visit as adjudicated; KCCQ as a PRO with its scoring direction", "Safety: blood pressure, heart rate and QTc changes with the correction (Fridericia) the SAP names; bleeding by the BARC, TIMI or ISTH scale the protocol uses"],
+    csrVocabulary: ["MACE: name every component exactly as the retained protocol and SAP define it; describe adjudication only when retained records establish the assessor, process and findings. If adjudication records are unavailable, state the gap rather than invent a CEC decision; report time to first event and total events only as planned and supplied", "Heart failure: HF hospitalisation or urgent HF visit under the recorded endpoint definition; attribute an adjudication only when documented. KCCQ as a PRO with its recorded scoring direction", "Safety: blood pressure, heart rate and QTc changes with the correction the retained SAP names; bleeding by the recorded grading scale and version. Do not assume a correction method or grading scale"],
     aliases: ['cardiovascular', 'cv', 'heart failure', 'cardio'],
   },
   {
@@ -553,8 +553,9 @@ Retain source originals and derivatives with page/version/hash lineage; enforce 
   parts.push(bullets('Avoid', audience.avoid));
 
   parts.push(bullets('Universal craft rules (always apply)', GLOBAL_STYLE_RULES));
-  parts.push(
-    '\n## How to use the evidence\nGround every clinical claim in retrieved evidence: use search_literature (PubMed), ' +
+  parts.push(doc?.id === 'csr'
+    ? '\n## How to use the evidence\nUse the retained protocol, SAP, amendments, case records and analysis outputs for this study\'s conduct and results. Keep their source/version/location and unresolved gaps in the source map. External references support background or writing craft; they are not source evidence for the client\'s results or findings. Do not replace unavailable client evidence with literature, an exemplar or model memory.'
+    : '\n## How to use the evidence\nGround every clinical claim in retrieved evidence: use search_literature (PubMed), ' +
       'search_clinical_evidence (ClinicalTrials.gov), search_drug_labels / search_drug_approvals / search_device_recalls ' +
       '(FDA), and assess_regulatory_landscape, then cite each source with its identifier and URL per the citation protocol.'
   );
