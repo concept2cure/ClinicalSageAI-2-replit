@@ -18,7 +18,7 @@ if mode == 'build':
     env['NODE_OPTIONS'] = '--max-old-space-size=6144'
 elif mode == 'typecheck':
     command = ['node', 'scripts/ci/typecheck-no-regression.mjs', '--incremental']
-elif mode == 'server-build':
+elif mode.startswith('server-build'):
     command = ['node', 'scripts/build-server.mjs']
     env['NODE_OPTIONS'] = '--max-old-space-size=6144'
 elif mode.startswith('push'):

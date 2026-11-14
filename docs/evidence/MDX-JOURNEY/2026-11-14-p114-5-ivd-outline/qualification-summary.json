@@ -20,5 +20,8 @@
   "qualifiedRuntimeHead": "e44ec6e1866df879cda300fabafdcf2aaa98c2e8",
   "compilerErrors": 0,
   "compilerBaseline": 0,
-  "compilerReport": "root/typecheck.json"
+  "compilerReport": "root/typecheck.json",
+  "selectorCorrection": "selector-correction.json",
+  "latestServerBuildReport": "root/server-build-after-sql.json",
+  "mandatoryPushCompiler": "pending"
 }
