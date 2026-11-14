@@ -1,0 +1,67 @@
+{
+  "plan": "F1",
+  "sourceHead": "c4daaf73b9bf9952579a70ec456e8129a4781583",
+  "canonicalThrough": "bc8fd9190",
+  "checks": {
+    "passed": 84,
+    "failed": 0,
+    "skipped": 0,
+    "files": 8,
+    "seconds": 31.34
+  },
+  "build": {
+    "exitCode": 0,
+    "viteSeconds": 24.65
+  },
+  "artifacts": {
+    "integration-tests.txt.gz": {
+      "rawSha256": "b22c90bcf91fdcee9c2d12dd517dce3efa43b09c73897f3aca307d15b56e9a99",
+      "artifactSha256": "a052378ee752f64c6be7ff6c6f90862808d14350798b4c39104db869a9f039da"
+    },
+    "integration-build.txt.gz": {
+      "rawSha256": "85e7aa6ff2b73f63d585dea0a6d0f66a2daff158513e856e117ead8825ebd98c",
+      "artifactSha256": "6e420093f022eb48af235d10d947a86378e6e1c03c7f1896173c247617e407bc"
+    }
+  },
+  "taxonomySourceHashesMatch": true,
+  "productionSourceChangedByThisRepair": false,
+  "candidateHash": {
+    ".gitleaksignore": "56baa72c81c6b4bfbacf89f8c016606e2a67b1a9eabb2839b65658f991a44259",
+    "server/services/__tests__/vault-taxonomy-etmf.test.ts": "ea781d48c389f9e917f815c5ee95c4f0c7b307cdbf936363e227b84b3a7358dc"
+  },
+  "secrets": {
+    "rulesUnchanged": true,
+    "exactPublishedFingerprintExceptions": 3,
+    "boundedRange": "cef271edb..4b82ba809",
+    "nonMergeCommits": 88,
+    "findings": 0,
+    "scannerErrors": 0,
+    "actualDetectorPositiveControlPassed": true,
+    "fullHistoryHostedVerdict": "check fresh CI after publication",
+    "historicalLiveStatusChanged": false
+  },
+  "limits": [
+    "Private-profile offboarding choice remains unresolved; no export/purge/RLS change.",
+    "Workspace readiness report does not observe production credentials or acceptance.",
+    "No live provider, scientific qualification, deployment or filing transmission."
+  ],
+  "publication": "Normal compiler and repository push gates run on final combined tree; verify actual remote identity after success.",
+  "assignmentCanonicalIntegration": {
+    "sourceHead": "28e90ee1b87546fa7fe66a54e104ce07065868e4",
+    "canonicalThrough": "f9656d88e",
+    "checks": {
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "files": 2,
+      "seconds": 3.53
+    },
+    "build": {
+      "exitCode": 0,
+      "viteSeconds": 23.82
+    },
+    "taxonomyInputsUnchanged": true,
+    "productionSourceChangedByOurCiRepair": false,
+    "incomingSource": "Current saved-task controls and uncertain-outcome classification preserved normally."
+  }
+}

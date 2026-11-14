@@ -93,6 +93,23 @@ describe('limit text', () => {
     expect(r.calculationBasis).not.toMatch(/compound-specific AI: Default/);
   });
 
+  /* The impurity register passes the impurity's NAME. A full name, or an
+     abbreviation in its own mixed case, fell to the 18 ng/day default. */
+  it('finds a listed nitrosamine by its name or its abbreviation, in any case', () => {
+    for (const identity of ['N-Nitrosodimethylamine', 'n-nitrosodimethylamine', 'ndma', 'NDMA']) {
+      const r = calculateTTC({ treatmentDuration: 'lifetime', route: 'oral', compoundClass: 'CoC_nitrosamine', nitrosamineIdentity: identity });
+      expect(r.acceptableIntakeNgPerDay, identity).toBe(96);
+      expect(r.calculationBasis, identity).toContain('N-Nitrosodimethylamine — 96 ng/day');
+    }
+    const phenyl = calculateTTC({ treatmentDuration: 'lifetime', route: 'oral', compoundClass: 'CoC_nitrosamine', nitrosamineIdentity: 'NMPhA' });
+    expect(phenyl.calculationBasis).toContain('compound-specific AI: N-Nitroso-N-methyl-phenylamine');
+    const alias = calculateTTC({ treatmentDuration: 'lifetime', route: 'oral', compoundClass: 'CoC_nitrosamine', nitrosamineIdentity: 'N-Nitrosomethylphenylamine' });
+    expect(alias.acceptableIntakeNgPerDay).toBe(26.5);
+    const named = calculateTTC({ treatmentDuration: 'lifetime', route: 'oral', compoundClass: 'CoC_nitrosamine', nitrosamineIdentity: 'Default' });
+    expect(named.acceptableIntakeNgPerDay).toBe(18);
+    expect(named.cocConsiderations).toMatch(/No compound-specific AI is on file for Default/);
+  });
+
   it('restates the Table 2 bands as the module holds them', () => {
     const r = controlMutagenicImpurity({
       impurityClass: 2, drugProductType: 'tablet', maxDailyDoseG: 1, treatmentDuration: 'up_to_1_month',

@@ -1,5 +1,5 @@
 /**
- * Archived projects, on Projects, and restoring one (P-122 §3.5, 2026-11-10).
+ * Archived projects, on Projects: open retained records or restore a project (P-122 §3.5).
  *
  * Archive is governed in Project settings (465bc23a8): a reason and a typed word,
  * then POST /api/c2c/projects/:id/archive, after which the project leaves the
@@ -26,6 +26,7 @@ export interface ArchivedRow {
   id: string;
   title: string;
   code: string;
+  ws?: string;
   status: string;
   activity: string | null;
   client_workspace_id?: number | null;
@@ -42,11 +43,13 @@ export function ArchivedProjectsLink({ shown, onOpen, children }: { shown: boole
   return <>{children}<button type="button" className="pj-archived-link" onClick={onOpen}>Archived projects</button></>;
 }
 
-export function ArchivedProjects({ portfolioUrl, needle, onBack, onRestored }: {
+export function ArchivedProjects({ portfolioUrl, needle, onBack, onRestored, onOpenProject }: {
   portfolioUrl: string;
   /** The page's search, lower-cased: it narrows these as it narrows the active list. */
   needle: string;
   onBack: () => void;
+  /** Open the actual admitted row without changing its archived status. */
+  onOpenProject: (project: ArchivedRow) => void;
   /** A project was restored: the portfolio is read again. */
   onRestored: () => void;
 }) {
@@ -99,6 +102,8 @@ export function ArchivedProjects({ portfolioUrl, needle, onBack, onRestored }: {
             <li key={p.id} className="pj-archived-row">
               <span className="pj-archived-t">{p.title}</span>
               <span className="pj-archived-m">{[p.code && p.code !== '—' ? p.code : null, 'Archived', p.activity].filter(Boolean).join(' · ')}</span>
+              <button type="button" className="btn ghost" aria-label={`Open ${p.title}`}
+                onClick={() => onOpenProject(p)}>Open</button>
               <button type="button" className="btn ghost" aria-label={`Restore ${p.title}`}
                 disabled={!actorUserId || !organizationId}
                 onClick={() => { setNote(null); setRestoring(p); }}>Restore</button>

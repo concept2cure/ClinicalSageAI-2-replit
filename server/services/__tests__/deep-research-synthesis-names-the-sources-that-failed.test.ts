@@ -98,6 +98,7 @@ describe('deep-research synthesis — a failed source is named as failed', () =>
     aiComplete.mockResolvedValue('## Executive Summary\nOne FDA approval record was returned.');
     await launchResearchJob(REQUEST);
     const synthesis = await persistedSynthesis();
+    expect(searchConnectors).toHaveBeenCalledWith(1, ['pubmed', 'fda_drugs'], expect.objectContaining({ indication: REQUEST.query.indication }), 1);
 
     const prompt = JSON.stringify(aiComplete.mock.calls[0]?.[0]);
     expect(prompt).toContain('PubMed / MEDLINE');
@@ -123,5 +124,18 @@ describe('deep-research synthesis — a failed source is named as failed', () =>
     await launchResearchJob({ ...REQUEST, connectorIds: ['fda_drugs'] });
     const synthesis = await persistedSynthesis();
     expect(synthesis).toBe('## Executive Summary\nNothing was returned.');
+  });
+  it('captures the initiating actor before queued work awaits, rather than adopting later mutation', async () => {
+    aiComplete.mockResolvedValue('Fixture synthesis.');
+    const input = { ...REQUEST };
+    const launching = launchResearchJob(input); input.userId = 999;
+    await launching; await persistedSynthesis();
+    expect(searchConnectors.mock.calls[0]?.[3]).toBe(1);
+    const inserted = query.mock.calls.find(([sql]) => /INSERT INTO deep_research_jobs/.test(String(sql)));
+    expect(inserted?.[1]?.[2]).toBe(1);
+  });
+  it.each([0, -1, 1.5, Number.NaN])('invalid initiator %s cannot launch external work', async userId => {
+    await expect(launchResearchJob({ ...REQUEST, userId })).rejects.toThrow('Current authenticated user required');
+    expect(query).not.toHaveBeenCalled(); expect(searchConnectors).not.toHaveBeenCalled(); expect(aiComplete).not.toHaveBeenCalled();
   });
 });

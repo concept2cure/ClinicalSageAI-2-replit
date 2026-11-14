@@ -1,0 +1,170 @@
+(node:9038) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:9051) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Signed in as lumen.lead@lumen-demo.example (user 8, organisation 8) at http://127.0.0.1:5000
+Every demo area is open on the enterprise plan.
+
+=== seed: lumen ===
+  • Client workspace: Lumen Bioscience (demo — not affiliated) … ok — found 3
+  • Projects: LMN-201 … ok — acb67718-5db9-4fc6-ab9b-fad8c9bd6cd4 (LMN-201)
+  • Vault: LMN-201 program overview … ok — ingested c0486360-8668-45ca-8795-ec60c81ecd44
+  • Tasks: 16 tasks on LMN-201 … ok — 16 created, 0 already there (board project 1)
+  • Team: LMN-201 is shared with the reviewer and the approver … ok — #9 can edit; #10 can edit
+  • Projects: LMN-801 … ok — 0835410c-013a-446e-8a62-169c727d3198 (LMN-801)
+  • Vault: LMN-801 program overview … ok — ingested 7787f04c-e914-4ac1-ae81-51001e006545
+  • Tasks: 5 tasks on LMN-801 … ok — 5 created, 0 already there (board project 2)
+  • Team: LMN-801 is shared with the reviewer and the approver … ok — #9 can edit; #10 can edit
+  • Projects: LMN-301 … ok — b23425c9-dbc4-43da-84f7-5895fafbacc9 (LMN-301)
+  • Vault: LMN-301 program overview … ok — ingested 93cf1ca7-574c-4a98-8371-7c219db431f8
+  • Tasks: 5 tasks on LMN-301 … ok — 5 created, 0 already there (board project 3)
+  • Team: LMN-301 is shared with the reviewer and the approver … ok — #9 can edit; #10 can edit
+  • Projects: LMN-401 … ok — f390f6c2-57c3-4e77-9811-e578b061cd05 (LMN-401)
+  • Vault: LMN-401 program overview … ok — ingested 269a9660-df05-4d31-96f7-1dc6803795ff
+  • Tasks: 3 tasks on LMN-401 … ok — 3 created, 0 already there (board project 4)
+  • Team: LMN-401 is shared with the reviewer and the approver … ok — #9 can edit; #10 can edit
+  • Vault: synthetic LMN-201 CSR source (JSON) … ok — ingested e39a4e3e-55d7-455f-9593-7011dfe42bb0 (sha256 44c81cc66030…)
+  • Biostatistics: study design "[Demo · Lumen] LMN-201 RePreve (NCT05330182) — Phase 2/3, recurrence prevention" … ok — created sd_6200a4dafc164a25aaa8ea3c0a1c3939
+  • Objective: RePreve … ok — created
+  • CMC / Module 3: drug substance and drug product on LMN-201 … ok — 2 created of 2
+  • CMC / Module 3: analytical methods on LMN-201 … ok — 5 created of 5, 5 validated under signature
+  • CMC / Module 3: specifications on LMN-201 … ok — 5 created of 5
+  • CMC / Module 3: stability programme on LMN-201 … ok — 2 created of 2
+  • CMC / Module 3: batch records on LMN-201 … ok — 3 created of 3
+  • Protocol development: a copy seeded with another study's eligibility criteria is set aside … ok — none
+  • Protocol development: LMN-201-CDI-02 document … ok — created #1
+  • Protocol development: section content … ok — 10 sections (10 written)
+  • Protocol development: objectives, eligibility, visits, team …     (429 on POST /api/protocol-development/documents/1/visits; waiting 27s, retry 1)
+ok — added objectives 5, criteria 10, visits 7, team 5
+  • Protocol development: schedule of assessments matrix …     (429 on POST /api/protocol-soa/documents/1/assessments; waiting 55s, retry 1)
+ok — 8 assessments × 7 visits, 28 cells (8 rows, 28 cells added)
+  • Protocol development: risk register … ok — 6 risks (6 added)
+  • Protocol development: milestones … ok — 5 milestones (5 added)
+  • Protocol development: amendment 1 … ok — #1 Amendment 2 — widen the Week 12 visit window and add a diary reminder call
+  • Protocol development: version snapshot … ok — snapshot 0.2
+  • Protocol development: GET /api/protocol-dev returns it … ok — #1: objectives 5, risks 6, milestones 5, amendments 1
+  • Protocol development: the RePreve study design bound to the protocol … ok — bound sd_6200a4dafc164a25aaa8ea3c0a1c3939
+  • Protocol development: 2 deviations, assessed, with CAPA … ok — 2 reported, 0 already there
+  • Protocol development: a reviewer and a review comment …     (429 on POST /api/protocol-reviews/documents/1/reviewers; waiting 39s, retry 1)
+ok — Lumen Reviewer assigned; 1 comment
+  • Plan: start 4 deliverables on LMN-201 … ok — 4 started, 0 already started
+  • Communication: data-room source "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt" on LMN-201 … ok — uploaded 157 (text read: completed)
+  • Communication: agency inbox entry for "FDA approval letter (fictional demo), BLA 761901" on LMN-201 … ok — logged ace_1794597123393_372cd853
+  • Communication: the inbox reads "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt" … ok — 0 questions, 4 commitments proposed (0 recorded)
+  • Communication: data-room source "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt" on LMN-201 … ok — uploaded 158 (text read: completed)
+  • Communication: agency inbox entry for "FDA information request (fictional demo), IND 194021" on LMN-201 … ok — logged ace_1794597125803_4f2a9e51
+  • Communication: the inbox reads "[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt" … ok — 3 questions, 0 commitments proposed
+  • Review: LMN-201 Investigator's Brochure sent for review … ok — sent to lumen.reviewer@lumen-demo.example
+  • Quality: LMN-SOP-201 on LMN-201 … ok — #1 effective
+  • Quality: LMN-SOP-202 on LMN-201 … ok — #2 effective
+  • Quality: LMN-SOP-203 on LMN-201 … ok — #3 draft
+  • Quality: deviation LMN-DEV-2026-014 on LMN-201 … ok — #1 closed
+  • Quality: deviation LMN-DEV-2026-015 on LMN-201 … ok — #2 under_investigation
+  • Quality: deviation LMN-DEV-2026-016 on LMN-201 … ok — #3 open
+  • Quality: deviation LMN-DEV-2026-017 on LMN-201 … ok — #4 pending_approval
+  • Quality: supplier LMN-SUP-001 … ok — #1 approved
+  • Quality: supplier LMN-SUP-002 … ok — #2 approved
+  • Quality: supplier LMN-SUP-003 … ok — #3 approved
+  • Quality: supplier LMN-SUP-004 … ok — #4 conditional
+  • Quality: supplier LMN-SUP-005 … ok — #5 pending
+  • Quality: nonconformance LMN-NC-2026-009 on LMN-201 … ok — #1 pending
+  • Quality: nonconformance LMN-NC-2026-007 on LMN-201 … ok — #2 rework
+  • Quality: nonconformance LMN-NC-2026-008 on LMN-201 … ok — #3 scrap
+  • Quality: internal audit LMN-IA-2026-03 … ok — #1 closed (1 major, 3 minor, 2 obs.)
+  • Quality: internal audit LMN-IA-2026-04 … ok — #2 in_progress (0 major, 1 minor, 1 obs.)
+  • Quality: internal audit LMN-IA-2026-05 … ok — #3 planned
+  • Quality: internal audit LMN-IA-2027-01 … ok — #4 planned
+  • Quality: CAPA "Visit-window control at investigator sites (from LMN-DEV-2026-014)" on LMN-201 … ok — CAPA-2026-0001 action_planned, 3 actions
+  • Quality: CAPA "TMF filing timeliness and Vault metadata completeness (from LMN-IA-2026-03)" on LMN-201 … ok — CAPA-2026-0002 investigation, 1 actions
+  • Quality: CAPA "Cold-chain shipper qualification for 2–8 °C lanes (from LMN-NC-2026-009)" on LMN-201 … ok — CAPA-2026-0003 open, 1 actions
+  • Quality: CAPA "Central-lab sample kit expiry tracking at sites" on LMN-201 … ok — CAPA-2026-0004 closed_effective, 1 actions
+  • Quality: change control LMN-CC-2026-021 on LMN-201 … ok — #1 in_implementation, linked to LMN-SOP-201, LMN-DEV-2026-014, CAPA-2026-0001
+  • Quality: management review Lumen 2026-Q3 … ok — #1, 2 open and 1 closed actions
+  • Quality: management review Lumen 2026-Q2 … ok — #2, 0 open and 1 closed actions
+  • Quality: training assignments on the Lumen SOPs in force … ok — 4 assigned on 2 SOPs; acknowledgement is each reader's own
+  • RBM: risk assessment (RACT) on LMN-201 … ok — created #1 with 8 default CtQ factors (overall risk high)
+  • RBM: 4 study-specific CtQ factors on LMN-201 … ok — 4 added, 0 already there
+  • RBM: RACT approval on LMN-201 … ok — approved by lumen.reviewer@lumen-demo.example
+  • RBM: 8 key risk indicators on LMN-201 … ok — standard library seeded; 8 configured, 0 already there
+  • RBM: 3 quality tolerance limits on LMN-201 … ok — 3 created, 0 already there
+  • RBM: 12 monthly metric extracts on LMN-201 … ok — 12 loaded (48 KRI readings, 18 QTL values, 78 site observations), 0 already loaded
+  • RBM: subject-level extract (12 subjects) on LMN-201 … ok — loaded: 12 subject profiles
+  • RBM: patient cohort scored on LMN-201 … ok — scored 12 subjects — 1 flagged, 1 for review
+  • RBM: monitoring plan on LMN-201 … ok — created #1 v1 (draft, generated from the approved RACT)
+  • RBM: 6 central-monitoring signals on LMN-201 … ok — 6 logged, 0 already there; 5 dispositioned
+  • RBM: 6 monitoring actions on LMN-201 … ok — 6 added, 0 already there
+  • RBM: site risk scored from the site-level indicator readings on LMN-201 … ok — found 8 sites
+  • RBM: the board and roster read back on LMN-201 … ok — risk high; 12 CtQ; KRIs 1 red / 2 amber of 8; QTLs 1 approaching of 3; 5 open signals; 1 flagged / 1 review of 12; plan draft with 15 actions; 8 attention items
+  • Vault: LMN-201 LMN201-CDI02-PROT-v2.0.pdf … ok — uploaded f266cd5c-6888-4c1d-bae5-d9bd5729e826 (2 pages); filed module-5 at 5.3.5.1; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-201 LMN201-IB-ED4.pdf … ok — uploaded eac04bdb-3693-4902-9286-307bc911aac8 (2 pages); filed module-1 at 1.14.4.1; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-201 LMN201-CDI02-SAP-v1.0.pdf … ok — uploaded 2102de09-495b-49bd-a5ea-70ee2bd46db5 (2 pages); filed module-5 at 5.3.5.1; sent, review signed by lumen.reviewer@lumen-demo.example
+  • Vault: LMN-201 LMN201-CDI02-ICF-v2.0.pdf … ok — uploaded dd0d832c-11b6-468f-973d-de68f21f8d5b (2 pages); filed module-5 at 5.3.5.1; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-201 LMN201-CDI02-IRB-APPROVAL-2.pdf … ok — uploaded f111b5fa-4f4d-4033-b012-c563258d1d01 (2 pages); filed module-5 at 5.3.5.1; draft (not sent for review)
+  • Vault: LMN-201 LMN201-FDA-PREIND-MINUTES.pdf … ok — uploaded 41f3d133-16f8-4605-b603-9fa5fe8ebe70 (2 pages); filed corresp at 1.12.1; draft (not sent for review)
+  • Vault: LMN-201 LMN201-DSUR-02.pdf … ok — uploaded aec55727-1ba7-4fc7-9635-19590335aabb (2 pages); filed module-1; sent
+  • Vault: LMN-201 LMN201-CDI02-CMP-v1.1.pdf … ok — uploaded b9b4e315-a19a-4529-9bfe-90c98d00ad3f (2 pages); filed module-5; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-201 LMN201-CDI02-DMP-v1.0.pdf … ok — uploaded c7118d0d-ee3d-46d4-9948-94d7bef81060 (2 pages); filed module-5; draft (not sent for review)
+  • Vault: LMN-201 LMN201-DP-2405-COA.pdf … ok — uploaded ee5df1a1-bfb9-4124-8673-9f9ff61976a6 (2 pages); filed module-3 at 3.2.P.5.4; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-201 LMN201-DP-STAB-SUMMARY-12M.pdf … ok — uploaded 12beff60-e47e-408a-ad4d-5ca51521ba22 (2 pages); filed module-3 at 3.2.P.8.1; sent, review signed by lumen.reviewer@lumen-demo.example
+  • Vault: LMN-201 LMN201-CRO-MSA-SUMMARY.pdf … ok — uploaded b09f6f18-788d-405e-9b1b-624699dc1879 (2 pages); unfiled; draft (not sent for review)
+  • Vault: LMN-201 LMN201-CDI02-MVR-SITE104-IMV3.pdf … ok — uploaded f89b0c0e-b566-45d3-8590-80e7e6a2eff4 (2 pages); filed module-5; sent
+  • Vault: LMN-201 LMN201-TOX-13WK-RAT.pdf … ok — uploaded 37045894-721b-49d8-887c-9dd8980bbf5a (2 pages); filed module-4 at 4.2.3.2; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Governed artifact: endpoint_justification on LMN-201 … ok — artifact_1794597287439_4de86edd3fa2: created, in review, reviewed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Governed artifact: evidence_memo on LMN-201 … ok — artifact_1794597291203_fd85ad41e9bc: created, in review
+  • Governed artifact: risk_benefit on LMN-201 … ok — artifact_1794597292631_acf4fdba2e4f: created
+  • Seals & fixity: LMN-201 … ok — 16 stored versions proven; sealed 255ae717-d9f4-4b2c-a2ec-e67debe415fd over 16 documents by lumen.approver@lumen-demo.example
+  • Vault read-back: LMN-201 … ok — 16 uploads, 5 of 36 required sections, 3 governed artifacts, 1 seal(s)
+  • Vault: LMN-801 LMN801-P2-SYNOPSIS-D0.3.pdf … ok — uploaded d95ccaf0-5dcf-4160-a009-2dbedbace9e8 (2 pages); filed module-5 at 5.3.5.1; draft (not sent for review)
+  • Vault: LMN-801 LMN801-PD-DIO-MOUSE.pdf …     (429 on POST /api/regulatory/documents; waiting 3s, retry 1)
+ok — uploaded ac6f91d8-ef02-4599-bd75-17401200d8b5 (2 pages); filed module-4 at 4.2.1.1; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-801 LMN801-DS-2502-COA.pdf … ok — uploaded d6507735-52ac-438e-9f49-9032d19d6019 (2 pages); filed module-3 at 3.2.S.4.4; sent
+  • Vault: LMN-801 LMN801-PREIND-REQUEST-DRAFT.pdf … ok — uploaded fe113fc1-9ed7-457f-b265-2a4dd048fa48 (2 pages); filed corresp; sent, review signed by lumen.reviewer@lumen-demo.example
+  • Governed artifact: evidence_memo on LMN-801 … ok — artifact_1794597307413_9db985ff5548: created, in review
+  • Seals & fixity: LMN-801 … ok — 5 stored versions proven; sealed 2160daff-5a9f-4b9a-9178-9e9fd65ee335 over 5 documents by lumen.approver@lumen-demo.example
+  • Vault read-back: LMN-801 … ok — 5 uploads, 3 of 36 required sections, 1 governed artifacts, 1 seal(s)
+  • Vault: LMN-301 LMN301-IB-ED2.pdf … ok — uploaded 98114c98-2314-4d53-8933-077dbf284a47 (2 pages); filed module-1 at 1.14.4.1; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-301 LMN301-COV01-INTERIM-SAFETY.pdf … ok — uploaded f4113d69-84e7-46a6-83bc-fa3fff85027c (2 pages); filed module-5 at 5.3.3.1; sent
+  • Vault: LMN-301 LMN301-TOX-NASAL-RABBIT.pdf … ok — uploaded 64686803-6dea-4568-abca-6e15847a737b (2 pages); filed module-4 at 4.2.3.6; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-301 LMN301-DP-STAB-SUMMARY.pdf … ok — uploaded 3ed93429-ddf9-4ba0-9766-857d45bb35cc (2 pages); filed module-3 at 3.2.P.8.1; draft (not sent for review)
+  • Governed artifact: safety_evidence_brief on LMN-301 … ok — artifact_1794597319247_07af13932069: created, in review, reviewed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Seals & fixity: LMN-301 … ok — 5 stored versions proven; sealed 4e42091d-df40-4d4a-a0fe-8bea73187fab over 5 documents by lumen.approver@lumen-demo.example
+  • Vault read-back: LMN-301 … ok — 5 uploads, 2 of 36 required sections, 1 governed artifacts, 1 seal(s)
+  • Vault: LMN-401 LMN401-PD-NEUTRALISATION.pdf … ok — uploaded 0ae53461-5ebd-4399-a0bc-e89ce80a2e2a (2 pages); filed module-4 at 4.2.1.1; sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • Vault: LMN-401 LMN401-TD02-INTERIM-SUMMARY.pdf … ok — uploaded ec1917c2-92eb-4b26-9523-d1ae7786f49f (2 pages); filed module-5; sent, review signed by lumen.reviewer@lumen-demo.example
+  • Vault: LMN-401 LMN401-PREIND-BRIEFING-OUTLINE.pdf … ok — uploaded bc2913de-007a-40a8-9e1e-0f8efa72082a (2 pages); filed corresp; draft (not sent for review)
+  • Governed artifact: strategy_memo on LMN-401 … ok — artifact_1794597344476_a3ee7c7bf863: created
+  • Seals & fixity: LMN-401 … ok — 4 stored versions proven; sealed bfee8ac0-2049-4971-9831-092648a421b0 over 4 documents by lumen.approver@lumen-demo.example
+  • Vault read-back: LMN-401 … ok — 4 uploads, 1 of 36 required sections, 1 governed artifacts, 1 seal(s)
+  • CSR LMN-201 Part B: the synthetic clinical source reviewed and approved in the Vault … ok — sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • CSR LMN-201 Part B: the clinical study report document in the one editor … ok — created 8e6d0b14-ad9f-49b3-ba04-92221555091e from "GLOBAL · Clinical Study Report (CSR)" (119 sections)
+  • CSR LMN-201 Part B: the study data frozen in the document … ok — frozen bd0f39c5-f5a0-42d4-ad34-ea76c86e2837 from the approved source v1.0
+  • CSR LMN-201 Part B: every section written from the study's synthetic data … ok — 119 written, 0 already had text (of 119)
+  • CSR LMN-201 Part B: sent for review … ok — review requested from lumen.reviewer@lumen-demo.example
+  • CSR LMN-801 Phase 1 MAD: the synthetic source in the Vault … ok — ingested 0056b5ad-5b26-43c5-8421-a3e631197836 (sha256 568856378f52…)
+  • CSR LMN-801 Phase 1 MAD: the synthetic clinical source reviewed and approved in the Vault … ok — sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • CSR LMN-801 Phase 1 MAD: the clinical study report document in the one editor … ok — created b07d2974-5f74-4313-9af2-f7b20a7a6e94 from "GLOBAL · Clinical Study Report (CSR)" (119 sections)
+  • CSR LMN-801 Phase 1 MAD: the study data frozen in the document … ok — frozen 4a01deb9-b92b-4567-8476-33203a02b8e8 from the approved source v1.0
+  • CSR LMN-801 Phase 1 MAD: every section written from the study's synthetic data … ok — 119 written, 0 already had text (of 119)
+  • CSR LMN-801 Phase 1 MAD: sent for review … ok — review requested from lumen.reviewer@lumen-demo.example
+  • CSR LMN-301 Phase 2a challenge: the synthetic source in the Vault … ok — ingested 69fef204-aa59-46a0-838c-a54223c3e65a (sha256 7b86b1d3f855…)
+  • CSR LMN-301 Phase 2a challenge: the synthetic clinical source reviewed and approved in the Vault … ok — sent, review signed by lumen.reviewer@lumen-demo.example, approved by lumen.approver@lumen-demo.example
+  • CSR LMN-301 Phase 2a challenge: the clinical study report document in the one editor … ok — created a8c2fa58-f9f1-49a9-ae9f-e329efa38625 from "GLOBAL · Clinical Study Report (CSR)" (119 sections)
+  • CSR LMN-301 Phase 2a challenge: the study data frozen in the document … ok — frozen d5533980-77d6-4659-be89-fb85da8a58f0 from the approved source v1.0
+  • CSR LMN-301 Phase 2a challenge: every section written from the study's synthetic data … ok — 119 written, 0 already had text (of 119)
+  • CSR LMN-301 Phase 2a challenge: sent for review … ok — review requested from lumen.reviewer@lumen-demo.example
+  • Applicant identity: LMN-201's application number and sponsor (fictional) … ok — application 194021, sponsor Lumen Bioscience (fictional demo sponsor)
+  • Submission Center: the program's canonical submission (IND) … ok — #1 "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #1 status draft
+  • Submission Center: place the vault documents as eCTD leaves … ok — 5 leaves (5 placed)
+  • Submission Center: sequence moves draft → assembling … ok — assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=7; shadowCriticals=0; blockers=3
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (7 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — HTTP 503
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 3; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • Reporting: 4 reports run for LMN-201 … ok — readiness.executive_digest: #1 partial; ha.commitment_register: #2 partial; usa_fda.ind_safety_readiness: #3 partial; etmf.completeness_pack: #4 partial
+  • Reporting: the LMN-201 monthly governance pack (bundle) … ok — created from 4 runs
+  • Reporting: 2 schedules for LMN-201 (in the platform, no e-mail) … ok — readiness.executive_digest: weekly; etmf.completeness_pack: monthly
+  • Administration: the Lumen account's company details (fictional address and contact) … ok — recorded
+  ⇒ lumen pack: created 434, found 3
+manifest → /root/.concept2cure-codespace/demo-manifests-lumen/lumen/manifest.json

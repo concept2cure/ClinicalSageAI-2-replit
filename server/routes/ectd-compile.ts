@@ -41,6 +41,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { retainRequestDbClient } from '../db/requestDbLease';
+import { readProgramAnchorRow } from '../services/c2c/program-project-anchor';
 import { isFiledDispatchStatus } from '../services/submission-service/filed-dispatch';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
@@ -678,12 +679,8 @@ function asksForAsync(req: Request): boolean {
 async function trackingProjectIdFor(anchor: CompileAnchor, orgId: number): Promise<number | null> {
   if (anchor.numericProjectId != null) return anchor.numericProjectId;
   if (!anchor.programId) return null;
-  const { rows } = await pool.query(
-    'SELECT id FROM projects WHERE regulatory_program_id = $1::uuid AND organization_id = $2 ORDER BY id LIMIT 1',
-    [anchor.programId, orgId],
-  );
-  const id = Number(rows[0]?.id);
-  return Number.isInteger(id) && id > 0 ? id : null;
+  const row = await readProgramAnchorRow(pool, { programId: anchor.programId, orgId, context: 'ectd-compile.async-tracking' });
+  return row?.id ?? null;
 }
 
 async function compileAsJob(

@@ -1,0 +1,89 @@
+[
+  {
+    "filePath": "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+    "errorCount": 0,
+    "warningCount": 8,
+    "messages": [
+      {
+        "ruleId": "no-undef",
+        "severity": 1,
+        "message": "'queueMicrotask' is not defined.",
+        "line": 122,
+        "column": 5,
+        "messageId": "undef",
+        "endLine": 122,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'QuickTask' has too many lines (215). Maximum allowed is 100.",
+        "line": 465,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 465,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'QuickTask' has a complexity of 25. Maximum allowed is 15.",
+        "line": 465,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 465,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 36. Maximum allowed is 15.",
+        "line": 524,
+        "column": 43,
+        "messageId": "complex",
+        "endLine": 524,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'CollabDiscuss' has too many lines (167). Maximum allowed is 100.",
+        "line": 772,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 772,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'CollabDiscuss' has a complexity of 20. Maximum allowed is 15.",
+        "line": 772,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 772,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 46. Maximum allowed is 15.",
+        "line": 816,
+        "column": 25,
+        "messageId": "complex",
+        "endLine": 816,
+        "endColumn": 27
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (762). Maximum allowed is 500.",
+        "line": 827,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1151,
+        "endColumn": 1
+      }
+    ]
+  }
+]

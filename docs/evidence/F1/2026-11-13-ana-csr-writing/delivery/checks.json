@@ -1,0 +1,81 @@
+{
+  "scope": "Plan F1; existing ordinary CSR writer and validated editor context only",
+  "sourceHead": "841c41466b6b96c6d95190432c41549ae9fc43b2",
+  "ownedRuntime": [
+    "server/services/ana/AnaDocumentDraftingService.ts",
+    "server/services/authoring/authoring-draft-template.ts"
+  ],
+  "initialRed": {
+    "passed": 1,
+    "failed": 19,
+    "files": 1,
+    "cases": 20,
+    "processSeconds": 23.074,
+    "selectedPins": 13,
+    "sourceStable": true,
+    "raw": "red-tests.json.gz",
+    "interpretation": "18 unmet writing/manual/binding conditions; one wrong expectation asked mismatch for a section the existing manual guard already refuses. Original test and all raw failures retained."
+  },
+  "fixtureCorrection": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 19,
+    "files": 1,
+    "processSeconds": 16.764,
+    "selectedPins": 13,
+    "sourceStable": true,
+    "raw": "red-fixture-successor-tests.json.gz",
+    "change": "Expected existing TEMPLATE_NOT_DRAFTABLE priority for recorded manual14.2. No runtime/assertion relaxation. Corrected20-case source reconstructed from retained original+one substitution; hash matches actually-run snapshot."
+  },
+  "green": {
+    "passed": 250,
+    "failed": 0,
+    "pending": 0,
+    "files": 9,
+    "focusedCases": 27,
+    "processSeconds": 54.187,
+    "selectedPins": 29,
+    "sourceStable": true,
+    "raw": "green-tests.json.gz"
+  },
+  "lint": {
+    "method": "ESLint API, original text at actual same filePath; no source swaps",
+    "counts": [
+      {
+        "file": "server/services/ana/AnaDocumentDraftingService.ts",
+        "beforeErrors": 0,
+        "beforeWarnings": 1,
+        "afterErrors": 0,
+        "afterWarnings": 1
+      },
+      {
+        "file": "server/services/authoring/authoring-draft-template.ts",
+        "beforeErrors": 0,
+        "beforeWarnings": 0,
+        "afterErrors": 0,
+        "afterWarnings": 0
+      },
+      {
+        "file": "server/services/ana/__tests__/csr-writing-delivery.test.ts",
+        "afterErrors": 0,
+        "afterWarnings": 0
+      }
+    ]
+  },
+  "phasesPooled": false,
+  "finalBehavior": {
+    "ordinary": "Exact resolver-derived E3 number selects canonical writing brief; explicit/recorded CSR, revision and recorded streaming share it. Unknown or conflicting write headings refuse before provider dispatch. Read-only requirements resolver unchanged.",
+    "manual": "Existing AnaProjectScopeError409 DRAFT_MANUAL_SECTION_REQUIRED, keeping current JSON/SSE/per-slot error contracts. Verified original-record numbers cannot gain eligibility from a conflicting caption.",
+    "derivative": "Only a local explicit-CSR original-record refusal precedes approved derivative dispatch. No ordinary brief/raw context/product reads inserted; exact payload, identity/model and round-trip checks remain.",
+    "editor": "Only complete validated registry/componentCSR source identity admits document-local E3 brief; unknown/mismatched/manual binding refuses. Current immutable CSR template-ID classification, including IND filing-coded templates, remains unchanged.",
+    "referenceBudget": "Original16KiB untrusted saved-reference JSON budget unchanged. Trusted canonical brief is separately prefixed outside JSON, never clipped. Positive large-JSON context+brief above16KiB and negative originalJSON above16KiB verified.",
+    "receivingApplication": "Verified document-local prefix distinguishes E3 structure from separately supplied receiving-application metadata. Existing recordedFilingDraftContext is not globally changed."
+  },
+  "limits": [
+    "Only outbound gateway and already-validated saved-reference boundary are controlled collaborators; product/access assertions use real bounded PGlite fixtures.",
+    "Actual legacy HTTP suite qualifies existing AnaProjectScopeError JSON/SSE classification; no new live authenticated manual-draft/provider flow was run.",
+    "Approved derivative fixture verifies exact service handoff and current local verification contract, not real custody/decryption/provider PQ.",
+    "No held authoring.router source edits; its source was unchanged across the selected cohort.",
+    "No live model comparison, clinical/model qualification, native PostgreSQL/RLS qualification, scientific approval, deployment or agency acceptance."
+  ]
+}

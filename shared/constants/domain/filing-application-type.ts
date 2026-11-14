@@ -95,5 +95,57 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   if (pw === 'ivd') return 'ivd';
   if (id.includes('nda') || pw === 'ctd') return 'nda';
   if (id.includes('ind') || pw === 'ind') return 'ind';
+  // A chosen filing that states no pathway, is no document class and matches
+  // no rule above has NO application type (NO_APPLICATION_TYPE). Until
+  // 2026-11-13 the wizard gave every such filing the pathway 'ctd', so 107 of
+  // the catalog's 251 filings were created as a US NDA: a 15-day safety
+  // report, an EU variation, a device master record (S12 sweep items 3 and 4,
+  // docs/evidence/SPINE/S12/2026-11-12-unmapped-filings/). The catalog
+  // (shared/regulatory/filing-catalog.ts PATHWAY_BY_ID and the filing document
+  // classes) is the only place a filing's type is stated; what it does not
+  // state is not created, and `noProjectReason` says so in the filing's name.
+  if (id) return NO_APPLICATION_TYPE;
+  // No filing chosen yet: the lane's usual first filing, as before.
   return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
+}
+
+/** What `programTypeFor` answers for a chosen filing the catalog states no type for: no project is created from it.
+ *  Empty, so it is falsy and is no program type the server accepts (VALID_PROGRAM_TYPES). */
+export const NO_APPLICATION_TYPE = '';
+
+/**
+ * Where the catalog's ICH quality rows are written (D2 3b Slice 4; P-55 row 5, F-D, decided 2026-10-26: no standalone
+ * Quality Overall Summary, drug substance or drug product project). Moved unchanged from
+ * server/services/regulatory/market-support.ts (2026-11-13), which still states them as each filing's own refusal at
+ * ICH / Global; `noProjectReason` reads them too. Keyed by registry id.
+ */
+export const WRITTEN_IN_THE_APPLICATION_PROJECT: Readonly<Record<string, string>> = {
+  ICH_QOS: "Not offered as its own project: the Quality Overall Summary is Module 2.3 of its application, so it is written in that application's project. " +
+    "For a small-molecule US IND, AnA composes it there from the project's CMC / Module 3 records.",
+  ICH_M3_DS: "Not offered as its own project: drug substance quality is Module 3.2.S of its application, so it is written in that application's project; " +
+    'for a small-molecule US IND it is composed there in CMC / Module 3. A drug substance filed on its own by its holder is a Drug Master File (US) ' +
+    'or an Active Substance Master File (EU): choose that filing type instead.',
+  ICH_M3_DP: "Not offered as its own project: drug product quality is Module 3.2.P of its application, so it is written in that application's project; " +
+    'for a small-molecule US IND it is composed there in CMC / Module 3.',
+};
+
+/** Why no project is created from a filing with no application type, in the filing's own name: the picker's
+ *  not-offered reason and the create endpoint's refusal are this one sentence. It names no other application. */
+export function noProjectReason(filing: { id: string; displayName: string; agency?: string | null; category?: string | null }): string {
+  const id = filing.id.toLowerCase();
+  const written = WRITTEN_IN_THE_APPLICATION_PROJECT[id.toUpperCase()];
+  if (written) return written;
+  // A quality system record (a device master record, a quality manual) is kept in the quality system.
+  if (filing.category === 'qms' || id.startsWith('qms_')) {
+    return `Not offered: ${filing.displayName} is a quality system record, not a filing, so no project is created from it.`;
+  }
+  // A CTD module is part of a dossier, written in the project of the application it belongs to.
+  if (/_ctd_m\d(_regional)?$/.test(id)) {
+    return `Not offered as its own project: ${filing.displayName} is a module of an application's dossier, so it is written in that application's project.`;
+  }
+  // ICH is no jurisdiction: what the catalog lists under it is a harmonised document, and this one is no project.
+  if (/^ich\b/i.test(String(filing.agency ?? ''))) {
+    return `Not offered: ICH is no jurisdiction and takes no filing, and ${filing.displayName} is not authored here as a project of its own.`;
+  }
+  return `Not offered: no project type is stated for ${filing.displayName}, so no project is created from it.`;
 }

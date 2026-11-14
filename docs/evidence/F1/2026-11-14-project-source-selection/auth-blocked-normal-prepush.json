@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-11-14T02:33:55.102435+00:00",
+  "elapsedSeconds": 581.675,
+  "argv": [
+    "python3",
+    "docs/evidence/F1/2026-11-14-project-source-selection/run-normal-prepush.py"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "integrated-retry-inputs.json",
+  "inputCount": 25,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "docs/evidence/F1/2026-11-14-project-source-selection/run-normal-prepush.py": "2f545bdb9cceda46ff777881254787aa4e0003bac71ae9080cab7ec104ecec4d"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "auth-blocked-normal-prepush.txt.gz",
+  "outputSha256": "4ec2cf2bd99a00aa86f0b24c7e5608b290a6a28ea519d0b501d3f924dbb80586",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": true
+}

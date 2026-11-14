@@ -1,0 +1,12 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts",
+    "errors": 0,
+    "warnings": 0
+  }
+]

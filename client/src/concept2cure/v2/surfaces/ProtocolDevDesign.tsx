@@ -30,6 +30,7 @@ import { C2CForm, type C2CFormFieldOption } from '../C2CForm';
 import { ProjectionsPanel } from './ProtocolDevProjections';
 import { PlanningInputsPanel } from './ProtocolDevPlanningInputs';
 import { CreateDesignDrawer } from './ProtocolDevCreateDesign';
+import { surfaceLeaveRefusal } from '../navParams';
 
 type Obj = Record<string, unknown>;
 const MIN_REASON = 8;
@@ -112,6 +113,7 @@ function BindDrawer({ documentId, programId, onCancel, onDone, onError }: BindDr
   if (error) {
     return (
       <C2CForm
+        presentation="inline"
         key="bind-error"
         config={{
           eyebrow: 'Protocol · study design', title: 'Bind a study design',
@@ -126,6 +128,7 @@ function BindDrawer({ documentId, programId, onCancel, onDone, onError }: BindDr
   if (rows === null) {
     return (
       <C2CForm
+        presentation="inline"
         key="bind-loading"
         config={{ eyebrow: 'Protocol · study design', title: 'Bind a study design', sub: 'Reading this organisation’s persisted designs…', submitLabel: 'Cancel', fields: [] }}
         onCancel={onCancel}
@@ -136,6 +139,7 @@ function BindDrawer({ documentId, programId, onCancel, onDone, onError }: BindDr
   if (rows.length === 0) {
     return (
       <C2CForm
+        presentation="inline"
         key="bind-none"
         config={{
           eyebrow: 'Protocol · study design', title: 'Bind a study design',
@@ -173,6 +177,7 @@ function BindDrawer({ documentId, programId, onCancel, onDone, onError }: BindDr
      reuses the loading form's state and the pre-selected design is lost. */
   return (
     <C2CForm
+      presentation="inline"
       key="bind-ready"
       config={{
         eyebrow: 'Protocol · study design', title: 'Bind a study design',
@@ -204,6 +209,7 @@ function UnbindDrawer({ documentId, onCancel, onDone, onError }: BindDrawerProps
   };
   return (
     <C2CForm
+      presentation="inline"
       config={{
         eyebrow: 'Protocol · study design', title: 'Unbind study design',
         sub: 'The design is untouched. This protocol stops claiming to be a projection of it, and its design-gate findings leave this screen.',
@@ -220,15 +226,13 @@ function UnbindDrawer({ documentId, onCancel, onDone, onError }: BindDrawerProps
 
 function DesignIdentity({ sd }: { sd: PdevStudyDesignView }) {
   return (
-    <div className="pj-card" style={{ padding: 12 }}>
-      <div className="pj-card-h">
-        <span className="t">{sd.title}</span>
-        <span className="s">{[sd.phase && 'Phase ' + sd.phase, sd.indication, sd.status].filter(Boolean).join(' · ')}</span>
-      </div>
+    <section aria-label="Recorded study design">
+      <h3 className="pd-pane-t">{sd.title}</h3>
+      <p className="pd-pane-s">{[sd.phase && 'Phase ' + sd.phase, sd.indication, sd.status].filter(Boolean).join(' · ')}</p>
       <KV k="Study design id" v={sd.studyId} />
       <KV k="Bound" v={sd.linkedAt ? sd.linkedAt.slice(0, 10) : 'date not recorded'} />
       <KV k="Standards evaluated" v={sd.standardsChecked.length ? sd.standardsChecked.join(', ') : 'none reported by the gate engine'} />
-    </div>
+    </section>
   );
 }
 
@@ -286,17 +290,28 @@ function createDrawerProgram(drawer: DesignDrawer | null, canWrite: boolean, pro
   return drawer === 'create' && canWrite ? programId : undefined;
 }
 
+function FormNotice({ message }: { message: string | null }) {
+  return message ? <div className="pde-refusal" role="status">{message}</div> : null;
+}
+
 export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast, onNav }: StudyDesignTabProps) {
   const [drawer, setDrawer] = useState<DesignDrawer | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const documentId = Number(doc.id);
   const sd = (doc.studyDesign ?? null) as PdevStudyDesignView | null;
   const programId = typeof doc.programId === 'string' ? doc.programId : undefined;
   const createProgramId = createDrawerProgram(drawer, canWrite, programId);
 
-  const done = (message: string) => { setDrawer(null); onToast?.(message); onChanged?.(); };
-  const failed = (m: string) => { setDrawer(null); onError?.(m); };
+  const closeForm = () => { setDrawer(null); setNotice(null); };
+  const done = (message: string) => { closeForm(); onToast?.(message); onChanged?.(); };
+  const failed = (m: string) => { closeForm(); onError?.(m); };
 
-  const actions = designTabActions(Boolean(sd), canWrite, programId, setDrawer);
+  const openForm = (next: DesignDrawer) => {
+    const reason = surfaceLeaveRefusal();
+    setNotice(reason);
+    if (!reason) setDrawer(next);
+  };
+  const actions = designTabActions(Boolean(sd), canWrite, programId, openForm);
 
   return (
     <div className="pd-pane" role="region" aria-label="Study design">
@@ -305,6 +320,29 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast, onN
         sub="The USDM / ICH M11 design object this protocol is a projection of. The protocol document carries the registers; the design object carries the estimands, the endpoints, the statistical plan and the schedule."
         actions={actions}
       />
+
+      <FormNotice message={notice} />
+
+      {drawer === 'bind' && canWrite && (
+        <BindDrawer
+          documentId={documentId}
+          programId={programId}
+          onCancel={closeForm}
+          onDone={() => done('Study design bound — the protocol now renders the design gates’ findings.')}
+          onError={failed}
+        />
+      )}
+      {createProgramId && <CreateDesignDrawer documentId={documentId} programId={createProgramId}
+        onCancel={closeForm} onSaved={() => onToast?.('Study design saved; binding is pending.')}
+        onDone={() => done('Study design created and bound — the recorded inputs and their gate findings are available.')}/>}
+      {drawer === 'unbind' && canWrite && (
+        <UnbindDrawer
+          documentId={documentId}
+          onCancel={closeForm}
+          onDone={() => done('Study design unbound — the design itself is unchanged.')}
+          onError={failed}
+        />
+      )}
 
       {!sd && (
         <div className="pde-note">
@@ -332,26 +370,7 @@ export function StudyDesignTab({ doc, canWrite, onChanged, onError, onToast, onN
         </>
       )}
 
-      {drawer === 'bind' && canWrite && (
-        <BindDrawer
-          documentId={documentId}
-          programId={programId}
-          onCancel={() => setDrawer(null)}
-          onDone={() => done('Study design bound — the protocol now renders the design gates’ findings.')}
-          onError={failed}
-        />
-      )}
-      {createProgramId && <CreateDesignDrawer documentId={documentId} programId={createProgramId}
-        onCancel={() => setDrawer(null)} onSaved={() => onToast?.('Study design saved; binding is pending.')}
-        onDone={() => done('Study design created and bound — the recorded inputs and their gate findings are available.')}/>}
-      {drawer === 'unbind' && canWrite && (
-        <UnbindDrawer
-          documentId={documentId}
-          onCancel={() => setDrawer(null)}
-          onDone={() => done('Study design unbound — the design itself is unchanged.')}
-          onError={failed}
-        />
-      )}
+
     </div>
   );
 }

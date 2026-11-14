@@ -49,6 +49,20 @@ const regional = [
 const body = (row: readonly [string, string, string, string]) => ({ name: 'Exact regional preparation', submissionTypeId: row[0], programType: row[1], primaryAgency: row[2], productType: row[3], deviceClassification: { intendedUse: 'Sponsor-stated purpose' } });
 
 describe('regional applications create only their exact authoring project', () => {
+  it('passes the recorded IVD product class to the existing FDA 510(k) scaffolder', async () => {
+    queueCreate();
+    const response = await request(app()).post('/api/c2c/projects').send({
+      name: 'Assay FDA filing', submissionTypeId: 'us_510k_ivd',
+      programType: '510k', primaryAgency: 'FDA', productType: 'ivd',
+      deviceClassification: { intendedUse: 'Sponsor-stated assay purpose' },
+    });
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
+    expect(inserted()).toMatchObject({ program_type: '510k', product_type: 'ivd' });
+    expect(scaffold).toHaveBeenCalledWith(expect.objectContaining({
+      programType: '510k', primaryAgency: 'FDA', productType: 'ivd',
+    }));
+    expect(submission).not.toHaveBeenCalled();
+  });
   it.each(regional)('%s creates a governed working file without a medicinal submission', async (...row) => {
     queueCreate(); const response = await request(app()).post('/api/c2c/projects').send(body(row));
     expect(response.status, JSON.stringify(response.body)).toBe(201);

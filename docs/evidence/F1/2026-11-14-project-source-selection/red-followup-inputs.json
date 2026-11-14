@@ -1,0 +1,19 @@
+{
+  "head": "5a552f1428e5ee8d474353ac6095242b1bab97c2",
+  "scope": "Unchanged production plus frozen additional chooser-refresh/delayed-grade RED controls and corrected pagination timing.",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "5cd73d69ec182711b5dafa6d5d0c9c19c18560f2300fa67a2f2e0af0a0c3b4b7",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts": "feb25846b1b6f12944bc0a78c8a86ccf37ec08d937ba39941f14db557e18e922",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "459a9ecd258b42cbdab494a3770747d65fa40df0ff07536bf0cc20edd19cf47e",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "648b0b695c8e9b81dc54a3635d4aac7e7ab044b6a36eb4195cdcfe5e60198324",
+    "server/routes/c2c/projects.ts": "a63a8a7f9c4df5e16288aaf861bbf8ee0b8130ef0c2f70d6e1dd369ab5097d02",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "0e74f6abd139249abc43dae9f4d450c7d09287800ed0e7399e68cc2d66c0a3f0",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "4846a43b8ec0c2b7abcc0a9c65d0ac3be510c091f9e9a61e5dbf8a22949df5c7",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx": "14bd3030a11c2f01850bf4392bc9d8952626fcffca47448a17cbd80f17f38ad5",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": "1f6117411ca7b832d6dcb57e901f35650380fe573653f2d631e7388629b0f68a",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "44216892cee2657ab026d13b2337026758db9803d3349c7d1ba3238d276e0cc4",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd"
+  }
+}

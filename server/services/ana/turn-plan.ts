@@ -30,7 +30,7 @@ import type { AnaTool } from '../ai-gateway/types';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json';
-import { workerLabel, type WorkerSnapshot } from '@shared/ana/turn-timeline';
+import { workerLabel, readWorkerSnapshot, type WorkerSnapshot } from '@shared/ana/turn-timeline';
 import { appendRunCoordination, readRunCoordination, readCoordinationEvents, coordinationSnapshot, coordinationParentAlias,
   coordinationSha256, coordinationRefused, type CoordinationPool, type CoordinationScope, type CoordinationAction,
   type CoordinationSource, type CoordinationEvent, type CoordinationDraft,
@@ -167,6 +167,16 @@ function reportAt(events: CoordinationEvent[], worker: string): CoordinationEven
 function assertWorkerActive(snapshot:WorkerSnapshot): void {
   if(['reported','stopped'].includes(snapshot.phase))return coordinationRefused('COORDINATION_WORKER_STOPPED');
 }
+function checkingEstimate(before: WorkerSnapshot, phase: WorkerSnapshot['phase'], input: Parameters<RunCoordinationHost['progress']>[2]): WorkerSnapshot['estimate'] {
+  const eligible = [phase === 'checking',before.role === 'verify',input.basisKind === 'deterministic_checks',
+    before.outcome === null,input.outcome == null,before.parentDisposition === 'pending'].every(Boolean);
+  if (!eligible) return null;
+  const candidate = readWorkerSnapshot({ ...before,phase,completed:input.completed,total:input.total,estimate:input.estimate ?? null });
+  if (!candidate?.estimate || candidate.completed === null || candidate.total === null || candidate.completed >= candidate.total ||
+      candidate.estimate.sampleCount !== candidate.completed || candidate.completed < (before.completed ?? 0)) return null;
+  if (before.total !== null && candidate.total !== before.total) return null;
+  return { ...candidate.estimate };
+}
 class RunCoordinator implements RunCoordinationHost {
   private readonly handles = new WeakMap<WorkerCoordinationHandle, string>();
   private readonly sources = new Map<string, CoordinationSource>();
@@ -213,12 +223,13 @@ class RunCoordinator implements RunCoordinationHost {
     return assignmentProjection(result, handle);
   }
   async progress(handle: WorkerCoordinationHandle, phase: WorkerSnapshot['phase'], input: Parameters<RunCoordinationHost['progress']>[2]) {
+    input = { ...input,estimate: input.estimate ? { ...input.estimate } : null };
     const worker = this.worker(handle);
-    return this.record(input, { operation: 'progress', worker, phase, completed: input.completed, total: input.total, outcome: input.outcome ?? null }, events => {
+    return this.record(input, { operation: 'progress', worker, phase, completed: input.completed, total: input.total, outcome: input.outcome ?? null,basisKind:input.basisKind ?? null,estimate:input.estimate }, events => {
       const before = workerAt(events, worker);
       assertWorkerActive(before);
       return this.draft(input, 'progress', { ...before, revision: before.revision + 1, phase, completed: input.completed,
-        total: input.total, outcome: input.outcome ?? before.outcome, basis: input.basisKind ?? before.basis });
+        total: input.total, outcome: input.outcome ?? before.outcome, basis: input.basisKind ?? before.basis,estimate:checkingEstimate(before,phase,input) });
     }, { terminal: phase === 'stopped' });
   }
   async report(handle: WorkerCoordinationHandle, input: Parameters<RunCoordinationHost['report']>[1]) {
@@ -233,7 +244,7 @@ class RunCoordinator implements RunCoordinationHost {
       const report = reportAt(events, worker), before = workerAt(events, worker);
       if(before.phase!=='reported')return coordinationRefused('COORDINATION_WORKER_STOPPED');
       if (report.reportSha256 !== input.reportSha256 || !input.basis?.some(ref => ref.kind === 'report' && ref.ref === report.eventId && ref.sha256 === report.reportSha256)) return coordinationRefused('COORDINATION_REPORT_CHANGED');
-      return { ...this.draft(input, 'revision', { ...before, revision: before.revision + 1, parentDisposition: 'pending' }), reportSha256: input.reportSha256 };
+      return { ...this.draft(input, 'revision', { ...before, revision: before.revision + 1, parentDisposition: 'pending',estimate:null }), reportSha256: input.reportSha256 };
     });
   }
   private writeReport(worker: string, input: Parameters<RunCoordinationHost['report']>[1], operation: 'report' | 'revision') {
@@ -245,11 +256,14 @@ class RunCoordinator implements RunCoordinationHost {
       return { ...this.draft(input, operation, { ...before, revision: before.revision + 1,
         phase: input.outcome === 'cancelled' || input.outcome === 'failed' ? 'stopped' : 'reported',
         outcome: input.outcome ?? 'completed', completed: input.completed ?? null, total: input.total ?? null,
-        basis: input.basisKind ?? before.basis, parentDisposition: 'pending' }), reportSha256: input.reportSha256 };
+        basis: input.basisKind ?? before.basis, parentDisposition: 'pending',estimate:null }), reportSha256: input.reportSha256 };
     }, { terminal: input.outcome === 'cancelled' || input.outcome === 'failed',
       source: input.outcome === 'cancelled' || input.outcome === 'failed' ? undefined : this.sources.get(worker) });
   }
   async message(handle: WorkerCoordinationHandle | null, input: Parameters<RunCoordinationHost['message']>[1]) {
+    input = { ...input,
+      basis: input.basis?.map(row => ({ ...row })),
+      model: input.model ? { ...input.model } : input.model };
     const sender = handle === null ? 'anna' : this.worker(handle);
     const source = this.sources.get(sender);
     const body={operation:'message',sender,recipient:input.recipient,textSha256:input.text===undefined?null:coordinationSha256(input.text),messageKind:input.messageKind??'help'};
@@ -261,6 +275,7 @@ class RunCoordinator implements RunCoordinationHost {
     }
     return this.record(input, body, events => {
       if (input.recipient === sender || !['anna', ...events.filter(event => event.operation === 'assigned').map(event => event.worker)].includes(input.recipient)) return coordinationRefused('COORDINATION_RECIPIENT_UNKNOWN');
+      if(input.recipient!=='anna')assertWorkerActive(workerAt(events,input.recipient));
       if (events.filter(event => event.operation === 'message').length >= 32 || events.filter(event => event.operation === 'message' && (event.sender ?? event.worker) === sender).length >= 8) return coordinationRefused('COORDINATION_MESSAGE_LIMIT');
       if (input.text !== undefined && (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 2000)) return coordinationRefused('COORDINATION_MESSAGE_INVALID');
       const worker = sender === 'anna' ? input.recipient : sender, before = workerAt(events, worker);
@@ -304,7 +319,7 @@ class RunCoordinator implements RunCoordinationHost {
       if (report.eventId !== input.reportEventId || report.reportSha256 !== input.reportSha256 || input.reason.trim().length < 8 || input.reason.length > 2000) return coordinationRefused('COORDINATION_REPORT_CHANGED');
       if (input.decision === 'accepted_as_proposal' && !this.sources.has(input.worker)) return coordinationRefused('COORDINATION_SOURCE_HELD');
       if(input.decision==='accepted_as_proposal'&&before.phase!=='reported')return coordinationRefused('COORDINATION_WORKER_STOPPED');
-      return { ...this.draft(input, 'disposition', { ...before, revision: before.revision + 1, parentDisposition: input.decision }),
+      return { ...this.draft(input, 'disposition', { ...before, revision: before.revision + 1, parentDisposition: input.decision,estimate:null }),
         basis: [{ kind: 'report', ref: report.eventId, sha256: input.reportSha256 }, ...(input.basis ?? []), ...(this.options.basis ?? []), ...(this.options.monitor ? [this.options.monitor.basis] : [])], reasonSha256: coordinationSha256(input.reason) };
     }, { source: this.sources.get(input.worker), beforeAppend: input.decision === 'accepted_as_proposal' ? this.options.beforeAssessment : undefined });
   }
@@ -319,7 +334,7 @@ class RunCoordinator implements RunCoordinationHost {
       // Raw expansion stays held until all model-derived transcript/record readers have an owner wall.
       messages.push({ ...message, held: true as const });
     }
-    return { workers: board.workers, messages };
+    return { workers: board.workers, reports: board.reports, messages };
   }
   async modelContexts(handle?:WorkerCoordinationHandle){
     const recipient=handle?this.worker(handle):'anna';

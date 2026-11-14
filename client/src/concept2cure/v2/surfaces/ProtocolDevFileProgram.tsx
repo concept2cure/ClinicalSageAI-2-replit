@@ -26,7 +26,7 @@ export function FileProtocolProgramDrawer({ documentId, programId, programName, 
     catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { running.current = false; setBusy(false); }
   };
-  return <C2CForm config={{ title: 'File protocol in open project', eyebrow: 'Protocol · project association', governed: true,
+  return <C2CForm presentation="inline" config={{ title: 'File protocol in open project', eyebrow: 'Protocol · project association', governed: true,
     sub: `${programName || programId} — explicitly records this unfiled protocol’s project. An existing project association cannot be moved.`,
     notice: error || undefined, busy: busy ? 'Filing the protocol…' : undefined, submitLabel: 'File protocol',
     fields: [{ key: 'reason', label: 'Reason for change (governed)', type: 'textarea', required: true }] }}

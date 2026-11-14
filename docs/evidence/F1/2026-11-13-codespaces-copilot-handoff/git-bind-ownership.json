@@ -1,0 +1,7 @@
+{
+  "normalHooksPath": ".husky/_",
+  "gitConfigBytesPreserved": true,
+  "configSha256": "42fd2ce8a31c5f037b364f74f652c820a224cc8d053e94c8f13fc6ab4f6a7c48",
+  "reason": "Restore host ownership after root devcontainer npm preparation, without changing Git settings",
+  "hostNode": "v22.16.0"
+}

@@ -64,15 +64,39 @@ function placeboRecorded(sources: CanonicalSource[]): boolean {
   });
 }
 
+/**
+ * One side's manufacturer row, read from that side's own record and no other.
+ *
+ * Until 2026-11-13 this was ONE row, "Manufacturer name and address (drug
+ * substance and drug product)", filled from the first `manufacturingSite`
+ * found on any source of any type and cross-referenced to both §3.2.S.2.1 and
+ * §3.2.P.3.1. A sponsor with one CDMO for the substance and another for the
+ * product filed a leaf naming one site for both; a project that recorded only
+ * the product's site had the substance's manufacturer cross-referenced to a
+ * section that did not carry it. 21 CFR 312.23(a)(7)(iv)(a) and (b) ask for
+ * each separately, and the regulatory record holds them as two requirements.
+ */
+function manufacturerRow(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): IndRegionalRow {
+  const own = sources.filter((s) => s.sourceType === side);
+  const who = [firstValue(own, 'manufacturer'), firstValue(own, 'manufacturingSite')].filter(Boolean).join(', ');
+  const substance = side === 'drug_substance';
+  return {
+    item: `${substance ? 'Drug substance' : 'Drug product'} manufacturer name and address${who ? ` — ${who}` : ''}`,
+    basis: substance ? '21 CFR 312.23(a)(7)(iv)(a)' : '21 CFR 312.23(a)(7)(iv)(b)',
+    recordRequirementId: substance ? 'fda-req-003' : 'fda-req-004',
+    status: who
+      ? { kind: 'cross-referenced', section: substance ? '3.2.S.2.1' : '3.2.P.3.1' }
+      : { kind: 'not-recorded' },
+  };
+}
+
 export function usIndRegionalRows(sources: CanonicalSource[]): IndRegionalRow[] {
-  const site = firstValue(sources, 'manufacturingSite');
   return [
-    {
-      item: `Manufacturer name and address (drug substance and drug product)${site ? ` — ${site}` : ''}`,
-      basis: '21 CFR 312.23(a)(7)(iv)(a)–(b)',
-      recordRequirementId: 'fda-req-003',
-      status: site ? { kind: 'cross-referenced', section: '3.2.S.2.1 / 3.2.P.3.1' } : { kind: 'not-recorded' },
-    },
+    manufacturerRow(sources, 'drug_substance'),
+    manufacturerRow(sources, 'drug_product'),
     {
       item: 'Placebo: composition, manufacture and control',
       basis: '21 CFR 312.23(a)(7)(iv)(c)',

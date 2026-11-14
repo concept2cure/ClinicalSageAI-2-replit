@@ -1,0 +1,59 @@
+{
+  "scope": "F1 native Quality catalogue currentness",
+  "date": "2026-11-13",
+  "branch": "concept2cure-v2",
+  "status": "source frozen; no commits by delegated agent",
+  "files": [
+    {
+      "path": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+      "sha256": "4dc27d4fd35cf6c7a3557626fefa270dce1e70eeb696e5b2701c8cbb359dc732",
+      "lines": 340
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
+      "sha256": "abd679cfbc584264e23b1df48c25d898bcb185d1a2cecd55d02a7ac949ea6812",
+      "lines": 341
+    }
+  ],
+  "red": {
+    "log": "catalogue-red-final.txt",
+    "failed": 7,
+    "passed": 18,
+    "files": 1,
+    "source_unchanged": true
+  },
+  "green": {
+    "logs": [
+      {
+        "file": "catalogue-green.txt",
+        "files": 1,
+        "passed": 25
+      },
+      {
+        "file": "catalogue-regression.txt",
+        "files": 5,
+        "passed": 49
+      },
+      {
+        "file": "catalogue-consumers.txt",
+        "files": 3,
+        "passed": 17
+      }
+    ],
+    "files": 9,
+    "passed": 91
+  },
+  "lint": {
+    "log": "catalogue-lint.txt",
+    "exit_code": 0,
+    "diagnostics": 0
+  },
+  "constraints": {
+    "source_read_access_edits": false,
+    "held_qms_edits": false,
+    "ui_edits": false,
+    "dependency_or_schema_changes": false,
+    "provider_calls": false
+  },
+  "limits": "PGlite source/project/disposition/catalogue SQL; native QMS producer and capture-audit seams mocked. No live application or model qualification claimed. Exploratory catalogue-red.log not authoritative; use final red receipt."
+}

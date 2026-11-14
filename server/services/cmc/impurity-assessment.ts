@@ -139,6 +139,12 @@ export interface ElementalImpurityAssessed {
   pdeMicrogramsPerDay: number;
   observedMicrogramsPerDay: number;
   observedAsRecorded: string;
+  /**
+   * Present only when the exposure was DERIVED from a recorded concentration
+   * and the recorded maximum daily dose (ICH Q3D §7): how, and that it is this
+   * material's contribution — the PDE is for the whole drug product.
+   */
+  exposureBasis?: string;
   withinLimit: boolean;
   disposition: 'within-limit' | 'above-limit';
   citation: string;
@@ -574,11 +580,39 @@ function assessAsElementalImpurity(
   ).trim();
   const route = recordedRoute(record);
   const unit = String(record.levelUnit ?? record.level_unit ?? '').trim().toLowerCase();
-  /* Q3D limits are a daily EXPOSURE, so a concentration cannot be compared to
-     one without the daily dose; only a µg/day figure is taken. */
-  const perDay = levelAsMicrogramsPerDay(record);
   const observedAsRecorded = [String(record.observedLevel ?? record.observed_level ?? '').trim(), unit]
     .filter(Boolean).join(' ');
+  /* Q3D limits are a daily EXPOSURE. A µg/day figure is taken as recorded. A
+     CONCENTRATION is an exposure once the daily amount is known — Q3D §7:
+     µg/g × g/day — and the register records the maximum daily dose on the same
+     row. Until 2026-11-12 only µg/day was taken, and any other unit was refused
+     with "cannot be compared … without the product's daily dose" WITHOUT
+     looking for the dose: the demo's own Palladium row (3 ppm, 15 mg, oral)
+     read "Not assessed" with the dose printed three columns along. Elemental
+     results are routinely reported in ppm, so that was the common case.
+     A concentration with no readable dose is still refused, for THAT reason. */
+  let perDay = levelAsMicrogramsPerDay(record);
+  let exposureBasis: string | undefined;
+  const ppm = perDay === null ? levelAsPpm(record) : null;
+  if (ppm !== null) {
+    const dose = parseDoseMg(record.maximumDailyDose ?? record.maximum_daily_dose);
+    if (!dose.ok) {
+      return {
+        ok: false,
+        impurityName,
+        code: dose.code,
+        message: `${dose.message} A Q3D permitted daily exposure is a daily amount, so a level recorded as a concentration (${unit}) is compared to it through the maximum daily dose.`,
+        routeTo: 'ICH Q3D(R2)',
+      };
+    }
+    /* µg/g × g/day. Rounded to 6 significant figures: the product of two
+       recorded decimals, not a measurement, and 3 × 15 / 1000 must read 0.045. */
+    perDay = Number((ppm * (dose.mg / 1000)).toPrecision(6));
+    exposureBasis =
+      `${observedAsRecorded} at a maximum daily dose of ${dose.mg} mg is ${perDay} µg/day from this material ` +
+      '(ICH Q3D(R2) §7: concentration × daily amount). The permitted daily exposure applies to the drug product as a ' +
+      'whole, so the contributions of every component are summed before it is compared.';
+  }
 
   const verdict = assessElementalImpurity({
     element,
@@ -619,6 +653,7 @@ function assessAsElementalImpurity(
     pdeMicrogramsPerDay: verdict.pdeMicrogramsPerDay,
     observedMicrogramsPerDay: verdict.observedMicrogramsPerDay,
     observedAsRecorded: observedAsRecorded || `${verdict.observedMicrogramsPerDay} µg/day`,
+    ...(exposureBasis ? { exposureBasis } : {}),
     withinLimit: verdict.withinLimit,
     disposition: verdict.withinLimit ? 'within-limit' : 'above-limit',
     citation: verdict.citation,

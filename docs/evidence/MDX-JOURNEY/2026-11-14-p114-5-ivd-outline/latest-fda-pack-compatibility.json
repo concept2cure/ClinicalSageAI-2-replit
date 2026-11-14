@@ -1,0 +1,56 @@
+{
+  "started": "2026-11-14T02:55:02.541Z",
+  "finished": "2026-11-14T02:55:06.180Z",
+  "status": "passed",
+  "engine": "Actual PGlite SQL; no native PostgreSQL/RLS claim",
+  "replaysAfterNewClassMigration": 2,
+  "sourcePins": {
+    "migrations/20260527_mutation_primitives.sql": "cb439a03ab53338895f54ecd89605f67342b5cb7e191bef8e77d6cf33c3d10d7",
+    "migrations/20260528_phase9_document_schema.sql": "fd438fd6bd9c391faa65ca988b871cb1609136e9dff48ff3f8775729a6fce499",
+    "migrations/20260804_phase9_rule_pack_outlines.sql": "b1e7c9fcb82a84158176766d878ec32bef4a21ae88d1fb87f8112daddd3598e9",
+    "migrations/20260810c_rule_pack_provenance.sql": "a70dc855874755457714458ea827ab8625c60a128385489e078bdc8db47976e2",
+    "migrations/20260810d_rule_pack_review_attribution.sql": "a3c0894fd0b4b6a5436bb36a10cdbf665c264e417e4dda5407e10b28c9ae1626",
+    "migrations/20260901b_estar_510k_denovo_outlines.sql": "c8fa7c11e35267314857d44d2880e5b037c1807e0fb79ec8b6f921e4d0b6700d",
+    "migrations/20261005c_k510_denovo_estar_outline_v1_1.sql": "856d61ae3f294c29744a7e5e9f80daff2e9689b40923c26d786bf867b6fffa91",
+    "migrations/20261114_k510_ivd_estar_outline_v1_0.sql": "f7bbdc3860d2db8512032fd9756c0f10d66e079915adde5d1fb457c4c21e0906",
+    "migrations/20261113_fda_priority_review_ea_icsr_class_packs.sql": "a2eeac33e7962720edd51751554a906845364f8873eba436aad30f9af2f6e89b"
+  },
+  "livePacks": [
+    {
+      "doc_type": "environmental_assessment",
+      "agency": "fda",
+      "version": "fda-environmental-assessment-v1.0",
+      "nodes": 8,
+      "superseded_by": null
+    },
+    {
+      "doc_type": "icsr_15day",
+      "agency": "fda",
+      "version": "fda-icsr-15day-v1.0",
+      "nodes": 8,
+      "superseded_by": null
+    },
+    {
+      "doc_type": "k510",
+      "agency": "fda",
+      "version": "fda-estar-510k-ivd-v1.0",
+      "nodes": 47,
+      "superseded_by": null
+    },
+    {
+      "doc_type": "k510",
+      "agency": "fda",
+      "version": "fda-estar-510k-v1.1",
+      "nodes": 38,
+      "superseded_by": null
+    },
+    {
+      "doc_type": "priority_review",
+      "agency": "fda",
+      "version": "fda-priority-review-request-v1.0",
+      "nodes": 6,
+      "superseded_by": null
+    }
+  ],
+  "retainedIvdDocumentUnchanged": true
+}

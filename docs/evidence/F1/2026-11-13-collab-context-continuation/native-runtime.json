@@ -1,0 +1,17 @@
+{
+  "status": 503,
+  "ready": false,
+  "schemaState": "ready",
+  "anaState": "no_provider",
+  "capabilityRegistry": "seeded",
+  "dependencies": {
+    "database": "ok",
+    "schema": "ok",
+    "ana": "down",
+    "storage": "ok",
+    "sessions": "skipped",
+    "virusScan": "skipped",
+    "redis": "skipped",
+    "worker": "skipped"
+  }
+}

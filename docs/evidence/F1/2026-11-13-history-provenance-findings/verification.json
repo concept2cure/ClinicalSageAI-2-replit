@@ -1,0 +1,113 @@
+{
+  "recordedAt": "2026-11-13T21:21:23.679494+00:00",
+  "scannerVersion": "8.28.0",
+  "scannerArchiveChecksumVerified": true,
+  "scannerConfigUnchanged": true,
+  "lazyFetchingDisabled": true,
+  "exactCommitChecks": [
+    {
+      "commit": "4b2ed1cbae64bff187b8a5594fc41ca5e2ecb4dd",
+      "phase": "before",
+      "exitCode": 1,
+      "findingCount": 1,
+      "scannerError": false,
+      "commitsScanned": [
+        "1 commits scanned"
+      ],
+      "findings": [
+        {
+          "RuleID": "generic-api-key",
+          "File": "docs/evidence/F1/2026-11-13-codespaces-demo-continuation/source-and-artifact-hashes.json",
+          "StartLine": 3,
+          "EndLine": 3,
+          "Commit": "4b2ed1cbae64bff187b8a5594fc41ca5e2ecb4dd",
+          "Fingerprint": "4b2ed1cbae64bff187b8a5594fc41ca5e2ecb4dd:docs/evidence/F1/2026-11-13-codespaces-demo-continuation/source-and-artifact-hashes.json:generic-api-key:3"
+        }
+      ]
+    },
+    {
+      "commit": "7310d3083ad2057f61e36646a9baefe7b9914616",
+      "phase": "before",
+      "exitCode": 1,
+      "findingCount": 1,
+      "scannerError": false,
+      "commitsScanned": [
+        "1 commits scanned"
+      ],
+      "findings": [
+        {
+          "RuleID": "generic-api-key",
+          "File": "terraform/modules/alb/tests/alb_timeouts.tftest.hcl",
+          "StartLine": 30,
+          "EndLine": 30,
+          "Commit": "7310d3083ad2057f61e36646a9baefe7b9914616",
+          "Fingerprint": "7310d3083ad2057f61e36646a9baefe7b9914616:terraform/modules/alb/tests/alb_timeouts.tftest.hcl:generic-api-key:30"
+        }
+      ]
+    },
+    {
+      "commit": "4b2ed1cbae64bff187b8a5594fc41ca5e2ecb4dd",
+      "phase": "after",
+      "exitCode": 0,
+      "findingCount": 0,
+      "scannerError": false,
+      "commitsScanned": [
+        "1 commits scanned"
+      ],
+      "findings": []
+    },
+    {
+      "commit": "7310d3083ad2057f61e36646a9baefe7b9914616",
+      "phase": "after",
+      "exitCode": 0,
+      "findingCount": 0,
+      "scannerError": false,
+      "commitsScanned": [
+        "1 commits scanned"
+      ],
+      "findings": []
+    }
+  ],
+  "unrelatedCanary": {
+    "generatedInMemory": true,
+    "writtenToSource": false,
+    "scannerExit": 1,
+    "findingCount": 1,
+    "rule": "generic-api-key",
+    "plaintextAbsentFromOutput": true
+  },
+  "fullHistoryCi": {
+    "runId": 43504538006,
+    "jobId": 132158612227,
+    "commit": "b0300fe5c44c1ea2ef134f7bbed14128c22c9b9d",
+    "commitsScanned": 14404,
+    "findingsBefore": 2
+  },
+  "classification": {
+    "provenanceValueResolvesToGitCommit": true,
+    "terraformPlaceholder": {
+      "length": 32,
+      "hexOnly": true,
+      "repeatingPeriodLength": 16,
+      "mockAwsProvider": true,
+      "planRunCount": 1,
+      "applyRunCount": 0,
+      "currentTrackedTestMatches": 5,
+      "currentTrackedEvidenceHarnessMatches": 1,
+      "nonFixtureProductionMatches": 0,
+      "productionImportsOfEvidenceHarness": 0
+    }
+  },
+  "localHistoryLimit": {
+    "completeFullHistoryPassClaimed": false,
+    "partialBaselineCommitsScanned": 535,
+    "partialBaselineHadMissingObjectErrors": true
+  },
+  "contractSuite": {
+    "path": "tests/ci/secret-history-scan.contract.test.ts",
+    "status": "passed",
+    "exitCode": 0,
+    "testsPassed": 11,
+    "testFilesPassed": 1
+  }
+}

@@ -1,0 +1,12 @@
+(node:11093) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+skipped project: found or created through New project
+skipped IND: the open IND's number and its sponsor, recorded (fictional; P-115)
+skipped Vault: upload the study files and the manifest (POST /api/vault/ingest)
+        adsl.xpt reviewed: locator.click: Timeout 30000ms exceeded.
+        adae.xpt reviewed: locator.click: Timeout 30000ms exceeded.
+pass    Vault: send, review-sign and approve each of the seven files (three people)
+pass    Editor: New document → M5 lists the CSR once (F1)
+        retry 1: page.waitForResponse: Timeout 30000ms exceeded while waiting for event "response"
+pass    Editor: the CSR created from New document shows "Build from the study’s data"
+pass    Study data: manifest chosen, tables previewed, frozen in the document

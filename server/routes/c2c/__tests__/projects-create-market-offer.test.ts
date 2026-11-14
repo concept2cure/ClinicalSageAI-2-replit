@@ -318,16 +318,49 @@ describe('POST /api/c2c/projects — a filing that is a document is created as i
 describe('POST /api/c2c/projects — the filing chosen decides the application type', () => {
   const programInserts = () => query.mock.calls.filter((c) => String(c[0]).includes('INSERT INTO regulatory_programs'));
 
+  /* Until 2026-11-13 a Type II Variation was an NDA by the wizard's 'ctd' default, and this refusal named the NDA.
+     The catalog states no type for it, so it creates no project, whatever type it is sent as. */
   it.each([
     ['its catalog id', 'eu_variation_ii'],
     ['its legacy id', 'type_ii_var'],
-  ])('a Type II Variation (by %s) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL', async (_label, submissionTypeId) => {
+  ])('a Type II Variation (by %s) sent as an MAA is refused 422 FILING_NOT_OFFERED in its own name, before any SQL', async (_label, submissionTypeId) => {
     queueDrugCreate();
     const res = await request(app()).post('/api/c2c/projects')
       .send(body({ programType: 'maa', primaryAgency: 'EMA', submissionTypeId }));
     expect(res.status, JSON.stringify(res.body)).toBe(422);
     expect(res.body.error).toBe('FILING_NOT_OFFERED');
-    expect(res.body.message).toMatch(/^Type II Variation \(Major\) creates an NDA project, not an MAA\. A project is created as the application its filing creates; choose a filing that creates an MAA\.$/);
+    expect(res.body.message).toBe('Not offered: no project type is stated for Type II Variation (Major), so no project is created from it.');
+    expect(programInserts()).toHaveLength(0);
+    expect(query).not.toHaveBeenCalled();
+    expect(scaffold).not.toHaveBeenCalled();
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+  });
+
+  it('a filing that creates one application, sent as another (a Conditional Marketing Authorisation as an NDA), is refused 422 FILING_NOT_OFFERED, before any SQL', async () => {
+    queueDrugCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType: 'nda', primaryAgency: 'EMA', submissionTypeId: 'eu_cma' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    expect(res.body.message).toMatch(/ creates an MAA project, not an NDA\. /);
+    expect(programInserts()).toHaveLength(0);
+    expect(query).not.toHaveBeenCalled();
+    expect(scaffold).not.toHaveBeenCalled();
+    expect(createSubmissionTx).not.toHaveBeenCalled();
+  });
+
+  /* S12 sweep items 3 and 4 (2026-11-13): until then this filing was an NDA by the wizard's 'ctd' default, so the
+     same request was created as a full NDA project. */
+  it.each([
+    ['as an NDA, as the wizard sent it', 'nda'],
+    ['as an IND', 'ind'],
+  ])('a filing the catalog states no type for (a Device Master Record) creates no project, sent %s: 422 in its own name, before any SQL', async (_label, programType) => {
+    queueDrugCreate();
+    const res = await request(app()).post('/api/c2c/projects')
+      .send(body({ programType, primaryAgency: 'FDA', submissionTypeId: 'qms_dmr' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    expect(res.body.message).toBe('Not offered: Device Master Record (DMR) is a quality system record, not a filing, so no project is created from it.');
     expect(programInserts()).toHaveLength(0);
     expect(query).not.toHaveBeenCalled();
     expect(scaffold).not.toHaveBeenCalled();

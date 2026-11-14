@@ -339,6 +339,7 @@ export function createApiClient({ baseUrl, accessToken, onRecord, identity = nul
     const logFrom = logSize();
     let res;
     let text;
+    let bytes;
     let retries = 0;
     // The platform rate-limits per source IP (server/config/platform-limits.ts:
     // api 100 req/min). A validation run and its browser share one IP, so a
@@ -346,7 +347,10 @@ export function createApiClient({ baseUrl, accessToken, onRecord, identity = nul
     // for the window and retry; every retry is recorded on the step.
     for (;;) {
       res = await fetch(url, { method, headers, body: fetchBody });
-      text = await res.text();
+      if (opts.binary && res.ok) {
+        bytes = Buffer.from(await res.arrayBuffer());
+        text = '';
+      } else text = await res.text();
       if (res.status !== 429 || retries >= 6) break;
       retries += 1;
       const retryAfter = Number(res.headers.get('retry-after'));
@@ -379,7 +383,7 @@ export function createApiClient({ baseUrl, accessToken, onRecord, identity = nul
         contentType: res.headers.get('content-type'),
         durationMs: Date.now() - started,
         rateLimitRetries: retries,
-        body: json !== null ? redact(json) : text.slice(0, 4000),
+        body: bytes ? `[binary: ${bytes.length} bytes]` : json !== null ? redact(json) : text.slice(0, 4000),
       },
     };
     let envDenied = null;
@@ -391,7 +395,7 @@ export function createApiClient({ baseUrl, accessToken, onRecord, identity = nul
       }
     }
     if (onRecord) onRecord(record);
-    return { status: res.status, ok: res.ok, json, text, headers: res.headers, retries, envDenied };
+    return { status: res.status, ok: res.ok, json, text, headers: res.headers, retries, envDenied, ...(bytes ? { bytes } : {}) };
   };
 }
 

@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-11-14T00:17:42.464564+00:00",
+  "elapsedSeconds": 3.275,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "client-green-inputs.json",
+  "inputCount": 15,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "client-lint.txt.gz",
+  "outputSha256": "d948b6377074e84da3cbac8f6878f901640f91ac2c5c322e5d1368b1038f5ea9",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

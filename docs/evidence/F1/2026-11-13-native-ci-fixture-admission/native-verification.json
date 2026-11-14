@@ -1,0 +1,23 @@
+{
+  "postgresMajor": 16,
+  "isolatedFromDemoCluster": true,
+  "schemaProvisioning": "install-fresh + deploy-migrate",
+  "provisioningExitCode": 0,
+  "provisionedBaseTables": 1281,
+  "nativeDeletionTestsPassed": 2,
+  "policyPgliteTestsPassed": 12,
+  "failed": 0,
+  "skipped": 0,
+  "rlsEnforce": "on",
+  "runtimeRole": {
+    "role": "app_service",
+    "rolsuper": false,
+    "rolbypassrls": false,
+    "encoding": "UTF8"
+  },
+  "fixtureSha256": "982ca9a99b322fa103e839d885b842239e56383ff63b78bbbcbbc98212745356",
+  "firstSetupEncodingFailure": "SQL_ASCII cluster rejected; fresh UTF8 cluster provisioned successfully before native tests",
+  "unresolvedPrivateProfileTests": 3,
+  "privateProfileExportPurgeChanged": false,
+  "liveProviderCalls": 0
+}

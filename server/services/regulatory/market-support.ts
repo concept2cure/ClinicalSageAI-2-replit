@@ -27,6 +27,7 @@
  *
  * Pure apart from `readMarketSupport`, which reads the active packs once.
  */
+import { WRITTEN_IN_THE_APPLICATION_PROJECT } from '../../../shared/constants/domain/filing-application-type.js';
 import {
   documentAgencyCandidates,
   NOTIFIED_BODY,
@@ -557,21 +558,12 @@ const HARMONISED_MARKET_KEYS: ReadonlySet<string> = new Set(['ich', 'ich_global'
  * substance or drug product project, and P-28 is not widened). The picker asks
  * each as an NDA at ICH / Global (Projects.tsx programTypeFor), so the ICH
  * sentence below would be all it said; each says instead where it is written.
- * Keyed by registry id, as `appliesTo` is. The modules are the registry's
+ * The sentences live in shared/constants/domain/filing-application-type.ts (2026-11-13), where the picker's reason
+ * for a filing with no application type reads them too. Keyed by registry id, as `appliesTo` is. The modules are the registry's
  * ctdModule. AnA's Module 2.3 composer and CMC / Module 3 compose only P-28's
  * scope, a small-molecule US IND (cmc/composition-scope.ts), and the sentences
  * claim no more than that.
  */
-const WRITTEN_IN_THE_APPLICATION_PROJECT: Readonly<Record<string, string>> = {
-  ICH_QOS: "Not offered as its own project: the Quality Overall Summary is Module 2.3 of its application, so it is written in that application's project. " +
-    "For a small-molecule US IND, AnA composes it there from the project's CMC / Module 3 records.",
-  ICH_M3_DS: "Not offered as its own project: drug substance quality is Module 3.2.S of its application, so it is written in that application's project; " +
-    'for a small-molecule US IND it is composed there in CMC / Module 3. A drug substance filed on its own by its holder is a Drug Master File (US) ' +
-    'or an Active Substance Master File (EU): choose that filing type instead.',
-  ICH_M3_DP: "Not offered as its own project: drug product quality is Module 3.2.P of its application, so it is written in that application's project; " +
-    'for a small-molecule US IND it is composed there in CMC / Module 3.',
-};
-
 /**
  * ICH asked for anything that is not one of its harmonised document classes
  * (an NDA, an IND, a supplement). ICH is no jurisdiction and takes no filing,

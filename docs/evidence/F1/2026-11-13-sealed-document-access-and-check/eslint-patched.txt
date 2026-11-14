@@ -1,0 +1,6 @@
+
+server/middleware/__tests__/authoringObjectAuthorization.test.ts
+  92:68  warning  Arrow function has too many lines (286). Maximum allowed is 100  max-lines-per-function
+
+✖ 1 problem (0 errors, 1 warning)
+

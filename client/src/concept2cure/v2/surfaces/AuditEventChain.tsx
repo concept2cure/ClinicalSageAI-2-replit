@@ -222,7 +222,9 @@ export function auditEventChainForAna(read: AuditEventChainRead): {
   };
 }
 
-const WHAT = 'A second chain, kept per organisation, that some services write to instead of the ledger';
+/* Demo walk 5.u6 (2026-11-12): this read "… that some services write to instead of the ledger", which tells a reader
+   that records bypass the audit trail. Both chains are read on this screen; the line says what this one is. */
+const WHAT = 'A separate hash chain, kept per organisation and verified on its own, for the events some services record there';
 
 function rowOf(read: Exclude<AuditEventChainRead, { state: 'error' }>) {
   const dim = 'var(--text-400)';

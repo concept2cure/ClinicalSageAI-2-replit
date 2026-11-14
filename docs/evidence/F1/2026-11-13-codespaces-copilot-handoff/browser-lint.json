@@ -1,0 +1,18 @@
+{
+  "startedAt": "2026-11-13T22:25:42.825220+00:00",
+  "elapsedSeconds": 2.388,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/reviewer-current-walk.cjs"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "inputs.json",
+  "inputCount": 12720,
+  "harnessSha256": "e5197958fb175f1e791de20ba3656ef42e494390fa11317f80a7a55d8c2f45d1",
+  "output": "browser-lint.txt.gz",
+  "outputSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

@@ -162,17 +162,21 @@ describe('reporting current session — private canvas reads', () => {
   });
 });
 
-describe('reporting current session — the reload notice says what happened', () => {
-  /* Reporting use walk, 2026-11-09: opening your own Account panel re-reads the account (refreshUser), Reporting
-     reloads (as above, so a changed role withdraws private results), and the notice said "Reporting was reset for the
-     current account … In the original account, check Run history" — an account switch that never happened. */
-  it('says the account was read again, not switched, when the same reader is refreshed', async () => {
+describe('reporting current session — refresh retains access and notices describe actual changes', () => {
+  // An unchanged account read retains this session. Different access still
+  // withdraws private data, as the account and permission controls above prove.
+  it('retains the open report without rereading or a switch notice when the same reader is refreshed', async () => {
     renderCanvas(); await run();
+    const report = screen.getByText('Original private report'), exportButton = screen.getByRole('button', { name: 'Export PDF' });
+    const requests = () => [calls('GET', '/api/insights-canvas/overview').length,
+      calls('GET', '/api/report-os/runs/41/rendered').length, calls('POST', '/api/report-os/runs').length];
+    const before = requests();
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ authenticated: true, user: { ...ACTOR } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
     await act(async () => { expect((await authService.refreshUser()).success).toBe(true); });
-    const notice = await screen.findByText(/Reporting reloaded/);
-    expect(notice.textContent).toMatch(/your account was read again/);
-    expect(notice.textContent).not.toMatch(/original account|reset for the current account/);
+    expect(screen.getByText('Original private report')).toBe(report);
+    expect(screen.getByRole('button', { name: 'Export PDF' })).toBe(exportButton);
+    expect(authService.getUser()?.id).toBe(ACTOR.id); expect(requests()).toEqual(before);
+    expect(screen.queryByText(/Reporting reloaded|Reporting was reset for the current account|In the original account/)).toBeNull();
   });
 
   it('still says the account changed when another reader takes the session', async () => {
@@ -182,13 +186,25 @@ describe('reporting current session — the reload notice says what happened', (
     expect(notice.textContent).toMatch(/In the original account/);
   });
 
-  it('says the account was read again when the replacement reader is then refreshed', async () => {
+  it('retains the current reader report and the truthful prior switch notice when that reader is refreshed', async () => {
+    wire((_method, url) => url === '/api/report-os/runs/41/rendered' && authService.getUser()?.id === NEXT.id
+      ? ok(reportDocument('Current reader private report')) : undefined);
     renderCanvas(); await run();
     await act(async () => replace());
-    await screen.findByText(/Reporting was reset for the current account/);
+    const notice = await screen.findByText(/Reporting was reset for the current account/);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
+    const report = await screen.findByText('Current reader private report'), exportButton = screen.getByRole('button', { name: 'Export PDF' });
+    const requests = () => [calls('GET', '/api/insights-canvas/overview').length,
+      calls('GET', '/api/report-os/runs/41/rendered').length, calls('POST', '/api/report-os/runs').length];
+    const before = requests();
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ authenticated: true, user: { ...NEXT } }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
     await act(async () => { expect((await authService.refreshUser()).success).toBe(true); });
-    expect((await screen.findByText(/Reporting reloaded/)).textContent).toMatch(/your account was read again/);
+    expect(screen.getByText('Current reader private report')).toBe(report);
+    expect(screen.getByRole('button', { name: 'Export PDF' })).toBe(exportButton);
+    expect(screen.queryByText('Original private report')).toBeNull(); expect(screen.queryByText(/Reporting reloaded/)).toBeNull();
+    expect(screen.getAllByText(/Reporting was reset for the current account/)).toEqual([notice]);
+    expect(authService.getUser()?.id).toBe(NEXT.id); expect(requests()).toEqual(before);
   });
 });
 

@@ -1,0 +1,14 @@
+{
+  "tests": 29,
+  "pass": 29,
+  "fail": 0,
+  "genuineRed": {
+    "failed": 7,
+    "passedControls": 2
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": "d16995eaa97f2d62602017ce651ae31a9ca7ccc6be70d51d4eabf2d5bfd13717",
+    "client/src/concept2cure/v2/__tests__/collabDirectoryContext.test.tsx": "e8454d7389337406e7a2bacfcfa0c37ce0d124a1b96d4f90011f42996623d365"
+  },
+  "scope": "real authService with injected synthetic HTTP; no real auth/message/task/provider calls"
+}

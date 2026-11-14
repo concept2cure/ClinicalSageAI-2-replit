@@ -1,0 +1,151 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-11-13T22:32:35.296Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-11-13T22:32:36.596Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-13T22:32:36.596Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+{
+  "timestamp": "2026-11-13T22:32:36.596Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: null 3043ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {} 31ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > a malformed sources request never falls back or calls the provider: {"version":1,"entries":[]} 17ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses another program manifest before dispatch 115ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > explicit source requests fail closed before dispatch > refuses a same-length extraction correction without fallback 125ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > uses both exact UTF-16 excerpts, including text past 600 characters, and parks the text-free receipt 378ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > exact selected excerpts reach generation and remain retained > rechecks after generation and refuses changed extraction without parking a candidate 193ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate
+{
+  "timestamp": "2026-11-13T22:32:49.414Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > keeps the verified generation input in the canonical acceptance audit after consuming the candidate 402ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls back consumption if a source was retired before accept 323ms
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > retains malformed stored manifests so acceptance refuses rather than dropping the control 308ms
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/Concept2cure-V2/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at Object.query (/workspace/Concept2cure-V2/server/routes/__tests__/authoringSelectedSources.pglite.test.ts:51:37)
+    at writeAuthoringAuditTrail (/workspace/Concept2cure-V2/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/Concept2cure-V2/server/routes/authoring.router.ts:747:9)
+    at /workspace/Concept2cure-V2/server/routes/authoring.router.ts:4324:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails
+{
+  "timestamp": "2026-11-13T22:32:50.461Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "db8964f4-1b6b-4ddb-a325-fd7572ae3052",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > acceptance reserves the retained exact source receipt > rolls the source-bound acceptance and receipt back when the audit writer fails 413ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-11-13T22:32:50.853Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply before actual commit and discards without a rollback or retry 394ms
+stdout | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry
+{
+  "timestamp": "2026-11-13T22:32:51.245Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc a5510000-0000-4000-8000-000000000011 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a lost COMMIT reply after actual commit and discards without a rollback or retry 392ms
+stderr | server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/workspace/Concept2cure-V2/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at Object.query (/workspace/Concept2cure-V2/server/routes/__tests__/authoringSelectedSources.pglite.test.ts:51:37)
+    at writeAuthoringAuditTrail (/workspace/Concept2cure-V2/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/workspace/Concept2cure-V2/server/routes/authoring.router.ts:747:9)
+    at /workspace/Concept2cure-V2/server/routes/authoring.router.ts:4324:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+ ✓ server/routes/__tests__/authoringSelectedSources.pglite.test.ts > uncertain acceptance never claims a confirmed rollback > holds a failed precommit rollback and discards the uncertain client 393ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > refuses a readable record changed after snapshot commit instead of reporting an empty catalogue 33ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > a later refresh retains the predecessor and presents the current immutable source 76ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > lists a captured file before the Quality record snapshots, however old the file is 88ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > preserves stable source identities when no current native fact changed 89ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely denied object without its title, snippet, identity or prose 46ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely missing object without its title, snippet, identity or prose 38ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > an exact selected denied source receives generic unavailable admission rather than a stale-readable signal 51ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > failed native verification still refuses the catalogue instead of creating an empty success 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > does not refuse another project's list of its sources 65ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > still refuses a list of its own project, so a stale record never reads as current 54ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > runs as many project admissions for eight sources as for two 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > still refuses the read when the person leaves the organization while its sources are being admitted 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > lists the other source normally, and the native one as unverifiable with its reason, its details withheld 101ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > lists both normally when the native source verifies 83ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/section-sources-unverifiable-native.pglite.test.ts > a section's Sources list with a native source that cannot be verified (S12) > a denied native source is still omitted, never disclosed as unverifiable 135ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > reads exact native text only after current parent admission and rechecks before supply 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > cannot supply native text without a verified current actor 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > does not convert denied or failed native permission checks into successful empty context 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > refuses changed native facts and retained-text tampering before handing context to a model 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > never cuts a supplementary character into a lone UTF-16 surrogate 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > refuses withdrawn native data before text and rechecks withdrawal after the read 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > existing selected-source conversation context admits native snapshots > labels bounded native excerpts truthfully 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > rechecks the same admitted native snapshot on successive dispatches 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > copies the admitted identity and authenticated scope instead of following mutable input 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > keeps zero-native legacy context unguarded and does not reread it 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > guards only the admitted native IDs in a mixed retained/native selection 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > preserves the exact stable bounded excerpt and UTF-8 digest 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses an originally supplied ID that disappears instead of accepting an empty reread 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > does not adopt a newer valid snapshot after an earlier successful dispatch 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late access failure rather than treating it as empty success 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late current fact failure rather than treating it as empty success 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late disposition failure rather than treating it as empty success 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts > selected native context remains current at every provider dispatch > refuses a late query failure rather than treating it as empty success 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > captures truthful native identity/text with no invented upload or original file 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > refreshes idempotently and retains exact predecessors when native facts change 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > captures a renamed record again, so the room shows the name the register now gives it 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > does not retire records omitted from another actor’s admitted view 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > rolls capture and retirement back together when its audit cannot be written 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/record-source.pglite.test.ts > native records on the existing immutable source spine > refuses duplicate/empty identities before changing the catalogue 2ms
+
+ Test Files  5 passed (5)
+      Tests  53 passed (53)
+   Start at  22:32:32
+   Duration  27.99s (transform 7.41s, setup 333ms, import 7.85s, tests 19.13s, environment 0ms)
+

@@ -35,8 +35,15 @@ vi.mock('../../storage', () => ({
 }));
 vi.mock('../../../db', () => ({
   db: {},
-  pool: { query: async (text: string) => (/INSERT INTO submission_transmittals/.test(text) ? { rowCount: 1, rows: [{ id: 41 }] } : { rowCount: 0, rows: [] }) },
+  pool: { query: async (text: string, params: unknown[] = []) => {
+    if (/SELECT ou\.role FROM organization_users ou/.test(text) && params[0] === 11 && params[1] === 7 &&
+        params[2] === 'active' && JSON.stringify(params[3]) === '["active"]') return { rowCount: 1, rows: [{ role: 'admin' }] };
+    return /INSERT INTO submission_transmittals/.test(text) ? { rowCount: 1, rows: [{ id: 41 }] } : { rowCount: 0, rows: [] };
+  } },
 }));
+// The filed-record tests retain real guard/account resolution with an explicit
+// durable receipt premise; the primary custody suite exercises the real chain.
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: async () => ({ persisted: true, chained: true }) }));
 
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
 import { getGateway } from '../index';
@@ -68,7 +75,9 @@ async function pack(sequence: string, leaves: EctdLeaf[]) {
     region: 'fda', applicationId: '000512', sequence, submissionType: sequence === '0000' ? 'original' : 'amendment',
     fda: { applicationType: 'ind', ...(sequence === '0000' ? {} : { submissionType: 'Original Application', submissionSubType: 'amendment' }) },
     sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, `out-${sequence}-${Math.random()}`),
-    environment: 'staging', leaves,
+    // Keep this read-back fixture byte-identical across hosts with/without
+    // Ghostscript; T2 separately proves source-only conversion facts cannot be recovered.
+    environment: 'staging', leaves, skipPdfaConversion: true,
   } as Parameters<typeof packageEctdSubmission>[0]);
 }
 

@@ -5,9 +5,15 @@
 import { describe, it, expect } from 'vitest';
 import { narrateStatisticalResult } from '../statistical-narrator';
 
+const superiority = {
+  method: 'frequentist', hypothesis: 'superiority', sidedness: 'two_sided',
+  alpha: 0.05, ciLevel: 95, prespecified: true, exploratory: false, multiplicityControlled: true,
+};
+
 describe('narrateStatisticalResult', () => {
   it('reports a significant time-to-event result from a CI excluding 1', () => {
     const r = narrateStatisticalResult({
+      ...superiority,
       endpoint: 'overall survival',
       analysisType: 'time_to_event',
       arms: [
@@ -23,13 +29,14 @@ describe('narrateStatisticalResult', () => {
     expect(r.significant).toBe(true);
     expect(r.statementStrength).toBe('confirmatory');
     expect(r.narrative).toContain('median was 24.1 months in the drug X arm (n=300) versus 18.7 months in the placebo arm');
-    expect(r.narrative).toContain('HR was 0.72 (95% CI 0.6–0.86; p<0.001)');
+    expect(r.narrative).toContain('HR was 0.72 (95% CI 0.6–0.86; p=0.0003)');
     expect(r.narrative).toContain('reached statistical significance');
     expect(r.flags).toContain('Statistical significance does not by itself establish clinical relevance.');
   });
 
   it('flags a non-significant result when the CI includes the null', () => {
     const r = narrateStatisticalResult({
+      ...superiority,
       endpoint: 'progression-free survival',
       analysisType: 'time_to_event',
       measure: 'HR',
@@ -42,7 +49,7 @@ describe('narrateStatisticalResult', () => {
     expect(r.flags).toEqual(
       expect.arrayContaining([
         'The 95% CI includes the null value (1).',
-        'Not statistically significant at α=0.05.',
+        'The supplied two-sided superiority criterion was not met at α=0.05.',
       ]),
     );
     expect(r.narrative).toContain('did not demonstrate a statistically significant difference');
@@ -50,6 +57,7 @@ describe('narrateStatisticalResult', () => {
 
   it('handles a difference measure (null = 0) for a binary endpoint', () => {
     const r = narrateStatisticalResult({
+      ...superiority,
       endpoint: 'ORR',
       analysisType: 'binary',
       measure: 'risk difference',
@@ -64,6 +72,7 @@ describe('narrateStatisticalResult', () => {
 
   it('marks exploratory + uncontrolled multiplicity and downgrades strength', () => {
     const r = narrateStatisticalResult({
+      ...superiority,
       endpoint: 'a subgroup',
       analysisType: 'binary',
       measure: 'OR',
