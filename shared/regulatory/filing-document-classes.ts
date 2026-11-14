@@ -153,11 +153,16 @@ export function productTypeFixedByFiling(registryId: string | null | undefined):
   return BY_REGISTRY_ID.get(id)?.productTypeByFiling?.[id] ?? null;
 }
 
+/** "a" or "an" before a filing's name: a vowel, or an initialism read with one ("an IND", "an MAA", "a 510(k)"). */
+export function filingArticle(label: string): 'a' | 'an' {
+  return /^[aeiou]/i.test(label) || /^(FDA|NDA|NDS|MAA|IND|ANDA|EU|RMP|RMAT|HDE|IDE|IVD|MDR|IVDR)\b/.test(label) ? 'an' : 'a';
+}
+
 /** A class or application type as a sentence names it: "An IND safety report", "A PAS"; mid-sentence, "an IND safety report". */
 export function filingTypeInSentence(programType: string, midSentence = false): string {
   const label = filingDocumentClassOf(programType)?.label ?? String(programType).toUpperCase().replace(/_/g, ' ');
-  const word = /^[aeiou]/i.test(label) || /^(FDA|NDA|NDS|MAA|IND|ANDA|EU|RMP|RMAT|HDE|IDE|IVD|MDR|IVDR)\b/.test(label) ? 'An' : 'A';
-  return `${midSentence ? word.toLowerCase() : word} ${label}`;
+  const word = filingArticle(label);
+  return `${midSentence ? word : word === 'an' ? 'An' : 'A'} ${label}`;
 }
 
 /**

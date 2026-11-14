@@ -1,0 +1,17 @@
+# After the change, in the running app (same database, the probe project still deleted).
+findings 200 total 7 naming the probe project 0 []
+# Reporting's own reads keep their meaning: the overview (default list) still answers, and Run history still lists.
+overview 200 projects offered 7
+run history 200 rows 5
+at-risk findings 200 total 7 [
+  'Quality drift: "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)" at 20% task completion',
+  'Quality drift: "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)" at 0% task completion',
+  'Quality drift: "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)" at 14% task completion',
+  'Quality drift: "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)" at 31% task completion',
+  'Demo Reviewer (synthetic) is spread across 6 active projects',
+  'JM Smith is spread across 5 active projects',
+  '2 overdue tasks in "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"'
+]
+
+# 2026-11-14, after the read was restructured for the SQL interpolation gate (the deleted set is its own statement):
+findings 200 total 14 naming the probe project 0 []

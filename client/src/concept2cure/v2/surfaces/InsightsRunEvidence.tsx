@@ -216,7 +216,8 @@ function DependencySection({ runId }: { runId: number }) {
         <tbody>
           {rows.map((d) => (
             <tr key={d.id}>
-              <td>{d.provider}</td>
+              {/* The source's name in words; a row that carries none has its id read as words, never shown as stored. */}
+              <td>{d.sourceLabel?.trim() || d.provider.replace(/[._-]+/g, ' ')}</td>
               <td>
                 {/* `ready` is the providers' healthy state; anything else is not a
                     pass, and an unknown value stays neutral rather than green. */}

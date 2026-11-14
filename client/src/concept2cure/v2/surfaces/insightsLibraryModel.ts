@@ -301,6 +301,8 @@ export interface RunDependencyRow {
   id: number;
   runId: number;
   provider: string;
+  /** The source's name in words, from the server's one vocabulary (report-os render/source-words.ts). */
+  sourceLabel?: string | null;
   status: string;
   blocker: string | null;
   observedAt: string;

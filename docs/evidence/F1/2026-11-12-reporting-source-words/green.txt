@@ -1,0 +1,12 @@
+# After the change, on the tree merged with trunk (7b4744f183).
+# The three files of red.txt:
+ Test Files  3 passed (3)
+      Tests  37 passed (37)
+# Reporting's server suites and the at-risk route (server/services/report-os, routes report-os*, insights-canvas-*, sentinel-openable-projects):
+ Test Files  101 passed (101)
+      Tests  1237 passed (1237)
+# Every client test file that reads a Reporting screen (found by search), with shared/regulatory:
+ Test Files  1 failed | 91 passed (92)
+      Tests  1 failed | 1180 passed (1181)
+# The one failure is not this change's and fails without it: shared/regulatory/__tests__/client-type-job-roles.test.ts,
+# "launch surfaces no role works in: ['etmf']" (the eTMF surface has no job role naming it). Reported to the coordinating session.

@@ -1,0 +1,5 @@
+# After the change: every client test file that reads a Reporting screen, then every server test that reaches the readiness run with the Reporting suites.
+ Test Files  65 passed (65)
+      Tests  703 passed (703)
+ Test Files  105 passed (105)
+      Tests  1305 passed (1305)

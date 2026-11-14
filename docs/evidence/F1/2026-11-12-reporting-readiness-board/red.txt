@@ -1,0 +1,34 @@
+# Before the change (HEAD da35d66fc1 + the two new test files): failing cases and totals.
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > a project with a filing and no governed artifact is not told it holds nothing 18ms
+   → expected { provider: 'artifact_state', …(5) } to match object { status: 'ready' }
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > says how many of the filing’s sections are approved or locked, by the dossier’s count 4ms
+   → expected { provider: 'artifact_approval', …(5) } to match object { status: 'missing', …(1) }
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > counts an approved or locked filing section as lifecycle evidence 3ms
+   → expected { provider: 'artifact_approval', …(5) } to match object { status: 'ready' }
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > says once that a project holds nothing, and what was looked for 3ms
+   → expected { provider: 'artifact_state', …(5) } to match object { status: 'partial', …(1) }
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > names governed artifacts when they are what the project holds 6ms
+   → expected 'No approved or locked governed artifa…' to be 'No governed artifact is approved or l…' // Object.is equality
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > reads a work project’s filing through its root project’s program 3ms
+   → expected undefined to deeply equal { sections: 3, approvedOrLocked: +0 }
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > never counts another organization’s filing, even under the same program id 3ms
+   → expected undefined to deeply equal { sections: +0, approvedOrLocked: +0 }
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > sums a project group’s projects, each program once 2ms
+   → expected undefined to deeply equal { sections: 6, approvedOrLocked: 2 }
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > the readiness run states what the project holds > names each source it counted on the two rows 4ms
+   → expected [ { …(3) } ] to deeply equal ArrayContaining{…}
+ × server/services/report-os/__tests__/orchestrator-held-records.pglite.test.ts > a filing store this environment has not provisioned > is said as unread, never as a project that holds nothing 7ms
+   → expected { provider: 'artifact_state', …(5) } to match object { status: 'partial', …(1) }
+ × client/src/concept2cure/v2/__tests__/insightsPortfolioBoardCards.test.tsx > a card on the readiness board > says the verdict in words, with the risk and the count of critical blockers it showed 68ms
+   → expected 'missing · critical risk · 23 critical…' to be 'Not ready · Critical risk · 23 critic…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/insightsPortfolioBoardCards.test.tsx > a card on the readiness board > shows a verdict it does not know as recorded, in words, and never as another verdict 36ms
+   → expected 'on_hold · 0 critical blockers' to be 'on hold · 0 critical blockers' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/insightsPortfolioBoardCards.test.tsx > a card on the readiness board > sets what holds the project back across the card, below its figure and name 36ms
+   → Cannot read properties of null (reading 'querySelector')
+ × client/src/concept2cure/v2/__tests__/insightsPortfolioBoardCards.test.tsx > a card on the readiness board > draws no empty line where no indication is recorded, and keeps one that is 34ms
+   → expected <div class="ro-port-ind"></div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/insightsPortfolioBoardCards.test.tsx > a card on the readiness board > still opens the project it names 159ms
+ × client/src/concept2cure/v2/__tests__/insightsPortfolioBoardCards.test.tsx > the board’s cards have room for their words > a card is a column at least 280px wide, and one a row on a phone 1ms
+   → expected ' display:grid; grid-template-columns:…' to match /minmax\(min\(100%,\s*280px\),\s*1fr\)/
+ Test Files  2 failed (2)
+      Tests  15 failed | 1 passed (16)
