@@ -21,5 +21,11 @@
   "latestNormalLintGateFailures": 0,
   "authenticationRecoveredAt": "2026-11-14T02:46:19.791845+00:00",
   "recoveredUserAPIHTTPStatus": 200,
-  "recoveredRepoPushPermission": true
+  "recoveredRepoPushPermission": true,
+  "subsequentCanonicalPublication": {
+    "sourceCommit": "fb1051afb653fd45f4b00020e809b6a5d7109b73",
+    "verifiedAt": "2026-11-14T03:57:45.532967+00:00",
+    "nativeReceipt": "publication-attempt-13.json",
+    "exitCode": 0
+  }
 }
