@@ -271,3 +271,52 @@ source is verified but not yet published by this attempt. The incoming changes
 are disjoint worker-report references, hosted-environment policy and deviation
 task currentness; they must be preserved by an ordinary merge. This continuation
 does not deploy, provision paid hosting or configure providers.
+
+## Authentication interruption and recovery
+
+The normal merge `524a3235d` preserves those disjoint canonical changes with the
+502-case source/config/fixtures unchanged. `current-start.json` passes normal
+Codespaces-image startup in31.9s, and `current-browser.json` plus
+`current-repaired-browser-observation.json` pass the same real source-selection/
+clear/editor-start flow at that commit. `current-runtime.json` confirms the exact
+served commit, schema ready and seeded capability registry; this verifier still
+has only `ana: no_provider` as its readiness failure.
+
+`publication-attempt-6.json` fails before any upload or hook: GitHub rejects the
+workspace Git credential. Direct GitHub CLI user/repository API checks return401.
+The connected GitHub app separately confirms repository read/push access, but
+does not export a Git credential for uploading the existing commit history.
+There is no stored CLI credential, credential helper or SSH identity here.
+`authentication-block.json` records only statuses and repository/source identities;
+no credential value is printed or added to Git. A secure workspace Git-auth refresh
+was requested; no token should be pasted into chat.
+
+While waiting, `run-normal-prepush.py` runs the unchanged canonical hook as a
+validation-only check with the real local/upstream ref input and no skip flags.
+It moves no remote ref, and a later authenticated push must still run its normal
+hook. `auth-blocked-normal-prepush.json` now passes that unchanged hook at
+`524a3235d`: native exit0, all89 lint-job gates0red, full compiler0/baseline0,
+with no source/runner drift. This is validation, not an authenticated push.
+**The local continuation is not
+published by any of the six recorded attempts.** Earlier passing checks do not
+turn any failed push into a successful publication.
+
+All implementation and merge work is committed on the local canonical branch;
+the final receipt-only commit changes no product source. No PR, alternate branch,
+force update, rebasing, provider setup or deployment was performed. Publication
+must resume with refreshed workspace Git authentication; inspect the current
+canonical head, preserve any new work by normal merge, then use the normal push.
+Do not paste a token into chat or place one in this packet. Source/test workers
+are closed and frozen; no other lane is claimed paused. The source holds end
+under their recorded publication/03:00UTC lease, and require a fresh ownership
+check before any later source edit. Runtime remains the normal local declared-
+image verifier at the named tested commit, with no live-model qualification claim.
+
+At02:44UTC a fresh private CLI probe succeeds, and the repository API confirms
+push permission. Workspace Git authentication has recovered; no credential value
+was printed, copied into the repository or requested in chat. The credential
+question no longer blocks the already authorized normal push. A fresh fetch also
+finds published CMC integrity/overview work at `a5de561bc`, which must be preserved
+by the next ordinary merge. The implementation inputs remain frozen and the
+normal push will run its hook again. The authentication-block record retains
+both its actual earlier401 and successful recovery, without rewriting history.
