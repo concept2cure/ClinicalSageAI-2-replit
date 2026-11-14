@@ -1,0 +1,101 @@
+{
+  "scope": "F1 test-only placement repair; one existing guard test changed; production files and other tests read-only",
+  "baseReportedByLead": "4b82ba809",
+  "hostedRed": {
+    "run": 43543956605,
+    "head": "08044016b7f17440fdb3d50448824dd3d31387bd",
+    "job": 132298589636,
+    "artifact": 14094842743,
+    "passed": 21348,
+    "failed": 1,
+    "pending": 64,
+    "failure": "Etmf.tsx imports tmfArtifactName from the shared catalog; vault-taxonomy-etmf.test.ts:488"
+  },
+  "currentBaselineRed": {
+    "passed": 0,
+    "failed": 1,
+    "selectedCase": "the eTMF screen takes artifact names from the catalog, not from fixtures",
+    "sourceSha256": "18faaa75ae7210186e883954f1917fb3f7d21be529f35668c0fb759a6a6aef8c",
+    "note": "Only the failing case was selected before the edit; other baseline cases were not executed in that targeted run."
+  },
+  "green": {
+    "passed": 61,
+    "failed": 0,
+    "pending": 0,
+    "suites": [
+      {
+        "file": "server/services/__tests__/vault-taxonomy-etmf.test.ts",
+        "passed": 27,
+        "failed": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx",
+        "passed": 2,
+        "failed": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/vaultTmfAnaContextInVault.test.tsx",
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "file": "client/src/concept2cure/v2/__tests__/vaultTmfRestored.test.tsx",
+        "passed": 25,
+        "failed": 0
+      }
+    ]
+  },
+  "lint": {
+    "beforeErrors": 0,
+    "afterErrors": 0,
+    "beforeWarnings": [
+      {
+        "rule": "@typescript-eslint/no-unused-vars",
+        "message": "'VAULT_FOLDER_PRESETS' is defined but never used.",
+        "line": 42
+      }
+    ],
+    "afterWarnings": [
+      {
+        "rule": "@typescript-eslint/no-unused-vars",
+        "message": "'VAULT_FOLDER_PRESETS' is defined but never used.",
+        "line": 42
+      }
+    ],
+    "warningGrowth": 0
+  },
+  "checks": [
+    "Etmf redirect retains its fixture-import ban and fixtures/etmf.ts stays absent",
+    "Three current Vault readers import and invoke shared tmfArtifactName outside comments/imports",
+    "Full one-catalog taxonomy scan remains active",
+    "Existing behavioral proofs cover actual Vault redirect, record/package labels and AnA gap labels"
+  ],
+  "commands": {
+    "baseline": "node node_modules/vitest/vitest.mjs run server/services/__tests__/vault-taxonomy-etmf.test.ts -t \"the eTMF screen takes artifact names from the catalog\" --maxWorkers=1 --reporter=json",
+    "green": "node node_modules/vitest/vitest.mjs run server/services/__tests__/vault-taxonomy-etmf.test.ts client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx client/src/concept2cure/v2/__tests__/vaultTmfRestored.test.tsx client/src/concept2cure/v2/__tests__/vaultTmfAnaContextInVault.test.tsx --maxWorkers=1 --reporter=json",
+    "lint": "node node_modules/eslint/bin/eslint.js server/services/__tests__/vault-taxonomy-etmf.test.ts --format=json"
+  },
+  "sourceSha256": {
+    "server/services/__tests__/vault-taxonomy-etmf.test.ts": "ea781d48c389f9e917f815c5ee95c4f0c7b307cdbf936363e227b84b3a7358dc",
+    "client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx": "ce1e5308467c8e8d959e7e5e374c874334bd4b65b103a54ae13e854636659a06",
+    "client/src/concept2cure/v2/__tests__/vaultTmfRestored.test.tsx": "54fb1b120031877f053df89fb24326698020cf332930f9d99a4d68913916ef0a",
+    "client/src/concept2cure/v2/__tests__/vaultTmfAnaContextInVault.test.tsx": "6e2e0b0da526eebfb2b220d873684c29bd2886f8a8d136801c2af1f051ffebee",
+    "client/src/concept2cure/v2/surfaces/Etmf.tsx": "41c1ebed090f25e0b537cd0b191c37a18f91daf7a3743850498f65c2dbdbf3dd",
+    "client/src/concept2cure/v2/surfaces/vaultTmf.ts": "d243e999cc7f8b73c4d95ba39598e2b16c3e2fd2c2b0173b6a6242fc47e0038e",
+    "client/src/concept2cure/v2/surfaces/VaultTmfPackage.tsx": "53ec952fc8ee3c69357ba2415aff0dd4e4bfb13e0a44c1367d054422d94db574",
+    "client/src/concept2cure/v2/surfaces/vaultTmfAnaContext.ts": "6ba8602b8b6bbec166b353afd2575eee587b18f50b2a2c6468068fccb57c6026"
+  },
+  "reportsSha256": {
+    "test-baseline-red.json.gz": "81de2db2f38b195300a51375a3621a5f1f8302fb1da1ace524b74ef5e368cc81",
+    "test-complete-green.json.gz": "dc998768a69affb3de9063ed878cc662a4918fbf783357e5cffe5e784e45e2b8",
+    "test-lint-before.json.gz": "178c51d8db233fe39cd74b9c4557bb3e5e026d6d8cc4c77872dadc3ea6e3942e",
+    "test-lint-after.json.gz": "7989fb5163e3be559b07e6e8c2a145c68b1c5548650ed8603deca9f5bb4bb5e0"
+  },
+  "notRun": [
+    "whole-program compiler",
+    "production build",
+    "database suites",
+    "providers",
+    "Git mutations"
+  ]
+}
