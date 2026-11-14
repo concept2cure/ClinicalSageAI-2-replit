@@ -33,7 +33,7 @@ function mountDesign(bound = false) {
   return onError;
 }
 function inline(name: string) {
-  const region = screen.getByRole('region', { name, exact: true });
+  const region = screen.getByRole('region', { name });
   expect(region.classList.contains('de-inline')).toBe(true);
   expect(document.querySelector('.de-bd')).toBeNull();
   expect(screen.queryByRole('dialog')).toBeNull();

@@ -66,7 +66,7 @@ describe('existing protocol actions preserve active inline input', () => {
     ['Close deviation', 'Protocol signature', 'deviations'],
   ])('refuses %s until the inline input is cancelled', async (action, destination, initialTab) => {
     const input = mountWorkspace(initialTab);
-    fireEvent.click(screen.getByRole('button', { name: action, exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: action }));
     expect(screen.queryByRole('dialog', { name: destination })).toBeNull();
     expect(input.isConnected).toBe(true);
     expect(input.value).toBe('Unsaved sponsor assumption');
@@ -74,8 +74,8 @@ describe('existing protocol actions preserve active inline input', () => {
     expect(apiRequest.mock.calls.some(([method]) => method !== 'GET')).toBe(false);
     expect(intake).not.toHaveBeenCalled(); expect(signing).not.toHaveBeenCalled();
     const form = screen.getByRole('region', { name: 'Ongoing planning input' });
-    fireEvent.click(within(form).getByRole('button', { name: 'Cancel', exact: true }));
-    fireEvent.click(screen.getByRole('button', { name: action, exact: true }));
+    fireEvent.click(within(form).getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: action }));
     expect(await screen.findByRole('dialog', { name: destination })).toBeTruthy();
   });
 
@@ -83,7 +83,7 @@ describe('existing protocol actions preserve active inline input', () => {
     render(<><ProjectionsPanel studyId="sd_one" designTitle="Recorded design" programId={PROGRAM} onNav={vi.fn()} /><ActiveInput /></>);
     const input = screen.getByLabelText('Sponsor planning input') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'Unsaved sponsor assumption' } });
-    fireEvent.click(screen.getByRole('button', { name: 'CRF shell', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'CRF shell' }));
     expect(await screen.findByText('Vitals')).toBeTruthy();
     const open = screen.getByRole('button', { name: 'Open blank CRFs in editor' });
     fireEvent.click(open);
@@ -92,7 +92,7 @@ describe('existing protocol actions preserve active inline input', () => {
     expect(input.value).toBe('Unsaved sponsor assumption');
     expect(screen.getByText('Vitals')).toBeTruthy();
     expect(screen.getByText(/Finish or cancel.*before/i)).toBeTruthy();
-    fireEvent.click(within(screen.getByRole('region', { name: 'Ongoing planning input' })).getByRole('button', { name: 'Cancel', exact: true }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Ongoing planning input' })).getByRole('button', { name: 'Cancel' }));
     expect((open as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(open);
     expect(intake.mock.lastCall?.[0]).toMatchObject({ programId: PROGRAM, source: { kind: 'study-design-crf', studyId: 'sd_one' } });
