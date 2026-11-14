@@ -4583,6 +4583,9 @@ export function DocumentWorkbench({
               icon={I.alertTriangle}
               title="Couldn’t load documents"
               hint="The document list didn’t respond. Sign in to your tenant and retry."
+              /* The sentence said "retry" and offered nothing to press. With a
+                 document pinned this list is the only place the failure shows. */
+              retry={() => void loadDocs()}
             />
           ) : docs.length === 0 ? (
             <>
@@ -5233,6 +5236,32 @@ export function DocumentWorkbench({
                     offered. When there are no documents at all this now offers
                     the action; when there IS a document open, "choose a
                     section" is genuinely correct — the tree beside it is full. */}
+                {/* "Nothing to edit yet" is a statement that the project has no
+                    documents, so it waits for the list to answer. This keyed on
+                    `docs.length` alone: while the list was being read, or after
+                    the read had failed, it invited a first document over a list
+                    nobody had seen, and with a stage filter on it said the same
+                    about a project with documents at other stages. The outline
+                    beside it already told these apart (the CSR lane's ED-01,
+                    2026-11-12). A failed read offers recovery and no create. */}
+                {!activeDoc && docsState === 'loading' ? (
+                  <EmptyState busy icon={I.fileText} title="Loading documents…" />
+                ) : !activeDoc && docsState === 'error' ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn’t load documents"
+                    hint="The document list did not answer, so nothing is shown or offered here."
+                    retry={() => void loadDocs()}
+                  />
+                ) : !activeDoc && docs.length === 0 && status !== 'all' ? (
+                  <EmptyState
+                    icon={I.fileText}
+                    title="Nothing at this stage"
+                    hint={`This project has no ${status.replace('_', ' ')} documents. Clear the filter to see the rest.`}
+                    action={{ label: 'Show all documents', onAct: () => requestLeave({ kind: 'filter', status: 'all' }) }}
+                  />
+                ) : (
                 <EmptyState
                   icon={I.fileText}
                   title={activeDoc ? 'Select a section to edit' : docs.length === 0 ? 'Nothing to edit yet' : 'Select a document'}
@@ -5246,6 +5275,7 @@ export function DocumentWorkbench({
                     ? 'Every save records an auditable revision (21 CFR Part 11)'
                     : undefined}
                 />
+                )}
               </div>
             ) : (
               <>

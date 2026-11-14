@@ -1,0 +1,42 @@
+{
+ "whileReading": {
+  "text": "Loading documents…",
+  "buttons": [],
+  "tree": [
+   "Loading documents…"
+  ]
+ },
+ "afterTheRead": {
+  "text": "(no empty or error panel: a section is open)",
+  "buttons": []
+ },
+ "afterAFailedRead": {
+  "text": "Couldn’t load documentsThe document list did not answer, so nothing is shown or offered here.Try again",
+  "buttons": [
+   "Try again"
+  ],
+  "tree": [
+   "Couldn’t load documentsThe document list didn’t respond. Sign in to your tenant and retry."
+  ]
+ },
+ "tryAgainOffered": true,
+ "afterTryAgain": {
+  "text": "(no empty or error panel: a section is open)",
+  "buttons": [],
+  "readAgain": true
+ },
+ "filterApproved": {
+  "text": "Nothing at this stageThis project has no approved documents. Clear the filter to see the rest.Show all documents",
+  "buttons": [
+   "Show all documents"
+  ],
+  "tree": [
+   "Nothing at this stageThis project has no approved documents. Clear the filter to see the r"
+  ]
+ },
+ "afterShowAll": {
+  "filter": "all",
+  "text": "(no empty or error panel: a section is open)",
+  "buttons": []
+ }
+}
