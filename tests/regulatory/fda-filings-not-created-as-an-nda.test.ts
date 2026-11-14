@@ -6,23 +6,27 @@
  * Requirement, a SUPAC change, a 15-Day Alert Report, an Environmental Assessment and a Priority Review request were
  * each scaffolded as a 505(b)(1) NDA: an NDA dossier, an NDA submission spine and "NDA number not assigned".
  *
- * This file holds the catalog's half: each filing states what it is, so the wizard's default can be removed
- * (the project-page lane's half) without any of these becoming uncreatable.
+ * This file holds the catalog's half: each filing states what it is, so the wizard's default could be removed
+ * without any of these becoming uncreatable. The project-page lane removed it in 790501d69 (2026-11-13): a filing
+ * the catalog states no type for now creates no project, and says so in its own name.
  *
  * - `us_accel_approval` and `us_rolling` ARE the NDA/BLA dossier (21 CFR 314 subpart H / 601 subpart E; a rolling
  *   review is the same dossier submitted in units). Their pathway is stated, where it was the wizard's default.
  * - `us_pmr` is its study's protocol: its outline (blueprint "Post-Marketing Requirement / Commitment Study") is the
  *   protocol's. It joins the existing protocol document class and creates no application.
  *
- * `us_priority_review`, `us_ea` and `us_icsr_15day` get their own document classes in the change that seeds their
- * packs. `us_supac` is a change category, not a filing, and waits for the founder.
+ * `us_priority_review`, `us_ea` and `us_icsr_15day` each have their own document class (2026-11-13), with the pack
+ * migrations/20261113_fda_priority_review_ea_icsr_class_packs.sql seeds. `us_supac` is a change category, not a
+ * filing, and waits for the founder.
  */
 import { describe, expect, it } from 'vitest';
 import { resolveFilingCatalogEntry } from '../../shared/regulatory/filing-catalog';
 import { filingDocumentClassForFiling, filingDocumentClassOf } from '../../shared/regulatory/filing-document-classes';
 import { programTypeFor } from '../../shared/constants/domain/filing-application-type';
+import { getRegistryDocumentTemplate } from '../../server/services/market-specs/document-template-library';
+import { filingClassPackSpec, filingClassPackSections } from '../../server/services/c2c/filing-class-packs';
 
-/** The program type the wizard and the create endpoint compute, with the wizard's `|| 'ctd'` default removed. */
+/** The program type the wizard and the create endpoint compute, now that the wizard's `|| 'ctd'` default is gone. */
 function typeWithoutTheDefault(id: string): string {
   const entry = resolveFilingCatalogEntry(id)!;
   return programTypeFor({ id: entry.id, label: entry.id, pathway: entry.pathwayKey ?? '' }, 'biopharma');
@@ -41,7 +45,7 @@ describe('an FDA filing states what it is, so none is an NDA by default', () => 
     expect(filingDocumentClassForFiling('US_PMR')).toBe(protocol);
     expect(filingDocumentClassForFiling('us_pmr')).toBe(protocol);
     expect(typeWithoutTheDefault('us_pmr')).toBe('protocol');
-    // What the wizard sends today, while its 'ctd' default still stands: the class is decided first.
+    // A caller that still sends 'ctd' (the default before 790501d69) gets the class all the same: it is decided first.
     expect(programTypeFor({ id: 'us_pmr', label: 'PMR', pathway: 'ctd' }, 'biopharma')).toBe('protocol');
     // The class's pack is still minted from its first registry id, the ICH M11 protocol.
     expect(protocol.registryIds[0]).toBe('ICH_PROTOCOL');
@@ -69,10 +73,52 @@ describe('an FDA filing states what it is, so none is an NDA by default', () => 
     expect(typeWithoutTheDefault(id)).toBe(type);
   });
 
-  it.each(['us_supac', 'us_priority_review', 'us_ea', 'us_icsr_15day'])(
-    '%s is stated at today\'s value until its own answer lands, so the wizard\'s default has no exception', (id) => {
-      expect(resolveFilingCatalogEntry(id)?.pathwayKey).toBe('ctd');
-    });
+  it('us_supac is stated at its old value until the founder answers, so it stays creatable without the default', () => {
+    expect(resolveFilingCatalogEntry('us_supac')?.pathwayKey).toBe('ctd');
+    expect(filingDocumentClassForFiling('us_supac')).toBeNull();
+  });
+
+  // ── Three filings that are one document each (2026-11-13) ─────────────────────
+  it.each([
+    ['us_priority_review', 'priority_review', 'priority review designation request'],
+    ['us_ea', 'environmental_assessment', 'environmental assessment'],
+    ['us_icsr_15day', 'icsr_15day', '15-day alert report'],
+  ])('%s is its own document class %s, never an application', async (id, docType, label) => {
+    const klass = filingDocumentClassForFiling(id);
+    expect([klass?.docType, klass?.packAgency, klass?.label]).toEqual([docType, 'fda', label]);
+    expect(klass?.registryIds).toEqual([id.toUpperCase()]);
+    expect(typeWithoutTheDefault(id)).toBe(docType);
+    // A caller that still sends 'ctd' gets the class all the same: it is decided first.
+    expect(programTypeFor({ id, label, pathway: 'ctd' }, 'biopharma')).toBe(docType);
+    // The catalog no longer needs to state a pathway for it.
+    expect(resolveFilingCatalogEntry(id)?.pathwayKey ?? null).toBeNull();
+    // Its pack is minted from its own registry outline, part for part.
+    const spec = filingClassPackSpec(docType);
+    expect([spec?.agency, spec?.supersedes, spec?.minted, spec?.confidence]).toEqual(['fda', null, '2026-11-13', 'low']);
+    const outline = await getRegistryDocumentTemplate(id.toUpperCase());
+    const rows = await filingClassPackSections(docType);
+    expect(rows.map((row) => [row.label, row.mandatory])).toEqual(outline!.sections.map((section) => [section.heading, section.required]));
+  });
+
+  it('a priority review request asks for its own criterion, not the Breakthrough and RMAT evidence', async () => {
+    const outline = await getRegistryDocumentTemplate('US_PRIORITY_REVIEW');
+    const parts = outline!.sections.map((section) => [section.number, section.heading, section.required]);
+    expect(parts).toEqual([
+      ['1', 'Cover Letter and Request Statement', true],
+      ['2', 'Product Description and Proposed Indication', true],
+      ['3', 'Serious or Life-Threatening Condition Justification', true],
+      ['4', 'Available Therapy', true],
+      ['5', 'Significant Improvement in Safety or Effectiveness', true],
+      ['6', 'Location of the Supporting Data in the Application', false],
+    ]);
+    expect(JSON.stringify(parts)).not.toMatch(/Breakthrough|RMAT|Development Plan/);
+    // The designations that do rest on preliminary clinical evidence keep it.
+    const btd = await getRegistryDocumentTemplate('US_BTD');
+    expect(btd!.sections.map((section) => section.heading)).toContain('Preliminary Clinical Evidence');
+    // PRIME and the device breakthrough request read the shared list, which this does not touch.
+    const prime = await getRegistryDocumentTemplate('EU_PRIME');
+    expect(prime!.sections.map((section) => section.heading)).toContain('Preliminary Clinical Evidence (Breakthrough/RMAT)');
+  });
 
   it('a filing that is no application and has no document class yet states no pathway', () => {
     for (const id of [

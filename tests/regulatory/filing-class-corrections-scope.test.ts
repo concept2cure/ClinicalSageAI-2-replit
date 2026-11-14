@@ -21,7 +21,10 @@ const outline = async (id: string) => {
 };
 
 describe('the designation and orphan corrections stay with the US requests', () => {
-  it.each(['EU_PRIME', 'EU_ACCEL_ASSESS', 'JP_SAKIGAKE', 'UK_ILAP', 'US_BREAKTHROUGH_DEVICE', 'US_PRIORITY_REVIEW'])(
+  // US_PRIORITY_REVIEW left this list on 2026-11-13: a priority review request answers its own PDUFA criteria
+  // (available therapy, significant improvement), and its outline is pinned in
+  // tests/regulatory/fda-filings-not-created-as-an-nda.test.ts. The shared outline these read is unchanged.
+  it.each(['EU_PRIME', 'EU_ACCEL_ASSESS', 'JP_SAKIGAKE', 'UK_ILAP', 'US_BREAKTHROUGH_DEVICE'])(
     '%s keeps its jurisdiction-neutral outline: unmet need required, no FD&C Act 506 node',
     async (id) => {
       const s = await outline(id);

@@ -1,0 +1,44 @@
+POST /api/c2c/projects on the local app, 2026-11-13, then GET the project, its dossier and its document's outline.
+
+BEFORE (trunk 48b826300): each sent as the wizard sends it today, programType 'nda'.
+  us_priority_review at FDA           sent as nda   -> 201 | program_type=nda | dossier: 59 sections in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  us_ea              at FDA           sent as nda   -> 201 | program_type=nda | dossier: 59 sections in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+  us_icsr_15day      at FDA           sent as nda   -> 201 | program_type=nda | dossier: 59 sections in 5 group(s): Module 1 · Administrative (US); Module 2 · Summaries; Module 3 · Quality (CMC); Module 4 · Nonclinical study reports; Module 5 · Clinical study reports
+
+The deploy migration (scripts/db/deploy-migrate.mjs) was then run twice on the same database: 475 files applied each time, exit 0; the second run is the replay RULE 1 requires. The three packs, live:
+  environmental_assessment|fda|fda-environmental-assessment-v1.0|t
+  icsr_15day|fda|fda-icsr-15day-v1.0|t
+  priority_review|fda|fda-priority-review-request-v1.0|t
+
+AFTER (this change): each sent as its own document class.
+  us_priority_review at FDA           sent as priority_review -> 201 | program_type=priority_review | dossier: 6 sections in 1 group(s): priority review designation request
+  us_ea              at FDA           sent as environmental_assessment -> 201 | program_type=environmental_assessment | dossier: 8 sections in 1 group(s): environmental assessment
+  us_icsr_15day      at FDA           sent as icsr_15day -> 201 | program_type=icsr_15day | dossier: 8 sections in 1 group(s): 15-day alert report
+  us_priority_review at FDA           sent as nda   -> 400 | The selected filing is a priority review designation request; create it as that filing, not as "nda".: 
+
+The created documents' outlines, read back from GET /api/c2c/documents/:id/outline:
+  us_priority_review  (Walk product — Priority Review Designation Request × FDA · PDUFA revie, program_type priority_review)
+            Cover Letter and Request Statement
+            Product Description and Proposed Indication
+            Serious or Life-Threatening Condition Justification
+            Available Therapy
+            Significant Improvement in Safety or Effectiveness
+            Location of the Supporting Data in the Application  (optional)
+  us_ea  (Walk product — Environmental Assessment × FDA · 21 CFR part 25, program_type environmental_assessment)
+            Date and Applicant
+            Description of the Proposed Action and Need
+            Substances Introduced into the Environment
+            Fate and Environmental Effects of Released Substances
+            Use of Resources and Energy  (optional)
+            Mitigation Measures
+            Alternatives to the Proposed Action
+            List of Preparers, Certification, and References
+  us_icsr_15day  (Walk product — 15-Day Alert Report × FDA · 21 CFR 314.80(c)(1), program_type icsr_15day)
+            Case Administrative Information (Safety Report ID, Dates)
+            Patient Characteristics
+            Suspect / Concomitant Drug Information
+            Reaction / Event (MedDRA Coded)
+            Seriousness and Outcome
+            Case Narrative
+            Causality (Reporter / Company Assessment)
+            Primary Source / Reporter Information
