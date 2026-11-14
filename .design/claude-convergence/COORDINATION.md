@@ -1854,6 +1854,21 @@ holds release on publication. The three isolated offboarding failures remain
 explicitly pending the founder's profile export/disposal choice; no profile
 RLS, export, purge, plan, gate or assertion was changed to hide them.
 
+Publication request, project selection continuation, 2026-11-14 01:51 UTC:
+two normal retries passed all89 gates and the full compiler0, then lost ref
+races to3692f44ad andcd407d470. Under rule6, a15-minute publication slot is
+requested for02:10–02:25UTC (at least15minutes ahead) if the coordinating session
+can allocate it. No callable cross-session channel reaches that session here;
+no other lane is claimed paused. Ordinary fetch/merge/push continues without
+force or skipped hooks. This continuation's frozen selection-file reservation
+extends only through02:30UTC or publication, whichever comes first, for Git
+integration; no additional implementation scope is taken. The request ends
+on successful publication.
+
+**Codex collaboration receipt follow-up, 2026-11-14 (F1 W1/D2; ends at publication):** holds only existing CollabLauncher.tsx Collaborate message/optional-task acknowledgement handling and focused receipt tests, plus its own design/evidence. Existing QuickTask/lifecycle/account fixes and S12 mapping are preserved; TaskBoard/TaskTray/CommunicationCenter and other held screens stay untouched. Two audits are test/read-only; one source owner follows retained RED proofs. Root owns runtime/integration/Git. User reports AnA working in their Codespace; no provider setup or live message is in scope.
+
+**Collaboration receipt follow-up completion:** source frozen with97/97 focused/adjacent tests and23/23 shell/accessibility checks. Genuine message RED15fail/10controls and optional-task RED8fail/12controls, plus controlled running-UI RED/GREEN, are retained. Partial message/task outcomes now use actual persisted identities without inventing rows or automatically resending a confirmed message. The existing shellChromeTruth auth mock retains real exports; the same6 fixture failures reproduce at canonical baseline before its repair. Zero lint errors or warning growth; independent review has no blocker. This continuation's launcher/test/design/evidence holds release with canonical publication. Root retains ordinary Git integration and owned local runtime only. User confirms AnA working in their Codespace; provider setup is untouched.
+
 ### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
 
 The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical
