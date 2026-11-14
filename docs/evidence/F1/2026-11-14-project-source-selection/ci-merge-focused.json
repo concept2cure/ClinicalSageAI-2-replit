@@ -1,0 +1,27 @@
+{
+  "startedAt": "2026-11-14T03:39:18.157553+00:00",
+  "elapsedSeconds": 19.143,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "server/services/__tests__/vault-taxonomy-etmf.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "ci-merge-publication-inputs.json",
+  "inputCount": 38,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "ci-merge-focused.txt.gz",
+  "outputSha256": "abde8c922931c1df8981c088455007b13ec7a0833be63f53b652a4628cce4aaf",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

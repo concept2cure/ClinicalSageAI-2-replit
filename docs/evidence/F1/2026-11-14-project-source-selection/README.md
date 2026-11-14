@@ -418,3 +418,24 @@ proof fixture, exact historical secret-scan fingerprint classifications and
 coordination/evidence; the selected-source product inputs remain unchanged.
 Preserve those canonical changes by ordinary merge and run the affected proof
 before the next authenticated normal push.
+
+
+Merge `530da5885` preserves the CI correction and both coordination entries.
+The36 frozen selection/editor/task inputs are unchanged. The38-file manifest
+additionally names the existing Vault proof and `.gitleaksignore`.
+`ci-merge-focused.json` passes27/27 Vault taxonomy cases with no source/runner
+drift. Independent read-only review recomputes all three exact historical
+manifest/source digest pairs and finds no broad scanner rule/path change or
+product, permission or source-selection contract change. The canonical proof
+keeps fixture prohibitions and additionally checks actual catalogue calls in
+the existing reachable Vault readers. Normal push12 records its own outcome.
+
+
+`publication-attempt-12.json` verifies `530da5885`: full compiler0/baseline0,
+all89 normal lint gates0red and no source/runner drift. Git then refuses another
+reference advance, to `13568639d`, which publishes the IVD510k outline work.
+Its change in the shared project route is one project-creation argument
+(`productType` passed to existing scaffolding), outside the exact-source GET,
+attestation and after-grading guards. Preserve it and the related selector,
+mapper, Vault, bootstrap and migration work by ordinary integration; current
+IVD and exact-source checks must identify the merged source.
