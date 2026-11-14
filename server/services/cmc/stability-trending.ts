@@ -286,3 +286,70 @@ export function assessTrend(
     projection,
   };
 }
+
+/* ── Forecast: what the recorded results predict at a time to come ───────────
+ *
+ * The same ordinary least-squares line `assessTrend` fits through the whole
+ * series, read forward: the fitted value at a future time and the two-sided
+ * (1 − alpha) PREDICTION interval for one new result there (the interval for
+ * a single future observation, not the confidence band of the mean). It is
+ * what a stability coordinator expects to see at the next pull if the batch
+ * keeps behaving as recorded. Nothing is assumed beyond the line: no
+ * Arrhenius term, no pooling, no model's figure. Three results at two or more
+ * time points is the least a line with an error term can be fitted to; with
+ * one residual degree of freedom the interval is wide, and it says so by
+ * being wide.
+ */
+export type ForecastVerdict = 'within' | 'interval crosses the limit' | 'outside' | 'no criterion';
+
+export interface ForecastPoint {
+  time: number;
+  predicted: number;
+  interval: { lower: number; upper: number };
+  /** Where the predicted result and its interval sit against the recorded criterion. */
+  verdict: ForecastVerdict;
+}
+
+export type ForecastOutcome =
+  | { ok: false; reason: 'INSUFFICIENT_POINTS' | 'TIME_POINTS_DO_NOT_VARY'; detail: string; pointsUsable: number }
+  | { ok: true; alpha: number; pointsUsed: number; observedPeriod: number; at: ForecastPoint[] };
+
+function outsideCriterion(value: number, criterion: ParsedAcceptanceCriterion): boolean {
+  if (criterion.twoSided && criterion.upperLimit !== null) return value < criterion.limit || value > criterion.upperLimit;
+  return criterion.direction === 'decreasing' ? value < criterion.limit : value > criterion.limit;
+}
+
+export function forecastTrend(
+  points: TrendPoint[],
+  times: number[],
+  criterion: ParsedAcceptanceCriterion | null,
+  options: Pick<TrendOptions, 'alpha'> = {},
+): ForecastOutcome {
+  const alpha = options.alpha ?? 0.05;
+  const series = points.filter(p => Number.isFinite(p.time) && Number.isFinite(p.value));
+  const n = series.length;
+  if (n < 3) {
+    return { ok: false, reason: 'INSUFFICIENT_POINTS', pointsUsable: n,
+      detail: `a forecast needs at least 3 numeric results at 2 or more time points; ${n} ${n === 1 ? 'is' : 'are'} recorded` };
+  }
+  const x = series.map(p => p.time);
+  const { mean, sxx } = spread(x);
+  if (sxx === 0) {
+    return { ok: false, reason: 'TIME_POINTS_DO_NOT_VARY', pointsUsable: n,
+      detail: 'every numeric result is recorded at the same time point, so no line can be fitted through them' };
+  }
+  const fit = linearRegression(x, series.map(p => p.value));
+  const t = studentTQuantile(1 - alpha / 2, n - 2);
+  const at = times.filter(Number.isFinite).map((time): ForecastPoint => {
+    const predicted = fit.intercept + fit.slope * time;
+    const halfWidth = t * fit.residualSd * Math.sqrt(1 + 1 / n + (time - mean) ** 2 / sxx);
+    const lower = predicted - halfWidth;
+    const upper = predicted + halfWidth;
+    const verdict: ForecastVerdict = !criterion ? 'no criterion'
+      : outsideCriterion(predicted, criterion) ? 'outside'
+        : outsideCriterion(lower, criterion) || outsideCriterion(upper, criterion) ? 'interval crosses the limit'
+          : 'within';
+    return { time, predicted: round(predicted), interval: { lower: round(lower), upper: round(upper) }, verdict };
+  });
+  return { ok: true, alpha, pointsUsed: n, observedPeriod: round(Math.max(...x), 2), at };
+}

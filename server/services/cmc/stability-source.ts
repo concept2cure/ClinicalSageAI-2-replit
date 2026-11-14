@@ -48,7 +48,14 @@
  * @module server/services/cmc/stability-source
  */
 
-import { parseMonthTime, readRecordedStabilityResults } from './recorded-stability';
+import {
+  inspectRecordedSeriesCriterion,
+  parseMonthTime,
+  parseNumeric,
+  readRecordedStabilityResults,
+  type StabilityPointRecord,
+} from './recorded-stability';
+import { forecastTrend, type ForecastVerdict } from './stability-trending';
 import type { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -254,6 +261,45 @@ export interface PullPoint {
   state: PullState;
   /** Why a point has no date, in words. */
   reason?: string;
+  /**
+   * On a pull still to come: what the study's own recorded results predict
+   * for each recorded test at it (stability-trending.ts `forecastTrend`), or
+   * why no forecast can be made for that test.
+   */
+  forecast?: PullForecast[];
+}
+
+export type PullForecast =
+  | { parameter: string; ok: false; detail: string }
+  | {
+      parameter: string; ok: true;
+      predicted: number; interval: { lower: number; upper: number };
+      verdict: ForecastVerdict; pointsUsed: number;
+      /** The acceptance criterion the verdict reads, as recorded, or '' when none is. */
+      criterion: string;
+    };
+
+/** One test's forecast at a month to come, from the results recorded for it on this study. */
+function pullForecast(parameter: string, results: StabilityPointRecord[], months: number): PullForecast {
+  const own = results.filter((r) => String(r.parameter ?? '').trim().toLowerCase() === parameter.toLowerCase());
+  const conditions = new Set(own.map((r) => String(r.condition ?? '').trim()).filter(Boolean));
+  if (conditions.size > 1) {
+    return { parameter, ok: false, detail: 'its results are recorded at more than one storage condition, so one line is not fitted through them' };
+  }
+  const inspected = inspectRecordedSeriesCriterion(own);
+  if (inspected.reason) return { parameter, ok: false, detail: inspected.reason };
+  const points = own.flatMap((r) => {
+    const time = parseMonthTime(r.timePoint);
+    const value = parseNumeric(r.result);
+    return time === null || value === null ? [] : [{ time, value }];
+  });
+  const outcome = forecastTrend(points, [months], inspected.criterion);
+  if (!outcome.ok) return { parameter, ok: false, detail: outcome.detail };
+  const at = outcome.at[0];
+  return {
+    parameter, ok: true, predicted: at.predicted, interval: at.interval, verdict: at.verdict, pointsUsed: outcome.pointsUsed,
+    criterion: String(own.find((r) => String(r.specification ?? '').trim())?.specification ?? '').trim(),
+  };
 }
 
 export interface PullSchedule {
@@ -320,7 +366,11 @@ export function stabilityPullSchedule(
     const state: PullState = complete ? 'recorded'
       : past ? (at.length > 0 ? 'incomplete' : 'overdue')
         : plannedDate === todayText ? 'due-today' : 'planned';
-    return { label, months, plannedDate, recorded, outstanding, state };
+    const toCome = state === 'planned' || state === 'due-today';
+    return {
+      label, months, plannedDate, recorded, outstanding, state,
+      ...(toCome && parameters.length > 0 ? { forecast: parameters.map((p) => pullForecast(p, results, months)) } : {}),
+    };
   });
 
   const upcoming = points

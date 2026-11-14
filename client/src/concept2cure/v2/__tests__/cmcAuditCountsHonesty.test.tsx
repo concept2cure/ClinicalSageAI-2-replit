@@ -193,6 +193,21 @@ describe('Stability — what is due', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Stability' }));
   }
 
+  it('prints what the recorded results predict at the next pull, per test, with the interval', async () => {
+    openStability([
+      study(1, { overdue: 0, incomplete: 0, points: [{ label: '12', plannedDate: '2027-02-01', state: 'planned', outstanding: [] }],
+        next: { label: '12', plannedDate: '2027-02-01', state: 'planned', outstanding: [], forecast: [
+          { parameter: 'Assay', ok: true, predicted: 97.6, interval: { lower: 97.1, upper: 98.1 }, verdict: 'within', pointsUsed: 4, criterion: '95.0-105.0%' },
+          { parameter: 'Total impurities', ok: true, predicted: 0.52, interval: { lower: 0.44, upper: 0.6 }, verdict: 'outside', pointsUsed: 4, criterion: 'NMT 0.5%' },
+          { parameter: 'Water content', ok: false, detail: 'a forecast needs at least 3 numeric results at 2 or more time points; 0 are recorded' },
+        ] } }),
+    ]);
+    const list = await screen.findByTestId('cmc-pull-forecast');
+    expect(list.textContent).toBe('predicted: Assay 97.6 (97.1 to 98.1); Total impurities 0.52 (0.44 to 0.6) — outside');
+    expect(list.getAttribute('title')).toContain('Water content: no forecast — a forecast needs at least 3 numeric results');
+    expect(screen.getByText(/Total impurities 0\.52/).getAttribute('data-tone')).toBe('warn');
+  });
+
   it('shows each study’s next pull and its date, and counts what is behind', async () => {
     openStability([
       study(1, { overdue: 2, incomplete: 1, next: { label: '12', plannedDate: '2027-02-01', state: 'planned', outstanding: ['Assay'] },
