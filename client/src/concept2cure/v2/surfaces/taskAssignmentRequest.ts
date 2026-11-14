@@ -25,7 +25,8 @@ const retired = (): AssignmentFailure => ({ kind: 'retired', message: 'The task,
 
 function failure(method: string, status?: number, payload?: unknown, code?: string): AssignmentFailure {
   const payloadCode = errorCodeOf(payload) ?? code;
-  if (method !== 'GET' && payloadCode !== 'AUDIT_WRITE_FAILED' && (!status || status >= 500)) {
+  if (method !== 'GET' && (payloadCode === 'OUTCOME_UNKNOWN' ||
+      (payloadCode !== 'AUDIT_WRITE_FAILED' && (!status || status === 408 || status >= 500)))) {
     return { kind: 'unconfirmed', message: 'Could not confirm the assignment. Refresh assignment before retrying; the change may have reached the server.' };
   }
   const message = status === 401 ? 'Your session has expired. Sign in and refresh assignment before continuing.' : serverMessage(payload);

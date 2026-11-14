@@ -1,0 +1,10 @@
+{
+  "scope": "Actual local app, fictional account and intercepted task/roster/error responses; no assignment or other mutation forwarded.",
+  "cases": [],
+  "pageErrors": [],
+  "status": "failed",
+  "error": {
+    "name": "TimeoutError",
+    "message": "locator.selectOption: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('New assignee', { exact: true })\u001b[22m\n\u001b[2m    - waiting for navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:5000/concept2cure/tasks\"\u001b[22m\n"
+  }
+}

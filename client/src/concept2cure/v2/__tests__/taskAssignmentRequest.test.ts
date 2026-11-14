@@ -76,3 +76,48 @@ describe('assignment ownership and existing automatic path', () => {
     expect((await autoAssignSavedTask(meta, () => ({}), () => true)).kind).toBe('unconfirmed');
   });
 });
+
+describe('assignment acknowledgement uncertainty', () => {
+  const attempts = [
+    ['named assignment', () => saveTaskAssignment(scope, meta, command, () => true)],
+    ['automatic assignment', () => autoAssignSavedTask(meta, () => taskAssignmentHeaders(scope, () => true), () => true)],
+  ] as const;
+  const unresolved = [
+    ['returned request timeout', () => request.mockResolvedValue(reply({ error: 'Request timed out.' }, 408))],
+    ['thrown request timeout', () => request.mockRejectedValue(new ApiRequestError('Request timed out.', 408))],
+    ['returned explicit unknown outcome', () => request.mockResolvedValue(reply({ error: 'OUTCOME_UNKNOWN' }, 403))],
+    ['thrown explicit unknown outcome', () => request.mockRejectedValue(new ApiRequestError('Not confirmed.', 403,
+      { message: 'The assignment result could not be confirmed.' }, 'OUTCOME_UNKNOWN'))],
+  ] as const;
+
+  describe.each(attempts)('%s', (_name, attempt) => {
+    it.each(unresolved)('keeps %s unconfirmed without retrying', async (_label, prepare) => {
+      prepare();
+      const result = await attempt();
+      expect(result.kind).toBe('unconfirmed');
+      expect('message' in result && result.message).toMatch(/Refresh assignment before retrying.*may have reached the server/);
+      expect(request).toHaveBeenCalledOnce();
+    });
+
+    it.each(['returned', 'thrown'])('preserves a %s explicit atomic audit rollback as a refusal', async delivery => {
+      const payload = { error: 'AUDIT_WRITE_FAILED', message: 'The audit failed, so nothing was changed.' };
+      if (delivery === 'returned') request.mockResolvedValue(reply(payload, 500));
+      else request.mockRejectedValue(new ApiRequestError(payload.message, 500, payload, 'AUDIT_WRITE_FAILED'));
+      expect(await attempt()).toEqual({ kind: 'refused', message: payload.message });
+      expect(request).toHaveBeenCalledOnce();
+    });
+  });
+
+  it.each([408, 500])('keeps failed GET %s unavailable rather than describing a possible write', async status => {
+    request.mockResolvedValue(reply({ error: 'Assignment options could not be read.' }, status));
+    expect(await loadTaskAssignment(scope, () => true)).toEqual({ kind: 'unavailable', message: 'Assignment options could not be read.' });
+    expect(request).toHaveBeenCalledOnce();
+  });
+
+  it.each([400, 403, 409])('keeps known client refusal %s distinct from an unknown write', async status => {
+    request.mockResolvedValue(reply({ error: 'Current task permissions do not allow the assignment.' }, status));
+    expect(await saveTaskAssignment(scope, meta, command, () => true)).toEqual({ kind: 'refused',
+      message: 'Current task permissions do not allow the assignment.' });
+    expect(request).toHaveBeenCalledOnce();
+  });
+});

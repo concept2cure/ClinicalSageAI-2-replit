@@ -1,0 +1,20 @@
+{
+  "tests": 31,
+  "failed": 8,
+  "passedControls": 23,
+  "sourceSha256": "3459cdad34fec4e771d6a39dbe10adcbbfd6bef7d83d44de07979b808263e26c",
+  "testSha256": "30034932b43e46686075d91151f4636bbde29ed409d875eab375453c9b1ceaef",
+  "lint": [
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "scope": "Synthetic request responses and real captured actor/receipt validation; no production edit, live message/task/provider, Git or full compiler."
+}
