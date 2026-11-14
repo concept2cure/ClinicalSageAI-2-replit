@@ -370,12 +370,13 @@ describe('the conversation in progress is reached without a rail entry', () => {
 
 const BOARD_PROPS = { surface: { id: 'tasks', label: 'Tasks' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' };
 
-describe('Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s', () => {
+describe('Tasks is one entry: the person’s own work first, everyone’s one press away', () => {
   /* Tasking and My work were two rail entries over one board, with one icon.
-     Tasks opens the board on everyone's tasks, whatever filter it was last
-     left on, through the same validated screen-action bus AnA's moves use;
-     the board's "My tasks" gives the person's own, and the entry stays
-     marked either way. */
+     Tasks opened the board on everyone's tasks; since P-131 (2026-11-12, D6.md
+     §A.7 item 1) it opens on the person's own work across every project,
+     whatever filter it was last left on, through the same validated
+     screen-action bus AnA's moves use. "Everyone" gives everyone's, and the
+     entry stays marked either way. */
   function Harness() {
     const [on, setOn] = React.useState<string | null>(null);
     return (
@@ -388,26 +389,26 @@ describe('Tasks is one entry: everyone’s tasks, with the board’s own filter 
     );
   }
 
-  it('opens the task board on everyone’s tasks', async () => {
+  it('opens the task board on the person’s own work, with Mine pressed', async () => {
     render(<Harness />);
     await settle();
     fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Tasks' }));
     await screen.findByText('Draft stability summary');
-    await screen.findByText('Review predicate table');
-    const mine = screen.getAllByRole('button').find((b) => b.textContent?.trim() === 'My tasks');
-    expect(mine?.className).not.toMatch(/\bon\b/);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mine' }).getAttribute('aria-pressed')).toBe('true'));
+    expect(screen.queryByText('Review predicate table')).toBeNull();
   });
 
-  it('the board’s My tasks gives the person’s own, and Tasks stays the marked entry', async () => {
+  it('Everyone gives everyone’s tasks, and Tasks stays the marked entry', async () => {
     render(<Harness />);
     await settle();
     const rail = screen.getByRole('navigation', { name: 'Primary' });
     const current = () => Array.from(rail.querySelectorAll('[aria-current="page"]')).map(el => el.textContent?.trim());
     fireEvent.click(within(rail).getByRole('button', { name: 'Tasks' }));
-    await screen.findByText('Review predicate table');
+    await screen.findByText('Draft stability summary');
     await waitFor(() => expect(current()).toEqual(['Tasks']));
-    fireEvent.click(screen.getByRole('button', { name: 'My tasks' }));
-    await waitFor(() => expect(screen.queryByText('Review predicate table')).toBeNull());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mine' }).getAttribute('aria-pressed')).toBe('true'));
+    fireEvent.click(screen.getByRole('button', { name: 'Everyone' }));
+    expect(await screen.findByText('Review predicate table')).toBeTruthy();
     expect(screen.getByText('Draft stability summary')).toBeTruthy();
     expect(current()).toEqual(['Tasks']);
   });
