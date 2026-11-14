@@ -1,5 +1,104 @@
 # AnA runs multiple agents; Manual/Auto is a real run policy (row 74)
 
+## 2026-11-13 continued F1 — peer lifecycle and gateway account-use custody
+
+The founder asked to continue after canonical `917486637`; this continuation starts from current canonical
+`841c41466`, including the separately published collaboration and native Quality currentness repairs.
+It moves **F1 / W1 / D2** in the existing P-104 runtime/trust paths. No source file, screen, route, mount,
+table, dependency, provider, model or qualification evidence is added or declared approved.
+
+### What already exists
+
+`server/services/ana/turn-plan.ts` owns `RunCoordinator.message`, the existing active-worker predicate, locked
+event validation and idempotent audit intent. Text-bearing peer messages check recipient lifecycle during private
+capture preparation, while metadata-only messages lack that check. The final locked append also needs to admit
+the current recipient after asynchronous preparation. A finished or stopped worker must not receive a new
+successful help/review message. Extend the same locked callback with its existing predicate; preserve active
+waiting/held workers, sender/source/private-capture checks, message limits and historical successful retries.
+Independent review also finds that the host retains a caller-owned message object across awaits. Snapshot its
+primitive fields, basis rows and model metadata at entry so the intent hash, private capture and locked event all
+describe the same original request. Production's current parsed caller supplies a fresh object; this repairs the
+host contract rather than claiming a demonstrated external exploit. Keep the same source/private-capture policy.
+The existing `run-coordination-dispositions.test.ts` is the actual PGlite regression home. Searches included peer,
+recipient, message, stopped/reported state and deleted run-control/agent-monitor homes; none supplies another
+current recipient-admission seam. The existing `turn-plan-and-context.test.ts` private-capture fixture may cover
+the prepared-text/append lifecycle and input-snapshot controls; it is named before any test edit.
+
+`server/services/submission-gateways/gateway-accounts.ts` owns encrypted account capture and the private WeakMap
+account fingerprint. `index.ts` rechecks that account after `archiveSentPackage` before handing it to the adapter,
+but writes no per-use credential event and does not recheck the initiating human's current standing there.
+The roadmap explicitly leaves this audit handoff open. `part11/signing-authority-gate.ts` already supplies the
+canonical active organization/member/user signing-policy check; `audit/audit-write-outcome.ts` supplies the
+persisted/chained audit outcome. Extend these existing call sites rather than duplicate their policy or ledger.
+The existing account row has actual `id`, `updated_at` and `updated_by`, **not** a credential grant/revision or
+expiry. Audit its actual account/last-change and retained-package references without inventing a grant or exposing
+the private ciphertext-derived fingerprint. No historical row means null account references, not a fabricated one.
+
+The existing transmit authorization is a server-generated typed structure whose upstream caller verifies the
+human; it is **not** an opaque signature capability at this layer. Snapshot that actor and request identity before
+awaits, require a positive safe matching request actor, and retain the upstream verification boundary. Ignore
+metadata actors and free-text reasons in the credential-use event. Require current signing standing and exact
+account identity before and after a successful chained audit; failure refuses before the adapter. Use the actual
+archive receipt for the retained package. Preserve explicit historical platform/client choices and record-only
+authority refusal. The existing `gateway-accounts.test.ts` provides the PGlite/adapter regression home; affected
+existing compatibility fixtures are named before edits. Searches covered gateway use, account/credential audit,
+archive/transmit, current membership and deleted gateway-account implementations.
+
+This is a **pre-adapter** custody checkpoint. RIM's held FDA adapter still has later asynchronous preparation;
+this slice does not claim final-wire authority freshness, new private signature issuance, immutable credential
+grant migration, real agency acceptance, live-provider qualification or complete v0.5 acceptance. RIM's account,
+filing/signature ceremony and comment-only index scopes stay intact. Only executed red/green, compiler, lint,
+publication and runtime results will be recorded as passing.
+
+### Executed continued-control results
+
+- Peer lifecycle: **eight** actual PGlite cases fail before the locked recipient check; completed, incomplete,
+  cancelled and failed recipients refuse for both parent and child senders. Active assigned/started/checking/
+  waiting/held recipients and historical successful retries remain valid. Three separate caller-mutation cases
+  fail before the entry snapshot. A real private-preparation pause/recipient-stop case also fails when a private
+  exact-source test override removes only the lifecycle predicate. Final normal execution passes **98/98 across
+  three existing suites**, including actual owner decryption, original intent replay, a real refusal receipt and
+  no successful message/worker/projection advance. The related lost-COMMIT case moves unchanged between the two
+  existing test homes; its assertions and both file ceilings are retained.
+- Gateway custody: **four** original behavioral regressions fail with the real PGlite account/member/audit
+  stores, actual archive and only the FDA adapter stubbed. Final integration passes **205/205 across 19 existing
+  suites**. The primary39 cases exercise actual chained audit, canonical signing standing, archive/audit-time
+  revocation and rotation, failed audit, safe matching actors, detached request/bundle/receipt facts and exact
+  content-free attribution. A historical platform default records null account references; an unknown direct-use
+  authorization kind records no use. No grant or immutable credential revision is invented.
+- The stricter admission exposes older positive test premises. Nine existing compatibility fixture files gain
+  explicit valid actors/current signing-role and durable-audit outcomes while retaining their original refusal,
+  signature, qualification, package and account-freshness assertions. One existing staging round-trip fixture
+  needs its already-supported `skipPdfaConversion` option: installed Ghostscript otherwise adds source-only MD5
+  provenance that the ZIP reader correctly cannot recover. A private overlay of the original gateway, index and
+  original fixture reproduces that same baseline failure. Exact JSON/key-order equality and all unrecoverable
+  source-proof controls remain. This is a deterministic test premise, not a production PDF/A policy change.
+
+Earlier component counts overlap these totals and are not added. Changed peer/source/test lint reports zero
+errors and no warning growth; the untouched pre-transmit test retains its existing single warning. Independent
+source review closes every raised finding. The gateway actor/bundle/metadata and actual retained receipt are
+detached before the relevant awaits; credential-use admission requires the actual persisted chained audit and a
+fresh current-person/account check afterward. Audit fields name actual account/last-change/package references,
+never a secret, operator free-text reason or private account fingerprint.
+
+All source is committed and frozen before integration/publication. Every normal push gate, including full
+TypeScript against baseline zero, remains required. Holds release with canonical publication of this entry.
+The final ordinary cached Codespace-image start must serve the published SHA and preserve the existing seven
+demo cache files. This component evidence does not qualify a provider, final agency wire, credential-grant
+migration, private human-signature issuer or the full v0.5 architecture.
+
+**Final canonical integration:** normal merges preserve the later Codespaces evidence and `5a552f142`'s
+disjoint native AnA catalogue projection/deletion-fixture repair. The earlier coordination append conflict keeps
+both owners' records. Independent review finds no integration issue; the existing catalogue suite passes
+**27/27** on Node22 after merge, with its worker closed before the normal full compiler. No branch, force push,
+hook bypass or baseline adjustment is used.
+
+**2026-11-14 publication retry:** the first normal push at `b5abbc0f8` passes all89 CI lint gates and the full
+compiler with zero errors against baseline zero, then Git refuses the ref update because canonical advanced.
+That failed publication attempt is retained. Incoming `0e6b15b10`'s disjoint collaboration-intake repair is merged
+normally; its two focused suites pass **30/30**, with no material independent-review finding and all workers
+closed. The retry keeps every hook and compiler gate; the peer/gateway production source is unchanged.
+
 ## 2026-11-13 F1 continuation — current activity and unreadable credential custody
 
 The founder asked to continue the whole existing implementation after the Codespace demo publication. This

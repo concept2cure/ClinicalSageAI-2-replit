@@ -261,6 +261,9 @@ class RunCoordinator implements RunCoordinationHost {
       source: input.outcome === 'cancelled' || input.outcome === 'failed' ? undefined : this.sources.get(worker) });
   }
   async message(handle: WorkerCoordinationHandle | null, input: Parameters<RunCoordinationHost['message']>[1]) {
+    input = { ...input,
+      basis: input.basis?.map(row => ({ ...row })),
+      model: input.model ? { ...input.model } : input.model };
     const sender = handle === null ? 'anna' : this.worker(handle);
     const source = this.sources.get(sender);
     const body={operation:'message',sender,recipient:input.recipient,textSha256:input.text===undefined?null:coordinationSha256(input.text),messageKind:input.messageKind??'help'};
@@ -272,6 +275,7 @@ class RunCoordinator implements RunCoordinationHost {
     }
     return this.record(input, body, events => {
       if (input.recipient === sender || !['anna', ...events.filter(event => event.operation === 'assigned').map(event => event.worker)].includes(input.recipient)) return coordinationRefused('COORDINATION_RECIPIENT_UNKNOWN');
+      if(input.recipient!=='anna')assertWorkerActive(workerAt(events,input.recipient));
       if (events.filter(event => event.operation === 'message').length >= 32 || events.filter(event => event.operation === 'message' && (event.sender ?? event.worker) === sender).length >= 8) return coordinationRefused('COORDINATION_MESSAGE_LIMIT');
       if (input.text !== undefined && (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 2000)) return coordinationRefused('COORDINATION_MESSAGE_INVALID');
       const worker = sender === 'anna' ? input.recipient : sender, before = workerAt(events, worker);
