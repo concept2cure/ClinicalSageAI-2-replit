@@ -1,6 +1,6 @@
 {
-  "startedAt": "2026-11-14T01:24:55.154532+00:00",
-  "elapsedSeconds": 25.553,
+  "startedAt": "2026-11-14T01:35:20.050373+00:00",
+  "elapsedSeconds": 33.268,
   "argv": [
     "/workspace/scratch/node22/bin/node",
     "docs/evidence/F1/2026-11-14-project-source-selection/selected-source-walk.cjs",
@@ -8,8 +8,8 @@
   ],
   "exitCode": 0,
   "sourceDrift": [],
-  "inputs": "publication-inputs.json",
-  "inputCount": 24,
+  "inputs": "retry-inputs.json",
+  "inputCount": 25,
   "executionInputs": {
     "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
     "docs/evidence/F1/2026-11-14-project-source-selection/selected-source-walk.cjs": "bcea69b33462c26033d589a1bcb512a4b622bb18491d588b69080cc0c89990ef"
@@ -17,7 +17,7 @@
   "executionInputDrift": [],
   "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
   "output": "repaired-browser.txt.gz",
-  "outputSha256": "ad3b33e701f9983401d8a1609b1b520df225002803e180c4ff76b37044619ce8",
+  "outputSha256": "6bf86dd848ccf4f48fc73ad2a506e292d655f7f8acb9f003e8afcf3f1a69f76c",
   "rawLogRetainedPrivately": true,
   "outputRedacted": false
 }

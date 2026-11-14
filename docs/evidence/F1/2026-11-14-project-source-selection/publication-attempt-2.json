@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-11-14T01:34:15.762388+00:00",
+  "elapsedSeconds": 651.887,
+  "argv": [
+    "python3",
+    "/workspace/scratch/c2c-git.py",
+    "push"
+  ],
+  "exitCode": 1,
+  "sourceDrift": [],
+  "inputs": "retry-inputs.json",
+  "inputCount": 25,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "publication-attempt-2.txt.gz",
+  "outputSha256": "1b43257233c9762749d15879969d1a86569657db0c671af6b497efe853bf7a1f",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": true
+}

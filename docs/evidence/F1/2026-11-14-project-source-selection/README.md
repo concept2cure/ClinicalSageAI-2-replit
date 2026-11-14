@@ -119,8 +119,14 @@ across the retained runs; no whole-repository test pass is claimed.
 
 ## Actual repaired local flow
 
-`repaired-start.json` records normal startup in the existing declared-image local
-verifier, native exit 0 in 31.7 seconds, serving merge `e24e26eab`.
+`repaired-start.json` records initial normal startup in the existing declared-image
+local verifier, native exit 0 in 31.7 seconds, serving merge `e24e26eab`.
+The initial passing observer and screenshots are retained under `premerge-*`.
+`merged-start.json` then passes normal startup in36.9s at `8e5c9140f`, preserving
+the published CSR medical-writing work. `merged-runtime.json` confirms that
+exact served commit, schema ready and capabilities seeded; `/readyz` is503 only
+for `ana: no_provider`. This is local verification in the declared image, not
+a hosted Codespace acceptance or live-model proof.
 `repaired-browser.json` / `repaired-browser-observation.json` pass with no
 source/runner drift. Actual Lumen Lead selects two native captured sources
 across a real search, clears them deliberately, reselects both across searches,
@@ -171,7 +177,10 @@ The first normal publication attempt (`publication-attempt-1.json`) is correctly
 blocked: all89 CI lint-job gates pass, then the full compiler finds two test
 typing errors. The synthetic user now supplies the actual required AuthUser
 fields through a typed object; the unsupported `exact` role-query option is
-removed. No cast-through-unknown, compiler/baseline edit or bypass is used.
+removed. These compiler corrections add no cast-through-unknown, compiler/
+baseline edit or bypass. The three older fixture adaptations retain their
+explicit partial-account test casts; the focused owner tests use the complete
+typed account and real session helpers.
 
 The additional automatic-drafting test home has three old synchronous,
 unauthenticated positives (`automatic-compatibility-before.json` has two actual
@@ -184,5 +193,12 @@ selected-source tests, with no drift. Scoped lint passes. Combined with the
 unchanged production and earlier adjacent suites,401 distinct cases pass in the
 retained runs. This is still not a whole-repository test-suite claim.
 
-The final normal full compiler and canonical publication remain pending until
-their native receipts are recorded.
+`publication-attempt-2.json` records the corrected normal full compiler at
+`8e5c9140f`: native tsc exit0, errors0/baseline0; all89 lint-job gates pass and
+the full pre-push hook succeeds. The remote ref advances to `3692f44ad` during
+those checks, so Git rejects the update without publishing it. This is the
+first remote-ref race, distinct from the earlier compiler rejection. The next
+ordinary merge preserves the newly published internal-audit task repair; no
+forced update, hook bypass or baseline change is used.
+
+Canonical publication remains pending until its native receipt is recorded.
