@@ -1,0 +1,11 @@
+{
+  "sourceRevision": "3692f44adc02ba891ae7e6876a990ad5f8d31740",
+  "productionSourceUnchanged": true,
+  "deviationCases": 54,
+  "existingAuditCasesIncludingPriorityControl": 54,
+  "failed": 48,
+  "passedControls": 60,
+  "suites": 2,
+  "rawLogSha256": "5a31029086b5abfbe53074243989d73e1b3706041099ef23a402782cf221d016",
+  "fixtureScope": "Single-connection PGlite native/actor/task/ledger SQL with task-service/audit adapter seams; advisory-lock invocation recorded"
+}
