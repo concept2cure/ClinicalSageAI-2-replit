@@ -11,6 +11,7 @@
  */
 
 import { regionalDeviceApplicationClassOf } from '../../../shared/regulatory/filing-catalog.js';
+import { isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 
 /** The query surface both node-postgres and PGlite satisfy. */
 export interface RulePackQueryable {
@@ -24,22 +25,30 @@ export interface ActiveRulePack {
 }
 
 const ACTIVE = 'superseded_by IS NULL';
+export const IVD_510K_RULE_PACK_VERSION = 'fda-estar-510k-ivd-v1.0';
 
 /** The active pack for exactly (docType, agency), or null. No fallback agency is tried here. */
 export async function findActiveRulePack(
   client: RulePackQueryable,
   docType: string,
   agency: string,
+  productType?: string | null,
 ): Promise<ActiveRulePack | null> {
   const regional = regionalDeviceApplicationClassOf(docType);
   if (regional && regional.packAgency !== agency) return null;
+  const ivd510k = docType === 'k510' && isIvdFamily(productType);
+  // An IVD FDA outline cannot borrow an unrelated harmonised pack when its
+  // approved variant is absent. The caller must report the missing outline.
+  if (ivd510k && agency !== 'fda') return null;
   const { rows } = await client.query(
     `SELECT version, label, required_sections
        FROM c2c_rule_packs
       WHERE doc_type = $1 AND agency = $2 AND ${ACTIVE}
+        AND (doc_type <> 'k510' OR agency <> 'fda'
+             OR (version = $3) = $4::boolean)
       ORDER BY effective_from DESC
       LIMIT 1`,
-    [docType, agency],
+    [docType, agency, IVD_510K_RULE_PACK_VERSION, ivd510k],
   );
   return (rows[0] as ActiveRulePack | undefined) ?? null;
 }
@@ -52,7 +61,9 @@ export async function listActiveRulePacks(
     `SELECT DISTINCT ON (doc_type, agency) doc_type, agency, version, label
        FROM c2c_rule_packs
       WHERE ${ACTIVE}
+        AND NOT (doc_type = 'k510' AND agency = 'fda' AND version = $1)
       ORDER BY doc_type, agency, effective_from DESC`,
+    [IVD_510K_RULE_PACK_VERSION],
   );
   return rows as Array<{ doc_type: string; agency: string; version: string; label: string }>;
 }

@@ -1,0 +1,14 @@
+{
+  "head": "006353ba29c0e122ddcbb9c9450f634c1c2784dc",
+  "finishedHead": "006353ba29c0e122ddcbb9c9450f634c1c2784dc",
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 27.493,
+  "declaredSourceFiles": 12516,
+  "sourceStable": true,
+  "sourceChanges": []
+}

@@ -1129,6 +1129,7 @@ router.post('/', async (req: Request, res: Response) => {
       scaffold = await scaffoldProjectDocuments({
         client, orgId, userId, projectId: newId,
         programType, primaryAgency: documentAgencyFor(marketInput) ?? primaryAgency, productName,
+        productType,
       });
       // No outline for this class (no pack, or no document class for the
       // program type): nothing to author, so the filing is not offered. Until

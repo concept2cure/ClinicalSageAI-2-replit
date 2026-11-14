@@ -1,0 +1,27 @@
+{
+  "exitCode": 1,
+  "elapsedSeconds": 1.1904287338256836,
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/MDX-JOURNEY/2026-11-14-p114-5-ivd-outline/mapper/corrected-contract-red-tests.json"
+  ],
+  "sourceBefore": {
+    "server/services/pathway-engines/estar/estar-mapper.ts": "5d9a332b5933a865c07d4d97f54c910b3af591f3598acad3053f17d4621bff1d",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts": "62cb7532c64792de668148dc7eed04242242352aaf2a39b29a0dee22e8710288",
+    "server/services/pathway-engines/estar/estar-filing-readiness.ts": "8d448bc4c7db76339625c7c4b8deb5f1d69dd7ee2ca691846c5346d4559ca884",
+    "server/services/pathway-engines/estar/estar-outline-requirements.ts": "4000172288a7972bbf03d186d24ab03a10ffef79b37491e6cc1ead4ff3258261"
+  },
+  "sourceAfter": {
+    "server/services/pathway-engines/estar/estar-mapper.ts": "5d9a332b5933a865c07d4d97f54c910b3af591f3598acad3053f17d4621bff1d",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts": "62cb7532c64792de668148dc7eed04242242352aaf2a39b29a0dee22e8710288",
+    "server/services/pathway-engines/estar/estar-filing-readiness.ts": "8d448bc4c7db76339625c7c4b8deb5f1d69dd7ee2ca691846c5346d4559ca884",
+    "server/services/pathway-engines/estar/estar-outline-requirements.ts": "4000172288a7972bbf03d186d24ab03a10ffef79b37491e6cc1ead4ff3258261"
+  },
+  "sourceStable": true
+}

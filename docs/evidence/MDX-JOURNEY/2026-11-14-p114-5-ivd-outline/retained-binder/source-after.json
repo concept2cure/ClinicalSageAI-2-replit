@@ -1,0 +1,23 @@
+{
+  "head": "3692f44adc02ba891ae7e6876a990ad5f8d31740",
+  "pins": {
+    "server/services/vault/__tests__/ivd-retained-binder.test.ts": "e7ab9b4b78e08f0e233a405d9fb3535db68761e7c57a4fba35702f6c33c9b748",
+    "server/services/vault/vault-binder-outline.ts": "5848fdeb24ff3ab3c99b3411f83e150644c5316f08c9fcd9903cc0c2178c4553",
+    "server/services/vault/vault-folders.ts": "93228a90228af2331ad3be034d4616b23e6f57d1396c6a26546e0d8d500fc07f",
+    "server/services/c2c/rule-pack-lookup.ts": "733ef7a1ed99f6dce10d75133ce9920a6f5d203a1e3f522d8156def17d6f8f5c",
+    "server/services/c2c/scaffold-project-documents.ts": "0ee1d8fe41c65d1375aa20c6181a0c2c6d54cda3f376170e6bc7593dbd5d9743",
+    "server/routes/c2c/projects.ts": "5599dacf88c0af9013cd392b1d96a8d4e68026426240bc1da27dff1cd0090cdc",
+    "shared/regulatory/device-authoring-sections.ts": "e936ba52bdff08c9859b8f4a57f0fa2538a626762af865a74774466f44403262",
+    "shared/regulatory/project-bootstrap.ts": "e159ad6d5258ee18cee36b73a2adece672c1a142ad33659fc6efc6ece320d1d4",
+    "migrations/20261005c_k510_denovo_estar_outline_v1_1.sql": "856d61ae3f294c29744a7e5e9f80daff2e9689b40923c26d786bf867b6fffa91",
+    "migrations/20261114_k510_ivd_estar_outline_v1_0.sql": "f7bbdc3860d2db8512032fd9756c0f10d66e079915adde5d1fb457c4c21e0906",
+    "server/services/pathway-engines/estar/estar-mapper.ts": "eba0867149a4add098792f8a5062aff233b396e5ffb6f3ff9ab55b64f8aa3aff",
+    "server/services/pathway-engines/estar/estar-outline-requirements.ts": "4000172288a7972bbf03d186d24ab03a10ffef79b37491e6cc1ead4ff3258261",
+    "server/services/forms/fill-official-pdf.ts": "260820b4041e7ae9700d1c173d6ea12a0e66f076e8ded281a546fb216d23a1d3",
+    "assets/estar-templates/eSTAR-510k-ivd.pdf": "df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "tests/setup.ts": "8822326d0bcbfbaed01fb22d75ef9a99bc7e3205be5786f7b67eaffc86760033",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd"
+  }
+}
