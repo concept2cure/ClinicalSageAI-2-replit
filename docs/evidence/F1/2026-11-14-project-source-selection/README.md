@@ -223,3 +223,30 @@ selection, pending-store refusal, after-grading scope recheck and deliberate
 Clear selection. Both regression sets remain; all prior receipts retain their
 own actual source revisions. The integrated source must pass new checks before
 publication, and the earlier401-case claim does not attest this merge yet.
+
+## Combined canonical selection implementation
+
+The resolved merge uses the published client action/AbortController owner and
+one `selectedSourcesRead` guard. It now combines exact parent/SHA-256/eligibility
+checks with complete canonical selection attestation, pending-store refusal and
+the explicit clear action. The original debounce fix, immediate search/page/
+refresh/checkbox cancellation, upload ownership and durable editor intent remain.
+The unchanged chooser and editor target are reused.
+
+The server preserves one exact-mode SQL reader. It combines nested-query and
+scope/unverified/tenant/count checks with the canonical-derived public marker,
+complete route projection validation and final access recheck after grading.
+Both regression sets remain; no source-read-access, permission or model policy
+is changed. Malformed canonical/raw projection failures retain the published
+`SOURCE_READ_ACCESS_CHANGED`503, malformed public markers use
+`SOURCE_SELECTION_UNVERIFIED`503, direct missing-actor reads use503 and HTTP
+denials remain concealed404. Native test formatting is compacted, with all
+assertions retained, to preserve its existing code-line ceiling.
+
+`integrated-client.json` passes303/303 across eleven suites;
+`integrated-server.json` passes199/199 across four suites. All502 pass with
+native exit0 and no named-input/runner drift. Both scoped lint runs have zero
+errors and retain the existing6 client /3 server warnings; the pure owners and
+test files add none. Independent review finds no blocker. `integrated-inputs.json`
+pins the combined source. Browser/startup, compiler and publication of this
+combined implementation are pending their own receipts.

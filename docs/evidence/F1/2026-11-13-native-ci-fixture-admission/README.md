@@ -39,6 +39,25 @@ The current P-105 private-boundary owner is `session_01KZK3jgtmQBgNepqLjXjS3k`. 
 
 No current authorized export/disposal policy resolves the conflict. After that existing founder decision is resolved, the narrow disposal pattern is the existing reviewed `tenant_record_purger` doors in `purge-held-doors.ts`, retaining pending-deletion, legal-hold and export-custody checks. Do not introduce general SELECT access, impersonate profile owners, add a session-settable bypass, drop a policy or exclude the failing proof to obtain green CI. Future verification must retain the blocking-key native suite and cover two tenants/two owners, owner-only reads, the decided export treatment, tenant-local complete erasure and hold/custody rollback. No private profile contents were queried and no export/purge/RLS source was edited.
 
+## Reproduced offboarding failure — 2026-11-13 23:58 UTC
+
+After the founder's "Fix all" request, the current `5a552f142` source was
+reproduced in the existing isolated UTF8 PostgreSQL 16 fixture database, using
+the non-superuser/non-bypass runtime role and enforced RLS. The blocking-keys
+suite reports **3 passed / 3 failed / 0 skipped**, with the same causal chain:
+organization-scope export omits the synthetic owner-private profile, its project
+foreign key blocks deletion, and rollback retains A's rows. B's isolation and
+the other three cases remain intact. Only synthetic test rows were exercised;
+the demonstration database and customer data were not used.
+
+[`offboarding-red-reproduced.json`](offboarding-red-reproduced.json) identifies
+the source/runtime boundary and log digest;
+[`offboarding-red-reproduced.txt.gz`](offboarding-red-reproduced.txt.gz) retains
+the native failing assertions. Neither database URLs nor the isolated fixture
+password occurs in that log. The founder's export/disposal choice remains
+pending. No assertion, profile policy, export or purge source was changed to
+hide this failure.
+
 ## Lead native verification
 
 The isolated PostgreSQL 16 test cluster was provisioned through the existing install-fresh/deploy-migrate path (**1,281 base tables**, exit 0). Its runtime `app_service` has neither superuser nor RLS-bypass privileges; the native suite reports `RLS_ENFORCE=on`. The two original deletion cases pass against real PostgreSQL, and the twelve existing PGlite project-admission cases pass. After adopting canonical `c36ec97e9`, the complete relevant unit set passes 73/73 and the two native cases pass again. No production admission assertion or outcome was relaxed.

@@ -81,3 +81,20 @@ Server cases cover strict parsing, mutual exclusions, exact admission/projection
 wrong/missing/stale sources and final rechecks without whole-catalogue work.
 Use the actual local app for the manual selected-source/editor flow. No provider
 call, model qualification, scientific approval or submission is part of this repair.
+
+## Parallel canonical integration, 2026-11-14 02:07 UTC
+
+Canonical08044016b now contains the independent selection repair b40217a60 and
+its typed guard correction. Preserve its published single client action owner,
+immediate abort on search/page/refresh/selection, initial debounce correction,
+row parent and SHA-256 validation. Add this continuation's complete admitted-set
+marker, pending-store refusal and explicit Clear selection recovery there.
+Keep one guard/selection owner and the unchanged SourceAssemblyDialog/target.
+
+The server keeps one exact-mode preparation and SQL/count path, with the
+canonical nested-query, empty-unverified admission and raw tenant/total checks
+alongside the verified marker and final scope check after grading. Both suites'
+negative cases remain. Error-code fixture reconciliation must identify the
+chosen refusal explicitly, without dropping the failed-closed condition.
+The earlier passing evidence names its original sources; new integrated tests,
+lint, browser and normal compiler/gates must attest the combined implementation.

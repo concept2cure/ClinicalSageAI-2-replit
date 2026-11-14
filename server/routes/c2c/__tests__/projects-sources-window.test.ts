@@ -74,12 +74,19 @@ beforeAll(async () => {
     CREATE TABLE project_members (project_id int,organization_id int,user_id int,role text,status text);
     CREATE TABLE concept2cure_artifacts (id int,organization_id int,project_id int);
     CREATE TABLE concept2cure_review_assignments (artifact_id int,organization_id int,reviewer_id int,status text);
+    CREATE TABLE cre_evidence_sources (id int PRIMARY KEY,organization_id int,client_program_id uuid,is_current boolean,checksum text,
+      grade text,grade_score int,graded_at timestamptz,extraction_status text,deleted_at timestamptz,
+      visibility_class text,source_type text DEFAULT 'client_document',client_workspace_id int,
+      provenance jsonb DEFAULT '{}',metadata jsonb DEFAULT '{}');
     INSERT INTO organizations VALUES (7,'active');
     INSERT INTO users VALUES (3,'active'),(99,'active');
     INSERT INTO regulatory_programs VALUES ('${P}',7,NULL);
     INSERT INTO projects VALUES (42,7,'${P}',3,3,'{}','active',NULL);
     INSERT INTO project_visibility_settings VALUES (42,7,'private');
   `);
+  for (const id of [7, 9, 11, 22]) await authorityDb.query(`INSERT INTO cre_evidence_sources
+    (id,organization_id,client_program_id,is_current,checksum) VALUES($1,7,$2,$3,$4)`,
+  [id, P, id !== 9, id < 10 ? `h${id}` : String(id).padStart(64, 'a')]);
 });
 afterAll(async () => { await authorityDb?.close(); });
 
@@ -97,6 +104,75 @@ beforeEach(async () => {
   gradeSources.mockResolvedValue(new Map());
 });
 
+describe('exact selected-source query parsing on the existing Data Room read', () => {
+  it('binds one to twenty distinct positive PostgreSQL integer identities without list filters', () => {
+    expect(parseDataRoomQuery(P, { sourceIds: '1,2147483647' })).toEqual({ programId: P,
+      sourceIds: [1, 2147483647], limit: 2, offset: 0 });
+    const ids = Array.from({ length: 20 }, (_, n) => n + 1);
+    expect(parseDataRoomQuery(P, { sourceIds: ids.join(',') })).toMatchObject({ sourceIds: ids, limit: 20, offset: 0 });
+  });
+
+  it.each([
+    '', ' ', '0', '-1', '+1', '01', '1.0', '1e2', '1,', ',1', '1,,2', '1, 2', '1,1',
+    '2147483648', '9007199254740993', Array.from({ length: 21 }, (_, n) => n + 1).join(','),
+    ['1', '2'], { id: '1' }, 1, null, undefined,
+  ])('refuses malformed or ambiguous explicit sourceIds (%j) instead of widening', sourceIds => {
+    expect(() => parseDataRoomQuery(P, { sourceIds })).toThrow(DataRoomQueryError);
+  });
+
+  it.each(['q', 'status', 'kind', 'from', 'to', 'current', 'scope', 'project', 'study', 'ctd', 'folder',
+    'limit', 'offset', 'includeUnscoped'])('refuses exact IDs combined with %s, including an empty filter', field => {
+    expect(() => parseDataRoomQuery(P, { sourceIds: '7,9', [field]: '' })).toThrow(DataRoomQueryError);
+  });
+
+  it.each(['sourceIds[]', 'sourceIds[0]', 'sourceIds[ids]', 'sourceIds.ids'])(
+    'refuses a literal array-shaped source key %s from a simple query parser', field => {
+      expect(() => parseDataRoomQuery(P, { [field]: '7' })).toThrow(DataRoomQueryError);
+    });
+});
+
+describe('GET /:id/sources exact selected identities', () => {
+  it('returns the existing page and recorded project facts for the complete set, including lifecycle rows', async () => {
+    searchDataRoom.mockResolvedValue({ total: 2, currentTotal: 1, sources: [
+      { ...src(9, false), clientProgramId: P, dataEligible: false },
+      { ...src(7, true), clientProgramId: P, textAvailable: true, dataEligible: true, originalFileAvailable: false },
+    ], selection: { scope: 'verified-accessible-sources', sourceIds: [7, 9] } });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=7,9`);
+    expect(res.status).toBe(200);
+    expect(searchDataRoom).toHaveBeenCalledExactlyOnceWith(7, { programId: P, sourceIds: [7, 9], limit: 2, offset: 0 }, { userId: 3 });
+    expect(res.body).toMatchObject({ projectId: P, selection: { scope: 'verified-accessible-sources', sourceIds: [7, 9] }, total: 2, currentTotal: 1, page: { limit: 2, offset: 0 },
+      window: { shown: 2, truncated: false }, unscoped: [], sources: [
+        { id: 9, projectId: P, checksum: 'h9', isCurrent: false, dataEligible: false },
+        { id: 7, projectId: P, checksum: 'h7', originalFileAvailable: false, textAvailable: true, dataEligible: true },
+      ] });
+    expect(listClientDocuments).not.toHaveBeenCalled();
+    expect(catalogProgramIds).not.toHaveBeenCalled();
+    expect(listVaultForCatalog).not.toHaveBeenCalled();
+  });
+
+  it.each(['sourceIds=', 'sourceIds=7&sourceIds=9', 'sourceIds=7,9&q=', 'sourceIds=7,9&includeUnscoped=false'])(
+    'returns400 before searching for an unreadable or mixed exact query: %s', async query => {
+      const res = await request(app()).get(`/api/c2c/projects/${P}/sources?${query}`);
+      expect(res.status).toBe(400);
+      expect(searchDataRoom).not.toHaveBeenCalled();
+    });
+
+  it('retains persisted private-parent admission before reading exact identities', async () => {
+    await authorityDb.exec("INSERT INTO organization_users VALUES (7,99,'viewer')");
+    const res = await request(app({ userId: 99, claimedRole: 'super_admin' })).get(`/api/c2c/projects/${P}/sources?sourceIds=7`);
+    expect(res.status).toBe(404);
+    expect(searchDataRoom).not.toHaveBeenCalled();
+  });
+
+  it.each(['sourceIds[]=7', 'sourceIds[0]=7', 'sourceIds[ids]=7', 'sourceIds.ids=7', 'sourceIds=7&sourceIds[]=9'])(
+    'rejects literal array-shaped query keys before a widened list: %s', async query => {
+      searchDataRoom.mockResolvedValue({ total: 1, currentTotal: 1, sources: [src(7)] });
+      const res = await request(app()).get(`/api/c2c/projects/${P}/sources?${query}`);
+      expect(res.status).toBe(400);
+      expect(searchDataRoom).not.toHaveBeenCalled();
+    });
+});
+
 describe('what a project uses from the catalog (GET and POST /:id/evidence)', () => {
   const DOC = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
   beforeAll(async () => {
@@ -104,13 +180,12 @@ describe('what a project uses from the catalog (GET and POST /:id/evidence)', ()
       ALTER TABLE regulatory_programs ADD COLUMN IF NOT EXISTS name text;
       CREATE TABLE c2c_project_pinned_evidence (id serial PRIMARY KEY, project_id uuid, evidence_kind text, evidence_ref text, title text,
         meta text, pinned_by int, pinned_at timestamptz DEFAULT now(), reason text);
-      CREATE TABLE cre_evidence_sources (id int PRIMARY KEY, organization_id int, client_program_id uuid, is_current boolean, checksum text,
-        grade text, grade_score int, graded_at timestamptz, extraction_status text, deleted_at timestamptz);
       CREATE SCHEMA vault;
       CREATE TABLE vault.documents (id uuid PRIMARY KEY, organization_id int, program_id uuid, content_hash char(64), document_code text,
         supersedes_id uuid, deleted_at timestamptz);
       UPDATE regulatory_programs SET name = 'Open project';
-      INSERT INTO cre_evidence_sources VALUES (5, 7, '${P}', true, 'c5', 'B', 80, now(), 'extracted', NULL);
+      INSERT INTO cre_evidence_sources (id,organization_id,client_program_id,is_current,checksum,grade,grade_score,graded_at,extraction_status,deleted_at)
+        VALUES (5, 7, '${P}', true, 'c5', 'B', 80, now(), 'extracted', NULL);
       INSERT INTO vault.documents VALUES ('${DOC}', 7, '${P}', '${'d'.repeat(64)}', 'PROT', NULL, NULL);
       INSERT INTO c2c_project_pinned_evidence (project_id, evidence_kind, evidence_ref, title) VALUES
         ('${P}', 'data_room', '5', 'Capture five'), ('${P}', 'vault_doc', '${DOC}', 'Protocol'), ('${P}', 'artifact', 'art-77', 'An artifact');
@@ -276,20 +351,6 @@ describe('GET /:id/sources verifies the entire explicit selection', () => {
   const exactSource = (id: number, over: Record<string, unknown> = {}) => ({ ...src(id), clientProgramId: P,
     checksum: String(id).padStart(64, 'a'), dataEligible: true, textAvailable: true, ...over });
   const admitted = (sourceIds: number[]) => ({ scope: 'verified-accessible-sources', sourceIds });
-
-  beforeAll(async () => {
-    // This suite also runs alone by test name. Its source rows support the real
-    // late canonical access check, independently of the mocked page projection.
-    await authorityDb.exec(`CREATE TABLE IF NOT EXISTS cre_evidence_sources
-      (id int PRIMARY KEY,organization_id int,client_program_id uuid,is_current boolean,checksum text,deleted_at timestamptz);
-      ALTER TABLE cre_evidence_sources ADD COLUMN IF NOT EXISTS visibility_class text,
-        ADD COLUMN IF NOT EXISTS source_type text DEFAULT 'client_document',
-        ADD COLUMN IF NOT EXISTS client_workspace_id int,
-        ADD COLUMN IF NOT EXISTS provenance jsonb DEFAULT '{}', ADD COLUMN IF NOT EXISTS metadata jsonb DEFAULT '{}';`);
-    for (const id of [11, 22]) await authorityDb.query(`INSERT INTO cre_evidence_sources
-      (id,organization_id,client_program_id,is_current,checksum) VALUES($1,7,$2,true,$3) ON CONFLICT(id) DO NOTHING`,
-    [id, P, String(id).padStart(64, 'a')]);
-  });
 
   it('returns the canonical complete admission and checked project with every selected row', async () => {
     searchDataRoom.mockResolvedValue({ total: 2, currentTotal: 2, sources: [exactSource(22), exactSource(11)], selection: admitted([11, 22]) });

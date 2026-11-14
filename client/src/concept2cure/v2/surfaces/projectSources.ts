@@ -11,6 +11,8 @@ import type { SourceCatalog } from '../editor/SourceCatalogLine';
 import { sourceHasGroundingText } from '@shared/data-room-processing-status';
 
 export interface SourceRow {
+  /** Recorded source parent, carried by exact selection reads. */
+  projectId?: string | null;
   textAvailable?: boolean | null;
   processing?: import('@shared/data-room-processing-status').DataRoomProcessingSummary | null;
   id: number;
@@ -41,7 +43,7 @@ export interface SourceRow {
 export interface SourcesPage {
   projectId?: string;
   sources: SourceRow[];
-  /** Only an exact admitted read can attest a deliberate selection. */
+  /** Only the complete exact admission carries a deliberate selection. */
   selection?: { scope: 'verified-accessible-sources'; sourceIds: number[] };
   /** Usage counts include only citations visible with the caller's current access. */
   usageScope?: 'accessible-citations';
@@ -60,8 +62,6 @@ export const isSourcesPage: ShapeGuard<SourcesPage> = (value): value is SourcesP
 
 /** How many sources one page of the Data Room shows. */
 export const SOURCES_PAGE = 200;
-/** The existing AnA exact-source admission ceiling, distinct from editor assembly. */
-export const SELECTED_SOURCE_LIMIT = 20;
 
 /** The Data Room read: a full-text search over what was read from each file, and its page. */
 export function sourcesUrl(pid: string, term: string, offset: number): string {
@@ -72,38 +72,39 @@ export function sourcesUrl(pid: string, term: string, offset: number): string {
   return `/api/c2c/projects/${pid}/sources${qs ? `?${qs}` : ''}`;
 }
 
-export function selectedSourcesUrl(pid: string, sources: readonly SourceRow[]): string | null {
-  if (!exactSourceIds(sources.map(source => source.id))) return null;
-  return `/api/c2c/projects/${encodeURIComponent(pid)}/sources?sourceIds=${sources.map(source => source.id).join(',')}`;
-}
-
+/** Explicit checks belong to the selection, independently of its visible search/page. */
+export type CheckedSource = Pick<SourceRow, 'id' | 'title' | 'checksum'>;
+export const ANA_SELECTED_SOURCE_LIMIT = 20;
 function exactSourceIds(ids: unknown): ids is number[] {
-  return Array.isArray(ids) && ids.length > 0 && ids.length <= SELECTED_SOURCE_LIMIT &&
-    ids.every(id => Number.isSafeInteger(id) && id > 0 && id <= 2_147_483_647) && new Set(ids).size === ids.length;
+  return Array.isArray(ids) && ids.length > 0 && ids.length <= ANA_SELECTED_SOURCE_LIMIT &&
+    new Set(ids).size === ids.length && ids.every(id => Number.isSafeInteger(id) && id > 0 && id <= 2_147_483_647);
 }
-
-function selectionMatchesProject(page: SourcesPage, pid: string, ids: number[]): boolean {
-  const selection = page.selection;
-  return page.projectId === pid && selection?.scope === 'verified-accessible-sources' &&
-    exactSourceIds(selection.sourceIds) && selection.sourceIds.length === ids.length &&
-    selection.sourceIds.every(id => ids.includes(id));
-}
-
-/** Match the whole admitted set and the versions actually checked. A newer
- * checksum, missing row or partial accessible set never substitutes a choice. */
-export function verifiedSourceSelection(value: unknown, pid: string, checked: readonly SourceRow[]): SourceRow[] | null {
-  if (!isSourcesPage(value)) return null;
+export function selectedSourcesUrl(pid: string, checked: readonly CheckedSource[]): string | null {
   const ids = checked.map(source => source.id);
-  if (!exactSourceIds(ids) || !selectionMatchesProject(value, pid, ids) || value.sources.length !== ids.length) return null;
-  const rows = new Map(value.sources.map(source => [source.id, source]));
-  if (rows.size !== ids.length) return null;
-  const ordered: SourceRow[] = [];
-  for (const source of checked) {
-    const current = rows.get(source.id);
-    if (typeof source.checksum !== 'string' || !source.checksum.trim() || !current || current.checksum !== source.checksum || !sourceCanGround(current)) return null;
-    ordered.push(current);
-  }
-  return ordered;
+  if (!exactSourceIds(ids)) return null;
+  return `/api/c2c/projects/${encodeURIComponent(pid)}/sources?${new URLSearchParams({ sourceIds: ids.join(',') })}`;
+}
+
+function selectionMatches(page: SourcesPage, checkedIds: number[]): boolean {
+  const selection = page.selection;
+  return exactSourceIds(checkedIds) && selection?.scope === 'verified-accessible-sources'
+    && exactSourceIds(selection.sourceIds) && selection.sourceIds.length === checkedIds.length
+    && selection.sourceIds.every(id => checkedIds.includes(id));
+}
+
+function checkedVersionMatches(source: SourceRow, selected: CheckedSource, pid: string): boolean {
+  return source.id === selected.id && source.projectId === pid && source.isCurrent === true && source.dataEligible === true
+    && typeof selected.checksum === 'string' && /^[0-9a-f]{64}$/i.test(selected.checksum)
+    && typeof source.checksum === 'string' && /^[0-9a-f]{64}$/i.test(source.checksum)
+    && source.checksum === selected.checksum && sourceCanGround(source);
+}
+
+/** A fresh read must confirm the entire checked set and its recorded bytes/parent. */
+export function selectedSourcesRead(value: unknown, pid: string, checked: readonly CheckedSource[]): value is SourcesPage {
+  if (!isSourcesPage(value) || value.projectId !== pid || value.sources.length !== checked.length
+    || !selectionMatches(value, checked.map(source => source.id))) return false;
+  const ids = new Set(value.sources.map(source => source.id));
+  return ids.size === checked.length && checked.every(selected => value.sources.some(source => checkedVersionMatches(source, selected, pid)));
 }
 
 /** Whether this source's text is available to draft from: persisted text and recorded processing state. */

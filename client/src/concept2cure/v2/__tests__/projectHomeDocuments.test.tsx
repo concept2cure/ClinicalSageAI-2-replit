@@ -78,7 +78,7 @@ const DOSSIER = {
     dossierRow('1', 'Module 1 · Regional · EMA MAA', 4, 'doc_ema', 'ema')],
 };
 const source = (id: number, title: string, extractionStatus: string) => ({
-  id, title, checksum: `sha-${id}`, ingestionStatus: 'ingested', extractionStatus, createdAt: '2026-10-01T09:00:00Z',
+  id, title, checksum: id.toString(16).padStart(64, '0'), projectId: PID, ingestionStatus: 'ingested', extractionStatus, createdAt: '2026-10-01T09:00:00Z',
   mimeType: 'application/pdf', fileSize: 1000, artifactId: null, origin: 'chat_upload', extractionMethod: 'pdf-text',
   // The fields GET /:id/sources answers (shapeSource). Grounding requires each
   // to be positively true; an absent one is unknown, and unknown never grounds.
@@ -86,15 +86,6 @@ const source = (id: number, title: string, extractionStatus: string) => ({
 });
 
 type Opts = { docs?: () => Response; program?: Record<string, unknown>; sources?: () => Response; dossier?: unknown };
-async function exactSourcePage(response: Response, url: string): Promise<Response> {
-  const selected = new URL(url, 'http://example.test').searchParams.get('sourceIds');
-  if (!selected || !response.ok) return response;
-  const body = await response.json();
-  const sourceIds = selected.split(',').map(Number);
-  const rows = Array.isArray(body.sources) ? body.sources.filter((row: { id: number }) => sourceIds.includes(row.id)) : [];
-  if (rows.length !== sourceIds.length) return down();
-  return ok({ ...body, sources: rows, selection: { scope: 'verified-accessible-sources', sourceIds } });
-}
 function serve(opts: Opts = {}) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, raw: unknown) => {
@@ -105,9 +96,13 @@ function serve(opts: Opts = {}) {
     if (url === DOCS_URL) return (opts.docs ?? (() => ok({ documents: DOCS })))();
     if (url === `/api/c2c/projects/${PID}/dossier`) return ok(opts.dossier ?? DOSSIER);
     if (url === `/api/c2c/projects/${PID}/sources` || url.startsWith(`/api/c2c/projects/${PID}/sources?sourceIds=`)) {
-      const response = opts.sources ? opts.sources()
-        : ok({ projectId: PID, sources: [source(11, 'csr-study-101.pdf', 'extracted'), source(12, 'scan.pdf', 'failed')] });
-      return exactSourcePage(response, url);
+      const response = opts.sources ? opts.sources() : ok({ projectId: PID,
+        sources: [source(11, 'csr-study-101.pdf', 'extracted'), source(12, 'scan.pdf', 'failed')] });
+      const ids = new URL(url, 'https://fixture.test').searchParams.get('sourceIds');
+      if (!ids || !response.ok) return response;
+      const body = await response.json(); const selected = ids.split(',').map(Number);
+      const sources = body.sources.filter((row: { id: number }) => selected.includes(row.id));
+      return ok({ ...body, projectId: PID, selection: { scope: 'verified-accessible-sources', sourceIds: selected }, sources, window: { shown: sources.length, truncated: false } });
     }
     if (url.startsWith('/api/chat/threads?program_id=')) return ok({ threads: [] });
     // The project's Skills card (ProjectSkills.tsx): nothing deployed, read-only.
@@ -118,6 +113,8 @@ function serve(opts: Opts = {}) {
 
 const props = () =>
   ({ surface: { id: 'project-home', label: 'Project home' } as never, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
+const signInForSources = () => authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 12, organizationId: 7 }))}.synthetic`,
+  { id: '12', organizationId: '7', roles: ['author'], permissions: [] });
 const tab = (label: string) =>
   Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find((b) => b.textContent?.trim() === label);
 async function open(label: string) {
@@ -132,8 +129,6 @@ const moduleRow = (startsWith: string) =>
    home line says the same words of the same filing; its own cases are below. */
 const rowsSaying = (words: string) =>
   Array.from(document.querySelectorAll<HTMLElement>('[data-testid="pj-lmod-doc"]')).filter((d) => d.textContent === words).length;
-const signIn = (role: string) => authService.setToken(`e30.${btoa(JSON.stringify({ userId: 12, organizationId: 7 }))}.fixture`,
-  { id: '12', organizationId: '7', roles: [role], permissions: [] }, 'fixture-refresh', 3600);
 
 beforeEach(() => {
   (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-410' };
@@ -409,7 +404,7 @@ describe('Evidence — every way a source comes in', () => {
   });
 
   it('"Write from these sources" hands the readable sources to AnA and never opens the editor', async () => {
-    signIn('member');
+    signInForSources();
     serve();
     const p = props();
     render(<ProjectHome {...p} />);
@@ -418,8 +413,9 @@ describe('Evidence — every way a source comes in', () => {
     if (!screen.queryByRole('heading', { name: 'Data room' })) await open('Evidence');
     await screen.findByText('csr-study-101.pdf');
     fireEvent.click(screen.getByRole('button', { name: /Write from these sources/ }));
-    await waitFor(() => expect((window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS, 'only the readable source').toEqual(['11']));
+    await waitFor(() => expect(p.onAsk).toHaveBeenCalledTimes(1));
     expect(p.onNav).not.toHaveBeenCalledWith('document-authoring');
+    expect((window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS, 'only the readable source').toEqual(['11']);
     expect(p.onAsk).toHaveBeenCalledTimes(1);
     expect(String(p.onAsk.mock.calls[0][0])).toMatch(/1 readable source/);
   });
@@ -474,7 +470,7 @@ describe('Review findings — the row, the handoff and the filing type say what 
   });
 
   it('"Write from these sources" hands over the 10 newest readable sources, and says "newest"', async () => {
-    signIn('member');
+    signInForSources();
     const many = Array.from({ length: 12 }, (_, i) => source(100 + i, `source-${100 + i}.pdf`, 'extracted'));
     serve({ sources: () => ok({ projectId: PID, sources: many }) });
     const p = props();
@@ -484,14 +480,15 @@ describe('Review findings — the row, the handoff and the filing type say what 
     const btn = screen.getByRole('button', { name: /Write from these sources/ });
     expect(btn.getAttribute('title')).toBe('Ask AnA to draft from the 10 newest readable sources in this data room');
     fireEvent.click(btn);
+    await waitFor(() => expect(p.onAsk).toHaveBeenCalledTimes(1));
     // The route lists newest first: the first ten.
-    await waitFor(() => expect((window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS)
-      .toEqual(Array.from({ length: 10 }, (_, i) => String(100 + i))));
+    expect((window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS)
+      .toEqual(Array.from({ length: 10 }, (_, i) => String(100 + i)));
     expect(String(p.onAsk.mock.calls[0][0])).toBe("Use the 10 newest readable sources in this project's data room as the context for drafting.");
   });
 
   it('a data room cut by the server window says "newest", even under the limit', async () => {
-    signIn('member');
+    signInForSources();
     serve({
       sources: () => ok({
         projectId: PID,
@@ -541,6 +538,8 @@ describe('Author — an empty Documents list, by who is listed every document', 
     await waitFor(() => expect(tab('Plan')?.getAttribute('data-status')).toBe('active'));
     await open('Author');
   };
+  const signIn = (role: string) => authService.setToken(`e30.${btoa(JSON.stringify({ userId: 12, organizationId: 7 }))}.fixture`,
+    { id: '12', organizationId: '7', roles: [role], permissions: [] }, 'fixture-refresh', 3600);
 
   it('an empty project says so in words, to a person who sees every document', async () => {
     signIn('admin');

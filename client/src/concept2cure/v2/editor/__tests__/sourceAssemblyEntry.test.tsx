@@ -8,6 +8,7 @@ vi.mock('@/services/portal/authService', async original => {
   const actual = await original<typeof import('@/services/portal/authService')>();
   return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }) };
 });
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 import { SourceAssemblyAction, SourceAssemblyDialog } from '../SourceAssemblyDialog';
 import { authService } from '@/services/portal/authService';
@@ -52,11 +53,10 @@ beforeEach(async () => {
   apiRequest.mockReset().mockImplementation(async (_method: string, path: string) => {
     if (path.startsWith('/api/authoring/docs?')) return documents();
     if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources`)) {
-      const exactIds = new URL(path, 'http://example.test').searchParams.get('sourceIds')?.split(',').map(Number);
-      const rows = exactIds ? sources.filter(row => exactIds.includes(row.id)) : sources;
-      return ok({ success: true, projectId: PROGRAM, sources: rows,
-        ...(exactIds ? { selection: { scope: 'verified-accessible-sources', sourceIds: exactIds } } : {}),
-        total: rows.length, currentTotal: rows.length, page: { limit: 50, offset: 0 }, window: { shown: rows.length, truncated: false } });
+      const ids = new URL(path, 'https://fixture.test').searchParams.get('sourceIds')?.split(',').map(Number);
+      const selected = ids ? sources.filter(row => ids.includes(row.id)) : sources;
+      return ok({ success: true, projectId: PROGRAM, ...(ids ? { selection: { scope: 'verified-accessible-sources', sourceIds: ids } } : {}), sources: selected.map(row => ({ ...row, projectId: PROGRAM })),
+        total: selected.length, currentTotal: selected.length, page: { limit: 50, offset: 0 }, window: { shown: selected.length, truncated: false } });
     }
     if (path === `/api/c2c/projects/${PROGRAM}`) return ok({ id: PROGRAM, name: 'Original project', code: 'P191' });
     return ok({ success: true, data: { tree: [] } });
@@ -97,7 +97,7 @@ describe('source-first entry in the existing Data Room rail', () => {
     fireEvent.click(screen.getByLabelText('Use Second selected source as context'));
     fireEvent.click(within(screen.getByTestId('data-room-build-selected')).getByRole('button', { name: 'Build in editor' }));
     await chooseDocument();
-    const dialog = within(screen.getByTestId('source-assembly-dialog'));
+    const dialog = within(await screen.findByTestId('source-assembly-dialog'));
     expect(dialog.getByText(/Second selected source/)).toBeTruthy();
     expect(dialog.queryByText(new RegExp(source.title))).toBeNull();
     expect(mutations()).toHaveLength(0);

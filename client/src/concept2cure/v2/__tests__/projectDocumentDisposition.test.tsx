@@ -6,17 +6,12 @@ import type { DocumentDispositionChoice } from '@shared/document-data-dispositio
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
-vi.mock('@/services/portal/authService', async original => {
-  const actual = await original<typeof import('@/services/portal/authService')>();
-  return { ...actual, useAuth: () => ({ user: null }), useAuthUser: () => actual.authService.getUser() };
-});
+vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<Record<string, unknown>>()), apiRequest }));
-vi.mock('@/contexts/TenantContext', () => ({
-  useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }),
-}));
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { authService } from '@/services/portal/authService';
 import { Vault } from '../surfaces/Vault';
-import { authService, type AuthUser } from '@/services/portal/authService';
 import { PID, DOC_ID, ok, props, uploadDoc, cabinetTree, vaultPayload, mockVaultApi } from './_vault-surface-fixtures';
 
 /** The data room is on Project home's Evidence tab (FILING_SPINE.md F3). */
@@ -35,9 +30,10 @@ const preview = () => ({ target: { type: 'captured_source', id: '1', title: 'Pro
   replacement: null, allowedChoices: ['keep_data', 'remove_data', 'supersede'], previewToken: 'review-token',
   expiresAt: new Date(Date.now() + 600_000).toISOString(), currentDisposition: null });
 beforeEach(() => {
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.synthetic`, {
+    id: '7', organizationId: '4', roles: ['author'], permissions: [],
+  });
   apiRequest.mockReset(); window.C2C_PROJECT = { id: PID, title: 'Program', code: 'PRG', ws: '', status: 'active' };
-  const user = { id: '7', organizationId: '4', email: 'synthetic@example.test', roles: ['member'], permissions: [] } as unknown as AuthUser;
-  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.fixture`, user, 'fixture-refresh');
 });
 afterEach(() => { cleanup(); authService.endSession(null); delete window.C2C_PROJECT; delete window.C2C_SOURCE_PINS; });
 
@@ -64,9 +60,9 @@ describe('reachable project document lifecycle controls', () => {
   it.each(['keep_data', 'remove_data'] as const)('DataRoom refresh applies %s eligibility to both local and handed-off pins', async choice => {
     let disposition: DocumentDispositionChoice | null = null;
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) return ok({ projectId: PID,
-        ...(url.includes('sourceIds=') ? { selection: { scope: 'verified-accessible-sources', sourceIds: [1] } } : {}),
-        sources: [source({ disposition, dataEligible: disposition !== 'remove_data', originalFileAvailable: disposition === null })] });
+      if (url.includes('?sourceIds=')) return ok({ projectId: PID, selection: { scope: 'verified-accessible-sources', sourceIds: [1] }, sources: [{ ...source({ disposition,
+        dataEligible: disposition !== 'remove_data', originalFileAvailable: disposition === null }), projectId: PID }] });
+      if (url === `/api/c2c/projects/${PID}/sources`) return ok({ sources: [source({ disposition, dataEligible: disposition !== 'remove_data', originalFileAvailable: disposition === null })] });
       if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Program', code: 'PRG' });
       if (url.includes('/document-dispositions/preview')) return ok({ preview: preview() });
       if (method === 'POST' && url.endsWith('/document-dispositions')) {

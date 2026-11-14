@@ -37,7 +37,7 @@ const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }
 const token = (user = AUTHOR, revision = 1) => `fixture.${btoa(JSON.stringify({ userId: Number(user.id), organizationId: Number(user.organizationId), revision }))}.fixture`;
 const startSession = (user = AUTHOR, revision = 1) => authService.setToken(token(user, revision), user, `fixture-refresh-${revision}`);
 const source = (id: number, patch: Partial<SourceRow> = {}): SourceRow => ({
-  id, title: `Source ${id}.pdf`, checksum: (id === 11 ? 'a' : 'b').repeat(64),
+  id, title: `Source ${id}.pdf`, projectId: A, checksum: (id === 11 ? 'a' : 'b').repeat(64),
   ingestionStatus: 'ingested', extractionStatus: 'extracted', textAvailable: true,
   isCurrent: true, dataEligible: true, originalFileAvailable: true, disposition: null,
   createdAt: '2026-11-13T12:00:00Z', mimeType: 'application/pdf', fileSize: 100,
@@ -134,9 +134,6 @@ describe('the checked set belongs to the Data Room, not its current page', () =>
     };
     selected = () => pending.promise;
     mount(); await screen.findByText('Source 11.pdf'); pin(11);
-    // The existing search effect settles its initial empty query after 300ms
-    // and resets pagination. Let that real initial visit settle before paging.
-    if (navigation === 'pagination') await act(async () => { await new Promise(resolve => setTimeout(resolve, 350)); });
     if (navigation === 'search') fireEvent.change(screen.getByLabelText('Search sources by title or text'), { target: { value: 'second source' } });
     else fireEvent.click(screen.getByRole('button', { name: 'Older sources' }));
     await screen.findByText('Source 22.pdf'); pin(22);
