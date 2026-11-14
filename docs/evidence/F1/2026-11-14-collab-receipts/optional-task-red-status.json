@@ -1,0 +1,23 @@
+{
+  "baselineSourceSha256": "12e7a47b6927224d218245e65e091d5c654fe05e093d20ac272feb0fbc4d53cd",
+  "testSha256": "917bb364edf6feaa61bf9094205bcf9761b01a54646b4a1dd2f9f3a1bce8b054",
+  "tests": 20,
+  "failed": 8,
+  "passedControls": 12,
+  "exitCode": 1,
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "failureNames": [
+    "a confirmed message with an unconfirmed optional task > preserves uncertainty without a made-up row after invalid identity 42",
+    "a confirmed message with an unconfirmed optional task > preserves uncertainty without a made-up row after invalid identity {}",
+    "a confirmed message with an unconfirmed optional task > preserves uncertainty without a made-up row after invalid identity true",
+    "a confirmed message with an unconfirmed optional task > preserves uncertainty without a made-up row after invalid identity \"   \"",
+    "a confirmed message with an unconfirmed optional task > preserves uncertainty without a made-up row after contradictory success envelope",
+    "a confirmed message with an unconfirmed optional task > preserves uncertainty without a made-up row after returned unknown code with client status",
+    "a confirmed message with an unconfirmed optional task > preserves uncertainty without a made-up row after thrown unknown code with client status",
+    "known optional-task refusal and successful receipt controls > reports a sent message and a task not created after returned explicit audit rollback"
+  ],
+  "scope": "Synthetic React/UI API receipts; no provider, real message/task writes, source edits or Git mutations by this worker."
+}

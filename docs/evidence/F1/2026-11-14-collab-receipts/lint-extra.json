@@ -1,0 +1,14 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "path": "docs/evidence/F1/2026-11-14-collab-receipts/receipt-browser.cjs",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  }
+]
