@@ -77,18 +77,21 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); clearAuthToken(); });
 
-const mount = () =>
+const renderBoard = () =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <TaskBoard {...({ onAsk: () => {}, onNav } as unknown as React.ComponentProps<typeof TaskBoard>)} />
     </QueryClientProvider>,
   );
+/* The List is the first view now (D6.md §A.4 step 5; P-131). These cases are about the board's cards and
+   their controls, so they open the Board, one click away. */
+const mount = async () => { renderBoard(); fireEvent.click(await screen.findByRole('button', { name: 'Board' })); };
 
 const card = (title: string) => screen.findByRole('button', { name: `Open ${title}` });
 
 describe("TaskBoard — every store's work", () => {
   it("labels another store's card with its store and offers no move; the board's own card keeps its controls", async () => {
-    mount();
+    await mount();
     const schedule = await card(SCHEDULE.title);
     expect(schedule.textContent).toMatch(/Schedule/);
     expect(within(schedule).queryByRole('button', { name: 'Advance' })).toBeNull();
@@ -98,14 +101,14 @@ describe("TaskBoard — every store's work", () => {
   });
 
   it('counts work blocked in another store in the Blocked column', async () => {
-    mount();
+    await mount();
     await card(SCHEDULE.title);
     const blockedHeader = screen.getAllByText('Blocked').find((el) => el.closest('.tb-col-h'));
     expect(blockedHeader?.closest('.tb-col-h')?.querySelector('.kn')?.textContent).toBe('2');
   });
 
   it('opening it says where it lives and opens that screen on its project, with no board edit control', async () => {
-    mount();
+    await mount();
     fireEvent.click(await card(SCHEDULE.title));
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
     // A project's page is named by its project (section 9), not "Project home".
@@ -122,7 +125,7 @@ describe("TaskBoard — every store's work", () => {
   });
 
   it('requires an authorized exact native filing read before opening Submission Center', async () => {
-    mount();
+    await mount();
     fireEvent.click(await card(FILING.title));
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
     fireEvent.click(within(detail).getByRole('button', { name: 'Open in Submission Center' }));
@@ -133,12 +136,12 @@ describe("TaskBoard — every store's work", () => {
 
   it('names a store it could not read, and says nothing when every store was read', async () => {
     boardMeta = { partial: true, unreadSources: ['c2c_project_work_items'] };
-    mount();
+    await mount();
     const note = await screen.findByTestId('tb-partial');
     expect(note.textContent).toMatch(/agency correspondence/);
     cleanup();
     boardMeta = { partial: false, unreadSources: [] };
-    mount();
+    await mount();
     await card(OWN.title);
     expect(screen.queryByTestId('tb-partial')).toBeNull();
   });
