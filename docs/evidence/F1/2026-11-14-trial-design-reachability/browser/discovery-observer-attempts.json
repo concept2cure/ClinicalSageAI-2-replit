@@ -1,0 +1,13 @@
+{
+  "attempts": [
+    {
+      "outcome": "observer assertion rejected",
+      "detail": "Initial probe required a literal program= query after CmdK navigation; actual shell project scope is retained independently, so URL-only identity assertion was incorrect."
+    },
+    {
+      "outcome": "observer selector corrected",
+      "detail": "Exact getByText Protocol scope waits for a wrapped label whose text also includes its select options. Replaced with the actual accessible Protocol scope combobox."
+    }
+  ],
+  "productionFinding": "No project-scope loss observed after corrected accessible-control/native-read checks. No native records written by these read-only probes."
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLiveRows } from '../dataConnect';
 import type { PdevDoc } from '../fixtures/protocol-data';
 import * as PG from './ProtocolGov';
@@ -6,6 +6,8 @@ import { ProtocolDevForm } from './ProtocolDevForms';
 import { FileProtocolProgramDrawer } from './ProtocolDevFileProgram';
 import { APP_REGISTRY } from '@shared/regulatory/app-registry';
 import { surfaceLeaveRefusal } from '../navParams';
+import { captureShellProjectGuard } from '../shellProject';
+import { captureAuthoringSession } from '../editor/authoringCurrentRead';
 
 interface ProtocolIndexRow { id: string; title: string; shortTitle?: string; status?: string; programId?: string | null }
 const isIndex = (value: unknown): value is ProtocolIndexRow[] => Array.isArray(value) && value.every((row) =>
@@ -51,9 +53,14 @@ interface SelectionBarProps {
   scope: string;
   setScope: (scope: string) => void;
   onCreated: (id?: number | null) => void;
+  onStarted?: (intent: ProtocolStartIntent) => void;
+  onSelectionChange?: () => void;
 }
 
-export function ProtocolSelectionBar({ selection, programId, programName, scope, setScope, onCreated }: SelectionBarProps) {
+/** A confirmed start can continue while its original account and project visit are current. */
+export interface ProtocolStartIntent { id: number; current: () => boolean }
+
+export function ProtocolSelectionBar({ selection, programId, programName, scope, setScope, onCreated, onStarted, onSelectionChange }: SelectionBarProps) {
   const [starting, setStarting] = useState(false);
   const [filing, setFiling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,12 +82,14 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
         {programId && <option value={programId}>Open project: {programName || programId}</option>}
         <option value="unfiled">Unfiled protocols</option><option value="all">All organization protocols</option>
       </select></label>
-      {selection.index.rows.length > 0 && <label>Protocol <select aria-label="Protocol document" value={selection.selectedId ?? ''} onChange={(event) => changeSelection(() => selection.select(event.target.value))}>
+      {selection.index.rows.length > 0 && <label>Protocol <select aria-label="Protocol document" value={selection.selectedId ?? ''} onChange={(event) => changeSelection(() => { onSelectionChange?.(); selection.select(event.target.value); })}>
         {selection.index.rows.map((row) => <option key={row.id} value={row.id}>
           {[row.shortTitle, row.title, PG.inWords(row.status), !row.programId && 'Unfiled'].filter(Boolean).join(' · ')}
         </option>)}
       </select></label>}
-      <PG.Btn icon="plus" variant="primary" onClick={() => changeSelection(() => setStarting(true))} disabled={!programId}>Start a protocol</PG.Btn>
+      <PG.Btn icon="plus" variant="primary" onClick={() => changeSelection(() => setStarting(true))} disabled={!programId}>
+        {selection.empty ? 'Start study & protocol design' : 'Start a protocol'}
+      </PG.Btn>
       {programId && selection.doc && !selection.doc.programId && !['finalized', 'superseded'].includes(selection.doc.status) &&
         <PG.Btn icon="folder" variant="outline" onClick={() => changeSelection(() => setFiling(true))}>File protocol in open project</PG.Btn>}
     </div>
@@ -88,24 +97,47 @@ export function ProtocolSelectionBar({ selection, programId, programName, scope,
     {selection.doc && !selection.doc.programId && <p>This protocol is unfiled. It has no recorded project association.</p>}
     {error && <div className="pde-refusal" role="alert">{error}</div>}
     <SelectionDialogs starting={starting} filing={filing} selection={selection} programId={programId} programName={programName}
-      onCreated={onCreated} closeStart={() => setStarting(false)} closeFile={() => setFiling(false)}
+      onCreated={onCreated} onStarted={onStarted} closeStart={() => setStarting(false)} closeFile={() => setFiling(false)}
       failed={(message) => { setStarting(false); setError(message); }} />
 
   </div>;
 }
 
-function SelectionDialogs({ starting, filing, selection, programId, programName, onCreated, closeStart, closeFile, failed }: {
+function SelectionDialogs({ starting, filing, selection, programId, programName, onCreated, onStarted, closeStart, closeFile, failed }: {
   starting: boolean; filing: boolean; selection: ReturnType<typeof useProtocolSelection>;
   programId: string | null; programName: string | null; onCreated: (id?: number | null) => void;
+  onStarted?: (intent: ProtocolStartIntent) => void;
   closeStart: () => void; closeFile: () => void; failed: (message: string) => void;
 }) {
   return <>
-    {starting && programId && <ProtocolDevForm kind="start-protocol" documentId={0}
-      target={{ programId, label: programName || programId }} onCancel={closeStart}
-      onDone={(_kind, receipt) => { closeStart(); onCreated(receipt ? receipt.id : undefined); }}
-      onError={failed} />}
+    {starting && programId && <StartProtocolDialog programId={programId} programName={programName}
+      onCancel={closeStart} onCreated={onCreated} onStarted={onStarted} onError={failed} />}
     {filing && programId && selection.doc && <FileProtocolProgramDrawer documentId={Number(selection.doc.id)} programId={programId}
       programName={programName} onCancel={closeFile}
       onDone={() => { closeFile(); onCreated(Number(selection.doc?.id)); }} />}
   </>;
+}
+
+/** Closing a successful form retires only its callback, not the admitted read-back continuation. */
+function StartProtocolDialog({ programId, programName, onCancel, onCreated, onStarted, onError }: {
+  programId: string; programName: string | null; onCancel: () => void;
+  onCreated: (id?: number | null) => void; onStarted?: (intent: ProtocolStartIntent) => void; onError: (message: string) => void;
+}) {
+  const live = useRef(true);
+  const [current] = useState(() => {
+    const session = captureAuthoringSession(), project = captureShellProjectGuard();
+    return () => session.sameRevision() && project();
+  });
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  return <ProtocolDevForm kind="start-protocol" documentId={0} target={{ programId, label: programName || programId }}
+    onCancel={onCancel}
+    onDone={(_kind, receipt) => {
+      if (!live.current || !current()) return;
+      const id = receipt && receipt.id;
+      if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0) {
+        onError('The server did not confirm a protocol id. Refresh the protocol picker before starting another document.'); return;
+      }
+      onCancel(); onStarted?.({ id, current }); onCreated(id);
+    }}
+    onError={(message) => { if (live.current && current()) onError(message); }} />;
 }

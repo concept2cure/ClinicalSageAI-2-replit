@@ -9,6 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import { getSurface, UI_SURFACES } from '@shared/constants/ui-surface-registry';
 import { isLaunchSurface } from '@shared/constants/launch-scope';
+import { APP_REGISTRY } from '@shared/regulatory/app-registry';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { resolveSurfaceIdForTarget } from '../navParams';
 import {
@@ -318,7 +319,7 @@ describe('getAnaContext says only what is true about where the person is', () =>
   it('the focus on an authoring surface does not change with the client type', () => {
     const bio = getAnaContext('protocol-dev', 'biopharma');
     const mdx = getAnaContext('protocol-dev', 'medtech');
-    expect(bio.focus).toBe('The protocol workspace');
+    expect(bio.focus).toBe(APP_REGISTRY.study_protocol_design.label);
     expect(mdx.focus).toBe(bio.focus);
   });
 
