@@ -7,7 +7,7 @@
  * (support/coordination-fixture.ts).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { coordinationSha256, readRunCoordination, coordinationRefusalReceipt, readCoordinationEvents,
+import { coordinationSha256, readRunCoordination, coordinationRefusalReceipt, readCoordinationEvents, appendRunCoordination, openRunCoordination,
   type CoordinationPool, type RunCoordinationHost } from '../run-events';
 import type { WorkerEstimate, WorkerPhase, WorkerSnapshot } from '@shared/ana/turn-timeline';
 import { runWithTenantScope } from '../../../db/tenantStore';
@@ -59,6 +59,7 @@ describe('run coordination decisions (spike check 1)', () => {
   registerEstimateLedgerCases();
   registerRecipientLifecycleCases();
   registerMessageSnapshotCases();
+  registerReportReferenceCases();
 
   it('reconciles a lost COMMIT reply and retries the same intent without a duplicate event', async () => {
     let lost = true, disposed = false;
@@ -133,6 +134,62 @@ describe('run coordination decisions (spike check 1)', () => {
     expect(audit).not.toContain('superseded source version');
   });
 });
+
+function registerReportReferenceCases() {
+  it('projects only the latest verified report receipt rather than a later disposition receipt',async () => {
+    const {scope,source,host}=await subject();
+    const worker=await host.assign({...assignment('report-ref'),source});
+    expect(await host.snapshot()).toMatchObject({reports:[]});
+    const reportSha256=coordinationSha256('Private worker report fixture');
+    const report=await host.report(worker.handle,{intentId:'report-ref-published',reportSha256,source,outcome:'completed'});
+    const expected={worker:worker.handle.worker,receipt:report.receipt,reportSha256};
+    expect(await host.snapshot()).toMatchObject({reports:[expected]});
+    const decision=await host.assess({intentId:'rework-ref',worker:worker.handle.worker,reportEventId:report.receipt.eventId,reportSha256,
+      decision:'rework',reason:'Check the current recorded evidence again.'});
+    expect(decision.receipt.eventId).not.toBe(report.receipt.eventId);
+    expect(await host.snapshot()).toMatchObject({reports:[expected]});
+    const revision=await host.revise(worker.handle,{intentId:'revised-ref',reportSha256,basis:[{kind:'report',ref:report.receipt.eventId,sha256:reportSha256}]});
+    expect(await host.snapshot()).toMatchObject({reports:[{...expected,receipt:revision.receipt}]});
+    await expect(host.assess({intentId:'stale-ref',worker:worker.handle.worker,reportEventId:report.receipt.eventId,reportSha256,
+      decision:'rework',reason:'An old report cannot stand in for its current revision.'})).rejects.toMatchObject({code:'COORDINATION_REPORT_CHANGED'});
+    const restarted=await openRunCoordination({...scope,pool});
+    expect(await restarted.snapshot()).toMatchObject({reports:[{...expected,receipt:revision.receipt}]});
+    await expect(restarted.assess({intentId:'restart-accept',worker:worker.handle.worker,reportEventId:revision.receipt.eventId,reportSha256,
+      decision:'accepted_as_proposal',reason:'Read metadata must not recreate current source grants.'})).rejects.toMatchObject({code:'COORDINATION_SOURCE_HELD'});
+  });
+  it('returns the verified current report through the registered parent team action',async () => {
+    const {scope,source,host}=await subject(),worker=await host.assign({...assignment('team-ref'),source});
+    const reportSha256=coordinationSha256('Private parent-team fixture report');
+    const report=await host.report(worker.handle,{intentId:'team-report',reportSha256,source});
+    const [{bindParentCoordination},{getToolHandler}]=await Promise.all([import('../agentic-workflow-tools'),import('../AnaToolExecutor')]);
+    const ctx={organizationId:scope.organizationId,userId:scope.userId,projectId:42,sqlClient:syntheticCurrentPolicyClient};
+    bindParentCoordination(ctx,host);
+    const handler=getToolHandler('run_agent');if(!handler)throw new Error('Registered team handler missing');
+    const output=await runWithTenantScope({tenantId:String(scope.organizationId),accountId:scope.userId,source:'request'},() => handler({action:'team'},ctx));
+    expect(JSON.parse(output)).toHaveProperty('reports',[{worker:worker.handle.worker,receipt:report.receipt,reportSha256}]);
+    expect(output).not.toContain('Private parent-team fixture report');
+  });
+  it.each(['completed','incomplete','cancelled','failed'] as const)('projects actual %s report metadata without accepting the result',async outcome => {
+    const {scope,source,host}=await subject(),worker=await host.assign({...assignment('outcome-ref'),source});
+    const reportSha256=coordinationSha256(`Private ${outcome} fixture report`);
+    const report=await host.report(worker.handle,{intentId:'outcome-report',reportSha256,outcome,source});
+    expect(await host.snapshot()).toMatchObject({reports:[{worker:worker.handle.worker,receipt:report.receipt,reportSha256}]});
+    expect((await readRunCoordination(pool,scope)).workers[0].parentDisposition).toBe('pending');
+    await pool.query('DELETE FROM organization_users WHERE user_id=$1',[scope.userId]);
+    await expect(host.snapshot()).rejects.toThrow();
+  });
+  it.each(['missing_hash','wrong_worker','active_snapshot'] as const)('holds malformed latest report metadata instead of falling back: %s',async mode => {
+    const {scope,source,host}=await subject(),worker=await host.assign({...assignment('broken-ref'),source});
+    const reportSha256=coordinationSha256('Original verified report reference');
+    const report=await host.report(worker.handle,{intentId:'good-report',reportSha256,source});
+    await appendRunCoordination(pool,scope,{intentId:'malformed-report',intentHash:coordinationSha256(mode)},() => ({
+      operation:'revision',worker:mode==='wrong_worker'?'w2':worker.handle.worker,
+      snapshot:{...report.snapshot,revision:report.snapshot.revision+1,...(mode==='active_snapshot'?{phase:'checking'}:{})},
+      basis:[{kind:'report',ref:report.receipt.eventId,sha256:reportSha256}],model:null,
+      ...(mode==='missing_hash'?{}:{reportSha256})}));
+    await expect(host.snapshot()).rejects.toMatchObject({code:'RUN_COORDINATION_UNAVAILABLE'});
+  });
+}
 
 function registerMessageSnapshotCases() {
   it.each(['parent','child'] as const)('retains the original %s message through caller mutation before the actual append',async actor => {

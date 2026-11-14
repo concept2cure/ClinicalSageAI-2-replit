@@ -1959,3 +1959,56 @@ CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source 
 
 
 **Codex MDX continuation, 2026-11-14 (F1, W1/D2; P-114 item 5):** completes the existing IVD 510(k) outline and the selection paths that serve it. Narrow holds end at publication or 2026-11-14 03:30 UTC: `shared/regulatory/device-authoring-sections.ts`, `project-bootstrap.ts`; `server/services/c2c/rule-pack-lookup.ts`, `scaffold-project-documents.ts`; only the scaffold product-type argument in `server/routes/c2c/projects.ts`; `server/services/vault/vault-folders.ts`; only the IVD slot registry in `server/services/pathway-engines/estar/estar-mapper.ts`; the exact IVD-version exception in `migrations/20261005c_k510_denovo_estar_outline_v1_1.sql`; the approved content migration `20261114_k510_ivd_estar_outline_v1_0.sql` and its registration in `scripts/db/migration-set.mjs`; focused tests and this lane's design/evidence. Initial source `3692f44ad`; pre-edit What already exists and contract are `.design/client-journey/IVD_510K_OUTLINE_COMPLETION_2026-11-14.md`, evidence `docs/evidence/MDX-JOURNEY/2026-11-14-p114-5-ivd-outline/`. Existing generic documents retain their bound version and section meanings; new IVD performance keys never reuse the old bench/animal keys; E5 and E6 remain conditional with their original meanings (47 nodes, corrected against the actual form scripts). D8 CSS and W7's four held files are excluded. No new screen, route, service, table, provider or device transmission. Root owns integration/Git; outline and mapper workers own disjoint source, with independent review.
+
+### Codex continuation — verified report references and Railway beta assessment, 2026-11-14
+
+Canonical starting revision `3692f44ad`. The founder reports successful real OpenAI-key drafting in Codespaces;
+this is user-attested functional evidence, not an independently witnessed run or model PQ. Continue existing
+**F1/W1/D2** AnA coordination and, in a separate bounded **F1/W2/D1** lane, assess Railway beta hosting. This is
+an assessment and existing hosted-policy repair, not deployment authorization or a change to AWS launch gates.
+
+#### What already exists
+
+`server/services/ana/run-events.ts` verifies the ledger before projecting workers/messages; `turn-plan.ts` exposes
+that projection to its host. `sub-agent-shape.ts` serializes parent team context, and `agentic-workflow-tools.ts`
+serves the existing team action. Recorded worker reports already carry `reportSha256`, but normal parent context
+omits the report reference required by existing `update_plan.worker_dispositions`. Extend that same verified pass
+and context with bounded, content-free latest report receipts/hashes (maximum six), never a latest progress or
+disposition receipt masquerading as a report. Preserve source admission, privacy, ledger verification and budgets.
+The existing real-worker stream and PGlite coordination fixtures will prove reachability without a test-computed
+hash oracle. Searches covered report/revision/rework/team/receipt aliases, unreachable callers and full deletion
+history for agent-swarm/monitor/control-registry homes; no replacement projection exists. Terminal-worker restart,
+extra budgets and a full autonomous rework loop are outside this repair.
+
+`server/startup/env.ts` already refuses production hosted owner credentials and policy overrides, but recognizes
+only ECS metadata. Extend its private hosted predicate to nonblank automatic `RAILWAY_PROJECT_ID` or
+`RAILWAY_ENVIRONMENT_ID`, preserving the same policy/alias set and marker-free self-hosted behavior. Existing
+`env-hosted-owner-credential.test.ts` and `env-production-overrides-posture.test.ts` are the RED/GREEN homes.
+
+`Dockerfile.optimized` already supplies the production Node22/document/OCR image and provision target;
+`docker-compose.beta.yml` names the app, PostgreSQL/pgvector, Redis, ClamAV and embeddings. Existing database
+provision/migration scripts, readiness, shutdown and AWS S3/KMS custody remain canonical. Railway-specific config,
+workflow or deleted-history implementation was not found. Existing `docs/deployment/DEPLOYMENT.md` contains an
+obsolete Vercel recipe and generic Railway steps; `deployment-guide.md` still calls deleted `deploy.sh`.
+Converge those existing documentation homes onto the current image/database contract with official pricing,
+storage/security limitations, a concrete operator sequence and explicit unexecuted acceptance checks. Do not
+restore deleted Vercel/Replit/Celery deployment stacks or invent another image, worker service or provider.
+
+| Holder | Existing files and scope |
+|---|---|
+| Report-reference agent | `server/services/ana/{run-events,turn-plan,sub-agent-shape,agentic-workflow-tools}.ts`; existing `server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts`, `server/services/ana/__tests__/{run-coordination-dispositions,sub-agent-hostable}.test.ts` only |
+| Hosted-runtime agent | `server/startup/env.ts`; existing `server/startup/__tests__/{env-hosted-owner-credential,env-production-overrides-posture}.test.ts` only |
+| Root | This inventory, existing AnA evidence README, `docs/deployment/{DEPLOYMENT,deployment-guide}.md`, official-source assessment, integration, Git and sole full compiler |
+
+These narrow holds end at publication or **2026-11-15 00:00 UTC**, whichever comes first. No other lane is paused.
+No new production file, dependency, table, screen, route, tool, model or infrastructure is introduced. Agents do
+not mutate Git/runtime/compiler state. Interface contracts above are approved; root releases each implementation
+after this inventory and the matching evidence entry are written.
+
+**Implementation freeze:** hosted policy passes75/75 after30 genuine RED failures; verified report-reference
+reachability passes90/90 after actual-parent and corrected exact-baseline RED. Scoped lint has zero errors/no
+warning growth. Independent review closes both source slices and the costed deployment assessment. Worker
+test/lint processes are closed and source/test holds transfer to root for integration; no further worker edits.
+Canonical08044016b is merged normally without source-scope overlap. Root retains Git, adjacent integration,
+sole normal pre-push compiler, publication and owned Codespace verification. All holds release on successful
+canonical publication. Railway acceptance, paid provision, clinical qualification and AWS launch remain unclaimed.

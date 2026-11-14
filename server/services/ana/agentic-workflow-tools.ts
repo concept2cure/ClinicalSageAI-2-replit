@@ -25,6 +25,7 @@ import type { RunCoordinationHost, WorkerCoordinationHandle, CoordinationModel }
 import { z } from 'zod';
 import { stableStringify } from '../../../shared/canonical-json';
 import { coordinationSha256 } from './run-events';
+import { recordedTeamContext } from './sub-agent-shape';
 import {
   AGENT_INSTRUCTIONS_MAX,
   AGENT_OBJECTIVE_MAX,
@@ -249,7 +250,7 @@ async function handleCoordinationAction(input: Record<string, unknown>, ctx: Too
   if (input.action === 'team') {
     if (Object.keys(input).some(key => key !== 'action')) return JSON.stringify({ error: 'COORDINATION_INPUT_INVALID' });
     const board = await binding.host.snapshot(binding.handle);
-    return JSON.stringify({ workers: board.workers, messages: board.messages.map(({ text: _text, ...message }) => message) });
+    return recordedTeamContext(board);
   }
   if (input.action === 'message') {
     const parsed = z.object({ action: z.literal('message'), intent_id: z.string().min(1).max(200), recipient: z.string().regex(/^(anna|w[1-6])$/), message_kind: z.enum(['review','help','source','report']),text:z.string().min(1).max(2000).optional() }).strict().parse(input);
