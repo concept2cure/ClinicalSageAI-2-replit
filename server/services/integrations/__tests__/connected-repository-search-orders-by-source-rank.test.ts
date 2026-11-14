@@ -36,7 +36,7 @@ function deps(): ConnectorSearchDeps {
 
 describe('searchConnectedRepositories: position in the source, not a relevance score', () => {
   it("each document carries its repository's position, and no relevance score", async () => {
-    const res = await searchConnectedRepositories(1, { query: 'protocol' }, deps());
+    const res = await searchConnectedRepositories(1, { query: 'protocol', actorUserId: 11 }, deps());
     for (const d of res.documents) {
       expect(d).not.toHaveProperty('relevanceScore');
       expect(typeof (d as unknown as { sourceRank?: unknown }).sourceRank).toBe('number');
@@ -44,7 +44,7 @@ describe('searchConnectedRepositories: position in the source, not a relevance s
   });
 
   it("merges repositories by each one's own order, so no repository crowds out another", async () => {
-    const res = await searchConnectedRepositories(1, { query: 'protocol', limit: 4 }, deps());
+    const res = await searchConnectedRepositories(1, { query: 'protocol', limit: 4, actorUserId: 11 }, deps());
     expect(res.documents.map((d) => d.title)).toEqual([
       'google_drive #1',
       'veeva_vault #1',

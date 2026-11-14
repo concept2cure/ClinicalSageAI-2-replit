@@ -2,6 +2,10 @@
 
 **Scope:** `concept2cure-v2` in `concept2cure/ClinicalSageAI-2-replit`. Use the existing project workflow and one editor. A Codespace editor opening is not application readiness, and a working AI chat is not regulatory drafting qualification.
 
+**Continuing with GitHub Copilot:** start with the [current Codespaces handoff](../testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md#github-copilot-codespaces-handoff),
+which the devcontainer already opens. It links the current roadmap, file coordination, shared implementation and
+demo evidence, and explains how an existing Codespace receives published work.
+
 ## 1. Default fresh Codespace: local PostgreSQL and fictional demo data
 
 The repository's `.devcontainer/devcontainer.json` selects Node 22 on Bookworm, requests 4 CPUs, 16 GB memory and 32 GB storage, and forwards port **5000**. Its normal lifecycle is:
@@ -119,6 +123,18 @@ Responses are reported as codes without credentials:
 - `NO_PQ_QUALIFIED_MODEL` — production performance qualification required before model-backed regulatory drafting; NEVER bypass by changing `approvedForHighRisk` without evidence.
 
 The old Replit-era startup document's assertion that OpenAI quota "is currently exceeded" was historical and cannot establish your current API account balance.
+
+**Verify an actual AnA turn separately.** The doctor probes above do not establish that the app's conversation path works. After the running Codespace has received its existing provider secret, load its existing application profile and use the existing verifier for one short ordinary chat turn. This may incur provider API usage:
+
+```bash
+set -a
+. ~/.concept2cure-codespace/app.env
+set +a
+npm run verify:ana -- --model gpt-4o-mini --expect-provider openai --require-live \
+  --question "Reply only OPENAI_DEMO_OK. Do not use tools or change records."
+```
+
+The configured demo identity is used by default; `--email` selects another authorized user and `--project-id` supplies an admitted project. On a deployment without development login, use the existing `ANA_VERIFY_TOKEN` secret instead. Do not print tokens or profile values. The model option remains a governed request: the actual served provider is checked. A LIVE result requires answer text, a completed provider/model receipt and the turn's finalization event; a missing finalization or interrupted response fails. A successful turn does not qualify OpenAI for CSR drafting, scientific review or signatures. See [the completion-check evidence](../evidence/F1/2026-11-13-provider-receipt-completion/README.md).
 
 ## 5. Neon automated branch safety
 

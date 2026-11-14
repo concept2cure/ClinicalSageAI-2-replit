@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-11-13T23:15:17.117753+00:00",
+  "incomingCommit": "917486637",
+  "mergedHead": "a5c92a646ed60e25f8640176a1dd0a3d84e597de",
+  "previousMeasuredHead": "a10861e8c3c2ff3a29b800a9b0349558f5df7c0e",
+  "changedPaths": [
+    ".design/claude-convergence/COORDINATION.md",
+    "client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx",
+    "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx",
+    "docs/evidence/ANA-AGENTS/2026-09-27/README.md"
+  ],
+  "assessment": "Only the existing LicensingSurface runtime and billing tests change; shared session helper, editor, backend, exports and startup source are unchanged. No further CSR browser replay for this delta; focused billing tests, lint, warm compiler and final stamp check follow."
+}

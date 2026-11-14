@@ -1,0 +1,32 @@
+{
+  "exitCode": 1,
+  "ready": false,
+  "prerequisitesVerified": false,
+  "database": {
+    "status": "passed",
+    "code": "DB_SCHEMA_AND_RUNTIME_GRANTS_VERIFIED"
+  },
+  "tenantIsolation": {
+    "status": "passed",
+    "code": "RLS_ENFORCED_CONFIGURED"
+  },
+  "auth": {
+    "status": "passed",
+    "code": "JWT_CONFIGURATION_PRESENT"
+  },
+  "openai": {
+    "status": "missing",
+    "code": "OPENAI_KEY_MISSING"
+  },
+  "anthropic": {
+    "status": "missing",
+    "code": "ANTHROPIC_KEY_MISSING"
+  },
+  "application": {
+    "status": "blocked",
+    "code": "APP_REQUIRED_DEPENDENCIES_MISSING",
+    "httpStatus": 503,
+    "anaState": "no_provider",
+    "schemaState": "ready"
+  }
+}

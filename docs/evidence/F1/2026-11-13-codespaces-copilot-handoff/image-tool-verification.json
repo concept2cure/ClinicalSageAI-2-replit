@@ -1,0 +1,6 @@
+{
+  "release": "v0.22.1",
+  "asset": "go-containerregistry_Linux_x86_64.tar.gz",
+  "sha256": "0ab7a1d6932a213aed964ce97666c3077fe691c8606413674a8b3e0b9ec4cda0",
+  "checksumsMatched": true
+}

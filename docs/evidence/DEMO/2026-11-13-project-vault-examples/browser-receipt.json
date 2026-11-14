@@ -1,0 +1,72 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "steps": [
+    {
+      "step": "Demo person picker \u2192 Ana Author sign-in"
+    },
+    {
+      "step": "Projects \u2192 fictional sponsor \u2192 completed internal handover \u2192 named Vault child folder",
+      "url": "http://127.0.0.1:5000/concept2cure/vault?program=5c59fbe5-a13a-4a02-9d93-d280886c4265"
+    },
+    {
+      "step": "Existing Export action downloaded the folder ZIP",
+      "files": [
+        {
+          "name": "manifest.json",
+          "bytes": 4374,
+          "sha256": "f6efa0c0da4ede21913394312ade61d0b4db8ce58b6368d4cb8231e40105cb0f"
+        },
+        {
+          "name": "INDEX.txt",
+          "bytes": 1587,
+          "sha256": "a4fb5b8b42fcf49f218c824f33fbfc1641460e5aa2598308ae425eaadbd0ba17"
+        },
+        {
+          "name": "audit/audit-trail.json",
+          "bytes": 18379,
+          "sha256": "12c21c4c254cdd1e0f85bb6cc109496a8ccb75bb9cf290f55068a5158206f84c"
+        },
+        {
+          "name": "SHA256SUMS",
+          "bytes": 731,
+          "sha256": "72dc645aec9fd25b090b7f2f7c7dd2603a536d7064e6998213bce33571bfa7a2"
+        },
+        {
+          "name": "documents/002-internal-handover-report-synthetic.pdf",
+          "bytes": 12469,
+          "sha256": "79bda270ae306d4aaf17d2c6a956e8fa940fd5a2535fb2d463c2d406846b41d2"
+        },
+        {
+          "name": "documents/004-internal-handover-study-data-synthetic.json",
+          "bytes": 36582,
+          "sha256": "63bb9a5c08e55a2ea0064467dedccc682341fe89b19fdb7c56aaa59ddec8406a"
+        },
+        {
+          "name": "documents/001-internal-handover-inventory-synthetic.json",
+          "bytes": 1140,
+          "sha256": "434778ea6ed16a6c6d6c7dd73fd789652baf7949187a9bc1c35c61e89ed89b71"
+        },
+        {
+          "name": "documents/003-internal-handover-report-synthetic.docx",
+          "bytes": 13308,
+          "sha256": "72b75302a7ee4c1b2eae7bfb530d980cacd1e313d06bdff4239b1b99eb63e8fd"
+        }
+      ]
+    },
+    {
+      "step": "Opened the stored PDF in the existing Vault reader"
+    },
+    {
+      "step": "Opened the Word file as a PDF rendition in the existing Vault reader"
+    },
+    {
+      "step": "Existing Vault at 390px viewport",
+      "width": 390
+    }
+  ],
+  "pageErrors": [],
+  "providerCalls": 0,
+  "actualHostedCodespace": false,
+  "outcome": "passed",
+  "folderExportPayloadHashesVerified": true
+}

@@ -1,0 +1,14 @@
+{
+  "outcome": "passed",
+  "instructionFile": ".github/instructions/codespaces-demo.instructions.md",
+  "applyTo": "**",
+  "relativeLinksChecked": 16,
+  "openedFiles": [
+    "docs/getting-started/CODESPACE_AGENT_PLAYBOOK.md",
+    "docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md"
+  ],
+  "protectedFilesUnchanged": 7,
+  "actualCopilotSessionLoading": "not executed",
+  "extensionAndSettingsChanges": false,
+  "compilerOrBuildExecuted": false
+}

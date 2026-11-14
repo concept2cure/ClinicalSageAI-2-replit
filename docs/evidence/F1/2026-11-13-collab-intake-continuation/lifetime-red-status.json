@@ -1,0 +1,8 @@
+{
+  "failed": 5,
+  "passedControls": 4,
+  "sourceSHA256": "d16995eaa97f2d62602017ce651ae31a9ca7ccc6be70d51d4eabf2d5bfd13717",
+  "testSHA256": "5f2e9df41f0444e5fe9f6474c754113de998c373c239cc76ab7bbccd3a5876bd",
+  "sourceUnchanged": true,
+  "policy": "Close dismisses UI; existing same-account Send & assign operation may finish. Retired UI callback cannot close replacement intake."
+}

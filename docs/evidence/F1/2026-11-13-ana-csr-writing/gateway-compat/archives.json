@@ -1,0 +1,61 @@
+{
+  "compression": "gzip;mtime0;lossless",
+  "archives": [
+    {
+      "file": "green-source-before.json.gz",
+      "bytes": 1183,
+      "sha256": "ada06c267d23227c515bf6fcba46a70a9071ca373d16e8746453d087263c9635",
+      "uncompressedBytes": 2399,
+      "uncompressedSha256": "96b72610096db3b36e23fbc698ab3835b4f8a3c9e07d743421ceb8417d05e49c"
+    },
+    {
+      "file": "green-source-after.json.gz",
+      "bytes": 1183,
+      "sha256": "ada06c267d23227c515bf6fcba46a70a9071ca373d16e8746453d087263c9635",
+      "uncompressedBytes": 2399,
+      "uncompressedSha256": "96b72610096db3b36e23fbc698ab3835b4f8a3c9e07d743421ceb8417d05e49c"
+    },
+    {
+      "file": "green-command.json.gz",
+      "bytes": 427,
+      "sha256": "ebb8a92fe306ccd2aea45eaff6ba25db6c75d71dec9cfe8c5bc5a28e3157b8ab",
+      "uncompressedBytes": 902,
+      "uncompressedSha256": "7220f6f743ec57d79e16032b4672535abba362297180b41bac582720aa23b0fd"
+    },
+    {
+      "file": "green.json.gz",
+      "bytes": 7908,
+      "sha256": "910878e9603bf38a309892cbe4a1e66a6b115b1e006d4fd6b80ab78e281b30f3",
+      "uncompressedBytes": 67271,
+      "uncompressedSha256": "e008cc81a6a95b5a26f331b64caf782f36381c9bd130483d413c69e19c0f71ca"
+    },
+    {
+      "file": "green.txt.gz",
+      "bytes": 100,
+      "sha256": "e66d55ac817c2fd7f83b2fa3d1a56d640e991a9e5738fdebb1602728b81c72f7",
+      "uncompressedBytes": 85,
+      "uncompressedSha256": "7f74308473a6933c54fd98e36e1d6c3da01438ee164db377e0ed17e8f6845c8b"
+    },
+    {
+      "file": "review.json.gz",
+      "bytes": 627,
+      "sha256": "e58c5f7a617f71560739a4f4ff759d50a243cdc2450983a70427e835819e99c6",
+      "uncompressedBytes": 962,
+      "uncompressedSha256": "eee8d0b2c5fe4783e011c6c31ab69a0897041c8e0cd213ec5a43d61685e343f7"
+    },
+    {
+      "file": "runtime-diff.txt.gz",
+      "bytes": 4133,
+      "sha256": "da39c71c728c1c844b19d730d6fd355c93bab84bbc9a65ab87e6202836a0fa8b",
+      "uncompressedBytes": 13054,
+      "uncompressedSha256": "b9106e52c019ad1c7b9f9d3272c301e4ba18274611cf60c3a129f5274f6dd2f3"
+    },
+    {
+      "file": "run-gateway-pinned.py.gz",
+      "bytes": 1080,
+      "sha256": "f279cbf6a21cbb4bc977a4f13ec935dd8a1f8074fd9b5c86c974fb05324651c7",
+      "uncompressedBytes": 2932,
+      "uncompressedSha256": "499adc62fb836fe69a3f67cb6858a37a71f86c41f353752635a49be86ad3646d"
+    }
+  ]
+}

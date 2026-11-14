@@ -38,7 +38,14 @@ vi.mock('../fda-esg', () => ({
     async downloadAcknowledgment() { throw new Error('unused'); }
   },
 }));
-vi.mock('../../../db', () => ({ pool: { query: async () => ({ rows: [], rowCount: 0 }) } }));
+vi.mock('../../../db', () => ({ pool: { query: vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/SELECT\s+ou\.role\s+FROM\s+organization_users\s+ou\s+JOIN\s+users/i.test(sql)
+      && params[0] === 11 && params[1] === 7 && params[2] === 'active' && JSON.stringify(params[3]) === '["active"]') {
+    return { rows: [{ role: 'admin' }], rowCount: 1 };
+  }
+  return { rows: [], rowCount: 0 };
+}) } }));
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })) }));
 vi.mock('../../storage', () => ({ getStorageProvider: () => ({ name: 'test', put }) }));
 
 import { getGateway, refusedBeforeWire, SentPackageNotArchivedError } from '../index';

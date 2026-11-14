@@ -1,0 +1,10 @@
+{
+  "baselineCommit": "0e6b15b100939d5728b50bc34e70b823a6bbab09",
+  "sourceSha256": "12e7a47b6927224d218245e65e091d5c654fe05e093d20ac272feb0fbc4d53cd",
+  "testSha256": "c0e734e14c2d94dbbd686921495215de28ab5ccf17f80915f078a0d39f5df0aa",
+  "tests": 23,
+  "failed": 6,
+  "passed": 17,
+  "failure": "Existing full authService mock hides authService export; all six fail before launcher render.",
+  "finalSourceRestoredExactly": true
+}

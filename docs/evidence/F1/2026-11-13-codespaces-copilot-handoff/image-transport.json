@@ -1,0 +1,9 @@
+{
+  "sourceImage": "mcr.microsoft.com/devcontainers/typescript-node@sha256:7c2e711a4f7b02f32d2da16192d5e05aa7c95279be4ce889cff5df316f251c1d",
+  "transport": "Same exported filesystem in one local Docker layer; public configuration retained",
+  "rootfsTarSha256": "2abbc788218c3215f39b4b2e52e2d486683b373ccf4ea34fb3e4297f92065827",
+  "rootfsTarBytes": 1593799168,
+  "localImageId": "sha256:8842d4f5cfee165861e96806feba312bb171adc13e6508845463b50ea4d354f0",
+  "publicConfigurationMatched": true,
+  "elapsedSeconds": 75.66
+}

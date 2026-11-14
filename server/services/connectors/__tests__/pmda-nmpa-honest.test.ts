@@ -57,7 +57,7 @@ describe.each([
   });
 
   it('is skipped by the repository search as not connected, and never listed as searched', async () => {
-    const out = await searchConnectedRepositories(7, { query: 'pembrolizumab', connectors: [id] });
+    const out = await searchConnectedRepositories(7, { query: 'pembrolizumab', connectors: [id], actorUserId: null });
     expect(out.searched).toEqual([]);
     expect(out.skipped).toEqual([{ connector: id, reason: expect.stringMatching(/no search is connected/i) }]);
   });
@@ -78,7 +78,7 @@ describe.each([
       })));
     const out = await searchConnectedRepositories(
       7,
-      { query: 'pembrolizumab', connectors: [id] },
+      { query: 'pembrolizumab', connectors: [id], actorUserId: null },
       {
         getConnectorCatalog: async () => [{ id, configured: true, healthy: true }] as never,
         searchConnectors,

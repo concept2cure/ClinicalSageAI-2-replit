@@ -85,9 +85,10 @@ function refuseForbiddenProductionPosture(): void {
   refuseHostedOwnerCredential(process.env);
 }
 
-/** Set by the ECS agent in every task; a task definition cannot remove it. */
-function isEcsTask(env: NodeJS.ProcessEnv): boolean {
-  return Boolean(env.ECS_CONTAINER_METADATA_URI_V4 || env.ECS_CONTAINER_METADATA_URI);
+/** Automatic platform identities distinguish hosted APIs from self-hosted installs. */
+function isHostedRuntime(env: NodeJS.ProcessEnv): boolean {
+  return Boolean(env.ECS_CONTAINER_METADATA_URI_V4 || env.ECS_CONTAINER_METADATA_URI) ||
+    ['RAILWAY_PROJECT_ID', 'RAILWAY_ENVIRONMENT_ID'].some(name => (env[name] ?? '').trim() !== '');
 }
 
 /**
@@ -105,7 +106,7 @@ function isEcsTask(env: NodeJS.ProcessEnv): boolean {
  * is the same kind of statement and is refused with them.
  */
 function refuseHostedOverrides(env: NodeJS.ProcessEnv): void {
-  if (!isEcsTask(env)) return;
+  if (!isHostedRuntime(env)) return;
   const accepted = Object.keys(env)
     .filter(k => /^[A-Z0-9_]+_ACCEPT_[A-Z0-9_]+$/.test(k))
     .filter(k => {
@@ -118,9 +119,9 @@ function refuseHostedOverrides(env: NodeJS.ProcessEnv): void {
   }
   if (accepted.length > 0) {
     console.error(
-      `[FATAL] Operator overrides are not permitted on the hosted deployment (an ECS task): ` +
+      `[FATAL] Operator overrides are not permitted on the hosted deployment (ECS or Railway): ` +
         `${accepted.join(', ')}. Each switches a production refusal off. Remove it from the ` +
-        'task definition (terraform/stack); a self-hosted install may keep it.',
+        'service configuration; a self-hosted install may keep it.',
     );
     process.exit(1);
   }
@@ -152,14 +153,14 @@ export const HOSTED_OWNER_CREDENTIAL_NAMES = [
  * keeps its owner URL: it migrates from the same host.
  */
 function refuseHostedOwnerCredential(env: NodeJS.ProcessEnv): void {
-  if (!isEcsTask(env)) return;
+  if (!isHostedRuntime(env)) return;
   const held = HOSTED_OWNER_CREDENTIAL_NAMES.filter(k => (env[k] ?? '').trim() !== '');
   if (held.length > 0) {
     console.error(
       `[FATAL] The database owner's credential is not permitted in the API on the hosted deployment ` +
-        `(an ECS task): ${held.join(', ')}. That role owns every table and bypasses RLS; the API ` +
+        `(ECS or Railway): ${held.join(', ')}. That role owns every table and bypasses RLS; the API ` +
         'serves as app_service (APP_DATABASE_URL), and only the one-off database task holds it. ' +
-        'Remove it from the API task definition (terraform/stack).',
+        'Remove it from the API service configuration.',
     );
     process.exit(1);
   }

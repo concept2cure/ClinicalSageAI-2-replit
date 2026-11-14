@@ -1,0 +1,12 @@
+{
+  "steps": [
+    "Archived list opens actual project with archived status",
+    "Retained Vault folder exports while project remains archived",
+    "Opening sent no archive/restore request",
+    "Existing governed Restore returned demo fixture to active"
+  ],
+  "errors": [],
+  "projectId": "5c59fbe5-a13a-4a02-9d93-d280886c4265",
+  "providerCalls": 0,
+  "outcome": "passed"
+}

@@ -1,0 +1,24 @@
+{
+  "startedAt": "2026-11-13T23:15:17.291031+00:00",
+  "elapsedSeconds": 3.606,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx",
+    "client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "postbilling-inputs.json",
+  "inputCount": 58,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "postbilling-lint.txt.gz",
+  "outputSha256": "8e474c457845f298c5f0d64129921f2c3edc2bd21b69cb48ce942590f6363122",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

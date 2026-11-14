@@ -38,6 +38,7 @@ vi.mock('../../../services/clinical-regulatory-evidence/source-usage.service.js'
 }));
 
 import router from '../projects';
+import { DataRoomQueryError, parseDataRoomQuery } from '../../../services/clinical-regulatory-evidence/data-room-search';
 
 const P = '11111111-1111-1111-1111-111111111111';
 let authorityDb: PGlite;
@@ -93,6 +94,75 @@ beforeEach(async () => {
   listVaultForCatalog.mockReset(); listVaultForCatalog.mockResolvedValue({ total: 0, documents: [], facets: { project: [], kind: [], ctd: [], folder: [] } });
   gradeSources.mockReset();
   gradeSources.mockResolvedValue(new Map());
+});
+
+describe('exact selected-source query parsing on the existing Data Room read', () => {
+  it('binds one to twenty distinct positive PostgreSQL integer identities without list filters', () => {
+    expect(parseDataRoomQuery(P, { sourceIds: '1,2147483647' })).toEqual({ programId: P,
+      sourceIds: [1, 2147483647], limit: 2, offset: 0 });
+    const ids = Array.from({ length: 20 }, (_, n) => n + 1);
+    expect(parseDataRoomQuery(P, { sourceIds: ids.join(',') })).toMatchObject({ sourceIds: ids, limit: 20, offset: 0 });
+  });
+
+  it.each([
+    '', ' ', '0', '-1', '+1', '01', '1.0', '1e2', '1,', ',1', '1,,2', '1, 2', '1,1',
+    '2147483648', '9007199254740993', Array.from({ length: 21 }, (_, n) => n + 1).join(','),
+    ['1', '2'], { id: '1' }, 1, null, undefined,
+  ])('refuses malformed or ambiguous explicit sourceIds (%j) instead of widening', sourceIds => {
+    expect(() => parseDataRoomQuery(P, { sourceIds })).toThrow(DataRoomQueryError);
+  });
+
+  it.each(['q', 'status', 'kind', 'from', 'to', 'current', 'scope', 'project', 'study', 'ctd', 'folder',
+    'limit', 'offset', 'includeUnscoped'])('refuses exact IDs combined with %s, including an empty filter', field => {
+    expect(() => parseDataRoomQuery(P, { sourceIds: '7,9', [field]: '' })).toThrow(DataRoomQueryError);
+  });
+
+  it.each(['sourceIds[]', 'sourceIds[0]', 'sourceIds[ids]', 'sourceIds.ids'])(
+    'refuses a literal array-shaped source key %s from a simple query parser', field => {
+      expect(() => parseDataRoomQuery(P, { [field]: '7' })).toThrow(DataRoomQueryError);
+    });
+});
+
+describe('GET /:id/sources exact selected identities', () => {
+  it('returns the existing page and recorded project facts for the complete set, including lifecycle rows', async () => {
+    searchDataRoom.mockResolvedValue({ total: 2, currentTotal: 1, sources: [
+      { ...src(9, false), clientProgramId: P, dataEligible: false },
+      { ...src(7, true), clientProgramId: P, textAvailable: true, dataEligible: true, originalFileAvailable: false },
+    ] });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=7,9`);
+    expect(res.status).toBe(200);
+    expect(searchDataRoom).toHaveBeenCalledExactlyOnceWith(7, { programId: P, sourceIds: [7, 9], limit: 2, offset: 0 }, { userId: 3 });
+    expect(res.body).toMatchObject({ projectId: P, total: 2, currentTotal: 1, page: { limit: 2, offset: 0 },
+      window: { shown: 2, truncated: false }, unscoped: [], sources: [
+        { id: 9, projectId: P, checksum: 'h9', isCurrent: false, dataEligible: false },
+        { id: 7, projectId: P, checksum: 'h7', originalFileAvailable: false, textAvailable: true, dataEligible: true },
+      ] });
+    expect(listClientDocuments).not.toHaveBeenCalled();
+    expect(catalogProgramIds).not.toHaveBeenCalled();
+    expect(listVaultForCatalog).not.toHaveBeenCalled();
+  });
+
+  it.each(['sourceIds=', 'sourceIds=7&sourceIds=9', 'sourceIds=7,9&q=', 'sourceIds=7,9&includeUnscoped=false'])(
+    'returns400 before searching for an unreadable or mixed exact query: %s', async query => {
+      const res = await request(app()).get(`/api/c2c/projects/${P}/sources?${query}`);
+      expect(res.status).toBe(400);
+      expect(searchDataRoom).not.toHaveBeenCalled();
+    });
+
+  it('retains persisted private-parent admission before reading exact identities', async () => {
+    await authorityDb.exec("INSERT INTO organization_users VALUES (7,99,'viewer')");
+    const res = await request(app({ userId: 99, claimedRole: 'super_admin' })).get(`/api/c2c/projects/${P}/sources?sourceIds=7`);
+    expect(res.status).toBe(404);
+    expect(searchDataRoom).not.toHaveBeenCalled();
+  });
+
+  it.each(['sourceIds[]=7', 'sourceIds[0]=7', 'sourceIds[ids]=7', 'sourceIds.ids=7', 'sourceIds=7&sourceIds[]=9'])(
+    'rejects literal array-shaped query keys before a widened list: %s', async query => {
+      searchDataRoom.mockResolvedValue({ total: 1, currentTotal: 1, sources: [src(7)] });
+      const res = await request(app()).get(`/api/c2c/projects/${P}/sources?${query}`);
+      expect(res.status).toBe(400);
+      expect(searchDataRoom).not.toHaveBeenCalled();
+    });
 });
 
 describe('what a project uses from the catalog (GET and POST /:id/evidence)', () => {

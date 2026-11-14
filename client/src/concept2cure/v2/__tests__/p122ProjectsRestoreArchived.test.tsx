@@ -36,6 +36,9 @@ vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganiza
 import { authService } from '@/services/portal/authService';
 import { ApiRequestError } from '@/lib/queryClient';
 import { Projects } from '../surfaces/Projects';
+import { archivedProjectsUrl } from '../surfaces/ProjectsArchived';
+import { portfolioFilterUrl } from '../surfaces/ProjectPortfolioFilters';
+import { readShellProject } from '../shellProject';
 
 const ARCHIVED = '9a7f0b10-0000-4000-8000-0000000000cc';
 const ACTOR = { id: '12', organizationId: '7', permissions: ['governed:write'], displayName: 'Current actor' };
@@ -71,8 +74,8 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); authService.endSession(null); });
 
-async function openArchived() {
-  render(<Projects {...props()} />);
+async function openArchived(parameters = props()) {
+  render(<Projects {...parameters} />);
   await screen.findByText('Program alpha');
   fireEvent.click(screen.getByRole('button', { name: 'Archived projects' }));
 }
@@ -87,6 +90,32 @@ async function restore(reason = 'The sponsor resumed the programme after the hol
 }
 
 describe('Projects: archived projects, and restoring one (P-122 §3.5)', () => {
+  it('opens the admitted archived row in project home without restoring or mutating it', async () => {
+    const parameters = props();
+    await openArchived(parameters);
+    const open = await screen.findByRole('button', { name: 'Open Program gamma' });
+    expect(open.className).toContain('ghost');
+    expect(screen.getByRole('button', { name: 'Restore Program gamma' })).toBeTruthy();
+    fireEvent.click(open);
+    expect(parameters.onNav).toHaveBeenCalledExactlyOnceWith('project-home');
+    const expected = { id: GAMMA.id, title: GAMMA.title, code: GAMMA.code, ws: GAMMA.ws, status: 'archived' };
+    expect(window.C2C_PROJECT).toEqual(expected);
+    expect(readShellProject()).toEqual(expected);
+    expect(apiRequest.mock.calls.filter(([method]) => method !== 'GET')).toEqual([]);
+    expect(screen.queryByRole('dialog', { name: 'Restore project' })).toBeNull();
+    expect(screen.queryByText(/was restored/)).toBeNull();
+  });
+
+  it('preserves the selected client, workstream and pathway in the admitted archived read', () => {
+    const portfolio = portfolioFilterUrl('21', 'Biotech', 'ind');
+    const url = new URL(archivedProjectsUrl(portfolio), 'http://demo.invalid');
+    const selected = new URL(portfolio, 'http://demo.invalid');
+    expect([...selected.searchParams]).toHaveLength(3);
+    for (const [key, value] of selected.searchParams) expect(url.searchParams.get(key)).toBe(value);
+    expect(url.searchParams.get('includeArchived')).toBe('true');
+    expect(url.searchParams.get('limit')).toBe('200');
+  });
+
   it('lists the archived projects the server returns, and only those', async () => {
     await openArchived();
     expect(await screen.findByText('Program gamma')).toBeTruthy();
@@ -128,6 +157,7 @@ describe('Projects: archived projects, and restoring one (P-122 §3.5)', () => {
     await openArchived();
     expect(await screen.findByText(/archived projects could not be read/i)).toBeTruthy();
     expect(screen.queryByText(/No archived projects/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Open Program gamma' })).toBeNull();
     archivedRead = async () => ok({ data: [ACTIVE, GAMMA], meta: { counts: COUNTS } });
     fireEvent.click(screen.getByRole('button', { name: /Try again|Retry/ }));
     expect(await screen.findByText('Program gamma')).toBeTruthy();

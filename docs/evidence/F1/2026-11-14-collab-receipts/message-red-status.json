@@ -1,0 +1,9 @@
+{
+  "baselineSourceSha256": "12e7a47b6927224d218245e65e091d5c654fe05e093d20ac272feb0fbc4d53cd",
+  "testSha256": "ee9ce2eb904552ec8331c377a483da1039904ec25a8c70b2616268781df60244",
+  "tests": 25,
+  "failed": 15,
+  "passed": 10,
+  "scope": "Real React and authentication guards; all APIs intercepted as fictional responses; no live messages, tasks, providers, Git or source changes.",
+  "identityContract": "notification-service.requiredNumber admits safe integer number >=0; receipt must not contradict success"
+}

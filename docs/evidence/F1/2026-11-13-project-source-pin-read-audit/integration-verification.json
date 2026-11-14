@@ -1,0 +1,130 @@
+{
+  "sourceHead": "ff42399a7a1af321519def5b9897894ec61ca5e2",
+  "mergedCanonicalThrough": "985559c5b",
+  "dateUTC": "2026-11-14",
+  "focused": {
+    "serverPassed": 128,
+    "clientPassed": 155,
+    "totalPassed": 283,
+    "skipped": 0,
+    "allSourceAndTestHashesMatchAfterMerge": true
+  },
+  "build": {
+    "exitCode": 0,
+    "viteSeconds": 22.96,
+    "logRawSha256": "41eb7efacf127e40986159761a0c466a0338af309d75764e6365b391cf147e01"
+  },
+  "lint": {
+    "serverErrors": 0,
+    "serverWarnings": 0,
+    "clientErrors": 0,
+    "clientWarnings": 6,
+    "clientBaselineWarnings": 6
+  },
+  "secretScan": {
+    "tool": "Gitleaks 8.28.0",
+    "range": "origin/concept2cure-v2..HEAD",
+    "scope": "unpublished local source commit; not full history",
+    "lazyFetch": false,
+    "exitCode": 0,
+    "findings": 0,
+    "scannerErrors": false
+  },
+  "nativeOffboarding": {
+    "passed": 3,
+    "failed": 3,
+    "policyChoice": "pending",
+    "privacyRlsExportPurgeSourceChanged": false
+  },
+  "finalPublication": "Normal push hook checks the combined whole-program compiler; local/remote identity is verified after successful publication. No gate bypass or force push.",
+  "postTypecheckCorrection": {
+    "error": "TS2345: a boolean-returning validator did not declare the SourcesPage type predicate required by liveGetOrNull",
+    "failedHead": "4041374b4",
+    "fixCommit": "a0c3c0e41",
+    "sourceHead": "7f3a15330e9aacdb08d9fd0d68b1b27b9fe9e68e",
+    "mergedCanonicalThrough": "2e5ae2e71",
+    "runtimeValidationChanged": false,
+    "sourceSha256": {
+      "server/services/clinical-regulatory-evidence/data-room-search.ts": "d691772539cfa83d8ada4d73d6e164344f5430bee94c0e0963740546f5470c93",
+      "server/routes/c2c/__tests__/projects-sources-window.test.ts": "4fc3aaf342ffa77b6b272adf684144dc46d00f9dcb71fbdcdcba9d74470ad235",
+      "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "364d6146d21720972aec6b3ba1e026828c5d3a1d74d3db3e6301b7469bb8bf06",
+      "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "83f5265cebc83a39b2a16cb87f4eca05ded31c11630896d78a019a0f120dcb77",
+      "client/src/concept2cure/v2/surfaces/projectSources.ts": "31ca63771bdde284fc40f6089a401f1949fbaf4f6d9e5a645063cfa790054af5",
+      "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx": "376e4bbc6a8400db12f18199a95dd73d719c097691dc371bbf2236cfc16cd7e4",
+      "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx": "87ed7e96a57a05458f19dccc542c132770bf2e86a157732131ebc2c1ba021151",
+      "client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx": "de13d36ae6d218f77e3966dc61efb0e2533df2dcd7c6ea2cdff82cc97973083e",
+      "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "a86b9b6d11903a40f289255eb73602c5f7629bd283593be893699e8d97b24f88",
+      "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx": "19068eee7ad6c99ba263ba59c2da4d6fc496dd0f0a3426d3b9254eee5f326b60",
+      "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "5773fc7295b5b922c5d58d47733bd51fee4f0339c62ca3a4201ec4b9bbc006f7"
+    },
+    "focused": {
+      "passed": 283,
+      "failed": 0,
+      "skipped": 0,
+      "files": 10,
+      "seconds": 64.97
+    },
+    "build": {
+      "exitCode": 0,
+      "viteSeconds": 25.45
+    },
+    "artifacts": [
+      "integration-typecheck-red.txt.gz",
+      "integration-final-focused.txt.gz",
+      "integration-final-build.txt.gz"
+    ],
+    "wholeProgramCompiler": "Required again by the normal push hook on this final combined tree; no baseline or gate changed."
+  },
+  "qualityTaskCanonicalRefresh": {
+    "sourceHead": "c9c632136a4226324e8b8ceef55fa5c87133d1a0",
+    "canonicalThrough": "3692f44ad",
+    "previousNormalPush": {
+      "sourceHead": "5fb1189b6",
+      "compilerErrors": 0,
+      "compilerExitCode": 0,
+      "lintGates": 89,
+      "redGates": 0,
+      "pushExitCode": 1,
+      "reason": "remote-ref advanced to3692f44ad during gates; no force or hook bypass"
+    },
+    "checks": {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "files": 2,
+      "seconds": 11.76
+    },
+    "build": {
+      "exitCode": 0,
+      "viteSeconds": 25.19
+    },
+    "allElevenSelectionSourceAndTestHashesUnchanged": true,
+    "finalCompiler": "Normal push hook runs again on the final merged tree."
+  },
+  "collaborationReceiptCanonicalRefresh": {
+    "sourceHead": "0a2c957aefd75b578c91904fffb94105c5708bb0",
+    "canonicalThrough": "cd407d470",
+    "previousNormalPush": {
+      "sourceHead": "3e7c90d9b",
+      "compilerErrors": 0,
+      "compilerExitCode": 0,
+      "lintGates": 89,
+      "redGates": 0,
+      "pushExitCode": 1,
+      "reason": "remote-ref advanced tocd407d470 during gates; no force or hook bypass"
+    },
+    "checks": {
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "files": 3,
+      "seconds": 8.39
+    },
+    "build": {
+      "exitCode": 0,
+      "viteSeconds": 23.62
+    },
+    "allElevenSelectionSourceAndTestHashesUnchanged": true,
+    "finalCompiler": "Normal push hook checks final merged tree again."
+  }
+}
