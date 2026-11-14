@@ -1,7 +1,9 @@
 # Project Data Room selected-source repair
 
-F1 / W1 / D2, starting at `5a552f142`. The bounded source-selection repair is
-implemented and focused checks pass; runtime/publication status is recorded below.
+F1 / W1 / D2, starting at `5a552f142`. **Published directly to `concept2cure-v2`
+at `fb1051afb`**, verified by normal push13 and a fresh remote ancestry check.
+The dated sections preserve their actual intermediate revisions and outcomes;
+the final canonical publication record is below.
 
 ## What already exists
 
@@ -439,3 +441,68 @@ Its change in the shared project route is one project-creation argument
 attestation and after-grading guards. Preserve it and the related selector,
 mapper, Vault, bootstrap and migration work by ordinary integration; current
 IVD and exact-source checks must identify the merged source.
+
+
+## IVD canonical integration bridge
+
+Merge `fb1051afb` preserves the IVD outline publication.
+`ivd-project-route-overlap.json` verifies the shared project's route differs
+from this continuation's prior file by exactly one `productType` argument
+in project creation; the entire remainder, including exact GET attestation
+and after-grading access recheck, is byte-identical. The other37 previously
+named inputs remain frozen; the new53-file manifest includes incoming IVD owners,
+migrations and fixtures. Independent review finds no source-selection,
+permission or editor-callback blocker.
+
+`ivd-merge-focused.json` passes204/204 across eight suites: current exact-source
+GET, regional project creation, IVD selector/mapper/retained binder/template
+and both IVD/generic replay contracts. Native exit0; no named input/runner
+drift. `ivd-source-start.json` applies normal Codespaces provisioning/startup
+in32.98s; `ivd-source-runtime.json` records this exact served merged commit,
+schema ready and capabilities seeded, with only local `ana: no_provider`.
+`ivd-final-browser.json` and its observation pass the actual search/clear/
+reselect/exact-read/unchanged-chooser/existing-editor-start flow at that revision
+in28.85s, with no drift, page errors or attempted document/model writes.
+No live generation or broader scientific/regulatory qualification is inferred.
+
+
+## Final canonical publication
+
+`publication-attempt-13.json` records successful authenticated normal Git
+publication of `fb1051afb653fd45f4b00020e809b6a5d7109b73`: native exit0,
+full compiler errors0/baseline0 and all89 normal lint-job gates0red. Its53
+named source inputs and runner have no drift. A fresh normal fetch confirms
+the remote canonical branch contains that exact source commit.
+`canonical-publication.json` retains that observation. Earlier failed, raced
+and interrupted attempts remain distinct; none is reclassified as a pass.
+
+The combined implementation retains one Data Room selection owner, one
+canonical exact reader and the existing chooser/editor. Checked sources survive
+search/page changes, exact complete current versions are required before
+handoff, and Clear selection supplies explicit recovery. The server rechecks
+access after awaited grading. The preserved IVD project-create addition leaves
+the exact-source GET unchanged. Existing source/permission/lifecycle/model
+and filing qualification owners retain their policies.
+
+Verification includes502 focused selection cases,74 subsequent editor
+integration cases,57 task-assignment cases,27 Vault proof cases and204 IVD/
+shared-route integration cases. These sets overlap and are not summed into a
+whole-repository claim. Current normal local provisioning/startup and the actual
+search/clear/chooser/editor-start browser flow pass at the published source.
+The verifier has no provider: only AnA fails readiness; live drafting/agency
+submission and scientific qualification were not exercised. The deferred AnA
+context audit candidates above remain separate future RED work.
+
+All source/test workers are closed and frozen. Their recorded source-edit
+leases ended; this closure changes only owned evidence/coordination. The final
+normal documentation push will also run its existing gates. `SHA256SUMS` binds
+this packet excluding itself. A final ordinary startup/version check after that
+documentation commit is observed directly, avoiding a self-referential receipt
+commit loop. Nothing is deployed or provisioned outside the owned local verifier.
+
+In an existing Codespace, use the canonical branch, then:
+
+```bash
+git pull --ff-only origin concept2cure-v2
+bash .devcontainer/post-start.sh
+```

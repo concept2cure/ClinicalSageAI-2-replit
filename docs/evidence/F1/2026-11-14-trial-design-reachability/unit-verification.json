@@ -1,0 +1,56 @@
+{
+  "baseline": "4b82ba809",
+  "runs": [
+    {
+      "part": "trial-design-flow",
+      "passed": 96,
+      "suites": 7,
+      "files": [
+        "client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx",
+        "client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx",
+        "client/src/concept2cure/v2/__tests__/protocolTrialDesignStart.test.tsx",
+        "client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx",
+        "client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx",
+        "client/src/concept2cure/v2/__tests__/protocolDevPicker.test.tsx",
+        "client/src/concept2cure/v2/__tests__/protocolDevTabState.test.tsx"
+      ]
+    },
+    {
+      "part": "trial-design-discovery",
+      "passed": 139,
+      "suites": 6,
+      "files": [
+        "client/src/concept2cure/v2/__tests__/registryModel.test.ts",
+        "client/src/concept2cure/v2/__tests__/trialDesignDiscovery.test.tsx",
+        "client/src/concept2cure/v2/__tests__/shellProjectRailAndPalette.test.tsx",
+        "tests/ui-readiness/ui-surface-registry.test.ts",
+        "tests/ui/surface-registry-coverage.test.ts",
+        "client/src/concept2cure/v2/__tests__/navEntitlementsIntegrity.test.tsx"
+      ]
+    }
+  ],
+  "disjointTotalPassed": 235,
+  "disjointTotalSuites": 13,
+  "sourceHashes": {
+    "client/src/concept2cure/v2/surfaces/ProtocolDev.tsx": "120f8f7cbc46c0161dec9fe6aa1833c9c5d252845dd7e2e730893e2c053ca47f",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx": "54e91969d899547465645ebce0e21d462944dbf90b6e0eb9a00d5aac59c8e736",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx": "ac7fef9aaab4e04713adfa39d0c9e8f2c928fdc55e97cd456d7c8ac2e9ac9645",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkNavigation.ts": "2b63a4c14e090709f8c5b35d9814b26467b7b257c3b0ff6313ed15a3d37bb1be",
+    "client/src/concept2cure/v2/__tests__/protocolTrialDesignStart.test.tsx": "e8b31d7cef2df933026a185b4f157b996f5395dcdbe5e7c3d1f08e47c1cc1816",
+    "client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx": "a9d6933c347a22b88b330d0680a546290a517b191a7eb08d5956948b2af461bf",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "9464ea49048996a9daae12ab411bebe0f6e46faa4f1ac43f2204b5ea78775e63",
+    "client/src/concept2cure/v2/__tests__/trialDesignDiscovery.test.tsx": "5382152a7c60991377cc8f2dd1fe2a906299bc4bf203cf2cf654160843240935",
+    "client/src/concept2cure/v2/__tests__/registryModel.test.ts": "d9e57f57e2a612287addb06d1f6e917f30f3cf64861de2ec29feedede330c39a"
+  },
+  "review": "Independent frozen review: no blocker; all nine hashes match",
+  "lint": {
+    "errors": 0,
+    "preexistingWarnings": 2,
+    "warningGrowth": 0,
+    "baselineHashesConfirmedAgainstGit": {
+      "shared/constants/ui-surface-registry.ui-v2.ts": "74f11637e5a1883d2c9406606c616fe7eaa7c54bee5d42f957369df0c19cba0c",
+      "client/src/concept2cure/v2/__tests__/registryModel.test.ts": "50624a430a99c290eabab8e444551b2ba74eb3cc9e1a29ea853a1629f0c8cd31"
+    }
+  },
+  "limits": "Callback/one-time continuation ownership only; existing generic protocol read ownership is not changed"
+}

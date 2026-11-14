@@ -93,6 +93,8 @@ export interface WorkspaceDocProps {
    *  it: "Draft with AnA" asks about "the section open on screen" and sends no
    *  stored title (periodic review 2026-09-28, SEC-C-4). */
   onOpenSection?: (sectionId: string | null) => void;
+  /** A newly confirmed clinical protocol starts on its existing design step, once on mount. */
+  initialTab?: string;
 }
 
 /* ── Cover page ────────────────────────────────────────────────────────── */
@@ -369,7 +371,7 @@ function TabStrip({ tab, onTab }: { tab: string; onTab: (id: string) => boolean 
 /** The open edit/parameter drawer and the row it addresses. */
 type FormState = { kind: PdevFormKind; target?: PdevFormTarget };
 
-export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged, onOpenSection }: WorkspaceDocProps) {
+export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadError, onChanged, onOpenSection, initialTab }: WorkspaceDocProps) {
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -382,7 +384,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   const [toast, fireToast] = useToast();
   const sections = asRows(doc.sections);
   const { tab, activeSec, sec, openSectionId, onSec, requestTab, workChangeRefusal, navigationNotice } = useProtocolWorkNavigation({
-    initialSection: str(doc.openSection), sections, pending: sourcePending,
+    initialSection: str(doc.openSection), initialTab, sections, pending: sourcePending,
     dialogs: [form, reg, signing, exportOpen, importOpen], tabs: TABS,
   });
 
