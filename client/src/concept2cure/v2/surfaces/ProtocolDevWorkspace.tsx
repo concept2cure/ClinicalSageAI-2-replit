@@ -394,18 +394,14 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
   useEffect(() => { setImportOpen(false); }, [numericDocId, programId]);
   useEffect(() => { onOpenSection?.(openSectionId); }, [openSectionId, onOpenSection]);
 
-  const openReg = (kind: RegisterKind) => {
+  const openGoverned = (open: () => void) => {
     if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
-    setReg(kind);
+    if (workChangeRefusal()) return;
+    open();
   };
-  const openForm = (kind: PdevFormKind, target?: PdevFormTarget) => {
-    if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
-    setForm({ kind, target });
-  };
-  const openFinalize = () => {
-    if (!canWrite) { fireToast('This protocol row has no numeric document id — governed writes need the governed store.', 'error'); return; }
-    setSigning({ kind: 'finalize' });
-  };
+  const openReg = (kind: RegisterKind) => openGoverned(() => setReg(kind));
+  const openForm = (kind: PdevFormKind, target?: PdevFormTarget) => openGoverned(() => setForm({ kind, target }));
+  const openFinalize = () => openGoverned(() => setSigning({ kind: 'finalize' }));
 
   /* AnA can open any protocol section by its number or title — the same click
      a person makes. The parent's honest-state reads have already resolved to a
@@ -430,11 +426,11 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
     <div className="pd-wrap">
       <ProtocolHeaderState
         doc={doc} canWrite={canWrite} exporting={exporting} refreshing={refreshing} onAsk={onAsk}
-        onExport={() => setExportOpen(true)} onEditCover={() => openForm('cover-page', {
+        onExport={() => { if (!workChangeRefusal()) setExportOpen(true); }} onEditCover={() => openForm('cover-page', {
           defaults: { sponsor: str(doc.sponsor), principalInvestigator: str(doc.pi) || str(doc.principalInvestigator) },
         })}
         handoffBlocked={protocolHandoffBlocked({ canWrite, programId, pending: sourcePending, dialogs: [form, reg, signing] })}
-        onOpenDraft={() => setImportOpen(true)} sourcePending={sourcePending} programId={programId} reloadError={reloadError}
+        onOpenDraft={() => { if (!workChangeRefusal()) setImportOpen(true); }} sourcePending={sourcePending} programId={programId} reloadError={reloadError}
       />
       <ProtocolWorkflowGuide doc={doc} tab={tab} onTab={requestTab} />
       {navigationNotice && <div className="pde-flow-refusal" role="status">{navigationNotice}</div>}
@@ -444,7 +440,7 @@ export function ProtocolWorkspaceDoc({ doc, onAsk, onNav, refreshing, reloadErro
         <div className="pd-work" role="tabpanel" id={PD_TABPANEL_ID} aria-labelledby={pdTabId(tab)}>
           <TabBody
             tab={tab} doc={doc} sec={sec} canWrite={canWrite} onAsk={onAsk} onNav={onNav}
-            onReg={openReg} onEdit={openForm} onSign={canWrite ? setSigning : undefined}
+            onReg={openReg} onEdit={openForm} onSign={canWrite ? next => openGoverned(() => setSigning(next)) : undefined}
             onSaved={() => { fireToast('Section saved — the revision is in the audit trail.'); onChanged?.(); }}
             onError={(m) => fireToast(m, 'error')}
             onToast={(m) => fireToast(m)}
