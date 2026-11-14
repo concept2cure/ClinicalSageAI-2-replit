@@ -11,6 +11,6 @@ if (!template) throw new Error('The retained PDF has no template packet');
 const bytes = Buffer.from(template.bytes);
 const output = '/workspace/scratch/ivd-retained-binder-raw-template.xml';
 writeFileSync(output, bytes);
-console.log(JSON.stringify({ pdfSha256: createHash('sha256').update(pdf).digest('hex'),
+process.stdout.write(JSON.stringify({ pdfSha256: createHash('sha256').update(pdf).digest('hex'),
   templateSha256: createHash('sha256').update(bytes).digest('hex'), templateBytes: bytes.length,
-  templatePath: output, command: 'Node 22 node --import tsx inspect-raw-form.mjs' }));
+  templatePath: output, command: 'Node 22 node --import tsx inspect-raw-form.mjs' }) + '\n');

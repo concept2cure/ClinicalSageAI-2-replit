@@ -3,6 +3,7 @@
   "artifactCounts": {
     "outline": 34,
     "mapper": 44,
-    "retained-binder": 46
-  }
+    "retained-binder": 48
+  },
+  "retainedBinderManifestAmendedForLoggedInspectorOutputOnly": true
 }

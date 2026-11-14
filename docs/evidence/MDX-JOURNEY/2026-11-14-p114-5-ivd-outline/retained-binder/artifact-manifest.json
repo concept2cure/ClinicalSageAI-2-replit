@@ -1,5 +1,5 @@
 {
-  "artifactCount": 46,
+  "artifactCount": 48,
   "artifacts": [
     {
       "path": "README.md",
@@ -62,9 +62,14 @@
       "sha256": "515eff4c65ee7d0d7f97f5cf84f6200ad2d41692770f2dc0fa4db9f4ccc1a6de"
     },
     {
+      "path": "inspect-raw-form.before-lint.mjs.gz",
+      "bytes": 574,
+      "sha256": "854a62e297407d718710b5f923a9921e89df20fc844f71f2577a690eb3c03224"
+    },
+    {
       "path": "inspect-raw-form.mjs",
-      "bytes": 1102,
-      "sha256": "ba72e8b1adb98b3a61483c9e7dee379b7d5466189e014e0949a0e9709b9abd77"
+      "bytes": 1118,
+      "sha256": "7e0a1173d6ba719920acd2e682c5bf834ca98dec3c3e9fe0ffecc3a933d3931c"
     },
     {
       "path": "raw-form-inspection.json",
@@ -80,6 +85,11 @@
       "path": "result.json",
       "bytes": 947,
       "sha256": "294198e0c661e78f1b78ebb0c04f8f7cc00fac7a6950b990df52b2fb77db3c8e"
+    },
+    {
+      "path": "root-lint-correction.json",
+      "bytes": 732,
+      "sha256": "541c6d3077b3fad7c15926de9b93087eab8a426e95a948a7f94553697ac3449b"
     },
     {
       "path": "runner.py",
