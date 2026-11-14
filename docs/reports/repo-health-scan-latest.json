@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T04:40:57.327Z",
+  "generatedAt": "2026-11-14T08:15:32.217Z",
   "git": {
-    "sha": "ec174c8125424e37119426a5abc1b9e944ea70a3",
+    "sha": "98e776d538f12ba8ab3766a69f08e4b8696c6258",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2439,7 +2439,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 209808
+        "bytes": 211859
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2490,12 +2490,12 @@
         "bytes": 154849
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 147031
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 147095
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 146805
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 147031
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
@@ -2669,7 +2669,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3691
+        "lines": 3723
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2721,7 +2721,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "lines": 2997
+        "lines": 3000
       },
       {
         "file": "server/routes/auth.ts",

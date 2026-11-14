@@ -75,6 +75,7 @@ import {
 } from '../../services/cmc/signed-record';
 import { createScopedLogger } from '../../utils/logger';
 import { compositionRefusalBody, compositionRefusalStatus } from '../../services/cmc/composition-scope';
+import { stabilityPullSchedule } from '../../services/cmc/stability-source';
 import * as metricsModule from '../../metrics.js';
 import { serverError } from '../../lib/api-response';
 import { launchScopeEnforced } from '../../services/entitlements/launch-scope';
@@ -589,7 +590,9 @@ router.get('/stability-studies', async (req, res) => {
       })
       .from(stabilityStudies)
       .where(and(eq(stabilityStudies.organizationId, orgId), projectFilter(req, stabilityStudies.projectId)));
-    res.json({ success: true, data: studies });
+    /* Each study's pull schedule: planned dates, what is recorded and what is overdue (stability-source.ts). */
+    const today = new Date();
+    res.json({ success: true, data: studies.map((s) => ({ ...s, pullSchedule: stabilityPullSchedule(s, today) })) });
   } catch (error) {
     console.error('Error fetching stability studies:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch stability studies' });

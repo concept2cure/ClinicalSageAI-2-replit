@@ -48,6 +48,7 @@
  * @module server/services/cmc/stability-source
  */
 
+import { parseMonthTime, readRecordedStabilityResults } from './recorded-stability';
 import type { getPool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -224,4 +225,112 @@ export async function loadProjectStabilityStudies(
       reason: `stability source read failed: ${detail}`,
     };
   }
+}
+
+/* ── Pull schedule: what is due on a study (P-122 inventory B2) ──────────────
+ *
+ * The Stability register listed each study's pull points only to fill the
+ * result form, and never its start date, so "what is due this month" — the
+ * question a stability coordinator opens the register to answer — had no
+ * answer on the CMC screen. Each pull point's planned date is the recorded
+ * start date plus its months, parsed by the same `parseMonthTime` the trend
+ * and the Q1E fit read; a point it cannot parse is reported as such, never
+ * dropped. A point whose planned date has passed is OVERDUE when nothing is
+ * recorded at it, and INCOMPLETE when some of its recorded test parameters have
+ * a result and some do not (on the demo programme, water content was never
+ * recorded at any pull: that is a gap in a pull, not a missed one). No grace
+ * window is invented.
+ */
+export type PullState = 'recorded' | 'overdue' | 'incomplete' | 'due-today' | 'planned' | 'not-scheduled';
+
+export interface PullPoint {
+  /** The pull point as the study records it. */
+  label: string;
+  months: number | null;
+  /** YYYY-MM-DD, or null when the point or the start date cannot be read. */
+  plannedDate: string | null;
+  recorded: string[];
+  outstanding: string[];
+  state: PullState;
+  /** Why a point has no date, in words. */
+  reason?: string;
+}
+
+export interface PullSchedule {
+  points: PullPoint[];
+  /** The next pull to come (planned or due today), or null when none is. */
+  next: PullPoint | null;
+  /** Past pulls with nothing recorded. */
+  overdue: number;
+  /** Past pulls with some recorded test parameters still without a result. */
+  incomplete: number;
+  /** Why no schedule could be drawn at all (no pull points, no start date). */
+  reason?: string;
+}
+
+const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})/;
+
+function startDay(value: unknown): Date | null {
+  const text = value instanceof Date ? value.toISOString() : String(value ?? '').trim();
+  const m = text.match(ISO_DAY);
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Start plus whole months, held to the month's last day (31 Jan + 1 month = 28/29 Feb). */
+function addMonths(start: Date, months: number): Date {
+  const y = start.getUTCFullYear();
+  const m = start.getUTCMonth() + months;
+  const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m, Math.min(start.getUTCDate(), lastDay)));
+}
+
+const dayText = (d: Date): string => d.toISOString().slice(0, 10);
+const textList = (v: unknown): string[] =>
+  (Array.isArray(v) ? v : []).map((x) => String(x ?? '').trim()).filter(Boolean);
+
+export function stabilityPullSchedule(
+  study: { startDate?: unknown; timePoints?: unknown; testParameters?: unknown; stabilityData?: unknown },
+  today: Date,
+): PullSchedule {
+  const labels = textList(study.timePoints);
+  if (labels.length === 0) return { points: [], next: null, overdue: 0, incomplete: 0, reason: 'No pull points are recorded on this study.' };
+  const start = startDay(study.startDate);
+  const parameters = textList(study.testParameters);
+  const results = readRecordedStabilityResults(study.stabilityData).points;
+  const todayText = dayText(today);
+
+  const points: PullPoint[] = labels.map((label) => {
+    const months = parseMonthTime(label);
+    const at = results.filter((r) => months !== null && parseMonthTime(r.timePoint) === months);
+    const recorded = [...new Set(at.map((r) => String(r.parameter ?? '').trim()).filter(Boolean))];
+    const outstanding = parameters.filter((p) => !recorded.some((r) => r.toLowerCase() === p.toLowerCase()));
+    const complete = parameters.length > 0 ? outstanding.length === 0 : at.length > 0;
+    if (months === null || !Number.isInteger(months)) {
+      return { label, months, plannedDate: null, recorded, outstanding, state: complete ? 'recorded' : 'not-scheduled',
+        reason: months === null ? `"${label}" is not a number of months.` : `${label} is not a whole number of months, so no calendar date is drawn.` };
+    }
+    if (!start) {
+      return { label, months, plannedDate: null, recorded, outstanding, state: complete ? 'recorded' : 'not-scheduled',
+        reason: 'No start date is recorded on this study.' };
+    }
+    const plannedDate = dayText(addMonths(start, months));
+    const past = plannedDate < todayText;
+    const state: PullState = complete ? 'recorded'
+      : past ? (at.length > 0 ? 'incomplete' : 'overdue')
+        : plannedDate === todayText ? 'due-today' : 'planned';
+    return { label, months, plannedDate, recorded, outstanding, state };
+  });
+
+  const upcoming = points
+    .filter((p) => p.state === 'planned' || p.state === 'due-today')
+    .sort((a, b) => String(a.plannedDate).localeCompare(String(b.plannedDate)));
+  return {
+    points,
+    next: upcoming[0] ?? null,
+    overdue: points.filter((p) => p.state === 'overdue').length,
+    incomplete: points.filter((p) => p.state === 'incomplete').length,
+    ...(start ? {} : { reason: 'No start date is recorded on this study, so no pull has a planned date.' }),
+  };
 }

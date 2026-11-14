@@ -1646,6 +1646,33 @@ interface StabilityStudyApiRow {
   status: string | null;
   startDate?: string | null;
   plannedEndDate?: string | null;
+  /** The server's schedule (services/cmc/stability-source.ts `stabilityPullSchedule`). */
+  pullSchedule?: StabilityPullSchedule | null;
+}
+
+interface StabilityPullPoint { label: string; plannedDate: string | null; state: string; outstanding: string[]; reason?: string }
+interface StabilityPullSchedule { next: StabilityPullPoint | null; overdue: number; incomplete?: number; reason?: string; points: StabilityPullPoint[] }
+
+/* Pull schedule in words, from the server's dates: the next pull and how many
+   are overdue. A study with no dates says why (P-122 inventory B2). */
+function StabilityPullCell({ schedule }: { schedule?: StabilityPullSchedule | null }) {
+  if (!schedule) return <td>--</td>;
+  if (schedule.points.length === 0) return <td><span title={schedule.reason}>no pull points</span></td>;
+  const next = schedule.next;
+  const behind = [
+    schedule.overdue > 0 ? `${schedule.overdue} overdue` : '',
+    (schedule.incomplete ?? 0) > 0 ? `${schedule.incomplete} incomplete` : '',
+  ].filter(Boolean).join(' · ');
+  const gaps = schedule.points
+    .filter((p) => p.state === 'overdue' || p.state === 'incomplete')
+    .map((p) => `${p.label} mo (${p.plannedDate ?? 'no date'}): ${p.outstanding.join(', ') || 'no result'}`)
+    .join('; ');
+  return (
+    <td title={gaps ? `Outstanding — ${gaps}` : schedule.reason}>
+      {next ? `${next.label} mo · ${next.plannedDate}` : schedule.reason ? 'no dates' : 'none to come'}
+      {behind && <span data-tone="warn">{` · ${behind}`}</span>}
+    </td>
+  );
 }
 
 const STAB_STORAGE_LABEL: Record<string, string> = {
@@ -1936,6 +1963,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
   const allResults = rows.flatMap((r) => readStabilityResults(r.stabilityData));
   const oos = allResults.filter((r) => stabilityConformance(r) === 'outside');
   const notAssessed = allResults.filter((r) => stabilityConformance(r) === 'not assessed');
+  const pullsOverdue = rows.reduce((n, r) => n + (r.pullSchedule?.overdue ?? 0), 0);
+  const pullsIncomplete = rows.reduce((n, r) => n + (r.pullSchedule?.incomplete ?? 0), 0);
   const withinCount = allResults.length - oos.length - notAssessed.length;
 
   /** Adopt the server's row after a write; never the values that were typed. */
@@ -2236,6 +2265,8 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
             {active} active {active === 1 ? 'study' : 'studies'}
             {' · '}<span data-tone={oos.length ? 'err' : undefined}>{oos.length} outside limits</span>
             {notAssessed.length > 0 && <>{' · '}{notAssessed.length} not assessed</>}
+            {pullsOverdue > 0 && <>{' · '}<span data-tone="warn">{pullsOverdue} {pullsOverdue === 1 ? 'pull' : 'pulls'} overdue</span></>}
+            {pullsIncomplete > 0 && <>{' · '}{pullsIncomplete} {pullsIncomplete === 1 ? 'pull' : 'pulls'} incomplete</>}
           </>
         )}
       </p>
@@ -2280,7 +2311,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
               <thead>
                 <tr>
                   <th>Study</th><th>Product</th><th>Batch</th><th>Scope</th><th>Type</th>
-                  <th>Storage</th><th>Duration</th><th>Results</th><th>Shelf life</th><th>Status</th>
+                  <th>Storage</th><th>Duration</th><th>Next pull</th><th>Results</th><th>Shelf life</th><th>Status</th>
                   <th style={{ textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
@@ -2300,6 +2331,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                         <td>{r.studyType || '--'}</td>
                         <td>{stabStorage(r.storageConditions)}</td>
                         <td>{r.duration != null ? r.duration + ' mo' : '--'}</td>
+                        <StabilityPullCell schedule={r.pullSchedule} />
                         <td>
                           {results.length === 0 ? (
                             <span className="cm-meta">none</span>
@@ -2327,7 +2359,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                       </tr>
                       {isOpen && results.length > 0 && (
                         <tr>
-                          <td colSpan={11} style={{ background: 'var(--bg-050)' }}>
+                          <td colSpan={12} style={{ background: 'var(--bg-050)' }}>
                             <table className="reg-tbl cm-subtable">
                               <thead>
                                 <tr><th>Pull (months)</th><th>Parameter</th><th>Result</th><th>Specification</th><th>Within limits</th><th>Tested</th><th>Recorded by</th></tr>
