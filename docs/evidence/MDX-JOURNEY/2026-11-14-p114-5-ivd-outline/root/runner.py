@@ -53,7 +53,11 @@ summary = {'head':head,'finishedHead':git('rev-parse','HEAD'),'command':command,
     'elapsedSeconds':round(time.time()-start,3),'declaredSourceFiles':len(before),'sourceStable':before==after,
     'sourceChanges':sorted(p for p in set(before)|set(after) if before.get(p)!=after.get(p))}
 if mode.startswith('push'):
-    summary['remoteHead'] = git('ls-remote','origin','refs/heads/concept2cure-v2').split()[0]
+    try:
+        summary['remoteHead'] = git('ls-remote','origin','refs/heads/concept2cure-v2').split()[0]
+    except subprocess.CalledProcessError:
+        summary['remoteHead'] = None
+        summary['remoteProbe'] = 'Git transport credential unavailable; verify through connected GitHub'
 (base / (mode + '.json')).write_text(json.dumps(summary,indent=2)+'\n')
 (base / 'runner.py').write_bytes(Path(__file__).read_bytes())
 print(json.dumps(summary),flush=True)

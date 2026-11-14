@@ -12,7 +12,7 @@
   "lintWarningCountsUnchanged": true,
   "build": "passed",
   "compiler": "passed",
-  "publication": "pending",
+  "publication": "pending_remote_ref_race",
   "humanAcceptance": "not_executed",
   "agencyAcceptance": "not_established",
   "nativePostgreSQL": "not_executed",
@@ -23,5 +23,8 @@
   "compilerReport": "root/typecheck.json",
   "selectorCorrection": "selector-correction.json",
   "latestServerBuildReport": "root/server-build-after-sql.json",
-  "mandatoryPushCompiler": "pending"
+  "mandatoryPushCompiler": "passed",
+  "mandatoryPushCompilerErrors": 0,
+  "mandatoryPushCompilerReport": "root/push-3.log.gz",
+  "ciLintGatesPassed": 89
 }
