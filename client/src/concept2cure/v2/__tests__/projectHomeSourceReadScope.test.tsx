@@ -6,6 +6,7 @@ const request = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: request }));
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { authService } from '@/services/portal/authService';
@@ -13,6 +14,8 @@ import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
+const admitted = <T extends readonly { id: number }[]>(projectId: string, sources: T) => ({ projectId, sources,
+  selection: { scope: 'verified-accessible-sources', sourceIds: sources.map(source => source.id) } });
 const row = (id: number) => ({ id, title: `source-${id}.pdf`, checksum: String(id % 10).repeat(64), projectId: A,
   extractionStatus: 'extracted', textAvailable: true, isCurrent: true, dataEligible: true });
 const props = { surface: { id: 'project-home' } as never, segment: 'biopharma', onNav: vi.fn() };
@@ -39,7 +42,7 @@ it('withholds drafting while the refreshed source admission is unknown, then ado
   request.mockImplementation(async (_method: string, path: string) => {
     if (path.includes('?sourceIds=')) {
       const projectId = path.includes(B) ? B : A;
-      return ok({ projectId, sources: [{ ...row(projectId === A ? 1 : 2), projectId }] });
+      return ok(admitted(projectId, [{ ...row(projectId === A ? 1 : 2), projectId }]));
     }
     if (path === `/api/c2c/projects/${A}/sources`) return ++reads === 1 ? ok({ sources: [row(1)] }) : pending.response;
     return ok({ id: A });
@@ -58,7 +61,7 @@ it('retires local and handoff pins on programme change before the new source rea
   request.mockImplementation(async (_method: string, path: string) => {
     if (path.includes('?sourceIds=')) {
       const projectId = path.includes(B) ? B : A;
-      return ok({ projectId, sources: [{ ...row(projectId === A ? 1 : 2), projectId }] });
+      return ok(admitted(projectId, [{ ...row(projectId === A ? 1 : 2), projectId }]));
     }
     if (path === `/api/c2c/projects/${A}/sources`) return ok({ sources: [row(1)] });
     if (path === `/api/c2c/projects/${B}/sources`) return pending.response;
@@ -99,7 +102,7 @@ it.each(['search', 'page'] as const)('retains checked sources across %s and fres
   await waitFor(() => expect(request.mock.calls.some(([, path]) => new URL(String(path), 'https://fixture.test').searchParams.get('sourceIds') === '1,2')).toBe(true));
   expect(onAsk).not.toHaveBeenCalled();
   expect(window.C2C_SOURCE_PINS ?? []).toEqual([]);
-  await act(async () => exact.resolve(ok({ projectId: A, sources: [row(2), row(1)] })));
+  await act(async () => exact.resolve(ok(admitted(A, [row(2), row(1)]))));
   expect(window.C2C_SOURCE_PINS).toEqual(['1', '2']);
   expect(onAsk).toHaveBeenCalledTimes(1);
 });
@@ -117,7 +120,7 @@ it.each(['another source', 'the checked source'] as const)('retires a delayed ex
   expect(onAsk).not.toHaveBeenCalled();
   const changed = screen.getByLabelText(`Use source-${change === 'another source' ? 2 : 1}.pdf as context`);
   fireEvent.click(changed); fireEvent.click(changed);
-  await act(async () => exact.resolve(ok({ projectId: A, sources: [row(1)] })));
+  await act(async () => exact.resolve(ok(admitted(A, [row(1)]))));
   expect(onAsk).not.toHaveBeenCalled();
   expect(window.C2C_SOURCE_PINS ?? []).toEqual([]);
 });
@@ -138,7 +141,7 @@ const refusedReads = [
 it.each(refusedReads)('refuses $name before either handoff', async ({ body }) => {
   const onAsk = vi.fn();
   request.mockImplementation(async (_method: string, path: string) => {
-    if (path.includes('?sourceIds=')) return ok(body);
+    if (path.includes('?sourceIds=')) return ok(admitted(body.projectId, body.sources));
     if (path === `/api/c2c/projects/${A}/sources`) return ok({ projectId: A, sources: [row(1)] });
     return ok({ id: A });
   });
@@ -160,7 +163,7 @@ it.each(refusedReads)('refuses $name before either handoff', async ({ body }) =>
 it('refuses an exact source read error and permits an explicit fresh retry', async () => {
   let failing = true; const onAsk = vi.fn();
   request.mockImplementation(async (_method: string, path: string) => {
-    if (path.includes('?sourceIds=')) return failing ? new Response('{}', { status: 503 }) : ok({ projectId: A, sources: [row(1)] });
+    if (path.includes('?sourceIds=')) return failing ? new Response('{}', { status: 503 }) : ok(admitted(A, [row(1)]));
     if (path === `/api/c2c/projects/${A}/sources`) return ok({ projectId: A, sources: [row(1)] });
     return ok({ id: A });
   });
@@ -176,7 +179,7 @@ it('refuses an exact source read error and permits an explicit fresh retry', asy
 
 it.each([null, 'legacy-unverified'])('does not admit mutually matching unchecked byte identities: %s', async checksum => {
   request.mockImplementation(async (_method: string, path: string) => path.startsWith(`/api/c2c/projects/${A}/sources`)
-    ? ok({ projectId: A, sources: [{ ...row(1), checksum }] }) : ok({ id: A }));
+    ? ok(admitted(A, [{ ...row(1), checksum }])) : ok({ id: A }));
   const onAsk = vi.fn(); openEvidence(onAsk);
   fireEvent.click(await screen.findByLabelText('Use source-1.pdf as context'));
   fireEvent.click(screen.getByRole('button', { name: 'Draft with 1 pinned source' }));
@@ -200,7 +203,7 @@ it('retires an exact response whose body arrives after the source was unchecked'
   fireEvent.click(pin);
   const call = request.mock.calls.find(([, path]) => String(path).includes('?sourceIds='))!;
   expect((call[4] as AbortSignal).aborted).toBe(true);
-  await act(async () => resolveBody({ projectId: A, sources: [row(1)] }));
+  await act(async () => resolveBody(admitted(A, [row(1)])));
   expect(onAsk).not.toHaveBeenCalled();
   expect(window.C2C_SOURCE_PINS ?? []).toEqual([]);
 });
@@ -218,7 +221,7 @@ it('keeps an admitted pending source read through an ordinary bearer refresh for
   await act(async () => { expect(await authService.refreshToken()).toBe(true); });
   const call = request.mock.calls.find(([, path]) => String(path).includes('?sourceIds='))!;
   expect((call[4] as AbortSignal).aborted).toBe(false);
-  await act(async () => exact.resolve(ok({ projectId: A, sources: [row(1)] })));
+  await act(async () => exact.resolve(ok(admitted(A, [row(1)]))));
   expect(onAsk).toHaveBeenCalledTimes(1);
   expect(window.C2C_SOURCE_PINS).toEqual(['1']);
 });
@@ -226,7 +229,7 @@ it('keeps an admitted pending source read through an ordinary bearer refresh for
 it('retires a pending check when an upload changes the read scope and admits a later deliberate retry', async () => {
   const exact = pendingRead(), upload = pendingRead(); let exactReads = 0;
   request.mockImplementation(async (_method: string, path: string) => path.includes('?sourceIds=')
-    ? ++exactReads === 1 ? exact.response : ok({ projectId: A, sources: [row(1)] })
+    ? ++exactReads === 1 ? exact.response : ok(admitted(A, [row(1)]))
     : path === `/api/c2c/projects/${A}/sources` ? ok({ projectId: A, sources: [row(1)] }) : ok({ id: A }));
   vi.stubGlobal('fetch', vi.fn(() => upload.response));
   const onAsk = vi.fn(); openEvidence(onAsk);
@@ -239,7 +242,7 @@ it('retires a pending check when an upload changes the read scope and admits a l
   await waitFor(() => expect((call[4] as AbortSignal).aborted).toBe(true));
   await act(async () => upload.resolve(ok({ fileId: 'synthetic-upload', extractionMethod: 'pdf-text', extractionWords: 10, sourceId: 2 })));
   await waitFor(() => expect((screen.getByRole('button', { name: 'Draft with 1 pinned source' }) as HTMLButtonElement).disabled).toBe(false));
-  await act(async () => exact.resolve(ok({ projectId: A, sources: [row(1)] })));
+  await act(async () => exact.resolve(ok(admitted(A, [row(1)]))));
   expect(onAsk).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: 'Draft with 1 pinned source' }));
   await waitFor(() => expect(onAsk).toHaveBeenCalledTimes(1));
@@ -268,8 +271,9 @@ it('keeps retained checked bytes across pages and opens the existing chooser onl
   fireEvent.click(screen.getByRole('button', { name: 'Build in editor' }));
   expect(screen.queryByTestId('source-assembly-dialog')).toBeNull();
   expect(targetReads()).toBe(beforeTargetReads);
-  await act(async () => exact.resolve(ok({ projectId: A,
-    sources: [{ ...row(1), originalFileAvailable: false, disposition: 'keep_data' }] })));
+  await act(async () => {
+    exact.resolve(ok(admitted(A, [{ ...row(1), originalFileAvailable: false, disposition: 'keep_data' }])));
+  });
   await screen.findByRole('option', { name: 'Existing working document' });
   fireEvent.change(screen.getByLabelText('Working document'), { target: { value: doc } });
   fireEvent.click(screen.getByRole('button', { name: 'Open in editor' }));

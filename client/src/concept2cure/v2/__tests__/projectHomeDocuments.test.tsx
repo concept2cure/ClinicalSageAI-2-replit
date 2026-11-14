@@ -102,7 +102,7 @@ function serve(opts: Opts = {}) {
       if (!ids || !response.ok) return response;
       const body = await response.json(); const selected = ids.split(',').map(Number);
       const sources = body.sources.filter((row: { id: number }) => selected.includes(row.id));
-      return ok({ ...body, sources, window: { shown: sources.length, truncated: false } });
+      return ok({ ...body, projectId: PID, selection: { scope: 'verified-accessible-sources', sourceIds: selected }, sources, window: { shown: sources.length, truncated: false } });
     }
     if (url.startsWith('/api/chat/threads?program_id=')) return ok({ threads: [] });
     // The project's Skills card (ProjectSkills.tsx): nothing deployed, read-only.

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T03:42:51.466Z",
+  "generatedAt": "2026-11-14T03:58:50.057Z",
   "git": {
-    "sha": "c6d7aaddf8c61b98d6e82fe4fa5126a34452e804",
+    "sha": "fb1051afb653fd45f4b00020e809b6a5d7109b73",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2499,7 +2499,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 145516
+        "bytes": 145793
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2511,7 +2511,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 141871
+        "bytes": 142387
       },
       {
         "file": "server/storage.ts",
@@ -2753,11 +2753,11 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2572
+        "lines": 2581
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2556
+        "lines": 2561
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",

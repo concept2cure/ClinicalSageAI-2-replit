@@ -1,0 +1,27 @@
+{
+  "startedAt": "2026-11-14T00:17:52.048481+00:00",
+  "elapsedSeconds": 11.849,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "server-accepted-inputs.json",
+  "inputCount": 8,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "server-native-corrected.txt.gz",
+  "outputSha256": "176c3942ed3893f741a5aefa024f3a83bd113badd4092dce3d93e14bfa33eaae",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

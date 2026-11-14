@@ -1,0 +1,11 @@
+{
+  "attempt": 9,
+  "head": "99bcd9020a27c7a07f79a5c7ebeeb572bf1e6535",
+  "status": "interrupted_execution_environment_replacement",
+  "nativeExitCode": null,
+  "lastObserved": "Full compiler active; no completion or upload receipt. Remote advanced to bc8fd919088622eac181e2324e4b23c15348ba0e before restart.",
+  "inputManifest": "editor-merge-publication-inputs.json",
+  "recoveredNamedInputDrift": [],
+  "recoveredAt": "2026-11-14T03:18:08Z",
+  "scope": "Post-restart named input verification is separate from the missing native process receipt; no compiler or publication pass claimed."
+}

@@ -1,0 +1,21 @@
+{
+  "head": "5a552f1428e5ee8d474353ac6095242b1bab97c2",
+  "scope": "Frozen client production/helper and focused DataRoom/ownership fixtures; unchanged canonical editor owners retained.",
+  "files": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "4131498863d8cd9666f4d19889e3cc62c0a216954bd6bdc4381c81757ea386ef",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts": "a74ca150f4760e743e3bc813be74c4946753db22c393a4a8494d0a868f8ed397",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "459a9ecd258b42cbdab494a3770747d65fa40df0ff07536bf0cc20edd19cf47e",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "648b0b695c8e9b81dc54a3635d4aac7e7ab044b6a36eb4195cdcfe5e60198324",
+    "client/src/concept2cure/v2/dataConnect.tsx": "cab6e1af7b7c52839392784955dbd9ea7a0e26bd97a416a737f8c19e37d205cc",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "34c158d08d683ae1f3b93f5cffe70e548d1cccb759e56ecbc3ef37ff075a287f",
+    "shared/data-room-processing-status.ts": "86396fc9a0bccac5f589586c67775f0008b896ca4b0a1eb7a56c5148d5f0aacf",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx": "0b768627847cf76bcd9a9ba506a6e8b00c16dd5a9c6d2929ac9feca008652f36",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx": "b44adc0eebd271a1b2d47a0e49b9e0408523fdc9bafbdcefde33573107d44184",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx": "3dbadc8e2a3941f7f7f551681a16c1eab54ae8de5876e048c35e26b50477ea06",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx": "2162f2f015ce6148535381893ac49ed55bc08201fb72fc12c036d4d7a0aed5fc",
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "222df08a0243efddb3bdebf4a2a2b198bdb3c023e75196a984eb279d560b1308",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd"
+  }
+}
