@@ -2083,6 +2083,43 @@ Canonical08044016b is merged normally without source-scope overlap. Root retains
 sole normal pre-push compiler, publication and owned Codespace verification. All holds release on successful
 canonical publication. Railway acceptance, paid provision, clinical qualification and AWS launch remain unclaimed.
 
+### Codex GA CI continuation — 2026-11-14 03:03 UTC
+
+The founder asked to continue toward GA. This F1/W1 repair begins at canonical
+`4b82ba809`, preserves all newer CMC, Quality, runtime and deployment work, and
+reserves only `server/services/__tests__/vault-taxonomy-etmf.test.ts` for the
+reproduced stale catalog-placement assertion. The actual Vault/eTMF product
+source remains read-only. This hold ends at publication or 2026-11-14 05:00 UTC.
+The pre-edit inventory and acceptance contract are in
+`docs/evidence/F1/2026-11-14-ga-ci-continuation/README.md`.
+
+The test worker owns that one existing test and focused regression runs; the
+secret-scan worker performs read-only fingerprint diagnosis with redacted
+metadata only. Root owns evidence, integration/Git and the sole full compiler
+and build. No other lane is paused. No secret-scan suppression, security gate,
+private-profile policy, export/purge, plan or approval change is authorized by
+this reservation. The recorded profile offboarding decision remains pending.
+
+**Secret-scan classification follow-up, 2026-11-14 03:09 UTC:** the worker,
+independent helper and root each verify the three published findings are the
+SHA-256 of the actual same-commit `scripts/visual-qa/api-fixtures.d.mts` blob,
+recorded as single file/digest JSON pairs. Root now reserves `.gitleaksignore`
+only for those three exact reviewed historical fingerprints and their reason;
+no regex, path/rule suppression, credential status or security gate changes.
+The existing contract tests and an actual binary positive control must retain
+detection of a key-shaped assignment. This narrow ledger hold ends at
+publication or 2026-11-14 05:00 UTC. Review evidence records no matched value.
+
+**GA CI continuation completion:** the sole test-file repair passes 61/61
+taxonomy/behavior cases with no new lint warning. The exact three manifest-hash
+fingerprints are independently verified, and all 88 bounded non-merge commits
+scan clean with no scanner errors. Existing security contracts pass 11/11;
+an actual scanner positive control still detects a key-shaped assignment.
+Both workers are frozen. Root retains normal Git/compiler/publication and the
+fresh hosted full-history verdict only; these file holds release on publication.
+Production source, model/approval policy and historical live-credential status
+are unchanged. The private-profile offboarding choice remains pending.
+
 **Codex saved-task assignment continuation, 2026-11-14 (F1 W1/D2; ends at publication):** holds only existing TaskAssignmentControls.tsx latest delayed-read/write-admission callbacks plus taskAssignmentRequest.ts outcome classifier, and their focused tests/design/evidence. Two workers own disjoint control/transport tests and audit before source edits; no shared contract, backend, TaskBoard/TaskTray/CommunicationCenter or provider changes. Root owns local runtime, integration/Git and the sole full compiler. Existing task/actor/workspace/CAS and persisted completion safeguards remain.
 
 **Saved-task assignment completion:** frozen existing controls/request helper and tests pass118/118 combined with zero lint errors/warnings. Genuine controls RED7fail/19controls and transport RED8fail/23controls retained; original controls proof is separate. Latest props govern delayed admission/callbacks while already-issued same-scope writes retain truthful receipts. Timeout/unknown writes stay unconfirmed; known refusal and atomic audit rollback controls pass. Controlled actual Task board browser passes timeout/read-recovery and permission-refusal cases with zero forwarded assignment writes/page errors. Both peer reviews have no blocker. These source/test/design/evidence holds release with canonical publication; root retains ordinary integration/Git/full compiler and owned local runtime only. Provider configuration is untouched.
