@@ -26,3 +26,7 @@ Production build passed on the merged canonical tree (`root/build.json`): all 12
 4. Walk the existing official eSTAR generation, human form review and retained signed-filing record. This outline is not evidence of completed form validation or FDA receipt; portal upload remains a human action under P-114 item 6.
 
 These steps are pending, not counted among the automated checks. This continuation completes existing backend/content owners and tests; it does not qualify the whole product for human use.
+
+## Publication follow-up: existing SQL selector
+
+The first normal push is retained in `root/push-1.json` and its compressed log. The SQL-interpolation gate rejects the additional variant clause interpolation in the existing `rule-pack-lookup.ts`. Replace that clause with a static, parameter-bound version/boolean predicate; retain the gate and baseline. The corrected selector/scaffold/binder cohort passes 159/159 across 7 files; the SQL gate and its 35-case self-test pass, and selector lint has 0 errors/warnings. The latest per-file matrix replaces those seven reports without adding overlapping tests. No gate or baseline changed. The normal compiler gate must pass on the corrected source before publication.

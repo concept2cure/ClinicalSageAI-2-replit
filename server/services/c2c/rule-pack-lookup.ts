@@ -40,16 +40,15 @@ export async function findActiveRulePack(
   // An IVD FDA outline cannot borrow an unrelated harmonised pack when its
   // approved variant is absent. The caller must report the missing outline.
   if (ivd510k && agency !== 'fda') return null;
-  const variant = docType === 'k510' && agency === 'fda'
-    ? `AND version ${ivd510k ? '=' : '<>'} $3` : '';
   const { rows } = await client.query(
     `SELECT version, label, required_sections
        FROM c2c_rule_packs
       WHERE doc_type = $1 AND agency = $2 AND ${ACTIVE}
-        ${variant}
+        AND (doc_type <> 'k510' OR agency <> 'fda'
+             OR (version = $3) = $4::boolean)
       ORDER BY effective_from DESC
       LIMIT 1`,
-    variant ? [docType, agency, IVD_510K_RULE_PACK_VERSION] : [docType, agency],
+    [docType, agency, IVD_510K_RULE_PACK_VERSION, ivd510k],
   );
   return (rows[0] as ActiveRulePack | undefined) ?? null;
 }

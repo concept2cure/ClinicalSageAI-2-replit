@@ -15,8 +15,8 @@
     {
       "file": "tests/schema-contract/c2c-project-scaffold.contract.test.ts",
       "passed": 19,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "selector-correction-tests.json",
+      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
     },
     {
       "file": "tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts",
@@ -57,32 +57,32 @@
     {
       "file": "server/routes/c2c/__tests__/projects-create-market-offer.test.ts",
       "passed": 29,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "selector-correction-tests.json",
+      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
     },
     {
       "file": "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
       "passed": 31,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "selector-correction-tests.json",
+      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
     },
     {
       "file": "server/routes/c2c/__tests__/projects-create.test.ts",
       "passed": 30,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "selector-correction-tests.json",
+      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
     },
     {
       "file": "server/services/c2c/__tests__/ivd-510k-rule-pack-selection.test.ts",
       "passed": 13,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "selector-correction-tests.json",
+      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
     },
     {
       "file": "server/services/c2c/__tests__/regional-device-document-class.test.ts",
       "passed": 28,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "selector-correction-tests.json",
+      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
     },
     {
       "file": "server/services/market-specs/__tests__/document-template-library.test.ts",
@@ -123,8 +123,8 @@
     {
       "file": "server/services/vault/__tests__/vault-folders.test.ts",
       "passed": 9,
-      "report": "integration/tests.json",
-      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+      "report": "selector-correction-tests.json",
+      "reportSha256": "cb47743757a31d3dcf89d1053af5eaa21b8b4c90ac449111691faf36924fb8ff"
     },
     {
       "file": "client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx",
