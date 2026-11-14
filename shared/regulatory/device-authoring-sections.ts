@@ -160,8 +160,28 @@ export const FDA_510K_IVD_SECTIONS: SectionDefinition[] = [
   {"code": "G2", "title": "Additional information / amendment responses", "module": 0, "required": false, "contentType": "mixed", "guidance": "FDA IVD eSTAR 7.1; 21 CFR 807.87; verify current submission instructions and applicability"},
 ];
 
+/** The generic FDA 510(k) authoring projection of its existing 38-node pack.
+ * Shared keys keep their meanings; only the nine IVD-specific keys are left
+ * out, and bench performance keeps the generic pack's required flag.
+ * Copy every row so the already published IVD source remains unchanged.
+ */
+const IVD_ONLY_510K_SECTION_KEYS: ReadonlySet<string> = new Set([
+  'E9', 'E10', 'E11', 'E12', 'E13', 'E14', 'E15', 'E16', 'E17',
+]);
+
+export const FDA_510K_SECTIONS: SectionDefinition[] = FDA_510K_IVD_SECTIONS
+  .filter(section => !IVD_ONLY_510K_SECTION_KEYS.has(section.code))
+  .map(section => ({
+    ...section,
+    required: section.code === 'E5' ? true : section.required,
+    guidance: 'FDA 510(k) eSTAR; 21 CFR 807.87; existing filing outline fda-estar-510k-v1.1. Confirm current instructions, applicability and original sponsor evidence; this scaffold does not establish content completeness or filing readiness.',
+  }));
+
 /** One authoring record per blueprint identity; no copied registry or UUIDs. */
 export const DEVICE_AUTHORING_SECTION_CORRECTIONS: Readonly<Record<string, SectionDefinition[]>> = {
+  us_510k_sections: FDA_510K_SECTIONS,
+  us_510k_mod_sections: FDA_510K_SECTIONS,
+  us_cdx_510k_sections: FDA_510K_IVD_SECTIONS,
   us_510k_ivd_sections: FDA_510K_IVD_SECTIONS,
   qms_quality_manual_sections: groups(QMS_BASIS, [
     ['scope', 'Quality system scope, device families and applicable requirements'],

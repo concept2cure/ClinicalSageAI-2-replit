@@ -1,0 +1,7 @@
+{
+  "head": "7825f921fa9b1aeb1f81ed47955c42cc207eec2e",
+  "observedRemote": "7579b804a7057bb11a7d705e8515c1ef5dd82dd2",
+  "pushAttempted": false,
+  "reason": "Remote advanced during compiler/build; local normal-push preflight requires integration first",
+  "hooksBypassed": false
+}

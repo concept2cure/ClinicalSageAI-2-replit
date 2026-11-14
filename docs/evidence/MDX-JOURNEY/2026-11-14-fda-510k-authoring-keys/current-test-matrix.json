@@ -1,0 +1,90 @@
+[
+  {
+    "path": "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+    "passed": 31,
+    "failed": 0,
+    "pending": 0,
+    "report": "root/integration-tests.json",
+    "reportSha256": "c63c1ebd3e0357c166332a303e48b1d0bbae73609b1773eab1c57642d4b10fe0"
+  },
+  {
+    "path": "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+    "passed": 8,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  },
+  {
+    "path": "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+    "passed": 4,
+    "failed": 0,
+    "pending": 0,
+    "report": "type-correction/tests.json",
+    "reportSha256": "853f8fadf9aee3f627457d12129b7c0b78aa416a8ad5e9ee092821f2bcd2c667"
+  },
+  {
+    "path": "server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts",
+    "passed": 5,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  },
+  {
+    "path": "server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts",
+    "passed": 46,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  },
+  {
+    "path": "server/services/market-specs/__tests__/document-template-library.test.ts",
+    "passed": 41,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  },
+  {
+    "path": "shared/regulatory/__tests__/filingSectionKey.test.ts",
+    "passed": 6,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  },
+  {
+    "path": "tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts",
+    "passed": 10,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  },
+  {
+    "path": "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts",
+    "passed": 7,
+    "failed": 0,
+    "pending": 0,
+    "report": "root/integration-tests.json",
+    "reportSha256": "c63c1ebd3e0357c166332a303e48b1d0bbae73609b1773eab1c57642d4b10fe0"
+  },
+  {
+    "path": "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+    "passed": 6,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  },
+  {
+    "path": "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+    "passed": 9,
+    "failed": 0,
+    "pending": 0,
+    "report": "green/tests.json",
+    "reportSha256": "26c53d1b0b6e17cc72acef85c1e73a473777c8e3a71521bf74bc4472d6ceec3b"
+  }
+]

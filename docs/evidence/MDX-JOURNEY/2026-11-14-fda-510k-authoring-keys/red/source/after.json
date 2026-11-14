@@ -1,0 +1,8 @@
+{
+  "pins": {
+    "shared/regulatory/device-authoring-sections.ts": "e936ba52bdff08c9859b8f4a57f0fa2538a626762af865a74774466f44403262",
+    "shared/regulatory/project-bootstrap.ts": "dfb019c95288ffd30d7aefd6c69df4ff5f98474f0ccd6e4a19a0f4c2fe0e44ef",
+    "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts": "df0f5287dbac45453a416486e51b0709707c9d7c8279f75d21d0540e908e330d"
+  },
+  "stable": true
+}

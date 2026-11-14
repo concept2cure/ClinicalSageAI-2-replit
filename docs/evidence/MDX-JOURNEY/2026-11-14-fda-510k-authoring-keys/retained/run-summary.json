@@ -1,0 +1,22 @@
+{
+  "recordedAt": "2026-11-14T03:49:32.150936+00:00",
+  "scope": "existing retained numeric510k guidance control, no runtime edits",
+  "command": "PATH=/workspace/.tooling/node_modules/node/bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 node node_modules/vitest/vitest.mjs run server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts --maxWorkers=1 --no-file-parallelism --reporter=verbose",
+  "exitCode": 0,
+  "testFilesPassed": 1,
+  "testsPassed": 4,
+  "testsFailed": 0,
+  "durationSeconds": 10.61,
+  "nodeVersion": "22.23.5",
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "initialCliRejection": {
+    "reason": "Unknown option --minWorkers",
+    "testsLoaded": false,
+    "receipt": "cli-option-rejected.log"
+  },
+  "criticalSourcePins": 11,
+  "retainedCaseIsRepairRedEvidence": false,
+  "independentReview": "no blocker within bounded3alias contract",
+  "ownedTestSha256": "1d097387f7935d4da44702f5c7b0aa6569011da6bcc2a54b4a1d0202e734aede"
+}

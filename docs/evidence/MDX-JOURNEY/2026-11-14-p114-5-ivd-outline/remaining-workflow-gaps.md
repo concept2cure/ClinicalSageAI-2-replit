@@ -21,3 +21,9 @@ Complete existing section reads/writes, authoritative hydration, exact indexed V
 The seven main existing owners are `documents.ts`, `useVaultUpload.ts`, MDX `types.ts`, `dossierStore.ts`, `useDossier.ts`, `DossierAttachments.tsx`, and `FilesTreePane.tsx`. Exact lifetime/session/shell ownership still needs tracing before implementation. W7 holds `PathwayPanes.tsx`; this completion should not assume that file is available.
 
 Existing IVD projects also retain their old governed outline versions. This increment does not automatically upgrade authored or signed records. Human review of the actual form, deployed acceptance, and FDA portal upload remain separate from local engineering checks.
+
+## Deeper source-retention audit: completion scope correction
+
+The later source-traced audit in `../2026-11-14-fda-510k-authoring-keys/next-workflow-completion/` supersedes a seven-client-owner-only interpretation of this boundary. The existing source record is strongly immutable in the deployed Vault record guard, but original-file availability can still be withdrawn or tombstoned without recognizing these section associations. Existing where-used, disposition-impact/confirmation and retention/compensation owners must participate in the completion. A visible persisted link alone would not close the end-to-end gap.
+
+The two detailed reports identify exact current owners, source pins, nonblocking signer reservation, duplicate/unknown-outcome contracts and native-concurrency cases. All attachment and retention changes remain **unimplemented**. They establish neither scientific span lineage nor human/agency acceptance. Do not connect the browser to the current permissive writer and describe the workflow as finished.

@@ -1,0 +1,34 @@
+{
+  "status": "component_verified",
+  "testsPassed": 142,
+  "testsFailed": 0,
+  "testsPending": 0,
+  "uniqueFiles": 10,
+  "sourcePins": 47,
+  "sourceStable": true,
+  "headStable": true,
+  "head": "c6d7aaddf8c61b98d6e82fe4fa5126a34452e804",
+  "sourceFreeze": "green/source-after.json",
+  "matrix": "green/current-test-matrix.json",
+  "runtimeFiles": [
+    "shared/regulatory/device-authoring-sections.ts",
+    "shared/regulatory/project-bootstrap.ts"
+  ],
+  "newContractTests": 7,
+  "redPassed": 2,
+  "redFailed": 5,
+  "scope": [
+    "US_510K and US_510K_MOD reference the existing generic38 filing tree",
+    "US_CDX_510K references the already approved IVD47 filing tree",
+    "UK source and existing IVD source objects remain unchanged",
+    "Stable template UUIDs, manual eligibility and new-create source provenance are preserved",
+    "Actual SQL retained numeric510k record and original source/audit metadata remain unchanged"
+  ],
+  "limits": [
+    "Static generic US_510K template has no project/product-type input; contextual IVD selection remains unresolved",
+    "Existing numeric drafts are not migrated or reinterpreted",
+    "No human, agency or deployment qualification claim",
+    "PGlite SQL does not establish native PostgreSQL runtime/RLS execution"
+  ],
+  "compilerBuildPublication": "Root-owned; pending in this packet"
+}
