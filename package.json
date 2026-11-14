@@ -33,7 +33,7 @@
     "db:migrate:deploy": "node scripts/db/deploy-migrate.mjs",
     "db:provision": "node scripts/db/provision.mjs",
     "codespaces:doctor": "node scripts/ops/codespaces-doctor.mjs",
-    "codespaces:doctor:test": "node --test scripts/ops/codespaces-doctor.test.mjs scripts/ops/codespaces-startup.test.mjs scripts/ops/codespaces-neon-policy.test.mjs",
+    "codespaces:doctor:test": "node --test scripts/ops/codespaces-doctor.test.mjs scripts/ops/codespaces-startup.test.mjs scripts/ops/codespaces-neon-policy.test.mjs scripts/ops/codespaces-csr-browser.test.mjs",
     "db:provision-test": "bash scripts/db/provision-test-db.sh",
     "db:provision-test:status": "bash scripts/db/provision-test-db.sh --status",
     "db:check-schema-entrypoints": "node scripts/db/install-fresh.mjs --check-schema-entrypoints",

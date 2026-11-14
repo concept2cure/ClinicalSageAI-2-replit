@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-13T04:51:09.767Z",
+  "generatedAt": "2026-11-14T02:03:36.799Z",
   "git": {
-    "sha": "329771c7772e6852066dec00359214abca4783c8",
+    "sha": "08044016b7f17440fdb3d50448824dd3d31387bd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2399,7 +2399,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1211351
+        "bytes": 1212545
       },
       {
         "file": "shared/schema.ts",
@@ -2419,7 +2419,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 362297
+        "bytes": 362954
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2498,6 +2498,10 @@
         "bytes": 146284
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 145516
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
         "bytes": 144437
       },
@@ -2507,7 +2511,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 141561
+        "bytes": 141850
       },
       {
         "file": "server/storage.ts",
@@ -2524,10 +2528,6 @@
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
         "bytes": 138732
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 138731
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2603,7 +2603,7 @@
       },
       {
         "file": "server/routes/ectd-compile.ts",
-        "bytes": 107183
+        "bytes": 107141
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
@@ -2611,13 +2611,13 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "bytes": 101210
+        "bytes": 101402
       }
     ],
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22660
+        "lines": 22674
       },
       {
         "file": "shared/schema.ts",
@@ -2629,7 +2629,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6904
+        "lines": 6911
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2749,11 +2749,15 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2673
+        "lines": 2675
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2569
+        "lines": 2571
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2556
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2774,10 +2778,6 @@
       {
         "file": "server/routes/submissions.ts",
         "lines": 2459
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2454
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2825,7 +2825,7 @@
       },
       {
         "file": "server/routes/ectd-compile.ts",
-        "lines": 2231
+        "lines": 2228
       },
       {
         "file": "server/services/ana/run-control.ts",
@@ -2912,12 +2912,12 @@
         "lines": 1931
       },
       {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1921
       },
       {
-        "file": "server/services/ana/evidence-literature-tool-defs.ts",
-        "lines": 1916
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "lines": 1921
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
@@ -3053,7 +3053,7 @@
       },
       {
         "file": "server/services/ana/AnaDocumentDraftingService.ts",
-        "lines": 1576
+        "lines": 1614
       },
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",

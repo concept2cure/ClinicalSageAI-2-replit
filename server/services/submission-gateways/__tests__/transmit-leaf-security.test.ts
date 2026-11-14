@@ -9,18 +9,36 @@
  * so such a package went to the agency — including FDA's test environment
  * ('staging'), the one launch row D7 is judged in.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { getGateway } from '../index';
+import { FdaEsgGateway } from '../fda-esg';
+import { CredentialError } from '../types';
 import type { GatewayTransmitRequest, SubmissionBundle } from '../types';
 import { generateIndForm } from '../../ind-forms/ind-form-fill-service';
 
 // The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
 vi.mock('../../storage', async () => (await import('./sent-package-storage-stub')).storageModule);
+vi.mock('../../../db', () => ({ pool: { query: vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/SELECT\s+ou\.role\s+FROM\s+organization_users\s+ou\s+JOIN\s+users/i.test(sql)
+      && params[0] === 11 && params[1] === 7 && params[2] === 'active' && JSON.stringify(params[3]) === '["active"]') {
+    return { rows: [{ role: 'admin' }], rowCount: 1 };
+  }
+  if (/INSERT INTO submission_transmittals/i.test(sql) && params[0] === 7 && params[9] === 11) return { rows: [{ id: 4001 }], rowCount: 1 };
+  return { rows: [], rowCount: 0 };
+}) } }));
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })) }));
+
+const missingStaging = ['URL', 'AS2_FROM', 'AS2_TO', 'CERT_PATH', 'KEY_PATH', 'FDA_CERT_PATH'].map(suffix => `FDA_ESG_STAGING_${suffix}`);
+beforeEach(() => {
+  vi.stubEnv('FDA_ESG_STAGING_TRANSPORT', 'as2');
+  for (const name of missingStaging) vi.stubEnv(name, undefined);
+});
+afterEach(() => vi.unstubAllEnvs());
 
 const secured = Buffer.from('%PDF-1.4\ntrailer<</Root 1 0 R/Encr#79pt 5 0 R>>\n%%EOF\n', 'latin1');
 const plain = Buffer.from('%PDF-1.4\ntrailer<</Root 1 0 R>>\n%%EOF\n', 'latin1');
@@ -42,6 +60,16 @@ function request(bundle: SubmissionBundle, environment: 'staging' | 'production'
     submissionType: 'original', metadata: {},
     authorization: { kind: 'governed-signature', signatureActionId: 'sig-1', actorUserId: 11 },
   };
+}
+
+async function expectMissingStagingCredentials(bundle: SubmissionBundle): Promise<void> {
+  const adapter = vi.spyOn(FdaEsgGateway.prototype, 'transmit');
+  try {
+    const error = await getGateway('fda', 'esg').transmit(request(bundle, 'staging')).then(() => null, err => err);
+    expect(adapter).toHaveBeenCalledOnce();
+    expect(error).toBeInstanceOf(CredentialError);
+    expect(error).toMatchObject({ region: 'fda', gateway: 'esg', environment: 'staging', missing: missingStaging });
+  } finally { adapter.mockRestore(); }
 }
 
 describe('transmit guard — leaf security from the signed bundle', () => {
@@ -81,7 +109,7 @@ describe('transmit guard — leaf security from the signed bundle', () => {
     const b = await bundleOf({ 'm1/us/form-fda-1571.pdf': form, 'm3/32s1/plain.pdf': plain }, 'ectd');
     // It fails later, on credentials this environment does not have — proof the
     // security check passed it on.
-    await expect(getGateway('fda', 'esg').transmit(request(b, 'staging'))).rejects.not.toThrow(/encrypted\/secured/);
+    await expectMissingStagingCredentials(b);
   });
 });
 
@@ -104,6 +132,6 @@ describe('transmit guard — every bundle format, eSTAR included', () => {
     } as never);
     expect(r.filled).toBe(true);
     const b = await bundleOf({ 'eSTAR-510k.pdf': Buffer.from(r.pdfBytes!) }, 'estar');
-    await expect(getGateway('fda', 'esg').transmit(request(b, 'staging'))).rejects.not.toThrow(/encrypted\/secured/);
+    await expectMissingStagingCredentials(b);
   });
 });

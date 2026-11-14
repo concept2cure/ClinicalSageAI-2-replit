@@ -274,12 +274,13 @@ export const ADVISE_RWE_DESIGN: AnaTool = {
 export const NARRATE_STATISTICAL_RESULT: AnaTool = {
   name: 'narrate_statistical_result',
   description:
-    'Turn a structured analysis result (effect measure + estimate + CI + p-value, plus per-arm ' +
-    'values) into correctly-hedged ICH-E3-style prose — determines significance from the confidence ' +
-    'interval (preferred) or p-value, distinguishes statistical from clinical significance, and flags ' +
-    'exploratory/post-hoc and multiplicity-uncontrolled analyses. Use when writing efficacy/safety ' +
-    'results so the language never overstates beyond the data. It narrates the figures you pass, ' +
-    'as given: it reads none from a retained analysis run and computes none. For a CSR, read each ' +
+    'Narrate finite supplied analysis values without rounding them or replacing small p-values with thresholds. ' +
+    'Only an explicit frequentist, two-sided superiority context with valid supplied alpha and coherent ' +
+    'p-value/confidence-interval decisions permits a significance statement. Missing or unsupported ' +
+    'context stays descriptive: Bayesian, noninferiority, equivalence and one-sided decisions are not assessed. ' +
+    'Confirmatory standing also requires explicit prespecification, nonexploratory status and controlled multiplicity. ' +
+    'This wording tool narrates the figures you pass, as given: it reads none from a retained analysis run ' +
+    'and calculates no statistics. A supplied number cannot prove its own provenance. For a CSR, read each ' +
     'figure first from the retained run with get_csr_section_evidence.',
   input_schema: {
     type: 'object',
@@ -307,9 +308,13 @@ export const NARRATE_STATISTICAL_RESULT: AnaTool = {
       estimate: { type: 'number' },
       ci_lower: { type: 'number' },
       ci_upper: { type: 'number' },
-      ci_level: { type: 'number', description: 'Default 95.' },
+      ci_level: { type: 'number', description: 'Reported confidence level. Required when giving a confidence interval; never assumed.' },
       p_value: { type: 'number' },
-      alpha: { type: 'number', description: 'Significance level (default 0.05).' },
+      alpha: { type: 'number', description: 'Reported analysis decision level, strictly between zero and one. No default is assumed.' },
+      method: { type: 'string', enum: ['frequentist', 'bayesian', 'descriptive'], description: 'Method stated by the source analysis. Only frequentist two-sided superiority inference is supported.' },
+      hypothesis: { type: 'string', enum: ['superiority', 'non_inferiority', 'equivalence'], description: 'Hypothesis stated by the source analysis; unsupported hypotheses remain descriptive.' },
+      sidedness: { type: 'string', enum: ['two_sided', 'one_sided'], description: 'Sidedness of the source test. One-sided decisions are not assessed by this tool.' },
+      prespecified: { type: 'boolean', description: 'Whether this analysis was prespecified according to retained protocol/SAP records. Omit if unknown; never infer it from a significant result.' },
       exploratory: { type: 'boolean', description: 'Mark exploratory/post-hoc.' },
       multiplicity_controlled: { type: 'boolean', description: 'Whether multiplicity was controlled.' },
     },

@@ -1,0 +1,20 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > the same connection-URI and Neon patterns 2ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > the same placeholders and non-live hosts 1ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > as patterns: the INF-22 shape is found; stand-ins and local hosts are not 1ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > a file digest in an evidence manifest is not a key, and a key named as one still is 1ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > the file-digest allowlist covers the sentry-access-token rule too, verbatim 0ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > an identifier with doubled separators is an identifier; mixed case or no separator is not 0ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaks.toml carries the working-tree gate’s rules for the credential this history leaked > one escape hatch for both scanners 0ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > CI scans every commit on the branch, and fails on a new finding > has the job, with the whole history checked out 0ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > CI scans every commit on the branch, and fails on a new finding > installs a pinned gitleaks and runs it blocking over HEAD with the repository config 1ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaksignore lists history, each finding with its status and reason > every entry is a fingerprint in a block that says what it is 4ms
+ ✓ tests/ci/secret-history-scan.contract.test.ts > .gitleaksignore lists history, each finding with its status and reason > the INF-22 credential is listed as live, not as a false positive 0ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  21:21:42
+   Duration  361ms (transform 87ms, setup 121ms, import 41ms, tests 13ms, environment 0ms)
+

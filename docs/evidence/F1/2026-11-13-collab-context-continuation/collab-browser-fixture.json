@@ -1,0 +1,18 @@
+{
+  "programId": "8b057fbd-0530-450a-88c1-73ed0ad0b1f4",
+  "documentId": "c2dbf867-8475-446d-b934-09c49f0bd89e",
+  "sections": [
+    {
+      "id": "b6e4e0e1-86f3-4d86-8daf-06af90415764",
+      "code": "1",
+      "title": "Context verification section one"
+    },
+    {
+      "id": "f6310755-aab9-4254-89cb-044f367b8f14",
+      "code": "2",
+      "title": "Context verification section two"
+    }
+  ],
+  "base": "http://127.0.0.1:5000",
+  "source": "Created once through canonical project/document/section APIs in owned disposable fixture; empty fictional content; no models."
+}

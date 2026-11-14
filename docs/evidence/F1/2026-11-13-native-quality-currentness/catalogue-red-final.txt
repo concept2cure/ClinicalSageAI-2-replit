@@ -1,0 +1,141 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > refuses a readable record changed after snapshot commit instead of reporting an empty catalogue 31ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > a later refresh retains the predecessor and presents the current immutable source 77ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > lists a captured file before the Quality record snapshots, however old the file is 89ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > preserves stable source identities when no current native fact changed 83ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely denied object without its title, snippet, identity or prose 38ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely missing object without its title, snippet, identity or prose 37ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > an exact selected denied source receives generic unavailable admission rather than a stale-readable signal 48ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > failed native verification still refuses the catalogue instead of creating an empty success 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > does not refuse another project's list of its sources 62ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > still refuses a list of its own project, so a stale record never reads as current 48ms
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its canonical set' 56ms
+   → The Quality record changed or is no longer available. Refresh the project catalogue before using it.
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its project facet' 52ms
+   → The Quality record changed or is no longer available. Refresh the project catalogue before using it.
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with an empty canonical set' 50ms
+   → The Quality record changed or is no longer available. Refresh the project catalogue before using it.
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with a facet outside its canonical set' 53ms
+   → The Quality record changed or is no longer available. Refresh the project catalogue before using it.
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refreshes an included sibling and retains its immutable predecessor on the first page 51ms
+   → The Quality record changed or is no longer available. Refresh the project catalogue before using it.
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > discovers an included sibling’s existing native record before that data room has ever been opened 149ms
+   → expected { facets: { project: [], …(4) }, …(3) } to match object { total: 1, currentTotal: 1 }
+(7 matching properties omitted from actual)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not synchronize subsequent pages and still refuses stale records inside their scope 50ms
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refuses a sibling changed just after its own first-page capture 37ms
+   → promise resolved "{ facets: { project: [], …(4) }, …(3) }" instead of rejecting
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > omits a denied native object without a title or text 72ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > omits a project whose private grant is no longer in the current evaluated catalog 73ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > still verifies the actor when the canonical catalogue set is empty 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > refuses native content changed after the page SQL and before its final admission 75ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > retains the actor fence if membership is revoked during the final admission of B 81ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > runs as many project admissions for eight sources as for two 23ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > still refuses the read when the person leaves the organization while its sources are being admitted 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its canonical set'
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its project facet'
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with an empty canonical set'
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with a facet outside its canonical set'
+Error: The Quality record changed or is no longer available. Refresh the project catalogue before using it.
+ ❯ server/services/clinical-regulatory-evidence/record-source.ts:193:19
+    191|           }
+    192|           if (nativeRecordHash(current.text) !== row.checksum || stabl…
+    193|             throw new SourceReadAccessError(409, 'NATIVE_SOURCE_CHANGE…
+       |                   ^
+    194|           }
+    195|           expectedCurrentTitle = current.title;
+ ❯ admitReadableIdentity server/services/clinical-regulatory-evidence/source-read-access.ts:116:102
+ ❯ admitEvaluated server/services/clinical-regulatory-evidence/source-read-access.ts:141:19
+ ❯ getCurrentReadableSourceScope server/services/clinical-regulatory-evidence/source-read-access.ts:180:24
+ ❯ Module.searchDataRoom server/services/clinical-regulatory-evidence/data-room-search.ts:209:20
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:213:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'NATIVE_SOURCE_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refreshes an included sibling and retains its immutable predecessor on the first page
+Error: The Quality record changed or is no longer available. Refresh the project catalogue before using it.
+ ❯ server/services/clinical-regulatory-evidence/record-source.ts:193:19
+    191|           }
+    192|           if (nativeRecordHash(current.text) !== row.checksum || stabl…
+    193|             throw new SourceReadAccessError(409, 'NATIVE_SOURCE_CHANGE…
+       |                   ^
+    194|           }
+    195|           expectedCurrentTitle = current.title;
+ ❯ admitReadableIdentity server/services/clinical-regulatory-evidence/source-read-access.ts:116:102
+ ❯ admitEvaluated server/services/clinical-regulatory-evidence/source-read-access.ts:141:19
+ ❯ getCurrentReadableSourceScope server/services/clinical-regulatory-evidence/source-read-access.ts:180:24
+ ❯ Module.searchDataRoom server/services/clinical-regulatory-evidence/data-room-search.ts:209:20
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:222:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'NATIVE_SOURCE_CHANGED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > discovers an included sibling’s existing native record before that data room has ever been opened
+AssertionError: expected { facets: { project: [], …(4) }, …(3) } to match object { total: 1, currentTotal: 1 }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "currentTotal": 1,
+-   "total": 1,
++   "currentTotal": 0,
++   "total": 0,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:231:29
+    229|   it('discovers an included sibling’s existing native record before th…
+    230|     siblingRecordsOnly();
+    231|     expect(await catalog()).toMatchObject({ total: 1, currentTotal: 1 …
+       |                             ^
+    232|     expect(await storedSources()).toHaveLength(1);
+    233|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refuses a sibling changed just after its own first-page capture
+AssertionError: promise resolved "{ facets: { project: [], …(4) }, …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "currentTotal": 0,
++   "facets": {
++     "ctd": [],
++     "folder": [],
++     "kind": [],
++     "project": [],
++     "study": [],
++   },
++   "sources": [],
++   "total": 0,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:249:27
+    247|     };
+    248|     afterProjection = mutate;
+    249|     await expect(catalog()).rejects.toMatchObject({ status: 409, code:…
+       |                           ^
+    250|   });
+    251| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 18 passed (25)
+   Start at  22:44:33
+   Duration  7.14s (transform 1.18s, setup 142ms, import 1.89s, tests 4.87s, environment 0ms)
+

@@ -1,0 +1,16 @@
+{
+  "observedAt": "2026-11-13T22:56:18.254112+00:00",
+  "previousPublishedHead": "50019d14e50304d023b6e9e7c945456c74175979",
+  "incomingHead": "1cddec661e2e2526ef79f613a89e059c71b22b0a",
+  "incomingChangedPaths": [
+    "client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx",
+    "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx",
+    "docs/evidence/F1/2026-11-13-self-service-checkout/README.md"
+  ],
+  "changedMeasuredInputs": [
+    "client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx",
+    "client/src/concept2cure/v2/surfaces/LicensingSurface.tsx"
+  ],
+  "unchangedOtherMeasuredInputCount": 12720,
+  "assessment": "Only licensing runtime source and its existing tests change. Editor, export, backend, bootstrap, dependencies and demo source remain byte-identical to measured inputs. Existing CSR/CDISC proof stays tied to its original source and runtime dates. Focused licensing checks and final published-head restart follow."
+}

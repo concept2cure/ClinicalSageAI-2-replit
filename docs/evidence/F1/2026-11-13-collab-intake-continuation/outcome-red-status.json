@@ -1,0 +1,11 @@
+{
+  "base": "841c41466b6b96c6d95190432c41549ae9fc43b2",
+  "tests": 12,
+  "failed": 8,
+  "passedControls": 4,
+  "scope": "genuine frozen baseline RED; injected HTTP only; no real create/message/notification calls",
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": "d16995eaa97f2d62602017ce651ae31a9ca7ccc6be70d51d4eabf2d5bfd13717",
+    "client/src/concept2cure/v2/__tests__/collabTaskOutcome.test.tsx": "c93feacb13a7a3b49a3a551e6ad84b743a4fe4a1a44da8cac36c80e0a0168bf1"
+  }
+}

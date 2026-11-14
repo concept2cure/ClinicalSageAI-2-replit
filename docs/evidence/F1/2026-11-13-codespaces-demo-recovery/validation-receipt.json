@@ -1,0 +1,32 @@
+{
+  "node": "22.23.5",
+  "sourceIntegrationCommit": "28ecc29d2",
+  "commands": {
+    "codespaces:doctor:test": {
+      "tests": 68,
+      "pass": 68,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "node --test scripts/demo/launch-demo/lumen-{report-scope,csr-studies,qms-change-approval,rbm-completion}.test.mjs": {
+      "tests": 49,
+      "pass": 49,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0
+    },
+    "eslint --no-ignore (two report files and browser regression)": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0
+    },
+    "bash -n .devcontainer/post-start.sh": {
+      "exitCode": 0
+    },
+    "node --check (modified report and new tests)": {
+      "exitCode": 0
+    }
+  },
+  "scope": "credential-independent validation; no live API calls"
+}

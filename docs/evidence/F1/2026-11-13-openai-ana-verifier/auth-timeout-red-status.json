@@ -1,0 +1,8 @@
+{
+  "failed": 2,
+  "providerCalls": 0,
+  "sha256": {
+    "scripts/ops/verify-ana-answers.mjs": "7b3cd2b3af0a007198ffe4053b51c8bca48987676592f8f46b66aabcc21a93b0",
+    "scripts/ops/verify-ana-answers.test.mjs": "36dd4131f41632cd329a771dfb655275c6930462cb5fda41edb208a5ef477db2"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "tests": 59,
+  "passed": 59,
+  "failed": 0,
+  "suites": 6,
+  "originalRed": {
+    "lifetime": {
+      "failed": 5,
+      "passedControls": 4
+    },
+    "outcome": {
+      "failed": 8,
+      "passedControls": 4
+    }
+  },
+  "extendedRed": {
+    "failed": 20,
+    "passedControls": 10
+  },
+  "lint": {
+    "errors": 0,
+    "sourceWarningsBefore": 8,
+    "sourceWarningsAfter": 8,
+    "focusedTestsWarnings": 0
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": "12e7a47b6927224d218245e65e091d5c654fe05e093d20ac272feb0fbc4d53cd",
+    "client/src/concept2cure/v2/__tests__/collabIntakeLifetime.test.tsx": "deb9bdb85d428a4176ec95cdd7beadb2cba7a1261771c138e4bb5d375e63e414",
+    "client/src/concept2cure/v2/__tests__/collabTaskOutcome.test.tsx": "a49f6d6b6786d3900f09d7c494e0c983e42b367db6eca64b356fec7d3ef61721"
+  },
+  "scope": "Synthetic API responses with real React/session guards; no real messages, tasks, providers, DB or Git writes.",
+  "copyCorrection": "QuickTask capability banner now states when creation succeeds, avoiding an unconditional saved claim before any request or beside an unknown outcome."
+}

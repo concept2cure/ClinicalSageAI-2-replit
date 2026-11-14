@@ -42,7 +42,8 @@ import { getResolvedSectionBlueprint, getExactSectionBlueprint, getSectionBluepr
 import type { RegulatoryApplicationType, SectionBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
 import { resolveRequirements } from '../ind/ctd/requirements-resolver.js';
-import { ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
+import { e3SectionDraftingMode, getE3Section, ICH_E3_GUIDANCE } from '../ind/ctd/csr-e3-guidance.js';
+import { csrWritingBrief, csrWritingGuidance } from './medical-writing-csr.js';
 import { CTD_AUTHORING_GUIDANCE } from '../ind/ctd/authoring-guidance.js';
 import { ichHeadingTitle } from '../ind/ctd/ich-m4-headings.js';
 import { BIOTECH_DRAFTING_GUIDANCE, buildDocumentPreparation, isDeviceDocumentScope } from '../market-specs/document-preparation.js';
@@ -435,6 +436,40 @@ function csrRequirements(requested: string): DraftingRequirements {
     requirements: `SECTION REQUIREMENTS (from the platform's ICH E3 record — draft to these; do not add requirements from memory):\n${answer.requirements}`,
     requirementsSource: `record:outline:csr-e3:${titled[0].number}:${answer.match}`,
   };
+}
+
+/** The ordinary writer uses the same exact E3 answer as the read-only resolver. */
+function resolvedCsrDraftSection(requirementsSource: string): string | undefined {
+  return /^record:outline:csr-e3:(\d+(?:\.\d+)*):/.exec(requirementsSource)?.[1];
+}
+
+function csrDraftNumberPrefix(sectionType: string): string | undefined {
+  return /^(?:(?:ICH\s*)?E3\s*)?§?\s*(\d{1,2}(?:\.\d{1,2}){0,3})(?:\s|$)/i.exec(sectionType.trim())?.[1];
+}
+
+/** Local original-record policy; no project/source read or derivative-payload change. */
+function assertCsrOriginalRecordSection(submissionType: string | undefined, sectionType: string): void {
+  if (resolveToRegistryEntry(submissionType ?? '')?.id !== 'ICH_CSR') return;
+  const resolved = resolvedCsrDraftSection(resolveDraftingRequirements(submissionType, sectionType).requirementsSource);
+  // A mismatched caption cannot make a verified original-record number draftable.
+  // A title such as "12-Week Efficacy Results" is not an E3 numeric prefix.
+  const sections = [getE3Section(resolved), getE3Section(csrDraftNumberPrefix(sectionType))];
+  if (sections.some(section => section && e3SectionDraftingMode(section.number) === 'manual')) {
+    throw new AnaProjectScopeError(409, 'DRAFT_MANUAL_SECTION_REQUIRED',
+      'This CSR section requires original outputs, records or manual preparation. Use the retained original and the manual editor; nothing was drafted.');
+  }
+}
+
+function ordinaryCsrWritingBrief(submissionType: string | undefined, sectionType: string, requirementsSource: string): string {
+  if (resolveToRegistryEntry(submissionType ?? '')?.id !== 'ICH_CSR') return '';
+  assertCsrOriginalRecordSection(submissionType, sectionType);
+  const section = getE3Section(resolvedCsrDraftSection(requirementsSource));
+  const prefix = csrDraftNumberPrefix(sectionType);
+  if (!section || (prefix && prefix !== section.number)) {
+    throw new AnaProjectScopeError(409, 'DRAFT_CSR_SECTION_UNAVAILABLE',
+      'Choose a verified ICH E3 heading for this CSR section. An unknown, conflicting or ambiguous heading cannot be drafted; nothing was drafted.');
+  }
+  return csrWritingBrief(csrWritingGuidance(section.number), null);
 }
 
 /** The current M11 record uses the existing outline renderer, including parent
@@ -1050,6 +1085,8 @@ function draftUserPrompt(req: DocumentDraftRequest, product: Awaited<ReturnType<
   // regulatory structure rather than the model re-deriving it.
   const { requirements, requirementsSource } = resolveDraftingRequirements(submissionType, req.sectionType);
   if (requirements) userPrompt += `${requirements}\n\n`;
+  const writing = ordinaryCsrWritingBrief(submissionType, req.sectionType, requirementsSource);
+  if (writing) userPrompt += `${writing}\n\n`;
   const registryId = resolveToRegistryEntry(submissionType ?? '')?.id;
   const productAdvisory = renderDraftProductAdvisory(req.projectContext, req.sectionType, requirementsSource,
     productRead.context, getSubmissionTypeContext(submissionType ?? '')?.region,
@@ -1090,6 +1127,7 @@ export class AnaDocumentDraftingService {
     req = snapshotDraftRequest(req);
     const { signal } = req;
     throwIfDraftCancelled(signal);
+    assertCsrOriginalRecordSection(req.submissionType, req.sectionType);
     if (req.derivativeId !== undefined) return this.draftApprovedDerivative(req);
     const sourceCheckpoint = await draftSourceCheckpoint(req);
     const product = await draftProductInputs(req);

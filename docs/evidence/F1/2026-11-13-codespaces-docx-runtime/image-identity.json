@@ -1,0 +1,53 @@
+{
+  "reference": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "amd64Digest": "sha256:a32008c8fa6eaa28f8974577d28dc83e23e2d0fb939cb7b17ce65ed8a9b13f72",
+  "validation": "Official root filesystem exported and imported as one local layer; public runtime configuration preserved. Direct multi-layer pull exceeded this host vfs disk allowance. Devcontainer features and actual GitHub-hosted forwarding were not built/tested here.",
+  "baseline": {
+    "node": "22.16.0",
+    "python": "3.11.2",
+    "python-docx": null,
+    "lxml": null,
+    "ensurepip": "missing until python3-venv installed"
+  },
+  "freshPostCreate": "exit 0: npm ci, pinned private document venv, PostgreSQL16+pgvector, app_service provisioning and demo people",
+  "startupTests": {
+    "passed": 78,
+    "failed": 0,
+    "skipped": 0
+  },
+  "runtime": {
+    "python-docx": "1.2.0",
+    "lxml": "6.1.1",
+    "wordBytes": 37991,
+    "zipParagraphAndTable": "verified by reopening with selected Python"
+  },
+  "readiness": {
+    "database": "ok",
+    "schema": "ok",
+    "storage": "ok",
+    "ana": "down (no_provider)"
+  },
+  "originChecks": {
+    "forwardedLoginPage": 200,
+    "forwardedDevLogin": 200,
+    "foreignOrigin": 403
+  },
+  "runtimeCredentialChecks": {
+    "forbiddenOwnerCredentialsPresent": false,
+    "connections": [
+      "app_service"
+    ],
+    "verifiedDocxInterpreterPresent": true
+  },
+  "liveProviderCalls": 0,
+  "actualGitHubCodespace": "NOT_EXECUTED",
+  "finalPostStart": {
+    "exitCode": 0,
+    "cachedGeneralSeed": true,
+    "portfolioHelper": "success marker and zero-created rerun verified",
+    "cdisc": "source files approved by three real demo identities; study data frozen; no model build"
+  },
+  "canonicalIntegration": "cd5f9c95a7cac7c1a2a448c40fc49b3e1034dbb2 merged: existing browser recovery and Lumen report scoping retained",
+  "testHostNetworkWorkaround": "Node22.16 native fetch did not use this cloud host proxy; CDISC fetch used an ephemeral Undici EnvHttpProxyAgent preload, preserved CA validation, and verified all ten canonical file hashes. No product proxy setting changed.",
+  "canonicalReferenceWord": "Approved docxFactory used, real version check-in and subsequent browser/ZIP recheck passed"
+}

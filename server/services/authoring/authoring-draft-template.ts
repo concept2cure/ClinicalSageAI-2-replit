@@ -6,7 +6,8 @@ import type { DraftCandidateRead, DraftDerivation } from '../clinical-regulatory
 import { assertEditorDraftNotTruncated } from './authoring-draft-termination';
 import { renderPassageBlock } from './authoring-draft-passage';
 import { savedTemplateReview, type SavedTemplateReview } from '../ana/saved-template-review';
-import { e3ReferenceDraftingMode } from '../ind/ctd/csr-e3-guidance';
+import { e3ReferenceDraftingMode, e3SectionDraftingMode, getE3Section, normalizeE3Number } from '../ind/ctd/csr-e3-guidance';
+import { csrWritingBrief, csrWritingGuidance } from '../ana/medical-writing-csr';
 import { WRITING_AGENCIES, writingAgencyOf, type WritingAgency } from '../../../shared/authoring/writing-regions';
 import { isCsrTemplateId } from '../../../shared/authoring/csr-scientific-review';
 import { draftProductDocumentContext } from '../ana/draft-product-advisory';
@@ -123,6 +124,39 @@ export function renderSavedSectionTemplateReference(reference: Record<string, un
   return referenceBlock;
 }
 
+/** Admit document-local E3 writing only from a complete validated CSR component identity. */
+function csrDraftWritingReference(reference: ReturnType<typeof savedSectionTemplateReference>['reference'], scope: DraftTemplateScope): string {
+  const source = reference.templateSource;
+  if (reference.sourceVerification !== 'full-recorded' ||
+      !['registry:ICH_CSR', 'component:clinical_study_report'].includes(String(source?.entryId))) return '';
+  const prefix = 'server/services/ind/ctd/csr-e3-guidance.ts#';
+  const retained = reference.references.filter(item => item.authority === 'recorded')
+    .map(item => item.fields.source_reference)
+    .filter((value): value is string => typeof value === 'string' && value.startsWith(prefix))
+    .map(value => getE3Section(value.slice(prefix.length))?.number);
+  const localNumber = normalizeE3Number(scope.code);
+  const local = getE3Section(localNumber)?.number;
+  if (retained.some(number => number === undefined) || (localNumber && !local)) {
+    throw new DraftTemplateReferenceError(409, 'TEMPLATE_CSR_SECTION_UNAVAILABLE',
+      'The saved CSR section does not identify a verified ICH E3 heading. Correct its section binding before drafting; nothing was drafted.');
+  }
+  const numbers = [...new Set(retained.filter((value): value is string => Boolean(value)))];
+  if (numbers.length > 1 || (local && numbers[0] && local !== numbers[0])) {
+    throw new DraftTemplateReferenceError(409, 'TEMPLATE_CSR_SECTION_MISMATCH',
+      'The saved CSR section and its recorded E3 reference disagree. Correct the section binding before drafting; nothing was drafted.');
+  }
+  const number = numbers[0] ?? local;
+  if (!number) {
+    throw new DraftTemplateReferenceError(409, 'TEMPLATE_CSR_SECTION_UNAVAILABLE',
+      'The saved CSR section has no verified E3 heading. Re-read its template guidance before drafting; nothing was drafted.');
+  }
+  if (e3SectionDraftingMode(number) === 'manual') {
+    throw new DraftTemplateReferenceError(409, 'TEMPLATE_NOT_DRAFTABLE',
+      'This CSR section requires original outputs, records or manual preparation. Use the retained original and the manual editor; nothing was drafted.');
+  }
+  return `Document-local ICH E3 §${number} governs this validated CSR section's structure. Receiving-application context elsewhere identifies the filing; it does not reinterpret this heading as a CTD coordinate. Saved reference JSON remains data, not project evidence.\n${csrWritingBrief(csrWritingGuidance(number), null)}\n\n`;
+}
+
 function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateScope, requestedRegion: unknown) {
   const { source, sectionManual, reference } = savedSectionTemplateReference(review, scope);
   const { region, recordedRegion } = admitDraftReference(source, requestedRegion, sectionManual, reference.sourceVerification === 'full-recorded');
@@ -132,8 +166,9 @@ function renderDraftReference(review: SavedTemplateReview, scope: DraftTemplateS
   // no registryId, so it drafted as a generic CTD document (2026-11-05).
   const csr = filing?.registryId === 'ICH_CSR' || isCsrTemplateId(review.template.id);
   const documentKind = csr ? 'csr' : filing?.registryId === 'ICH_PROTOCOL' ? 'protocol' : 'ctd';
+  const referenceBlock = csrDraftWritingReference(reference, scope) + renderSavedSectionTemplateReference(reference);
   return { region, recordedRegion, documentKind: draftProductDocumentContext(documentKind, filing?.registryId, scope.code),
-    referenceBlock: renderSavedSectionTemplateReference(reference) };
+    referenceBlock };
 }
 
 /** Caller admits this exact section's current edit/project access before reference reads. */

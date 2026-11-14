@@ -336,7 +336,10 @@ export function preflightIaReview() {
     remaining: [
       'Provision an authorized provider for the chosen registry model; presence alone does not verify credentials or provider identity.',
       'Run IA capture and have qualified domain/market reviewers adjudicate the real transcripts and draft expectations.',
-      'Approve the canonical PQ protocol and acceptance criteria through the responsible system-owner process.',
+      ...(protocol.status === 'approved' && protocol.approvedBy && protocol.approvedOn ? []
+        : ['Approve the canonical PQ protocol and acceptance criteria through the responsible system-owner process.']),
+      ...Object.entries(protocol.components).filter(([, component]) => component.required && !component.executable)
+        .map(([name, component]) => `Required PQ component ${name} cannot be executed yet: ${component.notExecutableReason ?? 'Complete its existing qualification harness and evidence checks before running qualification.'}`),
       'Populate and verify a tenant-scoped RAG evaluation corpus, resolve gold-source documents, and execute attributable RAG qualification.',
       'Execute production-route acceptance and staging validation separately; this policy probe does not test them.',
     ],

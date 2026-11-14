@@ -39,11 +39,12 @@ interface JobRow { job_id: string; organization_id: number; project_id: number; 
 let jobs: JobRow[] = [];
 
 /** The spine's reads, plus the tracking project and an in-memory artifact_compute_jobs. */
-function withJobTable() {
+function withJobTable(options: { trackingRows?: Array<{ id: number }>; trackingError?: boolean } = {}) {
   const spine = poolQuery.getMockImplementation()!;
   poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
-    if (/SELECT id FROM projects WHERE regulatory_program_id/i.test(sql)) {
-      return { rows: params[0] === UUID && params[1] === ORG ? [{ id: TRACKING_PROJECT }] : [] };
+    if (/FROM projects\s+WHERE regulatory_program_id/i.test(sql)) {
+      if (options.trackingError) throw new Error('tracking anchor lookup unavailable');
+      return { rows: params[0] === UUID && params[1] === ORG ? options.trackingRows ?? [{ id: TRACKING_PROJECT }] : [] };
     }
     if (/INSERT INTO artifact_compute_jobs/i.test(sql)) {
       jobs.push({ job_id: params[0] as string, organization_id: params[1] as number, project_id: params[2] as number, surface_key: params[3] as string,
@@ -175,6 +176,53 @@ describe('POST /compile with Prefer: respond-async', () => {
     await compile(asyncReq({ region: 'EMA' }), res);
     expect(res.status).toHaveBeenCalledWith(409);
     expect(jobs).toEqual([]);
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('Async compile tracking anchors', () => {
+  it('a program without a tracking anchor keeps the synchronous result and creates no job', async () => {
+    withJobTable({ trackingRows: [] });
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+    const res = createMockResponse() as any;
+    await compile(asyncReq(), res);
+    expect(res.status).not.toHaveBeenCalledWith(202);
+    expect(res.status).not.toHaveBeenCalledWith(500);
+    expect(res.json.mock.calls[0][0]).toMatchObject({ projectIdent: UUID, programId: UUID, xmlBackbone: REAL_BACKBONE });
+    expect(jobs).toEqual([]);
+  });
+
+  it('a tracking lookup failure refuses the request before a job or assembly starts', async () => {
+    withJobTable({ trackingError: true });
+    const res = createMockResponse() as any;
+    await compile(asyncReq(), res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.status).not.toHaveBeenCalledWith(202);
+    expect(jobs).toEqual([]);
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+  });
+
+  it('an admitted numeric project retains its synchronous draft backbone without a program-anchor lookup', async () => {
+    const spine = poolQuery.getMockImplementation()!;
+    poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (/FROM projects p\s+LEFT JOIN regulatory_programs/i.test(sql)) {
+        return { rows: params[0] === TRACKING_PROJECT && params[1] === ORG
+          ? [{ regulatory_program_id: UUID, linked_program_id: UUID, program_type: 'ind', primary_agency: 'FDA' }] : [] };
+      }
+      return spine(sql, params);
+    });
+    const req = asyncReq();
+    req.params.projectIdent = String(TRACKING_PROJECT);
+    const res = createMockResponse() as any;
+    await compile(req, res);
+    expect(res.status).not.toHaveBeenCalledWith(202);
+    expect(res.status).not.toHaveBeenCalledWith(500);
+    expect(res.json.mock.calls[0][0]).toMatchObject({ projectId: TRACKING_PROJECT, programId: null,
+      projectIdent: String(TRACKING_PROJECT), leafFilesRendered: 0, submissionReady: false });
+    expect(res.json.mock.calls[0][0].xmlBackbone).toContain('<?xml');
+    expect(jobs).toEqual([]);
+    expect(poolQuery.mock.calls.some(([sql]) => /FROM projects\s+WHERE regulatory_program_id/i.test(String(sql)))).toBe(false);
     expect(assembleSequenceMock).not.toHaveBeenCalled();
   });
 });

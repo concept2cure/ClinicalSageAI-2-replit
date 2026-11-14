@@ -1,0 +1,572 @@
+{
+  "compression": "gzip, mtime0; lossless",
+  "archives": [
+    {
+      "file": "apply-method-repair.py.gz",
+      "bytes": 1956,
+      "sha256": "6bbc03cc30f7637c0fc072b9a06f8aabbbcd4bb44468433c8883da3debee5060",
+      "uncompressedBytes": 5034,
+      "uncompressedSha256": "dde27714d10152d0dc5212893620012e8a9474056b47965c98ef065e2d4a5826"
+    },
+    {
+      "file": "clinical-before-tool-alignment.ts.gz",
+      "bytes": 29869,
+      "sha256": "485c76ed33f5fc9c9e45a600373b79ef0211d0b7bddfb78294de09b8ded9586d",
+      "uncompressedBytes": 100040,
+      "uncompressedSha256": "66704ef1e07dee30139f0d04cb50be84480993273f7f6962857de83a9c8807ce"
+    },
+    {
+      "file": "final-owned-source.json.gz",
+      "bytes": 451,
+      "sha256": "0be195f32c718de5957fda733c9663821d7e3af340329007a20e88a9a8625315",
+      "uncompressedBytes": 823,
+      "uncompressedSha256": "363d4621d54d07d273f8b536f1abddf4268c0b8ee963d79307d45b259a4dc2c9"
+    },
+    {
+      "file": "green-command.json.gz",
+      "bytes": 565,
+      "sha256": "dc1fa16b244ca1a072adc5eff83b807903cae2cb4a01cab3e77539d3d626ae06",
+      "uncompressedBytes": 1440,
+      "uncompressedSha256": "ff69bfabcf21edb3948245ea9a50517f3c41ef61faa58769e8d3846621c74f03"
+    },
+    {
+      "file": "green-source-after.json.gz",
+      "bytes": 3700,
+      "sha256": "5ad1b2538474ac4c2ec1f462ccc5cd7377335baf60f56d0b50ac47216d24e7aa",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "c1c66f88689453d54b799a7dce3efd0596a0bf199c09a9740eb023e9b5175f14"
+    },
+    {
+      "file": "green-source-before.json.gz",
+      "bytes": 3700,
+      "sha256": "5ad1b2538474ac4c2ec1f462ccc5cd7377335baf60f56d0b50ac47216d24e7aa",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "c1c66f88689453d54b799a7dce3efd0596a0bf199c09a9740eb023e9b5175f14"
+    },
+    {
+      "file": "green.json.gz",
+      "bytes": 36314,
+      "sha256": "8b5f72476de973c92aac9cdfd4d3f29130a219a6883fb999e76de092504cb32c",
+      "uncompressedBytes": 256513,
+      "uncompressedSha256": "4acf70de4b91d2f3198b14f42e1fa3936c3472461b8ec0d9f31894785bdee530"
+    },
+    {
+      "file": "green.txt.gz",
+      "bytes": 95,
+      "sha256": "1ebb245743b213b95873cad3b3dfabaf7c366cf52bd4fb364a2ce099360b5f66",
+      "uncompressedBytes": 77,
+      "uncompressedSha256": "35c110f6b6baf48f0c9c27284cdc0b8b30aa016969c1b99bd71c697d31123cb2"
+    },
+    {
+      "file": "initial-owned-source.json.gz",
+      "bytes": 394,
+      "sha256": "733902684c7206fc782cb70542f067b1d85755060c3258e9420324d3f4832814",
+      "uncompressedBytes": 691,
+      "uncompressedSha256": "7bb333b947222b606b8c17770ddd33f77eec334238f97c4508d0620ceba486e7"
+    },
+    {
+      "file": "lint-baseline.json.gz",
+      "bytes": 15335,
+      "sha256": "2d7efdfae3dd64809304bb70a035b163c7cadc518811740dacc711075a526699",
+      "uncompressedBytes": 46376,
+      "uncompressedSha256": "8a777c144565a572d828b1297839e68d59598effd37f4f3de5d59c57e014052b"
+    },
+    {
+      "file": "lint-command.json.gz",
+      "bytes": 384,
+      "sha256": "3c2a14934a7c0304d31b36b5306467f87f8d025d89d51ec2b1f18e2ba93b61d2",
+      "uncompressedBytes": 553,
+      "uncompressedSha256": "cd1c24ebc5a3dfdeb90de0ff5e3c946961e46d80212b965f0a089fc1a9f157ae"
+    },
+    {
+      "file": "lint-comparison.json.gz",
+      "bytes": 375,
+      "sha256": "b57d87312c7760d50c1f55d0e692c8369fcdf00a27bd6cabe5c077b63dcdd1ea",
+      "uncompressedBytes": 1966,
+      "uncompressedSha256": "7a08d07af40ad770f297d7275883c991163490d201e922ba57589a34addb61a9"
+    },
+    {
+      "file": "lint-current.json.gz",
+      "bytes": 15741,
+      "sha256": "ed936b32d4472ecea8cba62fa393059d9795e32d5b994311e753d42b23dadc90",
+      "uncompressedBytes": 48157,
+      "uncompressedSha256": "9a645c4d673cbf0104ae8b14e9de96dd4db186890f2e4d586682cd835545ad77"
+    },
+    {
+      "file": "lint-owned.mjs.gz",
+      "bytes": 761,
+      "sha256": "180ef3849865283120b2c37ee5824b4fd4fb3771bad2832f2e2c98a9b9a55a1a",
+      "uncompressedBytes": 1736,
+      "uncompressedSha256": "cb9384c71128f2bb618802afaf2557ad31a0c21170445f267a5dc2ee77fcb174"
+    },
+    {
+      "file": "lint.stderr.txt.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "uncompressedBytes": 0,
+      "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "lint.txt.gz",
+      "bytes": 342,
+      "sha256": "014bbf2cfc45887babb39d487028c36daee1805847d6fe74c88b24ef077cf4ef",
+      "uncompressedBytes": 1339,
+      "uncompressedSha256": "58983fe9442bc934016e542337d5ddca66aeeec9d0475725d10c553ca2fdbe00"
+    },
+    {
+      "file": "owned-diff.txt.gz",
+      "bytes": 10315,
+      "sha256": "2d0b6ae8bdb58fc545396a6bdf36277e96131cc83aeb5ec79f6c8a8435e9f51d",
+      "uncompressedBytes": 29677,
+      "uncompressedSha256": "4de0e4349dc8fe97b99be7f80f881f8d06c26c2ece17c429081b42066ddc2e5b"
+    },
+    {
+      "file": "red-command.json.gz",
+      "bytes": 427,
+      "sha256": "24022be03cec2e29b7c17d4c039c16d808795cbe35e844e7a458d17b9c4c00c4",
+      "uncompressedBytes": 674,
+      "uncompressedSha256": "1f608c148a944c859cc5bfe8b92bc812ed74b004d70a419ccff3898ddf10c8e2"
+    },
+    {
+      "file": "red-source-after.json.gz",
+      "bytes": 1091,
+      "sha256": "f97dfd25bd5ee3d4907da408613297b341909191fdbf84aa526a867d3e70c82e",
+      "uncompressedBytes": 2199,
+      "uncompressedSha256": "7e55b11aeb9aa3c2afa9aafe51d2b3145630486b54b81ca6dafe964ee5774085"
+    },
+    {
+      "file": "red-source-before.json.gz",
+      "bytes": 1091,
+      "sha256": "f97dfd25bd5ee3d4907da408613297b341909191fdbf84aa526a867d3e70c82e",
+      "uncompressedBytes": 2199,
+      "uncompressedSha256": "7e55b11aeb9aa3c2afa9aafe51d2b3145630486b54b81ca6dafe964ee5774085"
+    },
+    {
+      "file": "red.json.gz",
+      "bytes": 3266,
+      "sha256": "6c5bc3ba477c99dc2616862f3fe2862c05a64bda45b7ede763efa5173dd622a3",
+      "uncompressedBytes": 28979,
+      "uncompressedSha256": "3a515922207b52dbadcd31f260adf927d7143ee83b683c341bca94e4ad3da35e"
+    },
+    {
+      "file": "red.txt.gz",
+      "bytes": 94,
+      "sha256": "125075354281e9b91d0b116c2362e0aab6176f8432909006f5e2f9b1f30971fe",
+      "uncompressedBytes": 75,
+      "uncompressedSha256": "a2fb1eef8df2a06d6a0c1e15bb8350aaa02137460cf766a23d7b0118ce3ed301"
+    },
+    {
+      "file": "regression-selection.json.gz",
+      "bytes": 713,
+      "sha256": "884e7b2bb6576c9b231b6349f703433ff6f0bde752de09be6175542c609a0b7e",
+      "uncompressedBytes": 5051,
+      "uncompressedSha256": "111779bdbbb2c1bef73daaf7f06bd2e81b7a15637af1d4a80291779c1304c763"
+    },
+    {
+      "file": "run-phase.py.gz",
+      "bytes": 990,
+      "sha256": "a1f5badd0fa0a69af0ea1b2aa9bd4e0a7956dfc4eb64d6e6b71c86fcb1848f55",
+      "uncompressedBytes": 2371,
+      "uncompressedSha256": "30dcf94591ce70dabac7401e2f362412ab176344f1df8fe4061d12c4bfaff02f"
+    },
+    {
+      "file": "run-regression.py.gz",
+      "bytes": 790,
+      "sha256": "50c2c4c9f1d592e2d71c0fbb2cb8fb71494d40fbac415cc438f54cdf1fda06d3",
+      "uncompressedBytes": 1489,
+      "uncompressedSha256": "966bae4e67ad305193eca579400797585c21acd405eeaaf3c7c0af5b7ab8e0fe"
+    },
+    {
+      "file": "run-tool-alignment.py.gz",
+      "bytes": 795,
+      "sha256": "cc35bac2b3d7d35db848164c02b5a110de3e7e475bbcaf8b8579f4113d5f633c",
+      "uncompressedBytes": 1493,
+      "uncompressedSha256": "5cb9739e3beb233cf038de599bb5ffb545b2730a047645a853e2220904ef7bef"
+    },
+    {
+      "file": "run-tool-pins.py.gz",
+      "bytes": 793,
+      "sha256": "0400c72a499f205e17cd465f816c1a75a563031859a91ab373d29aab59f2a082",
+      "uncompressedBytes": 1488,
+      "uncompressedSha256": "0c3eae50a9e7fa378c352d89090b290e7eca0bd09032b65f872589ed2162b287"
+    },
+    {
+      "file": "server__eval__pq____tests____ia-review.test.ts.final.gz",
+      "bytes": 4788,
+      "sha256": "43d0935e4ffc24b2a682d8e0c7a66de6d4390fa565d4dd2dc8d5ab23ba68080b",
+      "uncompressedBytes": 16410,
+      "uncompressedSha256": "a6a940a0536d11feb4dcd98beba24ac5ff3d44267720f19ec2d8de3ee6984c06"
+    },
+    {
+      "file": "server__eval__pq____tests____ia-review.test.ts.original.gz",
+      "bytes": 4602,
+      "sha256": "2ec2d513856c4fcfdeef717c0b9df7e2e596e6bb133af2887d406ff17f5e8755",
+      "uncompressedBytes": 15670,
+      "uncompressedSha256": "417a57f585b5ce274d116e388f3b6a09997faf0d995e02d4e336a54b1c83cbb6"
+    },
+    {
+      "file": "server__eval__pq__run-pq.ts.final.gz",
+      "bytes": 7763,
+      "sha256": "36cf4a94ff234ae72bed736228fdba116c68c0be4e6cd3b8e128c820999a3738",
+      "uncompressedBytes": 26042,
+      "uncompressedSha256": "f6160d92bb01deccd7a0440458ebd6f43e825de51ef0321fbbd90fe4adfa3fee"
+    },
+    {
+      "file": "server__eval__pq__run-pq.ts.original.gz",
+      "bytes": 7626,
+      "sha256": "c2f1c0e73418301b6e79e824e21f8ff9c6106134bb6faf6b72ee821c8c6893b9",
+      "uncompressedBytes": 25601,
+      "uncompressedSha256": "f52841ae2c39513c7568c078627a8dee00af91ae3b06ecefc7b887f5aa5499e5"
+    },
+    {
+      "file": "server__services__ana____tests____csr-authoring-method.test.ts.final.gz",
+      "bytes": 2096,
+      "sha256": "00d3cf11220e52cb7baf25d5b72dff7b6e5735a68c8dff6d401b1d09d015e5f3",
+      "uncompressedBytes": 6288,
+      "uncompressedSha256": "1a8533edfa55844a0132a64121b125ae42c8a03542ca4ba35c8b9afd9264e0f4"
+    },
+    {
+      "file": "server__services__ana__medical-writing.ts.final.gz",
+      "bytes": 15203,
+      "sha256": "d715504cab2807574bc48acfb70fbc2625961d2efc0003e1a215b7c99ef3e2d6",
+      "uncompressedBytes": 44953,
+      "uncompressedSha256": "080beba5b14d0c06894255aa60e75926a125ea5c10d6001eb6c6ae361dea8b5b"
+    },
+    {
+      "file": "server__services__ana__medical-writing.ts.original.gz",
+      "bytes": 14824,
+      "sha256": "657a25f20e780da0248c539db26b30b1d1a99fedad878fa5ca33857d2cc6871d",
+      "uncompressedBytes": 43507,
+      "uncompressedSha256": "81a67e9835da8d8286201c12a577c07e51092531714b65e9cd8c06d9b274cc9d"
+    },
+    {
+      "file": "server__services__ana__skills__library__clinical.ts.final.gz",
+      "bytes": 29878,
+      "sha256": "aa7f08e8b186b5c4b172dcfd4951e32100ecf424be7399083612c26910dfdbbc",
+      "uncompressedBytes": 100089,
+      "uncompressedSha256": "d46234bdf19d089b00d9208b227ec55a4c86f75115276f861d525ab22aac7700"
+    },
+    {
+      "file": "server__services__ana__skills__library__clinical.ts.original.gz",
+      "bytes": 29394,
+      "sha256": "bc21343349b4e44dbe0a177172c229cc5334b99bd77f44b5ddb8aa6ddbfa390e",
+      "uncompressedBytes": 98738,
+      "uncompressedSha256": "058f3844cd9cd6b914b2175f1fcd737f70f8d470a4b5afdd0b1628d8da40a126"
+    },
+    {
+      "file": "server__services__ana__skills__library__medical-writing.ts.final.gz",
+      "bytes": 9764,
+      "sha256": "b6ecc357095713ea69cde09f79a9f87336ec8c06b4835c384ce50999912ccfae",
+      "uncompressedBytes": 30722,
+      "uncompressedSha256": "466f6297fa505656be8c271aee5549cae695d75cea7d912d4fcb7c9143fe8e61"
+    },
+    {
+      "file": "server__services__ana__skills__library__medical-writing.ts.original.gz",
+      "bytes": 9009,
+      "sha256": "f0dcd54224000ac303522e376629d46e7161778dd5f51691b32a1f3903525214",
+      "uncompressedBytes": 28790,
+      "uncompressedSha256": "a2a9a04727d77dc577bee79acdfc84a0cd8b72d29d665a23fe65e90e0c8a48e1"
+    },
+    {
+      "file": "server__services__ind__ctd__csr-e3-writing.ts.final.gz",
+      "bytes": 6993,
+      "sha256": "9121e223b1487d9c68ba597f09bbe007755b0aefaaf772237675d5acac74cf85",
+      "uncompressedBytes": 19121,
+      "uncompressedSha256": "34424bf26692d752ff98ee6bab0edd9c08cab40a23128235870a2225496f8801"
+    },
+    {
+      "file": "server__services__ind__ctd__csr-e3-writing.ts.original.gz",
+      "bytes": 6379,
+      "sha256": "440926f6df7e91fc00e39b88d518146f91b9605185702ad014895d98d089ee67",
+      "uncompressedBytes": 17521,
+      "uncompressedSha256": "d7162db5db390669242343c74eb5dd686ff2bae89850b64905e54a579ec5deb4"
+    },
+    {
+      "file": "tool-alignment-command.json.gz",
+      "bytes": 434,
+      "sha256": "20e29bb791250b2c4a4d216c0eecbb6e593fa4db91d45f2689d0a1a3a2fb3e34",
+      "uncompressedBytes": 695,
+      "uncompressedSha256": "9dbdc42a951e547afc28de590bbb4f987b16806f3292a64b7647a4b9dfee0862"
+    },
+    {
+      "file": "tool-alignment-correction.json.gz",
+      "bytes": 319,
+      "sha256": "1fe21c54d01e9f95789246d6e1d9e56c14f71e0d99c0fa361170c2172d37d118",
+      "uncompressedBytes": 437,
+      "uncompressedSha256": "5438eb2e5fabf489905074e4cfae50bfcdb9acbb0cdbbef07b7d094e821d56da"
+    },
+    {
+      "file": "tool-alignment-selection.json.gz",
+      "bytes": 691,
+      "sha256": "291ef6d5b2c22da5e292571ac0fb7223739f68e13c4d5af4fdb904cd5ca0636a",
+      "uncompressedBytes": 4297,
+      "uncompressedSha256": "fe93a747bd7a02dd2e4ea88d12063976bce39cc447f05dafd5d865ea3f86f9c8"
+    },
+    {
+      "file": "tool-alignment-source-after.json.gz",
+      "bytes": 3702,
+      "sha256": "463beb439db7bc7e7af9efa4e582a16203c20d479884b3e9985bf08dfc359d70",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "a27a3ff85c9aaa93971c686970beb734dc9f1df80c76a89c281b68919b83f0a1"
+    },
+    {
+      "file": "tool-alignment-source-before.json.gz",
+      "bytes": 3702,
+      "sha256": "463beb439db7bc7e7af9efa4e582a16203c20d479884b3e9985bf08dfc359d70",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "a27a3ff85c9aaa93971c686970beb734dc9f1df80c76a89c281b68919b83f0a1"
+    },
+    {
+      "file": "tool-alignment.json.gz",
+      "bytes": 1997,
+      "sha256": "1feda849ca3f9b6a3f02604dea76fdb02b47e7b8013273c1cfb49f1e95b6d3df",
+      "uncompressedBytes": 11053,
+      "uncompressedSha256": "d6debca5e55d84c38aefa4150adf8580da30e9cad7d5807b9350cdfa6007e048"
+    },
+    {
+      "file": "tool-alignment.txt.gz",
+      "bytes": 101,
+      "sha256": "69b8667164b9e1acfad761b725ad3e336c8b69172ee3b9e18bbb74836400bdde",
+      "uncompressedBytes": 86,
+      "uncompressedSha256": "6e2bff08f92acb5351acaa4592c14e8ca8be7b1a269c2019d2b1d1c0e3c8ab59"
+    },
+    {
+      "file": "tool-pins-command.json.gz",
+      "bytes": 441,
+      "sha256": "bff9b2846d354de4756a91e3cd9b8313e62e7b26dd62dba6742dd9c07be5310d",
+      "uncompressedBytes": 814,
+      "uncompressedSha256": "d8bb72bc067fc1944292576649906ddce1c05af937248896f0eee4115f843b2d"
+    },
+    {
+      "file": "tool-pins-selection.json.gz",
+      "bytes": 692,
+      "sha256": "dab5274b8cbb583bd92ad9e423d64cc324241a11bf403ab56a06d0a02ca5478c",
+      "uncompressedBytes": 4421,
+      "uncompressedSha256": "25700070c4fed4a05fd74d5421c19938b1b33c7fe2587f60169256bb9c1ad84c"
+    },
+    {
+      "file": "tool-pins-source-after.json.gz",
+      "bytes": 3702,
+      "sha256": "463beb439db7bc7e7af9efa4e582a16203c20d479884b3e9985bf08dfc359d70",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "a27a3ff85c9aaa93971c686970beb734dc9f1df80c76a89c281b68919b83f0a1"
+    },
+    {
+      "file": "tool-pins-source-before.json.gz",
+      "bytes": 3702,
+      "sha256": "463beb439db7bc7e7af9efa4e582a16203c20d479884b3e9985bf08dfc359d70",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "a27a3ff85c9aaa93971c686970beb734dc9f1df80c76a89c281b68919b83f0a1"
+    },
+    {
+      "file": "tool-pins.json.gz",
+      "bytes": 27811,
+      "sha256": "cbf71af45b5621b54e6d73cb45275d8de6cd2a976590e8ae080ddff1a9e3a290",
+      "uncompressedBytes": 186806,
+      "uncompressedSha256": "86832fbcbb4ab0ab54b25ac8ec7f239d89427301620e2ea07ab105409dd5f282"
+    },
+    {
+      "file": "tool-pins.txt.gz",
+      "bytes": 98,
+      "sha256": "68a6255b68a84ffd896682ab82ce0c0c40e485bf0e989172fa967838b438d22b",
+      "uncompressedBytes": 81,
+      "uncompressedSha256": "de3de15605e2dec72c4a976c0e97a05ec6fc707e2d0838ef095543499f25f31a"
+    },
+    {
+      "file": "lint-oncology.mjs.gz",
+      "bytes": 626,
+      "sha256": "dcde975be73198ad7930f84fa3949c6e3f4082dfc7ea1c273c5ac425ecf866da",
+      "uncompressedBytes": 1445,
+      "uncompressedSha256": "f669631eec3649d3da5cb33463fa6c55a47b1c8955a15f7dd7ba017c62d29b35"
+    },
+    {
+      "file": "medical-writing-before-oncology-convention.ts.gz",
+      "bytes": 15203,
+      "sha256": "d715504cab2807574bc48acfb70fbc2625961d2efc0003e1a215b7c99ef3e2d6",
+      "uncompressedBytes": 44953,
+      "uncompressedSha256": "080beba5b14d0c06894255aa60e75926a125ea5c10d6001eb6c6ae361dea8b5b"
+    },
+    {
+      "file": "method-test-before-oncology-followup.ts.gz",
+      "bytes": 2096,
+      "sha256": "00d3cf11220e52cb7baf25d5b72dff7b6e5735a68c8dff6d401b1d09d015e5f3",
+      "uncompressedBytes": 6288,
+      "uncompressedSha256": "1a8533edfa55844a0132a64121b125ae42c8a03542ca4ba35c8b9afd9264e0f4"
+    },
+    {
+      "file": "oncology-convention-correction.json.gz",
+      "bytes": 396,
+      "sha256": "f083eeca206068d7cf723b30ebf8f19b835fba11f927029865f9f4d700599722",
+      "uncompressedBytes": 586,
+      "uncompressedSha256": "2119f093844327ca0b3a5041cb72ac7011cb8e86c1cdc62917870da914e1d4b8"
+    },
+    {
+      "file": "oncology-followup-diff.txt.gz",
+      "bytes": 3628,
+      "sha256": "978938631ed85e88c967f15115b322c7fba254bb59e234f622a8ed2c7f6de11b",
+      "uncompressedBytes": 9225,
+      "uncompressedSha256": "84a3d94d09a00b91b80b4ba05e903fddc5896f6bc125e8068ebc3d93cf47c5a7"
+    },
+    {
+      "file": "oncology-green-command.json.gz",
+      "bytes": 454,
+      "sha256": "0cebb4fb9760378b88f9d8c1ff5d48ab4096fd2d0bb258c71bf571a1e1e042c1",
+      "uncompressedBytes": 837,
+      "uncompressedSha256": "c3eaf114ec14b64bbfc6666b8472d0d8955c5bb4fea71415cc8a2d2fc0b8663f"
+    },
+    {
+      "file": "oncology-green-selection.json.gz",
+      "bytes": 695,
+      "sha256": "0f6da32814404b074f8cce41f6b9191f0602fe2f887edbcf27981fa0ec3defc9",
+      "uncompressedBytes": 4439,
+      "uncompressedSha256": "373575d7a435b6d1260bd22f65af7b3e9fb758747943ad2d4210ac5c65a7590b"
+    },
+    {
+      "file": "oncology-green-source-after.json.gz",
+      "bytes": 3704,
+      "sha256": "cc67f3e6d36e5163b4646a41c6d13b89f6f338e4cb12102c3d4cbbd9a6c0cf3f",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "cfb7d6c83728a82e59ba1f176d2937652aa1b366b5dcb5b9f733182b4bfbf9e3"
+    },
+    {
+      "file": "oncology-green-source-before.json.gz",
+      "bytes": 3704,
+      "sha256": "cc67f3e6d36e5163b4646a41c6d13b89f6f338e4cb12102c3d4cbbd9a6c0cf3f",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "cfb7d6c83728a82e59ba1f176d2937652aa1b366b5dcb5b9f733182b4bfbf9e3"
+    },
+    {
+      "file": "oncology-green.json.gz",
+      "bytes": 2513,
+      "sha256": "a121aefb2b4af84c8cf7d1c62fac09f654471f6155659e8eb9a118beea19cb15",
+      "uncompressedBytes": 15168,
+      "uncompressedSha256": "188dc40903a334f77fb0fb2b2b1c917d35400dac849df37d29860186cdca11bd"
+    },
+    {
+      "file": "oncology-green.txt.gz",
+      "bytes": 101,
+      "sha256": "793ab1658e9330b3518425947e184ff28ba93f59017b3d932221281d1836f8bf",
+      "uncompressedBytes": 86,
+      "uncompressedSha256": "8b009b9a311f1877b4ac826c503b170bafdfbb0b3b5984cd405b670859f2fb1f"
+    },
+    {
+      "file": "oncology-lint-baseline.json.gz",
+      "bytes": 15651,
+      "sha256": "29e35ca2dad80e8628cb15e8b07f539854ec2d757bde390081fcc3b83047eaa5",
+      "uncompressedBytes": 46591,
+      "uncompressedSha256": "74bca297fe0e788a6df980a6dd22457f269f5b78c6bee111c24570e810becb09"
+    },
+    {
+      "file": "oncology-lint-command.json.gz",
+      "bytes": 366,
+      "sha256": "df24b0d5046ffbd0b7c5646612109d260c7cd44f6c74da146ba3ab2d9086bb72",
+      "uncompressedBytes": 514,
+      "uncompressedSha256": "12fc728162ae407b91e9af998d7f2f7178fdc7b64cfd4d5e884b8d101b679d32"
+    },
+    {
+      "file": "oncology-lint-comparison.json.gz",
+      "bytes": 170,
+      "sha256": "6fc2b52064c779a9e3a47711ec9a3f9a8e4485cfcef89d90f0f683572ee90f75",
+      "uncompressedBytes": 443,
+      "uncompressedSha256": "466f3b8f562f4a3d594f4252619d1e65f9ffa5dccd3a8df3b06a8cec90f90fe5"
+    },
+    {
+      "file": "oncology-lint-current.json.gz",
+      "bytes": 15690,
+      "sha256": "b9a5af3b5b37442999539f6635506a6b9c178e894f5a23e3af619d68a08feebb",
+      "uncompressedBytes": 46797,
+      "uncompressedSha256": "797c746afe07ce2211e261d9987c038d5048a5c7fe3cf5d3bbd9b1263bbbf00d"
+    },
+    {
+      "file": "oncology-lint.stderr.txt.gz",
+      "bytes": 20,
+      "sha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+      "uncompressedBytes": 0,
+      "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "oncology-lint.txt.gz",
+      "bytes": 154,
+      "sha256": "01a60f1cc3977dfc04cf09b249071975f74f3f63987d8f06aed29b16d6bb2134",
+      "uncompressedBytes": 298,
+      "uncompressedSha256": "e0f7885d903c582ad0c2ecf27d68be1f412fcac83b91fd15d6c0246e4d79470d"
+    },
+    {
+      "file": "oncology-red-command.json.gz",
+      "bytes": 467,
+      "sha256": "41c275f679b1ce92dcb0d3bd9b696c5cf92b8fc9686bc419b5e210213a3aaf9e",
+      "uncompressedBytes": 734,
+      "uncompressedSha256": "1efb381ae9d533f10585ee528a1cf886da419577a563ab62c30c3b7f9aae98c8"
+    },
+    {
+      "file": "oncology-red-selection.json.gz",
+      "bytes": 685,
+      "sha256": "0aec529b447a212b5b247992dc440f1d78a808f509bf76e32c19ae2112914ece",
+      "uncompressedBytes": 4237,
+      "uncompressedSha256": "979cca22deab75b3f1cc232b470a2f4dc0a2ab3544ce07b5afe1fb454313e857"
+    },
+    {
+      "file": "oncology-red-source-after.json.gz",
+      "bytes": 3704,
+      "sha256": "92d207c3b8ac63ea9854c290827928f9b0e6b18fd5702bd4f40d4674c25ba445",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "6acd17fc231db41c0c22d81885a14cc68e78621d7b13da309173572dd667ec6d"
+    },
+    {
+      "file": "oncology-red-source-before.json.gz",
+      "bytes": 3704,
+      "sha256": "92d207c3b8ac63ea9854c290827928f9b0e6b18fd5702bd4f40d4674c25ba445",
+      "uncompressedBytes": 8955,
+      "uncompressedSha256": "6acd17fc231db41c0c22d81885a14cc68e78621d7b13da309173572dd667ec6d"
+    },
+    {
+      "file": "oncology-red.json.gz",
+      "bytes": 1351,
+      "sha256": "096b5e52fa9982bcb69521fc293ba4d04ebaeba783b9910f94f2ea1390ee61b3",
+      "uncompressedBytes": 6913,
+      "uncompressedSha256": "99d06aa44bb97bac3fe71183f6b3cd13cee40c54b32e968fb656b8dfa6c94b13"
+    },
+    {
+      "file": "oncology-red.txt.gz",
+      "bytes": 100,
+      "sha256": "578524afa806672372f24e63e99892ce3d7436f0bc3c4b8e915e36999d46c769",
+      "uncompressedBytes": 84,
+      "uncompressedSha256": "6d5910c3d4ee22a6809ebd64c15837efd47564eeaea096e7b3e4a06433777d47"
+    },
+    {
+      "file": "post-oncology-owned-source.json.gz",
+      "bytes": 537,
+      "sha256": "65064de6066797f3edb78a920806d0ad801f036ecbe0f5a433c579a8d39f8252",
+      "uncompressedBytes": 1280,
+      "uncompressedSha256": "65e9708278f7a138e20a3767326d299302cb7f56bbb4b1ae71f1787df36482da"
+    },
+    {
+      "file": "run-oncology-green.py.gz",
+      "bytes": 795,
+      "sha256": "ae2a9096822c368b895154f2219dcabc098b90fa824c1a9f48fca6e0071352d2",
+      "uncompressedBytes": 1493,
+      "uncompressedSha256": "858e96e8f41ff953e1f91b05b5344e76388200e975e37c3713ac86625a2a21ee"
+    },
+    {
+      "file": "run-oncology-red.py.gz",
+      "bytes": 846,
+      "sha256": "ec6ec7411bed055c25021e7ffb089ae084f490adadbb5aad60f944978fe7e2e7",
+      "uncompressedBytes": 1582,
+      "uncompressedSha256": "c3d0ca99f257a42d7e7948038ead61f5156a9fa292b7f485943ed2bcccea77ef"
+    },
+    {
+      "file": "server__services__ana____tests____csr-authoring-method.test.ts.after-oncology.gz",
+      "bytes": 2296,
+      "sha256": "6a86d487921832ed96f6dac4bf419c7609e77908654c536e8f2a5ef9416829e1",
+      "uncompressedBytes": 7015,
+      "uncompressedSha256": "52bb661636012e64eda8e9b2fdb9469381f2932884fd26a6f0de1a96b445f378"
+    },
+    {
+      "file": "server__services__ana__medical-writing.ts.after-oncology.gz",
+      "bytes": 15236,
+      "sha256": "1c99db557a8ef40850cdc7074353660c7edeca5e75fbefa6ff98511e826d5ef1",
+      "uncompressedBytes": 45159,
+      "uncompressedSha256": "61396a34971d44bfec78bbaa68826eb0712200f078031893f0a98d0e105b3729"
+    }
+  ]
+}

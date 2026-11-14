@@ -1,0 +1,112 @@
+{
+  "package": "F1",
+  "baselineRevision": "5a552f142",
+  "observedDateUtc": "2026-11-14",
+  "runtime": "Node v22.23.5",
+  "completes": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+  "scope": "Existing GET project sources parser, canonical selected admission, bounded projection and existing tests only. Existing route response already serializes recorded top-level and per-row projectId; no route source change needed.",
+  "sourceSha256": {
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "d691772539cfa83d8ada4d73d6e164344f5430bee94c0e0963740546f5470c93",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": "4fc3aaf342ffa77b6b272adf684144dc46d00f9dcb71fbdcdcba9d74470ad235",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "364d6146d21720972aec6b3ba1e026828c5d3a1d74d3db3e6301b7469bb8bf06"
+  },
+  "unchangedRouteInput": {
+    "path": "server/routes/c2c/projects.ts",
+    "sha256": "a63a8a7f9c4df5e16288aaf861bbf8ee0b8130ef0c2f70d6e1dd369ab5097d02"
+  },
+  "greenCommand": "vitest run --config vitest.config.ts server/routes/c2c/__tests__/projects-sources-window.test.ts server/routes/c2c/__tests__/projects-sources-processing.test.ts server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts --reporter=default",
+  "lintCommand": "eslint --max-warnings 0 server/services/clinical-regulatory-evidence/data-room-search.ts server/routes/c2c/__tests__/projects-sources-window.test.ts server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
+  "redCommands": [
+    "vitest run --config vitest.config.ts server/routes/c2c/__tests__/projects-sources-window.test.ts --reporter=default",
+    "vitest run --config vitest.config.ts server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts --reporter=default",
+    "vitest run --config vitest.config.ts server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts -t 'complete verified admission result' --reporter=default",
+    "vitest run --config vitest.config.ts server/routes/c2c/__tests__/projects-sources-window.test.ts -t 'array-shaped' --reporter=default"
+  ],
+  "perFilePassed": {
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": 64,
+    "server/routes/c2c/__tests__/projects-sources-processing.test.ts": 3,
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": 48,
+    "server/services/clinical-regulatory-evidence/__tests__/record-source-access.test.ts": 13
+  },
+  "checks": [
+    {
+      "artifact": "server-route-red.txt.gz",
+      "exitCode": 1,
+      "filesFailed": 1,
+      "testsFailed": 41,
+      "testsPassed": 14,
+      "testsSkipped": 0,
+      "seconds": 10.64,
+      "rawLogSha256": "c51c4998b1f98fd79b8b95c92192a10459c5a0e3cd0b81affd91ae6a60a33e7c",
+      "artifactSha256": "4b02705d651e1387f8688eccd57b02716e815b13f631c64f59dc02f7cdf7239f"
+    },
+    {
+      "artifact": "server-native-red.txt.gz",
+      "exitCode": 1,
+      "filesFailed": 1,
+      "testsFailed": 14,
+      "testsPassed": 30,
+      "testsSkipped": 0,
+      "seconds": 9.47,
+      "rawLogSha256": "9aee8e75b4b4cccb6bd797e46134aceef739936b70824a0dbd0bbeaeb2df95cd",
+      "artifactSha256": "4f10132543779abd3e6f63c12f6d395544febaad6201fd5ff45209b0e099c3f3"
+    },
+    {
+      "artifact": "server-admission-red.txt.gz",
+      "exitCode": 1,
+      "filesFailed": 1,
+      "testsFailed": 4,
+      "testsPassed": 0,
+      "testsSkippedByNameFilter": 44,
+      "seconds": 6.32,
+      "rawLogSha256": "90ac9a7e908ccfc8c87da2dcc8295a87852ffcad485360263cbea4a0764c5eb0",
+      "artifactSha256": "ee481db097723d3507f1f787195337eb7bfdca1d847073229e452395a54803f6"
+    },
+    {
+      "artifact": "server-query-shape-red.txt.gz",
+      "exitCode": 1,
+      "filesFailed": 1,
+      "testsFailed": 9,
+      "testsPassed": 0,
+      "testsSkippedByNameFilter": 55,
+      "seconds": 9.85,
+      "rawLogSha256": "92b8c46980f49cf9dd85edc8d56bf2b2d2a6d5fb53e39f9aa421a89bc8e106fa",
+      "artifactSha256": "672633ee779d25e678b87024dcf9f5b8fb07daabd0da2fd0ee212328755b738b"
+    },
+    {
+      "artifact": "server-green.txt.gz",
+      "exitCode": 0,
+      "filesPassed": 4,
+      "testsPassed": 128,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "seconds": 22.4,
+      "rawLogSha256": "43bfdf3460649df7fed2935fd858885b865cbb4757ca6bcaf09a8237654f2b43",
+      "artifactSha256": "91e5af0b7a1a442bca6ac5eeffcbf4ce8a495b78c7307aa78ef83dfe43317184"
+    },
+    {
+      "artifact": "server-lint.txt.gz",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0,
+      "outputBytes": 0,
+      "rawLogSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifactSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec"
+    }
+  ],
+  "contract": [
+    "HTTP sourceIds is one to twenty distinct canonical decimal positive PG integer IDs <=2147483647. Explicit blank, repeated, array/nested, duplicate, malformed and oversized forms refuse400.",
+    "Every named list/paging/catalog/unscoped filter is mutually exclusive with sourceIds, even when empty. Literal bracket/dotted keys from the simple query parser refuse before normal-list fallback.",
+    "Exact mode requires the canonical verified admission set to equal all requested IDs uniquely with zero unverified entries. SQL uses only the admitted set; no unrelated Quality synchronization occurs.",
+    "Projection requires the complete unique set and matching recorded tenant/program before canonical end-of-read currentness/access recheck. Failure returns no partial success.",
+    "Lifecycle rows are not silently hidden: retained readable no-original data, superseded and ineligible facts preserve their recorded flags for the existing consumer refusal checks.",
+    "Missing/wrong-project/foreign IDs and denied native objects refuse generically; stale native records are not recaptured or substituted. Existing default list and catalog behavior stays covered."
+  ],
+  "testBoundary": "In-process PGlite executes actual project/source/disposition/admission/projection SQL. Existing Quality producer and capture-audit seams are controlled fixtures; route projection tests retain their existing seams. No external PostgreSQL/runtime/provider mutation.",
+  "independentReadOnlyReview": "No material blocker found; final literal query-shape defense additionally covered by nine red-then-green cases.",
+  "limits": [
+    "No Git mutation, full compiler or build by this worker.",
+    "No live provider, model qualification, scientific approval, regulatory delivery or hosted Codespace acceptance claimed.",
+    "Client selection lifetime and exact action admission remain the separate client worker/integrating lead responsibility."
+  ]
+}

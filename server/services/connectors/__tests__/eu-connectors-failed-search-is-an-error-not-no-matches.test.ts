@@ -91,7 +91,7 @@ describe.each(CONNECTORS)('$id connector: a failed search is an error', ({ make,
 describe('searchConnectors: the caller is told the search failed', () => {
   it.each(CONNECTORS.map(c => c.id))('%s: an HTTP error is reported as an error, with no results', async id => {
     answer = () => new Response('unavailable', { status: 404 });
-    const [r] = await searchConnectors(1, [id], { keywords: ['pembrolizumab'] });
+    const [r] = await searchConnectors(1, [id], { keywords: ['pembrolizumab'] }, null);
     expect(r.error, 'the failed search was reported as a search that found nothing').toMatch(/HTTP 404/);
     expect(r.results).toEqual([]);
   });

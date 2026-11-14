@@ -1,0 +1,26 @@
+{
+  "startedAt": "2026-11-13T22:46:08.943002+00:00",
+  "elapsedSeconds": 1.114,
+  "argv": [
+    "docker",
+    "--host=unix:///var/run/docker.sock",
+    "exec",
+    "-i",
+    "c2c-codespaces-handoff-20261113",
+    "node",
+    "-"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "merged-inputs.json",
+  "inputCount": 12722,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "managed-network-probe.txt.gz",
+  "outputSha256": "023366cd59ee526992302a4d0fade6270e7d28758e64ddc4ebd0a731324fc7d9",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

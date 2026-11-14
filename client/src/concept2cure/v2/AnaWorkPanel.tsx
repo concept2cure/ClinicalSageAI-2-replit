@@ -48,7 +48,7 @@ import React from 'react';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaChatMessage, AnaRunHold, RunControlStatus } from '../components/ana/useAnaChat';
-import { workerEstimate, workerMeasurement, workerState, type AgentActivityView, type ProjectTeamView } from './useAgentActivity';
+import { workerEstimate, workerEstimateAvailable, workerMeasurement, workerState, type AgentActivityView, type ProjectTeamView } from './useAgentActivity';
 import type { ProjectTeamSnapshot, WorkerSnapshot } from '@shared/ana/turn-timeline';
 import { useNow } from './useNow';
 import {
@@ -288,6 +288,8 @@ function TeamAssessment({ snapshot }: { snapshot: ProjectTeamSnapshot }) {
 
 /** Safe operational fields only. Never render the child brief or its report. */
 export function TeamWorker({ worker }: { worker: WorkerSnapshot }) {
+  // Withdraw elapsed estimates locally, even while the next durable read is pending.
+  useNow(workerEstimateAvailable(worker));
   const measurement = workerMeasurement(worker);
   return <details className="ana-work-sec">
     <summary className="ana-activity-row"><span className="ana-activity-text">

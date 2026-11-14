@@ -232,6 +232,20 @@ describe('existing PQ runner supplemental mode', () => {
     expect(evaluateModel).not.toHaveBeenCalled();
   });
 
+  it('does not ask the owner to approve the canonical protocol again after its approval', () => {
+    const result = preflightIaReview();
+    expect(result.protocol).toMatchObject({ status: 'approved', approvedOn: '2026-11-10' });
+    expect(result.remaining.join(' ')).not.toContain('Approve the canonical PQ protocol');
+  });
+
+  it('keeps the unexecutable CSR qualification component visible as unfinished work', () => {
+    const result = preflightIaReview();
+    expect(result.status).toBe('PREPARED_NOT_QUALIFIED');
+    expect(result.modelCounts.passedPq).toBe(0);
+    expect(result.remaining.join(' ')).toMatch(/csrDrafting.*cannot be executed/i);
+    expect(result.remaining.join(' ')).toContain("CSR builder's own prompts");
+  });
+
   it('preflights without a provider and exposes only credential presence, never values', () => {
     for (const name of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'MOONSHOT_API_KEY', 'GOOGLE_API_KEY']) vi.stubEnv(name, '');
     vi.stubEnv('OPENAI_API_KEY', 'secret-value-not-for-records');

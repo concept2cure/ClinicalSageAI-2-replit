@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-11-13T23:25:11.388842+00:00",
+  "elapsedSeconds": 3.982,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx",
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCollab.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCollabContext.test.tsx",
+    "client/src/concept2cure/v2/__tests__/authoringCollabRoomUnknown.test.tsx",
+    "client/src/concept2cure/v2/__tests__/collabDirectoryContext.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "collab-inputs.json",
+  "inputCount": 67,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "collab-integration-lint.txt.gz",
+  "outputSha256": "ac5b74763d23e90e2dbf46e0316e0152b4ebd9fbc51b1d2cc14e3279724c1488",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}
