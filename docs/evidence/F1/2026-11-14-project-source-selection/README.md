@@ -320,3 +320,17 @@ finds published CMC integrity/overview work at `a5de561bc`, which must be preser
 by the next ordinary merge. The implementation inputs remain frozen and the
 normal push will run its hook again. The authentication-block record retains
 both its actual earlier401 and successful recovery, without rewriting history.
+
+
+## Authenticated canonical integration retry
+
+`publication-attempt-7.json` records authenticated normal Git at `1b061c030`:
+all89 lint gates pass and full compiler errors0/baseline0, with no named input
+or runner drift. Git then rejects a ref race from `a5de561bc` to `4b82ba809`.
+Authentication is working; this failure is not a credential failure. The incoming
+filing-class/catalogue/bootstrap/migration corrections are outside the four
+selection owners and are preserved by ordinary merge. The502-case selection
+inputs remain frozen. Source/test edit holds end at the recorded03:00UTC lease;
+root continues only normal integration, Git and owned evidence/runtime closure.
+No lane is claimed paused, no source edit is added, and publication remains
+unconfirmed until an actual successful push receipt.
