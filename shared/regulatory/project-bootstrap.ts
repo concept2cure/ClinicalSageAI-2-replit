@@ -905,7 +905,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_sscp_ivd_sections: { id: 'eu_sscp_ivd_sections', name: 'Summary of Safety & Performance (Class C/D IVD)', sections: IVD_PERFORMANCE_SECTIONS },
   eu_ivd_reeval_sections: { id: 'eu_ivd_reeval_sections', name: 'IVD Periodic Performance Re-evaluation', sections: IVD_PERFORMANCE_SECTIONS },
   us_clia_waiver_sections: { id: 'us_clia_waiver_sections', name: 'CLIA Waiver Application', sections: IVD_PERFORMANCE_SECTIONS },
-  us_510k_ivd_sections: { id: 'us_510k_ivd_sections', name: '510(k) for Class II IVD', sections: IVD_PERFORMANCE_SECTIONS },
+  us_510k_ivd_sections: { id: 'us_510k_ivd_sections', name: '510(k) for Class II IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_510k_ivd_sections },
   us_pma_ivd_sections: { id: 'us_pma_ivd_sections', name: 'PMA for Class III IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_ivd_sections },
   us_de_novo_ivd_sections: { id: 'us_de_novo_ivd_sections', name: 'De Novo for Novel IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_de_novo_ivd_sections },
   us_eua_ivd_sections: { id: 'us_eua_ivd_sections', name: 'IVD Emergency Use Authorization', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_eua_ivd_sections },

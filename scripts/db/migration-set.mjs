@@ -3166,6 +3166,12 @@ export const C2C_MIGRATION_FILES = [
   // Evidence docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-k510-denovo-pack-v1-1-*.
   'migrations/20261005c_k510_denovo_estar_outline_v1_1.sql',
 
+  // P-114 item 5 (2026-11-14): the approved parallel FDA IVD 510(k)
+  // content outline. Product-aware selection preserves the generic device
+  // pack and every retained document version. Exact 47-node/tree checks;
+  // conflict-safe insertion, no table or content backfill.
+  'migrations/20261114_k510_ivd_estar_outline_v1_0.sql',
+
   // ── Filing document classes: the filing picked is the outline built (2026-10-18, D2)
   // A supplement, an annual report, an IND amendment / safety report / annual
   // report, a Type A/B/C meeting package, a designation request, a PSP, a REMS,

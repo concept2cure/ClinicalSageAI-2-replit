@@ -1,0 +1,194 @@
+{
+  "files": [
+    {
+      "file": "tests/regulatory/registryCoverage.test.ts",
+      "passed": 186,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "tests/regulatory/template-library-truth.test.ts",
+      "passed": 7,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "tests/schema-contract/c2c-project-scaffold.contract.test.ts",
+      "passed": 19,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts",
+      "passed": 10,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+      "passed": 6,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts",
+      "passed": 9,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+      "passed": 9,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/routes/c2c/__tests__/project-vault-estar-required-sections.test.ts",
+      "passed": 7,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/routes/c2c/__tests__/project-vault-one-outline.test.ts",
+      "passed": 3,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-create-market-offer.test.ts",
+      "passed": 29,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+      "passed": 31,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/routes/c2c/__tests__/projects-create.test.ts",
+      "passed": 30,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/c2c/__tests__/ivd-510k-rule-pack-selection.test.ts",
+      "passed": 13,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/c2c/__tests__/regional-device-document-class.test.ts",
+      "passed": 28,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/market-specs/__tests__/document-template-library.test.ts",
+      "passed": 41,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/regulatory/__tests__/market-support-ich-not-offered.test.ts",
+      "passed": 15,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/regulatory/__tests__/market-support-offer.test.ts",
+      "passed": 52,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/regulatory/__tests__/market-support.test.ts",
+      "passed": 30,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/regulatory/__tests__/regional-device-market-support.test.ts",
+      "passed": 25,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/vault/__tests__/ivd-retained-binder.test.ts",
+      "passed": 4,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/vault/__tests__/vault-folders.test.ts",
+      "passed": 9,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/projectMarketsDeviceAssembly.test.tsx",
+      "passed": 15,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts",
+      "passed": 13,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts",
+      "passed": 21,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts",
+      "passed": 52,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+      "passed": 13,
+      "report": "mapper/corrected-final-test-grouping-tests.json",
+      "reportSha256": "923e7b21e38b076bfde5453cc241c8a52e148e86ac442cc4eebdb469851ae9d0"
+    },
+    {
+      "file": "client/src/concept2cure/mdx/hooks/__tests__/useEstarOfficialFields.test.ts",
+      "passed": 41,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "client/src/concept2cure/mdx/surfaces/__tests__/EstarFilingPanel.render.test.tsx",
+      "passed": 26,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx",
+      "passed": 6,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.attachments.test.tsx",
+      "passed": 28,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    },
+    {
+      "file": "client/src/concept2cure/mdx/surfaces/__tests__/OfficialEstarPanel.render.test.tsx",
+      "passed": 51,
+      "report": "integration/tests.json",
+      "reportSha256": "914b5d77f1d5f85a1efe60a3f73c67856a166350202f2af27971130ae6cc84d9"
+    }
+  ],
+  "passed": 829,
+  "distinctFiles": 31,
+  "failed": 0,
+  "pending": 0
+}

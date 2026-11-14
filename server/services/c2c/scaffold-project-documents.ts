@@ -73,6 +73,8 @@ export interface ScaffoldInput {
   /** As the wizard sends it — 'FDA', 'EMA', 'Health_Canada', … */
   primaryAgency: string;
   productName: string;
+  /** Canonical recorded product class, not a label or a client segment. */
+  productType?: string | null;
 }
 
 export type ScaffoldSkip = 'UNMAPPED_PROGRAM_TYPE' | 'NO_RULE_PACK' | 'ALREADY_SCAFFOLDED';
@@ -127,7 +129,7 @@ export async function scaffoldProjectDocuments(input: ScaffoldInput): Promise<Sc
   let pack: RulePackRow | undefined;
   let resolvedAgency = agency;
   for (const candidate of documentAgencyCandidates(docType, agency)) {
-    const found = await findActiveRulePack(client, docType, candidate);
+    const found = await findActiveRulePack(client, docType, candidate, input.productType);
     if (found) { pack = found; resolvedAgency = candidate; break; }
   }
   if (!pack) {

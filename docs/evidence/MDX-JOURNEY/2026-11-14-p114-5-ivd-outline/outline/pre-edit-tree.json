@@ -1,0 +1,331 @@
+[
+  {
+    "key": "A",
+    "parent_key": null,
+    "label": "Administrative",
+    "mandatory": true,
+    "path_order": 1
+  },
+  {
+    "key": "A1",
+    "parent_key": "A",
+    "label": "Cover letter",
+    "mandatory": true,
+    "path_order": 2
+  },
+  {
+    "key": "A2",
+    "parent_key": "A",
+    "label": "Submitter, applicant and correspondent information",
+    "mandatory": true,
+    "path_order": 3
+  },
+  {
+    "key": "A3",
+    "parent_key": "A",
+    "label": "Pre-submission correspondence and previous communications",
+    "mandatory": false,
+    "path_order": 4
+  },
+  {
+    "key": "A4",
+    "parent_key": "A",
+    "label": "Consensus standards and declarations of conformity",
+    "mandatory": false,
+    "path_order": 5
+  },
+  {
+    "key": "A5",
+    "parent_key": "A",
+    "label": "510(k) summary or 510(k) statement (21 CFR 807.92 / 807.93)",
+    "mandatory": true,
+    "path_order": 6
+  },
+  {
+    "key": "A6",
+    "parent_key": "A",
+    "label": "Truthful and accuracy statement (21 CFR 807.87(k))",
+    "mandatory": true,
+    "path_order": 7
+  },
+  {
+    "key": "A7",
+    "parent_key": "A",
+    "label": "Class III summary and certification (21 CFR 807.94), where applicable",
+    "mandatory": false,
+    "path_order": 8
+  },
+  {
+    "key": "A8",
+    "parent_key": "A",
+    "label": "Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on",
+    "mandatory": false,
+    "path_order": 9
+  },
+  {
+    "key": "A9",
+    "parent_key": "A",
+    "label": "MDUFA user fee — Form FDA 3601 and payment",
+    "mandatory": true,
+    "path_order": 10
+  },
+  {
+    "key": "B",
+    "parent_key": null,
+    "label": "Device description",
+    "mandatory": true,
+    "path_order": 11
+  },
+  {
+    "key": "B1",
+    "parent_key": "B",
+    "label": "Device description and principles of operation",
+    "mandatory": true,
+    "path_order": 12
+  },
+  {
+    "key": "B2",
+    "parent_key": "B",
+    "label": "Indications for use statement",
+    "mandatory": true,
+    "path_order": 13
+  },
+  {
+    "key": "B3",
+    "parent_key": "B",
+    "label": "Classification, product code and regulation",
+    "mandatory": true,
+    "path_order": 14
+  },
+  {
+    "key": "C",
+    "parent_key": null,
+    "label": "Substantial equivalence",
+    "mandatory": true,
+    "path_order": 15
+  },
+  {
+    "key": "C1",
+    "parent_key": "C",
+    "label": "Predicate and reference devices",
+    "mandatory": true,
+    "path_order": 16
+  },
+  {
+    "key": "C2",
+    "parent_key": "C",
+    "label": "Substantial equivalence discussion and comparison table",
+    "mandatory": true,
+    "path_order": 17
+  },
+  {
+    "key": "D",
+    "parent_key": null,
+    "label": "Design, manufacturing and labeling",
+    "mandatory": true,
+    "path_order": 18
+  },
+  {
+    "key": "D1",
+    "parent_key": "D",
+    "label": "Design and manufacturing information",
+    "mandatory": false,
+    "path_order": 19
+  },
+  {
+    "key": "D2",
+    "parent_key": "D",
+    "label": "Proposed labeling and instructions for use",
+    "mandatory": true,
+    "path_order": 20
+  },
+  {
+    "key": "D3",
+    "parent_key": "D",
+    "label": "Reprocessing and reuse",
+    "mandatory": false,
+    "path_order": 21
+  },
+  {
+    "key": "D4",
+    "parent_key": "D",
+    "label": "Sterilization",
+    "mandatory": false,
+    "path_order": 22
+  },
+  {
+    "key": "D5",
+    "parent_key": "D",
+    "label": "Shelf life and packaging",
+    "mandatory": false,
+    "path_order": 23
+  },
+  {
+    "key": "D6",
+    "parent_key": "D",
+    "label": "Benefits, risks and mitigation measures — risk management (ISO 14971), Special 510(k) design control activities",
+    "mandatory": false,
+    "path_order": 24
+  },
+  {
+    "key": "E",
+    "parent_key": null,
+    "label": "Performance and safety testing",
+    "mandatory": true,
+    "path_order": 25
+  },
+  {
+    "key": "E1",
+    "parent_key": "E",
+    "label": "Biocompatibility",
+    "mandatory": true,
+    "path_order": 26
+  },
+  {
+    "key": "E2",
+    "parent_key": "E",
+    "label": "Software and firmware",
+    "mandatory": false,
+    "path_order": 27
+  },
+  {
+    "key": "E3",
+    "parent_key": "E",
+    "label": "Cybersecurity (FD&C Act section 524B, cyber devices)",
+    "mandatory": false,
+    "path_order": 28
+  },
+  {
+    "key": "E4",
+    "parent_key": "E",
+    "label": "Electromagnetic compatibility, electrical, mechanical and thermal safety",
+    "mandatory": false,
+    "path_order": 29
+  },
+  {
+    "key": "E5",
+    "parent_key": "E",
+    "label": "Bench performance testing",
+    "mandatory": false,
+    "path_order": 30
+  },
+  {
+    "key": "E6",
+    "parent_key": "E",
+    "label": "Animal performance testing",
+    "mandatory": false,
+    "path_order": 31
+  },
+  {
+    "key": "E7",
+    "parent_key": "E",
+    "label": "Clinical performance testing",
+    "mandatory": false,
+    "path_order": 32
+  },
+  {
+    "key": "E8",
+    "parent_key": "E",
+    "label": "Human factors and usability",
+    "mandatory": false,
+    "path_order": 33
+  },
+  {
+    "key": "E9",
+    "parent_key": "E",
+    "label": "Analytical performance — assay and instrument performance (precision, detection limit, linearity, interference)",
+    "mandatory": true,
+    "path_order": 34
+  },
+  {
+    "key": "E10",
+    "parent_key": "E",
+    "label": "Method comparison study",
+    "mandatory": false,
+    "path_order": 35
+  },
+  {
+    "key": "E11",
+    "parent_key": "E",
+    "label": "Validation of specimens / matrix comparison",
+    "mandatory": false,
+    "path_order": 36
+  },
+  {
+    "key": "E12",
+    "parent_key": "E",
+    "label": "Reference range / expected values",
+    "mandatory": false,
+    "path_order": 37
+  },
+  {
+    "key": "E13",
+    "parent_key": "E",
+    "label": "Stability of specimens",
+    "mandatory": false,
+    "path_order": 38
+  },
+  {
+    "key": "E14",
+    "parent_key": "E",
+    "label": "Metrological traceability of calibrators and controls",
+    "mandatory": false,
+    "path_order": 39
+  },
+  {
+    "key": "E15",
+    "parent_key": "E",
+    "label": "Assay cut-off",
+    "mandatory": false,
+    "path_order": 40
+  },
+  {
+    "key": "E16",
+    "parent_key": "E",
+    "label": "Carry-over",
+    "mandatory": false,
+    "path_order": 41
+  },
+  {
+    "key": "E17",
+    "parent_key": "E",
+    "label": "High-dose hook effect",
+    "mandatory": false,
+    "path_order": 42
+  },
+  {
+    "key": "F",
+    "parent_key": null,
+    "label": "Quality management",
+    "mandatory": false,
+    "path_order": 43
+  },
+  {
+    "key": "F1",
+    "parent_key": "F",
+    "label": "Quality management system information",
+    "mandatory": false,
+    "path_order": 44
+  },
+  {
+    "key": "G",
+    "parent_key": null,
+    "label": "References and additional information",
+    "mandatory": false,
+    "path_order": 45
+  },
+  {
+    "key": "G1",
+    "parent_key": "G",
+    "label": "References and bibliography",
+    "mandatory": false,
+    "path_order": 46
+  },
+  {
+    "key": "G2",
+    "parent_key": "G",
+    "label": "Additional information / amendment responses",
+    "mandatory": false,
+    "path_order": 47
+  }
+]

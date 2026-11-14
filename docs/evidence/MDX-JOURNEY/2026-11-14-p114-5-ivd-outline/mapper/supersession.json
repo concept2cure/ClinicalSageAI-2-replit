@@ -1,0 +1,8 @@
+{
+  "supersededReports": [
+    "green-tests.json",
+    "cohort-tests.json",
+    "qualification-summary.json"
+  ],
+  "reason": "Raw XFA ancestry proves FDA hides BenchTesting and shows conditional AnimalTesting. More seriously, whenApplicable does not block current ready/canFileNow, so relaxing BIO without a recorded contact assessment widened release. Final implementation preserves existing mandatory BIO review and changes generic IVD performance to conditional animal-only."
+}

@@ -1,0 +1,19 @@
+{
+  "status": "engineering_component_qualified_publication_pending",
+  "sourceBase": "3692f44adc02ba891ae7e6876a990ad5f8d31740",
+  "passed": 829,
+  "distinctFiles": 31,
+  "failed": 0,
+  "pending": 0,
+  "sourceBridge": "integration/test-grouping-bridge.json",
+  "runtimeSourceStable": true,
+  "lintErrors": 0,
+  "lintWarnings": 9,
+  "lintWarningCountsUnchanged": true,
+  "build": "pending",
+  "compiler": "pending",
+  "publication": "pending",
+  "humanAcceptance": "not_executed",
+  "agencyAcceptance": "not_established",
+  "nativePostgreSQL": "not_executed"
+}
