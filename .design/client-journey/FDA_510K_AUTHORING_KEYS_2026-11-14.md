@@ -52,3 +52,8 @@ Extend the existing `server/services/authoring/__tests__/authoring-template-guid
 ## Implemented qualification
 
 The bounded repair is implemented in the two existing shared owners. The current combined cohort passes 142 tests across 10 distinct files with all 47 declared source pins stable; forced lint has zero errors and two unchanged warnings. The new seven-case contract has five authentic failures against the retained pre-edit source and passes completely after the repair. The independently owned retained-record case and independent source/SQL comparison pass. Full-program compiler, production build and normal canonical publication remain root-owned acceptance gates. See the linked evidence packet for exact reports and remaining contextual/reconciliation limits.
+
+
+## Canonical publication
+
+Published normally to `concept2cure-v2` at `36dafdf56b14dd91961498c5dc5514280656800d`. The latest selected matrix passes 173 unique cases across 11 files, with zero failures/pending. Full compiler: zero errors. Production build and all 89 CI Lint-job gates pass on unchanged source. Retained evidence and exact publication receipt are in the linked packet. All scoped implementation holds are released. Human/agency acceptance and the separately inventoried attachment/retention completion remain open.

@@ -2061,6 +2061,8 @@ CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source 
 
 **Codex existing US 510(k) authoring-key repair, 2026-11-14 (F1):** narrow holds only on `shared/regulatory/device-authoring-sections.ts`, the three US alias rows in `shared/regulatory/project-bootstrap.ts`, its new focused contract test, the existing `server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts` retained-record case, and lane-owned design/evidence. Ends at publication or 2026-11-14 05:00 UTC. Complete existing US_510K/US_510K_MOD generic 38 and US_CDX_510K IVD 47 projections; UK and retained documents are unchanged. Pre-edit What already exists: `.design/client-journey/FDA_510K_AUTHORING_KEYS_2026-11-14.md` and `docs/evidence/MDX-JOURNEY/2026-11-14-fda-510k-authoring-keys/README.md`. No new screen, route, table, migration or service. Static template recommendation still has no recorded product context; this is not a whole-product qualification. Root owns Git/compiler/integration; worker owns the two shared files and focused test. No other owner is paused.
 
+**Published and released:** US 510(k) authoring-key source is published normally at `36dafdf56b14dd91961498c5dc5514280656800d`. All holds in the preceding bounded repair are released. Latest selected cohort 173/11, zero-error full compiler, production build and 89 Lint-job gates pass. Durable section attachments/source-retention work remains discovery only; no implementation hold is taken for it.
+
 ### Codex continuation — verified report references and Railway beta assessment, 2026-11-14
 
 **Founder data-class clarification:** confidential sponsor documents without patient identifiers. Root owns

@@ -1,9 +1,9 @@
 {
-  "count": 88,
+  "count": 101,
   "artifacts": {
     "README.md": {
-      "bytes": 7576,
-      "sha256": "202c1a6c8830feb56adbb908ee29eae37fc3db83f244da252fb5dd1c68cc30b3"
+      "bytes": 8699,
+      "sha256": "fdc3c23a8ff913992dc86432258b786558a2c41129002de07bc9ba8923d68fdb"
     },
     "current-test-matrix.json": {
       "bytes": 2992,
@@ -73,9 +73,13 @@
       "bytes": 16184,
       "sha256": "801a096bdbf6b850e4d9edbfdf94acf1d67b55bcfb9ec995e155146dc8b0a7a1"
     },
+    "publication.json": {
+      "bytes": 389,
+      "sha256": "ac50891e6b6b595ce9200bcfee8b2c29156285faeb901b7796b220adf7b7bcbb"
+    },
     "qualification-summary.json": {
-      "bytes": 1389,
-      "sha256": "51a935e4f22d08accb1c046787602985a1aa0fe3020028c3dc55a81e6bdf6619"
+      "bytes": 1414,
+      "sha256": "41d5cf5e1907d15336078ff1b4b8d35b89020f90fd685d98e514b01c7677cb40"
     },
     "red/raw.log.gz": {
       "bytes": 150,
@@ -152,6 +156,22 @@
     "retained/source-pins-prequalification.json": {
       "bytes": 1448,
       "sha256": "047f51df472384205e2969736fb87f16037d032c911fb52b41b3bef7ad67e673"
+    },
+    "root/build-dialog-source-pins.json.gz": {
+      "bytes": 692757,
+      "sha256": "7c477f68888f1bdec24e6d1e3b60ee90047338465ffe342cee3ff7596fbc50fe"
+    },
+    "root/build-dialog-start.json": {
+      "bytes": 384,
+      "sha256": "409600be7a8f1fddd872fed1d305a54a4531d415b4d55c9f9a070438764b7139"
+    },
+    "root/build-dialog.json": {
+      "bytes": 443,
+      "sha256": "9a93ea294955262ea4efe74c403202f39bb45554d6113b03821a48860f80d115"
+    },
+    "root/build-dialog.log.gz": {
+      "bytes": 5420,
+      "sha256": "049c7df60456dabd17aa59d414adafd8eb3c50cbba087fb81b5f4028c9de7faf"
     },
     "root/build-merged-source-pins.json.gz": {
       "bytes": 692582,
@@ -257,9 +277,41 @@
       "bytes": 5246,
       "sha256": "119cc3473f029c19137d9368cddb53edcd108516bb78da10eb41e0fc40cd5ae3"
     },
+    "root/push-3-source-pins.json.gz": {
+      "bytes": 692757,
+      "sha256": "7c477f68888f1bdec24e6d1e3b60ee90047338465ffe342cee3ff7596fbc50fe"
+    },
+    "root/push-3-start.json": {
+      "bytes": 404,
+      "sha256": "13d56fb27dbaa3f453991a84e512d7dd77f9d8d8db3c001acf8b7b93d11d34d0"
+    },
+    "root/push-3.json": {
+      "bytes": 523,
+      "sha256": "4cd78bcd5e828969739e7f21982f428717426a0ffd548eb1221d867915ef0ce5"
+    },
+    "root/push-3.log.gz": {
+      "bytes": 5153,
+      "sha256": "847654b9e42e423422a22761893ee7c16f067ccdd982ecc0472595b6235e97f6"
+    },
     "root/runner.py.gz": {
       "bytes": 1703,
       "sha256": "674ab094e94eac55549ee2a584d03ce6a95c1de4e85e482a841bf6fcbe33682a"
+    },
+    "root/typecheck-dialog-source-pins.json.gz": {
+      "bytes": 692757,
+      "sha256": "7c477f68888f1bdec24e6d1e3b60ee90047338465ffe342cee3ff7596fbc50fe"
+    },
+    "root/typecheck-dialog-start.json": {
+      "bytes": 433,
+      "sha256": "8159da0babc133214b5bb6d51ded1322143b4d89e1c2a6e3c8bec571b9d69065"
+    },
+    "root/typecheck-dialog.json": {
+      "bytes": 490,
+      "sha256": "520c8e30036ab85e47a9fd25999ed17839a8ca3a12bbdc62cf24e8df48b1bd96"
+    },
+    "root/typecheck-dialog.log.gz": {
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
     },
     "root/typecheck-fixed-source-pins.json.gz": {
       "bytes": 692533,

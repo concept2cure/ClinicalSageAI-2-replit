@@ -1,0 +1,14 @@
+{
+  "head": "36dafdf56b14dd91961498c5dc5514280656800d",
+  "startedAt": 1794630417.4795446,
+  "command": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "sourcePins": "typecheck-dialog-source-pins.json.gz",
+  "sourceSnapshotSha256": "515dd98d278ff0dadefc085310961ac06f120495714183865c597fb97a281e13",
+  "declaredSourceFiles": 13601,
+  "nodeVersion": "v22.23.5",
+  "TYPECHECK_HEAP_MB": "12288"
+}

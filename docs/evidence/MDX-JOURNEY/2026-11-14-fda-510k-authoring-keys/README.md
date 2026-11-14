@@ -10,7 +10,7 @@ Saved documents retain stored rows, CREATE snapshots and recorded guidance; temp
 
 ## Status and scope
 
-Implemented and independently reviewed; full compiler, build and canonical publication pending. The read-only comparison reproduces every generic key, label and mandatory flag from the actual migration. Completed repair: only US_510K and US_510K_MOD use generic 38; US_CDX_510K uses the existing IVD 47; UK and all retained records stay untouched. All generic guidance must be generic FDA guidance and must not retain the IVD hidden-bench or non-contact instructions.
+Published directly to `concept2cure-v2` at `36dafdf56b14dd91961498c5dc5514280656800d`. Latest selected qualification: **173 tests across 11 files**, with zero failed or pending. The full compiler reports zero errors, the production build passes, and the successful normal push re-runs all 89 CI Lint-job gates and the full compiler. All declared source/test inputs remain unchanged throughout. Earlier receipts below are historical integration evidence; human/agency/deployment acceptance remains unestablished. The read-only comparison reproduces every generic key, label and mandatory flag from the actual migration. Completed repair: only US_510K and US_510K_MOD use generic 38; US_CDX_510K uses the existing IVD 47; UK and all retained records stay untouched. All generic guidance must be generic FDA guidance and must not retain the IVD hidden-bench or non-contact instructions.
 
 Static template selection has no recorded project/product input. A generic US_510K working template can still be selected in an IVD project; this repair does not claim to close that recommendation gap. Governed filing editing starts from the actual stored outline. CDx-specific scientific assessment, human acceptance and agency validation are not established by key alignment.
 
@@ -18,7 +18,7 @@ The existing native PGlite saved-guidance fixture will additionally pin a retain
 
 ## Automated qualification
 
-The combined current cohort passes **142/142 across 10 distinct files**, with no failures or pending tests (`green/tests.json`). All 47 declared source pins and HEAD remain stable. The new seven-case contract executes the actual generic/IVD SQL migrations and canonical resolver, then follows library → builtin → create-section resolver → shared filing-key matcher. The original source has five genuine failures and two passing preservation controls; original source/test bytes and RED output are retained under `red/`.
+The initial combined cohort passes **142/142 across 10 distinct files**, with no failures or pending tests (`green/tests.json`). All 47 declared source pins and HEAD remain stable. The new seven-case contract executes the actual generic/IVD SQL migrations and canonical resolver, then follows library → builtin → create-section resolver → shared filing-key matcher. The original source has five genuine failures and two passing preservation controls; original source/test bytes and RED output are retained under `red/`.
 
 Scoped forced lint reports zero errors and two existing warnings, both in `project-bootstrap.ts`, unchanged from its baseline. Independent review in `retained/independent-review.json` confirms exact keys, labels, required flags and order for both generic templates and both IVD/CDx templates, distinct generic row objects, unchanged IVD/UK source controls, stable template UUIDs and manual preparation eligibility.
 
@@ -41,3 +41,7 @@ The project-source selection update is integrated normally at `7825f921fa`. Fres
 The source-selection merge passes the full compiler with zero errors (330.790 seconds) and production build (28.105 seconds), with 13,598 declared source/test inputs stable. A later protocol-workspace update is detected before another push starts; the preflight stops without attempting a push, and that update is integrated normally. These are canonical integration receipts, not new feature or human-acceptance counts.
 
 The protocol integration passes the compiler with zero errors (335.093 seconds) and full production build (29.797 seconds), with 13,600 declared inputs unchanged. The second actual normal push again passes all 89 Lint-job gates and zero-error compiler; a concurrent shared-dialog repair changes the final ref. Its public hook signature is unchanged, and its three source/test files do not change this lane’s four qualified files. Preserve and integrate that repair normally, then run compiler/build/push again.
+
+## Confirmed canonical publication
+
+The successful normal push is `root/push-3.json` at `36dafdf56b14dd91961498c5dc5514280656800d`. All implementation, test-correction and preceding IVD source commits are ancestors of that ref. The selected latest per-file matrix contains 173 passing cases across 11 files without adding overlapping reruns. The latest full compiler (`root/typecheck-dialog.json`), production build (`root/build-dialog.json`) and mandatory push gates pass on unchanged source. The following evidence-only commit seals this receipt. Static product-aware recommendation, deliberate remediation of old numeric drafts, durable attachment/retention completion and human acceptance remain open.
