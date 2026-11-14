@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T01:30:52.277Z",
+  "generatedAt": "2026-11-14T02:03:36.799Z",
   "git": {
-    "sha": "729fbb0e7d7487348eb6fccb21b54163aa992757",
+    "sha": "08044016b7f17440fdb3d50448824dd3d31387bd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2498,6 +2498,10 @@
         "bytes": 146284
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "bytes": 145516
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
         "bytes": 144437
       },
@@ -2524,10 +2528,6 @@
       {
         "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
         "bytes": 138732
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 138731
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2756,6 +2756,10 @@
         "lines": 2571
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "lines": 2556
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
         "lines": 2506
       },
@@ -2774,10 +2778,6 @@
       {
         "file": "server/routes/submissions.ts",
         "lines": 2459
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2454
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
