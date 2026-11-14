@@ -60,7 +60,7 @@ const app = () => { const a = express(); a.use('/api/task-management', createTas
 const board = async () => {
   const r = await request(app()).get('/api/task-management/board');
   expect(r.status).toBe(200);
-  return r.body.data as Array<{ taskId: string; blocking?: boolean; blocked: boolean; readOnly?: boolean }>;
+  return r.body.data as Array<{ taskId: string; blocking?: boolean; blocked: boolean; readOnly?: boolean; assignee?: string }>;
 };
 const byId = (cards: Awaited<ReturnType<typeof board>>, id: string) => cards.find((c) => c.taskId === id)!;
 
