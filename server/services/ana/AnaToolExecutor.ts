@@ -2428,7 +2428,9 @@ registerToolHandler('narrate_statistical_result', async (input) => {
   if (!endpoint.trim() || !analysisType) {
     return JSON.stringify({ error: 'narrate_statistical_result requires endpoint and a valid analysis_type.' });
   }
-  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  // Preserve invalid supplied numeric fields for the narrator's explicit
+  // refusal flags; do not silently turn them into an omitted value.
+  const num = (v: unknown): number | undefined => v === undefined ? undefined : typeof v === 'number' ? v : Number.NaN;
   const arms = Array.isArray(input.arms)
     ? (input.arms as any[])
         .filter(a => a && typeof a.name === 'string')
@@ -2445,6 +2447,10 @@ registerToolHandler('narrate_statistical_result', async (input) => {
     ciLevel: num(input.ci_level),
     pValue: num(input.p_value),
     alpha: num(input.alpha),
+    method: typeof input.method === 'string' ? input.method : undefined,
+    hypothesis: typeof input.hypothesis === 'string' ? input.hypothesis : undefined,
+    sidedness: typeof input.sidedness === 'string' ? input.sidedness : undefined,
+    prespecified: typeof input.prespecified === 'boolean' ? input.prespecified : undefined,
     exploratory: typeof input.exploratory === 'boolean' ? input.exploratory : undefined,
     multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
   });

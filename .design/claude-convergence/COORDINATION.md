@@ -1919,3 +1919,19 @@ dependency is reproduced against original source. No lint errors or warning grow
 all findings. Existing evidence above records exact scope and limits. Root retains normal integration/Git and
 the sole full compiler; the rehearsal agent is runtime/scratch-only. **All source, test and evidence holds in this
 continuation release with canonical publication of this completion.** No other lane is paused or declared accepted.
+
+
+### Codex CSR medical-writing repair continuation, 2026-11-13 (F1 / W1 / D2)
+
+Current source `841c41466`; inventory `.design/claude-convergence/F1-ANA-CSR-WRITING-2026-11-13.md`, evidence `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Narrow holds end at canonical publication or **2026-11-14 02:37 UTC**, whichever comes first. Existing source only; no other lane is paused. The held draft/accept handler in `server/routes/authoring.router.ts` is excluded.
+
+| Holder | Existing files and bounded scope |
+|---|---|
+| Root | `server/services/ana/statistical-narrator.ts`; only `narrate_statistical_result` handler in `AnaToolExecutor.ts` and `NARRATE_STATISTICAL_RESULT` in `evidence-literature-tool-defs.ts`; focused narrator tests, this entry/design/evidence, integration/Git and sole full compiler |
+| Method worker | `server/services/ana/skills/library/medical-writing.ts`, `clinical.ts`, `server/services/ana/medical-writing.ts`, `server/services/ind/ctd/csr-e3-writing.ts`; existing `server/eval/pq/run-pq.ts` IA preflight remaining-action text and focused tests only |
+| Delivery worker | `server/services/ana/AnaDocumentDraftingService.ts` ordinary CSR writing/manual admission and local explicit manual refusal only; `server/services/authoring/authoring-draft-template.ts` validated drafting context/binding; focused service/template tests only |
+
+Preserve current source/actor/privacy/model/independent-review gates and exact attested derivative payload. No protocol criteria, model registry, qualification approval or UI change. No source branch/worktree or new product owner is created.
+
+
+CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source `1ea68c474` is integrated normally with current intake/catalog source at `78c381c3c`. All implementation workers are frozen. Narrator38/3 and delivery250/9 pass; writing method, selection and oncology successors remain separate in `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Current-intake57/3 and fresh merged production build pass with11,926 source hashes stable. Scoped lint has zero errors/no warning growth. The existing approved protocol/model/source/checker/scientific gates are unchanged; no model training or clinical qualification is claimed. Source holds named in this continuation release with canonical publication of this completion; root retains only Git, final gates and publication receipts. No other owner is paused.

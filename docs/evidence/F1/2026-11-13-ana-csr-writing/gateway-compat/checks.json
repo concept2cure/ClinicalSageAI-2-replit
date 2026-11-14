@@ -1,0 +1,16 @@
+{
+  "observedAt": "2026-11-14T01:21:24.599863+00:00",
+  "incomingBase": "0e6b15b100939d5728b50bc34e70b823a6bbab09",
+  "incomingTip": "985559c5b5cf952b3cc2934b45df20e2ff19266e",
+  "mergeHead": "ae4cd476b88b57843a842b616b5ca98d91fbac7e",
+  "ownedCsrRuntimeOverlap": false,
+  "independentReview": "No concrete CSR writing/source approval/custody regression found. Message metadata snapshots precede awaits and locked recipient lifecycle check remains. Current authorization precedes dispatch snapshot; gateway account use requires current signing authority and unchanged account before/after chained credential-use audit. Numeric account ID validation agrees with existing SERIAL schema.",
+  "tests": {
+    "passed": 165,
+    "files": 6,
+    "processSeconds": 80.648,
+    "sourcePins": 20,
+    "sourceStable": true
+  },
+  "limits": "Bounded test collaborators, not actual agency transport, native database signing, live provider or model/clinical qualification."
+}
