@@ -53,6 +53,97 @@ function Harness({ empty = false }: { empty?: boolean }) {
 const first = () => screen.getByRole('button', { name: 'first' });
 const last = () => screen.getByRole('button', { name: 'last' });
 
+function FocusLayer({ name, enabled = true, opener = true }: { name: string; enabled?: boolean; opener?: boolean }) {
+  const ref = useDialog(() => {}, enabled);
+  return enabled ? <div role="dialog" aria-label={name} aria-modal="true" tabIndex={-1} ref={ref}>
+    {opener && <button>{name} opener</button>}
+    <input aria-label={`${name} draft`} />
+  </div> : null;
+}
+
+function FocusStack({ lower = false, upper = false, enabled = true, opener = true }: {
+  lower?: boolean; upper?: boolean; enabled?: boolean; opener?: boolean;
+}) {
+  return <>
+    <button>page opener</button>
+    {lower && <FocusLayer key="lower" name="Lower" enabled={enabled} opener={opener} />}
+    {upper && <FocusLayer key="upper" name="Upper" />}
+  </>;
+}
+
+function openLower(strict = false) {
+  const wrap = (contents: React.ReactNode) => strict ? <React.StrictMode>{contents}</React.StrictMode> : contents;
+  const view = render(wrap(<FocusStack />));
+  const pageOpener = screen.getByRole('button', { name: 'page opener' }); pageOpener.focus();
+  view.rerender(wrap(<FocusStack lower />));
+  return { view, pageOpener, wrap };
+}
+
+describe('dialog cleanup respects the remaining open layer', () => {
+  it.each(['unmounted', 'disabled'])('keeps focus in the higher dialog when the lower one is %s', change => {
+    const { view } = openLower();
+    screen.getByRole('button', { name: 'Lower opener' }).focus();
+    view.rerender(<FocusStack lower upper />);
+    const draft = screen.getByRole('textbox', { name: 'Upper draft' }); draft.focus();
+    view.rerender(<FocusStack lower={change !== 'unmounted'} enabled={change !== 'disabled'} upper />);
+    expect(document.activeElement).toBe(draft);
+    expect(screen.getByRole('dialog', { name: 'Upper' }).contains(document.activeElement)).toBe(true);
+  });
+
+  it('returns focus to the remaining lower dialog when the upper opener was removed', () => {
+    const { view } = openLower();
+    screen.getByRole('button', { name: 'Lower opener' }).focus();
+    view.rerender(<FocusStack lower upper />);
+    screen.getByRole('textbox', { name: 'Upper draft' }).focus();
+    view.rerender(<FocusStack lower upper opener={false} />);
+    view.rerender(<FocusStack lower opener={false} />);
+    expect(screen.getByRole('dialog', { name: 'Lower' }).contains(document.activeElement)).toBe(true);
+  });
+
+  it('restores the connected opener inside the lower dialog when its top layer closes', () => {
+    const { view } = openLower();
+    const opener = screen.getByRole('button', { name: 'Lower opener' }); opener.focus();
+    view.rerender(<FocusStack lower upper />);
+    screen.getByRole('textbox', { name: 'Upper draft' }).focus();
+    view.rerender(<FocusStack lower />);
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('restores the page opener when the only enabled dialog is disabled', () => {
+    const { view, pageOpener } = openLower();
+    view.rerender(<FocusStack lower enabled={false} />);
+    expect(document.activeElement).toBe(pageOpener);
+  });
+
+  it('restores the surviving page opener when the whole stack is removed together', () => {
+    const { view, pageOpener } = openLower();
+    screen.getByRole('button', { name: 'Lower opener' }).focus();
+    view.rerender(<FocusStack lower upper />);
+    view.rerender(<FocusStack />);
+    expect(document.activeElement).toBe(pageOpener);
+  });
+
+  it('retains the surviving page opener after its lower dialog was retired first', () => {
+    const { view, pageOpener } = openLower();
+    screen.getByRole('button', { name: 'Lower opener' }).focus();
+    view.rerender(<FocusStack lower upper />);
+    view.rerender(<FocusStack upper />);
+    screen.getByRole('textbox', { name: 'Upper draft' }).focus();
+    view.rerender(<FocusStack />);
+    expect(document.activeElement).toBe(pageOpener);
+  });
+
+  it('keeps ordinary nested opener restoration in StrictMode', () => {
+    const { view, pageOpener, wrap } = openLower(true);
+    const opener = screen.getByRole('button', { name: 'Lower opener' }); opener.focus();
+    view.rerender(wrap(<FocusStack lower upper />));
+    view.rerender(wrap(<FocusStack lower />));
+    expect(document.activeElement).toBe(opener);
+    view.rerender(wrap(<FocusStack />));
+    expect(document.activeElement).toBe(pageOpener);
+  });
+});
+
 describe('useDialog keeps Tab inside the panel', () => {
   it('wraps forward from the last control to the first', () => {
     render(<Harness />);

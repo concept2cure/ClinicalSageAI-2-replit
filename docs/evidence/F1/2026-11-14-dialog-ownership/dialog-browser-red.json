@@ -1,0 +1,27 @@
+{
+  "mode": "red",
+  "scope": "Actual local app, fictional account, controlled DOM keyboard and lower-dialog dismissal; intercepted rows; no business mutations or provider calls.",
+  "cases": [
+    {
+      "scenario": "composing-escape",
+      "isComposing": true,
+      "defaultPrevented": false,
+      "retainedDraft": false,
+      "ordinaryEscapeCloses": false
+    },
+    {
+      "scenario": "handled-escape",
+      "isComposing": false,
+      "defaultPrevented": true,
+      "retainedDraft": false,
+      "ordinaryEscapeCloses": false
+    },
+    {
+      "scenario": "lower-dialog-closes",
+      "survivingTopHasFocus": false,
+      "retainedDraft": true
+    }
+  ],
+  "pageErrors": [],
+  "status": "passed"
+}
