@@ -37,6 +37,8 @@ A separate final read found that the generic oncology reporting convention still
 
 The earlier source copies named `final` remain observations of that earlier completed phase. `post-oncology-owned-source.json.gz` identifies the current seven owned source/test files and the two that changed in the follow-up; `oncology-green-source-after.json.gz` is the current 73-file selected snapshot. The older phases, pins and lint results were not overwritten or relabelled.
 
+The later [size successor](size-successor/README.md) preserves the actual ordinary-gate refusal before the compiler and a concise equivalent of only the new clinical composition/revision paragraph: 100,089 to 99,881 bytes under the unchanged 100,000-byte ceiling. Its 56-case four-file successor and two-file lint check passed. The version remains 2. The current owned and selected snapshots are now under `size-successor/`; all earlier source observations remain retained at their actual phases.
+
 ## Limits
 
 These checks establish instruction delivery and deterministic software contracts. IA provider responses are mocked. They do not establish trained model weights, clinical writing performance, medical-writer certification, scientific approval, production readiness, deployment or agency acceptance. Public references remain unapproved for training and actual model PQ entries remain pending. The required CSR capture/evidence-verification work remains incomplete; this status repair does not authorize a qualification pass.

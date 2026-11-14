@@ -27,13 +27,16 @@ IA preparation now recognizes that P-118's protocol is approved and names requir
 | Remaining oncology method assumption | Separate RED one failure/12 skipped; affected successor 37 passed across four files; 73 selected pins stable |
 | Service/editor delivery and current custody/source controls | Initial RED 19 failed/one passed, including one corrected fixture-priority expectation; final 250 passed across nine files; 29 selected pins stable |
 | Preserved current intake/native catalog compatibility | 57 passed across three files; 20 selected pins stable; admitted native metadata is not scientific approval |
+| Size-ceiling wording successor | 56 passed across four files; 73 pins stable; clinical skill 99,881 bytes below unchanged 100,000-byte limit |
 | Scoped lint | Zero errors and no warning growth; one existing narrator warning removed |
-| Integrated production build | Exit 0; 28.189 s process; client/server, audit verifier, qualification verifier and controlled runtime assets emitted |
+| Integrated production build | Exit 0; 29.247 s process; client/server, audit verifier, qualification verifier and controlled runtime assets emitted |
 | Build source stability | All 11,926 selected source/configuration/test hashes unchanged across build and reverified afterward |
 
 The [method](method/README.md), [narrator](narrator/README.md) and [delivery](delivery/README.md) packets preserve original sources, meaningful failures, fixture/setup corrections, exact commands, successful successors and separate scope limits. Overlapping phases are not pooled or relabelled. [Release checks](release/checks.json) record the integrated build. Publication is observed separately after normal direct canonical gates, with no PR, force, bypass or baseline increase.
 
 Current canonical advanced to `0e6b15b100` during integration. Its collaboration-intake and native-catalog changes were normally merged without owned CSR runtime overlap. Both coordination entries were preserved. The [57-case compatibility packet](intake-compat/README.md) and fresh merged build passed; earlier build receipts remain separate.
+
+The first ordinary push correctly refused the clinical skill at 100,089 bytes against the existing 100,000-byte ceiling before reaching TypeScript. Only the new compose/revise paragraph was tightened by 208 bytes; its meaning, current step12 and later records remain. The [56-case successor](method/README.md), scoped lint and fresh merged build passed. The gate/ceiling/baseline were not changed. This refused attempt is not a compiler or publication pass.
 
 ## Qualification limits
 

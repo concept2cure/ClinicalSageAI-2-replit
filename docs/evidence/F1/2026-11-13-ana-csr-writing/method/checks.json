@@ -117,5 +117,19 @@
       "warningChange": 0,
       "existingGuidanceComplexityWarning": 1
     }
-  }
+  },
+  "sizeSuccessor": {
+    "packet": "size-successor/README.md",
+    "beforeBytes": 100089,
+    "afterBytes": 99881,
+    "ceilingBytes": 100000,
+    "passed": 56,
+    "files": 4,
+    "sourcePins": 73,
+    "sourceStable": true,
+    "clinicalAndTestLint": "0errors/0warnings",
+    "earlierPhasesRewritten": false
+  },
+  "latestOwnedSourceSnapshot": "size-successor/current-owned-source.json.gz",
+  "latestSelectedSourceSnapshot": "size-successor/green-source-after.json.gz"
 }
