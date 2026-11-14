@@ -1,0 +1,18 @@
+{
+  "phase": "readable split and completed provider reply verification",
+  "exit": 0,
+  "tests": 74,
+  "pass": 74,
+  "fail": 0,
+  "sha256": {
+    "scripts/ops/codespaces-doctor.mjs": "ded502f981bced2c033f26462553fcf3f1bac06afe88cc4c9468673cbb64a486",
+    "scripts/ops/codespaces-doctor.test.mjs": "ec48bb6aa0285c9c770f2ec77c9b21974bb6b5a1a276cb9a7f153581841d9f69",
+    "scripts/ops/codespaces-provider-receipt.mjs": "c50016860de8f98935f46e17964989faba799af33d61ff9c4902b1199655caca",
+    "scripts/ops/codespaces-doctor-receipt-cases.mjs": "956fe27d871553dce71c53945507dc934b4bed834accc20ff458918c234c09da"
+  },
+  "red_mapping": "Archived red.test.mjs contains the original74-case registration. New cases move unchanged into codespaces-doctor-receipt-cases.mjs and are side-effect imported by existing doctor.test.mjs, so the existing npm doctor test command still registers74. The case module uses equivalent fixture-only credentials; it makes no real provider/database call.",
+  "limits": [
+    "Synthetic protocol and loopback HTTP only; no real provider key or API call",
+    "Narrow receipt evidence for current text-only probe, not complete SDK schema, billing balance, provider eligibility, model qualification or AnA end-to-end proof"
+  ]
+}

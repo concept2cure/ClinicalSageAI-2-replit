@@ -1,0 +1,64 @@
+{
+  "suites": 7,
+  "tests": 97,
+  "passed": 97,
+  "failed": 0,
+  "correctedMessageRed": {
+    "tests": 25,
+    "failed": 15,
+    "passedControls": 10,
+    "baselineSourceSha256": "12e7a47b6927224d218245e65e091d5c654fe05e093d20ac272feb0fbc4d53cd",
+    "testSha256": "43122f3e1fb9de904e666a2f74e971ccd2c801f322aa7805165973d3ab25034c"
+  },
+  "lint": {
+    "baseline": [
+      {
+        "path": "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/collabOptionalTaskReceipt.test.tsx",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+        "errors": 0,
+        "warnings": 8
+      }
+    ],
+    "green": [
+      {
+        "path": "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/__tests__/collabOptionalTaskReceipt.test.tsx",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+        "errors": 0,
+        "warnings": 8
+      }
+    ]
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": "75dcc8392302cea6858c0c4d0f116b158f53e64e7d010c2c8df5d636674d3545",
+    "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx": "43122f3e1fb9de904e666a2f74e971ccd2c801f322aa7805165973d3ab25034c",
+    "client/src/concept2cure/v2/__tests__/collabOptionalTaskReceipt.test.tsx": "917bb364edf6feaa61bf9094205bcf9761b01a54646b4a1dd2f9f3a1bce8b054"
+  },
+  "scope": "Real React/session guards with fictional intercepted API responses; no live message/task/provider, Git or whole compiler run.",
+  "additionalShellAndAccessibility": {
+    "suites": 2,
+    "tests": 23,
+    "passed": 23,
+    "failed": 0,
+    "file": "client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx",
+    "sha256": "7226a3a87e36f0bf29a2414b0690389467e963dd31ba129851159c1ced1f9bc0"
+  },
+  "sourceUnchangedAfterShellFixtureRepair": true
+}

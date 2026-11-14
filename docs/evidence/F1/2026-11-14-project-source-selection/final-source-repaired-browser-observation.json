@@ -1,0 +1,294 @@
+{
+  "mode": "repaired",
+  "outputPrefix": "final-source-",
+  "startedAt": "2026-11-14T02:59:54.773Z",
+  "sourceReads": [
+    {
+      "path": "/api/c2c/projects/a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed/sources",
+      "status": 200,
+      "projectId": "a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed",
+      "total": 15,
+      "window": {
+        "shown": 15,
+        "truncated": false
+      },
+      "sources": [
+        {
+          "id": 231,
+          "title": "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+          "checksum": "d8173242cba28c3da6169b64bde364b5b7932087484b926fdb61cccd9e18b2a6"
+        },
+        {
+          "id": 230,
+          "title": "Supplier: [Demo · Lumen] Glacierpath Logistics",
+          "checksum": "ca73b1c02c40cd8116e7e4e7a209564b12dd644af194239047fb7b456715be9b"
+        },
+        {
+          "id": 229,
+          "title": "Supplier: [Demo · Lumen] Corvane Biologics",
+          "checksum": "6b3759f0375b4c07a9a9ad38de1f0bf9d0f28618a4a8fafca1f30fd57533854a"
+        },
+        {
+          "id": 228,
+          "title": "Supplier: [Demo · Lumen] Thistlegate Central Laboratory",
+          "checksum": "efa5b950df98c787a8ed8864546e57dd3c5b46f77af81eed791da314356b307a"
+        },
+        {
+          "id": 227,
+          "title": "Supplier: [Demo · Lumen] Larkmere Clinical Research",
+          "checksum": "b8f3105c4b0e68b90af93d90957188a6fc338aab968a8e2c8e4810dc8f45a5c8"
+        },
+        {
+          "id": 226,
+          "title": "Management review: Lumen 2026-Q2",
+          "checksum": "d2ddad449eb0fb68911c58f8cf69dfc7b98bac50bcef5811bc42f49e895e678f"
+        },
+        {
+          "id": 225,
+          "title": "Management review: Lumen 2026-Q3",
+          "checksum": "86581821145f997938cca9c0b2e3305ade4e1ad894e2f680220cfb08d02be49d"
+        },
+        {
+          "id": 224,
+          "title": "Internal audit: LMN-IA-2027-01",
+          "checksum": "24221a393a5261272e5fdd6adf8f26c4b4b573c3f73aacb3a50e635f733de1b7"
+        },
+        {
+          "id": 223,
+          "title": "Internal audit: LMN-IA-2026-05",
+          "checksum": "9f9b0b965f632b59c88670f8d81b2d883bd5254f18409b41ab3011a62dce8409"
+        },
+        {
+          "id": 222,
+          "title": "Internal audit: LMN-IA-2026-04",
+          "checksum": "fa66b6c9332bf7be95c2c0e4696b67cf02c75364e780b34e17ce09ca04b5bd67"
+        },
+        {
+          "id": 221,
+          "title": "Internal audit: LMN-IA-2026-03",
+          "checksum": "44296877dbd29513517ebc1b6376101797452fae13b4629c0ad0fd6ce804e031"
+        },
+        {
+          "id": 220,
+          "title": "GMP deviation: [Demo · Lumen] Site 105: kit dispensed before the screening toxin result was entered in the EDC",
+          "checksum": "ad801e51fed60b715ebb5929c22c58a5027271ab1ffda3eb5b55e669021eb9f6"
+        },
+        {
+          "id": 219,
+          "title": "GMP deviation: [Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days after IRB approval",
+          "checksum": "df50d658e8e846c0065782bee935d2946439035d49b1c56a7d40429ff3e1fa58"
+        },
+        {
+          "id": 218,
+          "title": "GMP deviation: [Demo · Lumen] Site 107: two serious adverse events reported to the sponsor after the 24-hour window",
+          "checksum": "971497a53bf16106088073cf0289a4c627ade5ce47a7a7cf54a58ec2c31240b5"
+        },
+        {
+          "id": 217,
+          "title": "GMP deviation: [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)",
+          "checksum": "39acfafaee63fdba0d9838aa19351c663d1bd0e8b7d4453b8c15010ca4db9e12"
+        }
+      ]
+    },
+    {
+      "path": "/api/c2c/projects/a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed/sources?q=Supplier%3A+%5BDemo+%C2%B7+Lumen%5D+Glacierpath+Logistics",
+      "status": 200,
+      "projectId": "a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed",
+      "total": 1,
+      "window": {
+        "shown": 1,
+        "truncated": false
+      },
+      "sources": [
+        {
+          "id": 230,
+          "title": "Supplier: [Demo · Lumen] Glacierpath Logistics",
+          "checksum": "ca73b1c02c40cd8116e7e4e7a209564b12dd644af194239047fb7b456715be9b"
+        }
+      ]
+    },
+    {
+      "path": "/api/c2c/projects/a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed/sources?q=Supplier%3A+%5BDemo+%C2%B7+Lumen%5D+Quorvex+IRT+Systems",
+      "status": 200,
+      "projectId": "a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed",
+      "total": 1,
+      "window": {
+        "shown": 1,
+        "truncated": false
+      },
+      "sources": [
+        {
+          "id": 231,
+          "title": "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+          "checksum": "d8173242cba28c3da6169b64bde364b5b7932087484b926fdb61cccd9e18b2a6"
+        }
+      ]
+    },
+    {
+      "path": "/api/c2c/projects/a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed/sources?sourceIds=230%2C231",
+      "status": 200,
+      "projectId": "a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed",
+      "total": 2,
+      "window": {
+        "shown": 2,
+        "truncated": false
+      },
+      "selection": {
+        "scope": "verified-accessible-sources",
+        "sourceIds": [
+          230,
+          231
+        ]
+      },
+      "sources": [
+        {
+          "id": 231,
+          "title": "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+          "checksum": "d8173242cba28c3da6169b64bde364b5b7932087484b926fdb61cccd9e18b2a6"
+        },
+        {
+          "id": 230,
+          "title": "Supplier: [Demo · Lumen] Glacierpath Logistics",
+          "checksum": "ca73b1c02c40cd8116e7e4e7a209564b12dd644af194239047fb7b456715be9b"
+        }
+      ]
+    },
+    {
+      "path": "/api/c2c/projects/a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed/sources?limit=200&offset=0",
+      "status": 200,
+      "projectId": "a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed",
+      "total": 15,
+      "window": {
+        "shown": 15,
+        "truncated": false
+      },
+      "sources": [
+        {
+          "id": 231,
+          "title": "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+          "checksum": "d8173242cba28c3da6169b64bde364b5b7932087484b926fdb61cccd9e18b2a6"
+        },
+        {
+          "id": 230,
+          "title": "Supplier: [Demo · Lumen] Glacierpath Logistics",
+          "checksum": "ca73b1c02c40cd8116e7e4e7a209564b12dd644af194239047fb7b456715be9b"
+        },
+        {
+          "id": 229,
+          "title": "Supplier: [Demo · Lumen] Corvane Biologics",
+          "checksum": "6b3759f0375b4c07a9a9ad38de1f0bf9d0f28618a4a8fafca1f30fd57533854a"
+        },
+        {
+          "id": 228,
+          "title": "Supplier: [Demo · Lumen] Thistlegate Central Laboratory",
+          "checksum": "efa5b950df98c787a8ed8864546e57dd3c5b46f77af81eed791da314356b307a"
+        },
+        {
+          "id": 227,
+          "title": "Supplier: [Demo · Lumen] Larkmere Clinical Research",
+          "checksum": "b8f3105c4b0e68b90af93d90957188a6fc338aab968a8e2c8e4810dc8f45a5c8"
+        },
+        {
+          "id": 226,
+          "title": "Management review: Lumen 2026-Q2",
+          "checksum": "d2ddad449eb0fb68911c58f8cf69dfc7b98bac50bcef5811bc42f49e895e678f"
+        },
+        {
+          "id": 225,
+          "title": "Management review: Lumen 2026-Q3",
+          "checksum": "86581821145f997938cca9c0b2e3305ade4e1ad894e2f680220cfb08d02be49d"
+        },
+        {
+          "id": 224,
+          "title": "Internal audit: LMN-IA-2027-01",
+          "checksum": "24221a393a5261272e5fdd6adf8f26c4b4b573c3f73aacb3a50e635f733de1b7"
+        },
+        {
+          "id": 223,
+          "title": "Internal audit: LMN-IA-2026-05",
+          "checksum": "9f9b0b965f632b59c88670f8d81b2d883bd5254f18409b41ab3011a62dce8409"
+        },
+        {
+          "id": 222,
+          "title": "Internal audit: LMN-IA-2026-04",
+          "checksum": "fa66b6c9332bf7be95c2c0e4696b67cf02c75364e780b34e17ce09ca04b5bd67"
+        },
+        {
+          "id": 221,
+          "title": "Internal audit: LMN-IA-2026-03",
+          "checksum": "44296877dbd29513517ebc1b6376101797452fae13b4629c0ad0fd6ce804e031"
+        },
+        {
+          "id": 220,
+          "title": "GMP deviation: [Demo · Lumen] Site 105: kit dispensed before the screening toxin result was entered in the EDC",
+          "checksum": "ad801e51fed60b715ebb5929c22c58a5027271ab1ffda3eb5b55e669021eb9f6"
+        },
+        {
+          "id": 219,
+          "title": "GMP deviation: [Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days after IRB approval",
+          "checksum": "df50d658e8e846c0065782bee935d2946439035d49b1c56a7d40429ff3e1fa58"
+        },
+        {
+          "id": 218,
+          "title": "GMP deviation: [Demo · Lumen] Site 107: two serious adverse events reported to the sponsor after the 24-hour window",
+          "checksum": "971497a53bf16106088073cf0289a4c627ade5ce47a7a7cf54a58ec2c31240b5"
+        },
+        {
+          "id": 217,
+          "title": "GMP deviation: [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)",
+          "checksum": "39acfafaee63fdba0d9838aa19351c663d1bd0e8b7d4453b8c15010ca4db9e12"
+        }
+      ]
+    }
+  ],
+  "presenceRequests": [
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/6d38778f-ece2-4b81-aefb-a5a93ab633af/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/6d38778f-ece2-4b81-aefb-a5a93ab633af/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/realtime-collab/rooms/6d38778f-ece2-4b81-aefb-a5a93ab633af/users/me"
+    },
+    {
+      "method": "POST",
+      "path": "/api/realtime-collab/rooms"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/realtime-collab/rooms/6d38778f-ece2-4b81-aefb-a5a93ab633af/awareness"
+    }
+  ],
+  "blockedPosts": [],
+  "pageErrors": [],
+  "passed": true,
+  "version": {
+    "commit": "6c466782cfa898b9207e59558aa6e7a7f7488f12",
+    "startedAt": "2026-11-14T02:59:20.365Z"
+  },
+  "checkedTitles": [
+    "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+    "Supplier: [Demo · Lumen] Glacierpath Logistics"
+  ],
+  "draftLabel": "Draft with 2 pinned sources",
+  "clearSelection": true,
+  "exactStatus": 200,
+  "dialogText": "Selected sources → document editor\nBuild from selected sources\n\nTarget project: [Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)\n\nOpens the selected working document. Preview and build there, with or without AnA. No text is changed by opening it.\n\nSupplier: [Demo · Lumen] Glacierpath Logistics · 230\nSHA-256 ca73b1c02c40cd8116e7e4e7a209564b12dd644af194239047fb7b456715be9b\nSupplier: [Demo · Lumen] Quorvex IRT Systems · 231\nSHA-256 d8173242cba28c3da6169b64bde364b5b7932087484b926fdb61cccd9e18b2a6\n\nThe editor verifies the selected source versions before building. Retained readable data can be used when the original file is unavailable.\n\nLoading working documents…\n\nWorking document\nChoose a working document\n\nStart a new document with these selected sources, then preview and build in the editor.\n\nNew document\nCancel\nOpen in editor",
+  "editorText": "LMN-301\n›\nThe editor\nSearch\n⌘K\n69\n[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND) · Planning · M5\n[Demo · Lumen] LMN-301 Phase 2a Viral Challenge Clinical Study Report — SYNTHETIC\nSaved draft sections · unbound\n\nUnbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections.\n\nall\ndraft\nin review\napproved\nfrozen\nFilings in this project\nFDA · IND — home filing\nCreate editing copy\nM5\n[Demo · Lumen] LMN-301 Phase 2a Viral Challenge Clinical Study Report — SYNTHETIC\n119\n1\nTitle Page\n2\nSynopsis\n3\nTable of Contents for the Individual Clinical Study Report\n4\nList of Abbreviations and Definitions of Terms\n5\nEthics\n5.1\nIndependent Ethics Committee (IEC) or Institutional Review Board (IRB)\n5.2\nEthical Conduct of the Study\n5.3\nPatient Information and Consent\n6\nInvestigators and Study Administrative Structure\n7\nIntroduction\n8\nStudy Objectives\n9\nInvestigational Plan\n9.1\nOverall Study Design and Plan — Description\n9.2\nDiscussion of Study Design, Including the Choice of Control Groups\n9.3\nSelection of Study Population\n9.3.1\nInclusion Criteria\n9.3.2\nExclusion Criteria\n9.3.3\nRemoval of Patients from Therapy or Assessment\n9.4\nTreatments\n9.4.1\nTreatments Administered\n9.4.2\nIdentity of Investigational Product(s)\n9.4.3\nMethod of Assigning Patients to Treatment Groups\n9.4.4\nSelection of Doses in the Study\n9.4.5\nSelection and Timing of Dose for Each Patient\n9.4.6\nBlinding\n9.4.7\nPrior and Concomitant Therapy\n9.4.8\nTreatment Compliance\n9.5\nEfficacy and Safety Variables\n9.5.1\nEfficacy and Safety Measurements Assessed and Flow Chart\n9.5.2\nAppropriateness of Measurements\n9.5.3\nPrimary Efficacy Variable(s)\n9.5.4\nDrug Concentration Measurements\n9.6\nData Quality Assurance\n9.7\nStatistical Methods Planned in the Protocol and Determination of Sample Size\n9.7.1\nStatistical and Analytical Plans\n9.7.2\nDetermination of Sample Size\n9.8\nChanges in the Conduct of the Study or Planned Analyses\n10\nStudy Patients\n10.1\nDisposition of Patients\n10.2\nProtocol Deviations\n11\nEfficacy Evaluation\n11.1\nData Sets Analysed\n11.2\nDemographic and Other Baseline Characteristics\n11.3\nMeasurements of Treatment Compliance\n11.4\nEfficacy Results and Tabulations of Individual Patient Data\n11.4.1\nAnalysis of Efficacy\n11.4.2\nStatistical/Analytical Issues\n11.4.2.1\nAdjustments for Covariates\n11.4.2.2\nHandling of Dropouts or Missing Data\n11.4.2.3\nInterim Analyses and Data Monitoring\n11.4.2.4\nMulticentre Studies\n11.4.2.5\nMultiple Comparison/Multiplicity\n11.4.2.6\nUse of an \"Efficacy Subset\" of Patients\n11.4.2.7\nActive-Control Studies Intended to Show Equivalence\n11.4.2.8\nExamination of Subgroups\n11.4.3\nTabulation of Individual Response Data\n11.4.4\nDrug Dose, Drug Concentration, and Relationships to Response\n11.4.5\nDrug-Drug and Drug-Disease Interactions\n11.4.6\nBy-Patient Displays\n11.4.7\nEfficacy Conclusions\n12\nSafety Evaluation\n12.1\nExtent of Exposure\n12.2\nAdverse Events (AEs)\n12.2.1\nBrief Summary of Adverse Events\n12.2.2\nDisplay of Adverse Events\n12.2.3\nAnalysis of Adverse Events\n12.2.4\nListing of Adverse Events by Patient\n12.3\nDeaths, Other Serious Adverse Events, and Other Significant Adverse Events\n12.3.1\nListing of Deaths, Other Serious Adverse Events and Other Significant Adverse Events\n12.3.1.1\nDeaths\n12.3.1.2\nOther Serious Adverse Events\n12.3.1.3\nOther Significant Adverse Events\n12.3.2\nNarratives of Deaths, Other Serious Adverse Events and Certain Other Significant Adverse Events\n12.3.3\nAnalysis and Discussion of Deaths, Other Serious Adverse Events and Other Significant Adverse Events\n12.4\nClinical Laboratory Evaluation\n12.4.1\nListing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value (14.3.4)\n12.4.2\nEvaluation of Each Laboratory Parameter\n12.4.2.1\nLaboratory Values Over Time\n12.4.2.2\nIndividual Patient Changes\n12.4.2.3\nIndividual Clinically Significant Abnormalities\n12.5\nVital Signs, Physical Findings and Other Observations Related to Safety\n12.6\nSafety Conclusions\n13\nDiscussion and Overall Conclusions\n14\nTables, Figures and Graphs Referred to But Not Included in the Text\n14.1\nDemographic Data\n14.2\nEfficacy Data\n14.3\nSafety Data\n14.3.1\nDisplays of Adverse Events\n14.3.2\nListings of Deaths, Other Serious and Significant Adverse Events\n14.3.3\nNarratives of Deaths, Other Serious and Certain Other Significant Adverse Events\n14.3.4\nAbnormal Laboratory Value Listing (Each Patient)\n15\nReference List\n16\nAppendices\n16.1\nStudy Information\n16.1.1\nProtocol and protocol amendments\n16.1.2\nSample case report form (unique pages only)\n16.1.3\nList of IECs or IRBs (plus the name of the committee chair if required by the regulatory authority) — Representative written information for patient and sample consent forms\n16.1.4\nList and description of investigators and other important participants in the study, including brief (1 page) CVs or equivalent summaries of training and experience relevant to the performance of the clinical study\n16.1.5\nSignatures of principal or coordinating investigator(s) or sponsor’s responsible medical officer, depending on the regulatory authority’s requirement\n16.1.6\nListing of patients receiving test drug(s)/investigational product(s) from specific batches, where more than one batch was used\n16.1.7\nRandomisation scheme and codes (patient identification and treatment assigned)\n16.1.8\nAudit certificates (if available)\n16.1.9\nDocumentation of statistical methods\n16.1.10\nDocumentation of inter-laboratory standardisation methods and quality assurance procedures if used\n16.1.11\nPublications based on the study\n16.1.12\nImportant publications referenced in the report\n16.2\nPatient Data Listings\n16.2.1\nDiscontinued patients\n16.2.2\nProtocol deviations\n16.2.3\nPatients excluded from the efficacy analysis\n16.2.4\nDemographic data\n16.2.5\nCompliance and/or drug concentration data (if available)\n16.2.6\nIndividual efficacy response data\n16.2.7\nAdverse event listings (each patient)\n16.2.8\nListing of individual laboratory measurements by patient, when required by regulatory authorities\n16.3\nCase Report Forms\n16.3.1\nCRFs for deaths, other serious adverse events and withdrawals for AE\n16.3.2\nOther CRFs submitted\n16.4\nIndividual Patient Data Listings (US Archival Listings)\n[Demo · Lumen] LMN-301 Phase 2a Viral Challenge Clinical Study Report — SYNTHETIC\nDraft\nv2\nSaved 4 h ago\nSection\nDocument\nSaved\nFreeze\nE-sign\nPlace into filing\nRe-file saved text\n✻\nAuthoring ·\nNew document\nCreates a governed document in the authoring store. Choosing a template seeds its sections server-side.\n\nThis start uses 2 selected sources. Creating the working document does not build it; preview and build later in the editor, with or without AnA.\n\nDocument title*\nCTD module\nNo CTD placement\nM1\nM2\nM3\nM4\nM5\nStart from\nSearch templates\nClear\n\nSearch titles, descriptions, types, categories, regions and recorded template details.\n\n469 of 469 templates\nSelect…\n(blank document)\nUS · Investigational New Drug Application — preparation worksheet\nGLOBAL · Quality Overall Summary (QOS)\nGLOBAL · Nonclinical Overview\nGLOBAL · Clinical Overview\nGLOBAL · Clinical Summary\nGLOBAL · Submission Cover Letter\nGLOBAL · Investigator's Brochure (IB)\nGLOBAL · Periodic Benefit-Risk Evaluation Report (PBRER/PSUR)\nGLOBAL · Clinical Study Report (CSR)\nGLOBAL · Blank case report forms (CRFs) and design specification\nGLOBAL · CRF annotation and data mapping worksheet\nGLOBAL · Interventional Clinical Trial Protocol (ICH M11 CeSHarP)\nGLOBAL · Statistical Analysis Plan (SAP)\nGLOBAL · Informed Consent Form (ICF)\nGLOBAL · Module 3.2.S — Drug Substance\nGLOBAL · Module 3.2.P — Drug Product\nGLOBAL · Development Safety Update Report (DSUR)\nGLOBAL · Nonclinical study report working document\n2.5 Clinical Overview\n2.7.3 Summary of Clinical Efficacy\n3.2.P Drug Product\n3.2.S Drug Substance\nAgency response letter (cross-agency)\nCTD outline (cross-agency baseline)\nClinical protocol (ICH E6 outline)\nEMA MAA — Module 1 (EU regional)\nEMA Type IB variation\nFDA 510(k) — Substantial Equivalence package\nFDA IND application\nFDA NDA — Module 1 (administrative & prescribing)\nFDA PMA — Class III device application\nFDA Pre-Submission briefing package (Q-Sub)\nHealth Canada Clinical Trial Application\nHealth Canada NDS — Module 1\nInvestigator Brochure (cross-agency)\nMHRA GB Marketing Authorisation — Module 1\nPMDA NDA — Module 1 (Japan)\nSwissmedic MA — Module 1 (Switzerland)\nM1 · Module 1: Regional Administrative Information — preparation worksheet\nM2 · Module 2: CTD Summaries — preparation worksheet\nM3 · Module 3: Quality — preparation worksheet\nM4 · Module 4: Nonclinical Study Reports — preparation worksheet\nM5 · Module 5: Clinical Study Reports — preparation worksheet\n1.1 · FDA Forms — preparation worksheet\n1.1.1 · Form FDA 1571 — preparation worksheet\n1.1.2 · Form FDA 1572 — preparation worksheet\n1.1.3 · Form FDA 3674 — preparation worksheet\n1.2 · Cover Letter\n1.3 · Administrative Information — preparation worksheet\n1.3.1 · Contact/Agent Information — preparation worksheet\n1.3.2 · Field Copy Certification — preparation worksheet\n1.3.3 · Debarment Certification — preparation worksheet\n1.3.4 · Financial Certification and Disclosure (Forms FDA 3454 / 3455) — preparation worksheet\n1.4 · References — preparation worksheet\n1.4.1 · Letter of Authorization — preparation worksheet\n1.4.2 · Statement of Right of Reference — preparation worksheet\n1.12 · Other Correspondence — preparation worksheet\n1.12.1 · Pre-IND Correspondence — preparation worksheet\n1.12.14 · Environmental Assessment or Claim of Categorical Exclusion\n1.14 · Labeling — preparation worksheet\n1.14.4.1 · Investigator's Brochure\n1.14.4.2 · Investigational Drug Labeling\n1.20 · Introductory Statement and General Investigational Plan\n2.2 · Introduction to the CTD\n2.3 · Quality Overall Summary\n2.3.S · Drug Substance\n2.3.S.1 · General Information\n2.3.S.2 · Manufacture\n2.3.S.3 · Characterization\n2.3.S.4 · Control of Drug Substance\n2.3.S.5 · Reference Standards — preparation worksheet\n2.3.S.6 · Container Closure System — preparation worksheet\n2.3.S.7 · Stability\n2.3.P · Drug Product\n2.3.P.1 · Description and Composition\n2.3.P.2 · Pharmaceutical Development\n2.3.P.3 · Manufacture\n2.3.P.4 · Control of Excipients — preparation worksheet\n2.3.P.5 · Control of Drug Product\n2.3.P.6 · Reference Standards — preparation worksheet\n2.3.P.7 · Container Closure System — preparation worksheet\n2.3.P.8 · Stability\n2.3.A · Appendices — preparation worksheet\n2.4 · Nonclinical Overview\n2.5 · Clinical Overview\n2.6 · Nonclinical Written and Tabulated Summaries\n2.6.1 · Introduction\n2.6.2 · Pharmacology Written Summary\n2.6.3 · Pharmacology Tabulated Summary — preparation worksheet\n2.6.4 · Pharmacokinetics Written Summary\n2.6.5 · Pharmacokinetics Tabulated Summary — preparation worksheet\n2.6.6 · Toxicology Written Summary\n2.6.7 · Toxicology Tabulated Summary — preparation worksheet\n2.7 · Clinical Summary\n3.2.S · Drug Substance\n3.2.S.1 · General Information\n3.2.S.2 · Manufacture\n3.2.S.3 · Characterization\n3.2.S.4 · Control of Drug Substance\n3.2.S.5 · Reference Standards — preparation worksheet\n3.2.S.6 · Container Closure System — preparation worksheet\n3.2.S.7 · Stability\n3.2.P · Drug Product\n3.2.P.1 · Description and Composition\n3.2.P.2 · Pharmaceutical Development\n3.2.P.3 · Manufacture\n3.2.P.4 · Control of Excipients — preparation worksheet\n3.2.P.5 · Control of Drug Product\n3.2.P.6 · Reference Standards — preparation worksheet\n3.2.P.7 · Container Closure System — preparation worksheet\n3.2.P.8 · Stability\n3.2.A · Appendices — preparation worksheet\n3.2.R · Regional Information — preparation worksheet\n4.2.1 · Pharmacology\n4.2.1.1 · Primary Pharmacodynamics — preparation worksheet\n4.2.1.2 · Secondary Pharmacodynamics — preparation worksheet\n4.2.1.3 · Safety Pharmacology — preparation worksheet\n4.2.1.4 · Pharmacodynamic Drug Interactions — preparation worksheet\n4.2.2 · Pharmacokinetics\n4.2.2.1 · Analytical Methods and Validation — preparation worksheet\n4.2.2.2 · Absorption — preparation worksheet\n4.2.2.3 · Distribution — preparation worksheet\n4.2.2.4 · Metabolism — preparation worksheet\n4.2.2.5 · Excretion — preparation worksheet\n4.2.2.6 · Pharmacokinetic Drug Interactions — preparation worksheet\n4.2.3 · Toxicology\n4.2.3.1 · Single-Dose Toxicity — preparation worksheet\n4.2.3.2 · Repeat-Dose Toxicity — preparation worksheet\n4.2.3.3 · Genotoxicity — preparation worksheet\n4.2.3.4 · Carcinogenicity — preparation worksheet\n4.2.3.5 · Reproductive and Developmental Toxicity — preparation worksheet\n4.2.3.6 · Local Tolerance — preparation worksheet\n4.2.3.7 · Other Toxicity Studies — preparation worksheet\n5.3.1 · Reports of Biopharmaceutic Studies — preparation worksheet\n5.3.2 · Reports of Studies Pertinent to Pharmacokinetics Using Human Biomaterials — preparation worksheet\n5.3.3 · Reports of Human PK Studies — preparation worksheet\n5.3.4 · Reports of Human Pharmacodynamic Studies — preparation worksheet\n5.3.5 · Reports of Efficacy and Safety Studies\n5.3.5.1 · Clinical Study Reports of Controlled Studies\n5.3.5.2 · Clinical Study Reports of Uncontrolled Studies\n5.3.5.3 · Reports of Analyses of Data from More than One Study\n5.3.5.4 · Other Study Reports — Previous Human Experience\n5.3.6 · Reports of Post-Marketing Experience — preparation worksheet\n5.3.7 · Case Report Forms and Individual Patient Listings — preparation worksheet\n5.4 · Literature References — preparation worksheet\nTarget Product Profile\nRegulatory pathway assessment\nIND strategy document\nModule content matrix\nMeeting request letter\nFDA questions list draft\nNonclinical gap analysis report\nStudy requirement matrix\nClinical development plan outline\nPhase 1 study synopsis\nMaster project timeline\nResource allocation plan\nMeeting request package\nPre-IND briefing document\nSupporting data appendices\nFinal FDA question list\nMeeting attendance log — preparation worksheet\nOfficial meeting minutes\nUpdated IND strategy with FDA alignment\nFDA feedback disposition table\n3.2.S Drug Substance section — preparation worksheet\nGeneral Information — preparation worksheet\nManufacture — preparation worksheet\nCharacterisation — preparation worksheet\nControl of Drug Substance — preparation worksheet\nReference Standards — preparation worksheet\nStability — preparation worksheet\n3.2.P Drug Product section — preparation worksheet\nDescription and Composition — preparation worksheet\nPharmaceutical Development — preparation worksheet\nManufacture — preparation worksheet\nControl of Drug Product — preparation worksheet\nContainer Closure System — preparation worksheet\nManufacturing process description\nBatch analysis certificates — preparation worksheet\nControl strategy document\nSpecifications table\nStability summary\nStability protocols and data tables — preparation worksheet\nCMC QC review report\nFinalized Module 3\nPrimary pharmacodynamics reports — preparation worksheet\nSafety pharmacology reports — preparation worksheet\nPrimary Pharmacodynamics — preparation worksheet\nSecondary Pharmacodynamics — preparation worksheet\nSafety Pharmacology — preparation worksheet\nPK/ADME study reports\nRepeat-dose toxicity reports — preparation worksheet\nGenotoxicity battery reports — preparation worksheet\nLocal tolerance reports — preparation worksheet\nSingle-Dose Toxicity — preparation worksheet\nRepeat-Dose Toxicity — preparation worksheet\nGenotoxicity — preparation worksheet\nLocal Tolerance — preparation worksheet\nCompiled nonclinical study report package\nGLP compliance statements — preparation worksheet\nGLP audit findings (if any)\nFinalized Module 4 package\nProtocol outline / synopsis\nStudy design document\nStatistical analysis plan draft\nEndpoint definitions\nAssessment schedule\nEligibility criteria document\nSafety monitoring plan\nDSMB charter (if applicable)\nAE/SAE reporting procedures\nInvestigator's Brochure\nFinal clinical protocol\nQuality Overall Summary (2.3)\nNonclinical Overview (2.4)\nNonclinical Written Summary\nNonclinical Tabulated Summary — preparation worksheet\nClinica"
+}

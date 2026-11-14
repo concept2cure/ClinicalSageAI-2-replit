@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-11-13T22:13:09.369004+00:00",
+  "elapsedSeconds": 239.334,
+  "argv": [
+    "docker",
+    "--host=unix:///var/run/docker.sock",
+    "exec",
+    "c2c-codespaces-handoff-20261113",
+    "bash",
+    "-lc",
+    "bash .devcontainer/post-create.sh"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "inputs.json",
+  "inputCount": 12720,
+  "output": "post-create.txt.gz",
+  "outputSha256": "ea7417661340da0b1b9d265420f2b6a813247f1f3662ae61dfffcfd9fc738e7c",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

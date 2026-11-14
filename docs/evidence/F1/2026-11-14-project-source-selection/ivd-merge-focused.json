@@ -1,0 +1,34 @@
+{
+  "startedAt": "2026-11-14T03:45:44.248613+00:00",
+  "elapsedSeconds": 57.775,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts",
+    "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+    "server/services/c2c/__tests__/ivd-510k-rule-pack-selection.test.ts",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+    "server/services/vault/__tests__/ivd-retained-binder.test.ts",
+    "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+    "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+    "tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "ivd-merge-publication-inputs.json",
+  "inputCount": 53,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "ivd-merge-focused.txt.gz",
+  "outputSha256": "e2c83a1c75b6846cd6e1a89ea9451dbd16129b3219e54f221065ee4a5fa4b24b",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

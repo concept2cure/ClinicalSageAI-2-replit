@@ -39,7 +39,7 @@ import { useDialog } from './useDialog';
 import { useNow } from './useNow';
 import { footerState, mirrorLines, summaryRows, traceRows, type StepRow, type SummaryRow, type TaskRow } from './turnSummaryRows';
 import { LIVE_RUN_STATUSES } from '../components/ana/anaTurnTimeline';
-import { workerEstimate, workerMeasurement, workerState } from './useAgentActivity';
+import { workerEstimate, workerEstimateAvailable, workerMeasurement, workerState } from './useAgentActivity';
 
 /* ── The record's Summary, read once per record ───────────────────────────── */
 
@@ -160,10 +160,14 @@ function EndNotes({ notes }: { notes?: string[] }) {
 }
 
 function WorkerSummaryRow({ worker }: { worker: WorkerSnapshot }) {
+  const at = worker.estimate?.at;
+  const estimate = at && workerEstimateAvailable(worker, Date.parse(at))
+    ? `Recorded estimate at ${new Date(at).toLocaleString()}. ${workerEstimate(worker, Date.parse(at))}`
+    : 'Completion estimate unavailable.';
   return <Row status={worker.outcome && worker.outcome !== 'completed' ? 'error' : 'success'} glyph={I.users}
     verb={worker.role === 'verify' ? 'Verification worker' : 'Research worker'} object={workerState(worker)}
     preview={workerMeasurement(worker).text}
-    detail={<><span>Assignment: {worker.taskCaption ?? (worker.role === 'verify' ? 'Check assigned work' : 'Research assigned work')} · record revision {worker.revision}</span><span>{workerEstimate(worker)}</span>
+    detail={<><span>Assignment: {worker.taskCaption ?? (worker.role === 'verify' ? 'Check assigned work' : 'Research assigned work')} · record revision {worker.revision}</span><span>{estimate}</span>
       <span>A returned report is a proposal. Human approval and filing gates remain separate.</span>
       <span>Recorded event {worker.receipt.eventId}</span></>} />;
 }

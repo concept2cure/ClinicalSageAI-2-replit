@@ -1,0 +1,15 @@
+{
+  "head": "b9dc22a432da4f3a36fd0d3406b00d70b655b516",
+  "startedAt": 1794630113.2615628,
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "sourcePins": "push-2-source-pins.json.gz",
+  "sourceSnapshotSha256": "78b917ed17238270ac28bb4b844a8f08f4f659556b02662adb5602d24fff8617",
+  "declaredSourceFiles": 13600,
+  "nodeVersion": "v22.23.5",
+  "TYPECHECK_HEAP_MB": "12288"
+}

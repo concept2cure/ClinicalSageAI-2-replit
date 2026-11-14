@@ -1,0 +1,42 @@
+{
+  "command": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--no-ignore",
+    "--format=json",
+    "server/services/pathway-engines/estar/estar-mapper.ts",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts"
+  ],
+  "exitCode": 0,
+  "baselineCommand": [
+    "node",
+    "node_modules/eslint/bin/eslint.js",
+    "--stdin",
+    "--stdin-filename",
+    "server/services/pathway-engines/estar/estar-mapper.ts",
+    "--no-ignore",
+    "--format=json"
+  ],
+  "baselineSource": "HEAD:server/services/pathway-engines/estar/estar-mapper.ts",
+  "baselineSha256": "acba3bf05021c19accc2c40d1b55cc0c6b6a4ac047ab7c6370c1edda7bf2ac40",
+  "current": [
+    {
+      "file": "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+      "errors": 0,
+      "warnings": 0
+    },
+    {
+      "file": "server/services/pathway-engines/estar/estar-mapper.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "baseline": [
+    {
+      "file": "server/services/pathway-engines/estar/estar-mapper.ts",
+      "errors": 0,
+      "warnings": 0
+    }
+  ],
+  "warningCountUnchanged": true
+}

@@ -18,7 +18,11 @@ import type { RunCoordinationHost } from './run-events.js';
 /** Recorded operational context only. Encrypted message bodies stay held until
  * a private final-SDK capture and derived-output ownership wall admits them. */
 export function recordedTeamContext(board: Awaited<ReturnType<RunCoordinationHost['snapshot']>>): string {
-  return JSON.stringify({ workers: board.workers, messages: board.messages.map(message => ({ sender: message.sender,
+  return JSON.stringify({ workers: board.workers, reports: board.reports.map(report => ({
+    worker: report.worker,
+    reportSha256: report.reportSha256,
+    receipt: { eventId: report.receipt.eventId, eventHash: report.receipt.eventHash, sequence: report.receipt.sequence, at: report.receipt.at },
+  })), messages: board.messages.map(message => ({ sender: message.sender,
     recipient: message.recipient, kind: message.kind, receipt: message.receipt,
     ...(message.text || message.held ? { held: true } : {}) })) });
 }

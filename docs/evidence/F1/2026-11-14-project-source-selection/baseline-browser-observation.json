@@ -1,0 +1,123 @@
+{
+  "mode": "baseline",
+  "startedAt": "2026-11-14T00:11:47.096Z",
+  "sourceReads": [
+    {
+      "path": "/api/c2c/projects/a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed/sources",
+      "status": 200,
+      "projectId": "a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed",
+      "total": 15,
+      "window": {
+        "shown": 15,
+        "truncated": false
+      },
+      "sources": [
+        {
+          "id": 231,
+          "title": "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+          "checksum": "d8173242cba28c3da6169b64bde364b5b7932087484b926fdb61cccd9e18b2a6"
+        },
+        {
+          "id": 230,
+          "title": "Supplier: [Demo · Lumen] Glacierpath Logistics",
+          "checksum": "ca73b1c02c40cd8116e7e4e7a209564b12dd644af194239047fb7b456715be9b"
+        },
+        {
+          "id": 229,
+          "title": "Supplier: [Demo · Lumen] Corvane Biologics",
+          "checksum": "6b3759f0375b4c07a9a9ad38de1f0bf9d0f28618a4a8fafca1f30fd57533854a"
+        },
+        {
+          "id": 228,
+          "title": "Supplier: [Demo · Lumen] Thistlegate Central Laboratory",
+          "checksum": "efa5b950df98c787a8ed8864546e57dd3c5b46f77af81eed791da314356b307a"
+        },
+        {
+          "id": 227,
+          "title": "Supplier: [Demo · Lumen] Larkmere Clinical Research",
+          "checksum": "b8f3105c4b0e68b90af93d90957188a6fc338aab968a8e2c8e4810dc8f45a5c8"
+        },
+        {
+          "id": 226,
+          "title": "Management review: Lumen 2026-Q2",
+          "checksum": "d2ddad449eb0fb68911c58f8cf69dfc7b98bac50bcef5811bc42f49e895e678f"
+        },
+        {
+          "id": 225,
+          "title": "Management review: Lumen 2026-Q3",
+          "checksum": "86581821145f997938cca9c0b2e3305ade4e1ad894e2f680220cfb08d02be49d"
+        },
+        {
+          "id": 224,
+          "title": "Internal audit: LMN-IA-2027-01",
+          "checksum": "24221a393a5261272e5fdd6adf8f26c4b4b573c3f73aacb3a50e635f733de1b7"
+        },
+        {
+          "id": 223,
+          "title": "Internal audit: LMN-IA-2026-05",
+          "checksum": "9f9b0b965f632b59c88670f8d81b2d883bd5254f18409b41ab3011a62dce8409"
+        },
+        {
+          "id": 222,
+          "title": "Internal audit: LMN-IA-2026-04",
+          "checksum": "fa66b6c9332bf7be95c2c0e4696b67cf02c75364e780b34e17ce09ca04b5bd67"
+        },
+        {
+          "id": 221,
+          "title": "Internal audit: LMN-IA-2026-03",
+          "checksum": "44296877dbd29513517ebc1b6376101797452fae13b4629c0ad0fd6ce804e031"
+        },
+        {
+          "id": 220,
+          "title": "GMP deviation: [Demo · Lumen] Site 105: kit dispensed before the screening toxin result was entered in the EDC",
+          "checksum": "ad801e51fed60b715ebb5929c22c58a5027271ab1ffda3eb5b55e669021eb9f6"
+        },
+        {
+          "id": 219,
+          "title": "GMP deviation: [Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days after IRB approval",
+          "checksum": "df50d658e8e846c0065782bee935d2946439035d49b1c56a7d40429ff3e1fa58"
+        },
+        {
+          "id": 218,
+          "title": "GMP deviation: [Demo · Lumen] Site 107: two serious adverse events reported to the sponsor after the 24-hour window",
+          "checksum": "971497a53bf16106088073cf0289a4c627ade5ce47a7a7cf54a58ec2c31240b5"
+        },
+        {
+          "id": 217,
+          "title": "GMP deviation: [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 104-007)",
+          "checksum": "39acfafaee63fdba0d9838aa19351c663d1bd0e8b7d4453b8c15010ca4db9e12"
+        }
+      ]
+    },
+    {
+      "path": "/api/c2c/projects/a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed/sources?q=Supplier%3A+%5BDemo+%C2%B7+Lumen%5D+Glacierpath+Logistics",
+      "status": 200,
+      "projectId": "a7d280d7-e8b7-4e6d-a53f-5eba8219c9ed",
+      "total": 1,
+      "window": {
+        "shown": 1,
+        "truncated": false
+      },
+      "sources": [
+        {
+          "id": 230,
+          "title": "Supplier: [Demo · Lumen] Glacierpath Logistics",
+          "checksum": "ca73b1c02c40cd8116e7e4e7a209564b12dd644af194239047fb7b456715be9b"
+        }
+      ]
+    }
+  ],
+  "blockedPosts": [],
+  "pageErrors": [],
+  "passed": false,
+  "version": {
+    "commit": "5a552f1428e5ee8d474353ac6095242b1bab97c2",
+    "startedAt": "2026-11-14T00:09:12.624Z"
+  },
+  "checkedTitles": [
+    "Supplier: [Demo · Lumen] Quorvex IRT Systems",
+    "Supplier: [Demo · Lumen] Glacierpath Logistics"
+  ],
+  "draftLabel": "Draft with 1 pinned source",
+  "failure": "Search discarded the off-page checked source"
+}

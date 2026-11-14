@@ -20,9 +20,12 @@
  * be recorded, and a transmit under it is refused rather than quietly sent
  * under the platform's identity.
  */
-import { CredentialError, type GatewayName, type Region } from './types';
+import { CredentialError, TransmitAuthorizationError, type GatewayName, type Region, type GatewayTransmitRequest, type TransmitAuthorization } from './types';
 import { decryptCredential, encryptCredential } from '../security/credential-cipher';
 import { createHash } from 'node:crypto';
+import { checkSigningAuthority } from '../part11/signing-authority-gate';
+import { recordAuditRow } from '../audit/audit-write-outcome';
+import type { SentPackageRecord } from './sent-package-archive';
 
 type Queryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 
@@ -108,7 +111,7 @@ const accountAuthorities = new WeakMap<ResolvedGatewayAccount, AccountAuthority>
 
 function authorityFingerprint(row: Record<string, unknown> | undefined): string {
   return createHash('sha256').update(JSON.stringify([
-    Boolean(row), row?.account_mode ?? null, row?.sender_identifier ?? null,
+    Boolean(row), row?.id ?? null, row?.account_mode ?? null, row?.sender_identifier ?? null,
     row?.credentials_ciphertext ?? null, row?.updated_at ?? null,
   ])).digest('hex');
 }
@@ -116,12 +119,55 @@ function authorityFingerprint(row: Record<string, unknown> | undefined): string 
 async function readAccountRow(db: Queryable, authority: Omit<AccountAuthority, 'fingerprint'>) {
   const { organizationId, region, gateway, environment } = authority;
   const { rows } = await db.query(
-    `SELECT account_mode, sender_identifier, credentials_ciphertext, updated_at
+    `SELECT id, account_mode, sender_identifier, credentials_ciphertext, updated_at
        FROM organization_gateway_accounts
       WHERE organization_id = $1 AND region = $2 AND gateway = $3 AND environment = $4`,
     [organizationId, region, gateway, environment],
   );
   return rows[0] as Record<string, unknown> | undefined;
+}
+
+function captureAuthorization(auth: TransmitAuthorization): TransmitAuthorization {
+  if (auth.kind === 'governed-signature' && typeof auth.signatureActionId === 'string' && auth.signatureActionId.trim()) return Object.freeze({ ...auth });
+  if (auth.kind === 'governed-http' && typeof auth.reason === 'string' && auth.reason.trim().length >= 8 &&
+      auth.reauthVerifiedAt instanceof Date && Number.isFinite(auth.reauthVerifiedAt.getTime())) {
+    return Object.freeze({ ...auth, reauthVerifiedAt: new Date(auth.reauthVerifiedAt) });
+  }
+  throw new TransmitAuthorizationError('A supported human authorization is required. Nothing was transmitted.');
+}
+
+/** Snapshot server request facts, not proof that a signature or reauthentication occurred. */
+export function captureGatewayTransmitRequest(req: GatewayTransmitRequest): GatewayTransmitRequest {
+  const actor = req?.authorization?.actorUserId;
+  if (!Number.isSafeInteger(actor) || !actor || actor <= 0 || actor !== req?.userId ||
+      !Number.isSafeInteger(req.organizationId) || req.organizationId <= 0 ||
+      !['staging', 'production'].includes(req.environment)) {
+    throw new TransmitAuthorizationError('The transmitting user and organization must match the human authorization. Nothing was transmitted.');
+  }
+  const authorization = captureAuthorization(req.authorization);
+  try {
+    return Object.freeze({ ...req, authorization, bundle: Object.freeze(globalThis.structuredClone(req.bundle)),
+      metadata: req.metadata == null ? undefined : globalThis.structuredClone(req.metadata),
+      dispatchBinding: req.dispatchBinding ? Object.freeze({ ...req.dispatchBinding }) : undefined });
+  } catch { throw new TransmitAuthorizationError('The transmit request could not be captured. Nothing was transmitted.'); }
+}
+
+function accountReference(row: Record<string, unknown> | undefined) {
+  if (!row) return { accountId: null, accountUpdatedAt: null };
+  const updated = row.updated_at instanceof Date ? row.updated_at : new Date(typeof row.updated_at === 'string' ? row.updated_at : Number.NaN);
+  if (typeof row.id !== 'number' || !Number.isSafeInteger(row.id) || row.id <= 0 || !Number.isFinite(updated.getTime()) ||
+      !['client', 'platform'].includes(String(row.account_mode))) throw new Error('Account reference unavailable');
+  return { accountId: row.id, accountUpdatedAt: updated.toISOString() };
+}
+
+function accountUseDetails(row: Record<string, unknown> | undefined, req: GatewayTransmitRequest,
+  receipt: SentPackageRecord, scope: Omit<AccountAuthority, 'fingerprint'>) {
+  const { region, gateway, environment } = scope;
+  return { purpose: 'gateway_transmit', ...accountReference(row), accountMode: row?.account_mode === 'client' ? 'client' : 'platform',
+    region, gateway, environment, programId: req.programId ?? null, packageId: req.packageId ?? null,
+    bundleSha256: receipt.sha256, storageVersionId: receipt.storageVersionId,
+    authorizationKind: req.authorization.kind, signatureActionId: req.authorization.kind === 'governed-signature' ? req.authorization.signatureActionId : null,
+    sequenceId: req.dispatchBinding?.sequenceId ?? null, transmitAttemptId: req.dispatchBinding?.attemptId ?? null };
 }
 
 function resolvedAccount(row: Record<string, unknown> | undefined, authority: AccountAuthority): ResolvedGatewayAccount {
@@ -158,6 +204,8 @@ export async function resolveGatewayAccountForUse(
   db: Queryable,
   captured: ResolvedGatewayAccount,
   scope: Omit<AccountAuthority, 'fingerprint'>,
+  request: GatewayTransmitRequest,
+  archived: SentPackageRecord,
 ): Promise<ResolvedGatewayAccount> {
   const { organizationId, region, gateway, environment } = scope;
   const authority = accountAuthorities.get(captured);
@@ -166,12 +214,26 @@ export async function resolveGatewayAccountForUse(
   ]);
   if (!authority || authority.organizationId !== organizationId || authority.region !== region
     || authority.gateway !== gateway || authority.environment !== environment) throw changed();
-  let row: Awaited<ReturnType<typeof readAccountRow>>;
-  try { row = await readAccountRow(db, authority); } catch { throw changed(); }
-  if (authorityFingerprint(row) !== authority.fingerprint) throw changed();
-  // Decrypt only after the authority still matches, and ignore any mutation of
-  // the public captured object's fields while asynchronous checks were running.
-  return resolvedAccount(row, authority);
+  try {
+    const req = captureGatewayTransmitRequest(request);
+    const receipt = Object.freeze({ ...archived });
+    if (req.organizationId !== organizationId || req.environment !== environment || receipt.sha256 !== req.bundle.sha256 ||
+        receipt.sizeBytes !== req.bundle.sizeBytes || !/^[a-f0-9]{64}$/i.test(receipt.sha256) || !receipt.storageVersionId) throw changed();
+    const current = async () => {
+      if (await checkSigningAuthority(req.authorization.actorUserId, organizationId, db)) throw changed();
+      const row = await readAccountRow(db, authority);
+      if (authorityFingerprint(row) !== authority.fingerprint) throw changed();
+      return row;
+    };
+    const row = await current();
+    const audit = await recordAuditRow({ tenantId: organizationId, userId: req.authorization.actorUserId,
+      action: 'credential.use', resourceType: 'organization_gateway_account', resourceId: `${region}:${gateway}:${environment}`,
+      details: accountUseDetails(row, req, receipt, scope) });
+    if (!audit.persisted || !audit.chained) throw changed();
+    // No grant revision is invented: updated_at is only the row's last-change metadata.
+    // Decrypt after the audit and fresh account/standing checks; caller field mutations confer no authority.
+    return resolvedAccount(await current(), authority);
+  } catch { throw changed(); }
 }
 
 /** What a client account still lacks before it can send; empty when it can. */

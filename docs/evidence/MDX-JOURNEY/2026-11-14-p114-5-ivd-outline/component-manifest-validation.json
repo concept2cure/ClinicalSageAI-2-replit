@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "artifactCounts": {
+    "outline": 34,
+    "mapper": 44,
+    "retained-binder": 48
+  },
+  "retainedBinderManifestAmendedForLoggedInspectorOutputOnly": true
+}

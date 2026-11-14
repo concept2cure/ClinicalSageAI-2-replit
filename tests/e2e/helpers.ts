@@ -1,7 +1,7 @@
 /**
  * E2E test helpers for Phase 11 governed workflow tests.
  */
-import { APIRequestContext } from '@playwright/test';
+import { APIRequestContext, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -46,4 +46,34 @@ export async function login(
 
 export function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
+}
+
+/** Live browser-session HTTP; independent of the optional seed-data helpers above. */
+export async function browserApi<T>(
+  page: Page,
+  method: 'GET' | 'POST' | 'PUT',
+  path: string,
+  body?: unknown
+): Promise<{ status: number; headers: Record<string, string>; body: T }> {
+  return page.evaluate(
+    async ({ method, path, body }) => {
+      const token = localStorage.getItem('trialsage_access_token');
+      const response = await fetch(path, {
+        method,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      const headers = Object.fromEntries(response.headers.entries());
+      const contentType = response.headers.get('content-type') ?? '';
+      const responseBody = contentType.includes('json')
+        ? await response.json()
+        : { byteLength: (await response.arrayBuffer()).byteLength };
+      return { status: response.status, headers, body: responseBody };
+    },
+    { method, path, body }
+  ) as Promise<{ status: number; headers: Record<string, string>; body: T }>;
 }

@@ -141,7 +141,11 @@ BEGIN
   SELECT string_agg(doc_type || ':' || version, ', ' ORDER BY doc_type, version) INTO live
     FROM c2c_rule_packs
    WHERE agency = 'fda' AND superseded_by IS NULL
-     AND ((doc_type = 'k510' AND version <> 'fda-estar-510k-v1.1')
+     -- 2026-11-14, P-114 item 5: the approved IVD outline is a parallel
+     -- variant, not a replacement of this generic pack. Exempt exactly that
+     -- version; any other unexpected generic or variant still fails here.
+     AND ((doc_type = 'k510' AND version <> 'fda-estar-510k-v1.1'
+           AND version <> 'fda-estar-510k-ivd-v1.0')
        OR (doc_type = 'denovo' AND version <> 'fda-estar-denovo-v1.1'));
   IF live IS NOT NULL THEN
     RAISE EXCEPTION 'k510/denovo:fda must have exactly one live pack (v1.1) each; also live: %', live;

@@ -1,0 +1,74 @@
+[
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/__tests__/planningInputForms.test.ts",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/__tests__/protocolAuditRemediation.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/__tests__/protocolDesignInline.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/__tests__/protocolTrialDesignStart.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/surfaces/ProtocolDevCreateDesign.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/surfaces/ProtocolDevDesign.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/surfaces/ProtocolDevFileProgram.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/surfaces/ProtocolDevForms.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/surfaces/ProtocolDevPlanningInputs.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  },
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx",
+    "errorCount": 0,
+    "warningCount": 0,
+    "messages": []
+  }
+]

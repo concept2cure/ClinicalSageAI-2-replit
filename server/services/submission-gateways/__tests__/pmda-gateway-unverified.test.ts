@@ -35,12 +35,17 @@ const { wireCalls, dbCalls } = vi.hoisted(() => ({
 
 // The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
 vi.mock('../../storage', async () => (await import('./sent-package-storage-stub')).storageModule);
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })) }));
 
 vi.mock('../../../db', () => ({
   db: {},
   pool: {
-    query: async (text: string) => {
+    query: async (text: string, params: unknown[] = []) => {
       dbCalls.push(text.replace(/\s+/g, ' ').trim());
+      if (/SELECT\s+ou\.role\s+FROM\s+organization_users\s+ou\s+JOIN\s+users/i.test(text)
+          && params[0] === 11 && params[1] === 7 && params[2] === 'active' && JSON.stringify(params[3]) === '["active"]') {
+        return { rowCount: 1, rows: [{ role: 'admin' }] };
+      }
       if (/INSERT INTO submission_transmittals/.test(text)) return { rowCount: 1, rows: [{ id: 41 }] };
       if (/SELECT transmission_id, status, ack_received_at, metadata FROM submission_transmittals/.test(text)) {
         return {

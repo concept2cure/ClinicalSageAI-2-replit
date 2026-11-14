@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-11-13T22:33:10.786735+00:00",
+  "elapsedSeconds": 22.796,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/reviewer-current-walk.cjs",
+    "http://127.0.0.1:5000"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "merged-inputs.json",
+  "inputCount": 12722,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/reviewer-current-walk.cjs": "b6d255c22045c8544d90c7b1400f125b931a47615fdef400f7b3942c0a376a81"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "reviewer-browser-confirmed.txt.gz",
+  "outputSha256": "9da8f340ac1a9caf848d93bac5b4f58a13a2c937de6dc445e03d48845338ef44",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

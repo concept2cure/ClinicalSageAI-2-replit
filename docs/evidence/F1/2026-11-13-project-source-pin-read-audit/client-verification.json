@@ -1,0 +1,69 @@
+{
+  "plan": "F1",
+  "baselineRevision": "5a552f1428e5ee8d474353ac6095242b1bab97c2",
+  "observedDateUTC": "2026-11-14",
+  "runtime": "Node v22.23.5",
+  "testFiles": {
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx": 7,
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx": 42,
+    "client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx": 36,
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": 14,
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx": 25,
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": 31
+  },
+  "passed": 155,
+  "failed": 0,
+  "skipped": 0,
+  "seconds": 35.6,
+  "lint": {
+    "errors": 0,
+    "warnings": 6,
+    "baselineWarnings": 6,
+    "newWarnings": 0
+  },
+  "red": {
+    "initial": {
+      "failed": 3,
+      "passed": 2
+    },
+    "paginationDebounce": {
+      "failed": 1,
+      "passed": 154
+    }
+  },
+  "sourceSha256": {
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "a9a0029661181954099b81ce8c43450ed9c1beb92c1685164c67b48821c1b776",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts": "31ca63771bdde284fc40f6089a401f1949fbaf4f6d9e5a645063cfa790054af5",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx": "376e4bbc6a8400db12f18199a95dd73d719c097691dc371bbf2236cfc16cd7e4",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx": "87ed7e96a57a05458f19dccc542c132770bf2e86a157732131ebc2c1ba021151",
+    "client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx": "de13d36ae6d218f77e3966dc61efb0e2533df2dcd7c6ea2cdff82cc97973083e",
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "a86b9b6d11903a40f289255eb73602c5f7629bd283593be893699e8d97b24f88",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx": "19068eee7ad6c99ba263ba59c2da4d6fc496dd0f0a3426d3b9254eee5f326b60",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "5773fc7295b5b922c5d58d47733bd51fee4f0339c62ca3a4201ec4b9bbc006f7"
+  },
+  "artifacts": {
+    "client-initial-red.json.gz": {
+      "rawSha256": "60389a3df61a417c15f79b8d7433750406f79858fc58297e82335022f3915467",
+      "artifactSha256": "be5e0202fb7408371990f77557454409b017856df5d7657e16a103fddad8991f"
+    },
+    "client-pagination-red.json.gz": {
+      "rawSha256": "ee90f67ce29186ea3daa9da03c7040df84184e1d2e354996b33d7da4c46822ba",
+      "artifactSha256": "5ea34031d15a2036d919aba06dc915284d403f15a3d97a63fb0ffb93b98291b9"
+    },
+    "client-green.txt.gz": {
+      "rawSha256": "394de26cd9518337ae286cd2b835a1a3751b85009377c5bd0f603742bd23d6dd",
+      "artifactSha256": "d279a1337ade56691a546d6e72aaec85e92e7fa8327016e3cb9107147eafd5d1"
+    },
+    "client-lint.json.gz": {
+      "rawSha256": "f8cf537175556fe3a4f634096059086fd5ded66d89183b9d884df79cd079e385",
+      "artifactSha256": "4cbd3b5105ee72a6e7d4dfbed15e314c838b9240c5f721ebcf52af38d344d125"
+    }
+  },
+  "boundaries": [
+    "No provider calls, new route, new reader/service, screen, table, model or dependency.",
+    "Strict owner/project/session/selection retirement and original checked SHA preserved.",
+    "Implicit newest10, explicit AnA20 and editor5 limits remain.",
+    "Separate native tenant offboarding3 failures reproduced, policy choice pending; no privacy/RLS/export/purge change."
+  ],
+  "independentReview": "Server worker reviewed client lifecycle twice without a concrete blocker; root subsequently extracted final reply validation into a local helper to preserve the6-warning baseline and reran all155 cases."
+}

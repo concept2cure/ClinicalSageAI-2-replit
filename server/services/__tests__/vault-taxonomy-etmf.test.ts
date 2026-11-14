@@ -480,12 +480,19 @@ describe('the essential-documents library sits in the catalog (drift guard)', ()
   });
 });
 
-describe('the eTMF screen and the catalog', () => {
-  it('the eTMF screen takes artifact names from the catalog, not from fixtures', () => {
+describe('the trial master file in Vault and the catalog', () => {
+  it('the reachable Vault readers take artifact names from the catalog, not from fixtures', () => {
     const screen = read('client/src/concept2cure/v2/surfaces/Etmf.tsx');
     expect(screen.match(/^import\b[^;]*from '(?:\.\.\/)+fixtures\/[^']+';/gm) ?? [], 'fixture imports in Etmf.tsx').toEqual([]);
-    expect(/^import \{[^}]*\btmfArtifactName\b[^}]*\} from '@shared\/constants\/domain\/tmf-reference-model';/m.test(screen),
-      'Etmf.tsx imports tmfArtifactName from the shared catalog').toBe(true);
+    // Etmf is the existing Vault door. These readers name its records, package and AnA gaps.
+    for (const file of ['vaultTmf.ts', 'VaultTmfPackage.tsx', 'vaultTmfAnaContext.ts']) {
+      const reader = withoutComments(read(`client/src/concept2cure/v2/surfaces/${file}`));
+      expect(reader.match(/^import\b[^;]*from ['"](?:[^'"]*\/)?fixtures\/[^'"]+['"];/gm) ?? [], `fixture imports in ${file}`).toEqual([]);
+      expect(/^import \{[^}]*\btmfArtifactName\b[^}]*\} from '@shared\/constants\/domain\/tmf-reference-model';/m.test(reader),
+        `${file} imports tmfArtifactName from the shared catalog`).toBe(true);
+      const body = reader.replace(/^import\b[^;]*;/gm, '');
+      expect(/\btmfArtifactName\s*\(/.test(body), `${file} resolves artifact names through the catalog, beyond its import`).toBe(true);
+    }
     expect(fs.existsSync(path.join(ROOT, 'client/src/concept2cure/v2/fixtures/etmf.ts')), 'fixtures/etmf.ts exists').toBe(false);
   });
 });

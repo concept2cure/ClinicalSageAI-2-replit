@@ -1,0 +1,267 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > refuses a readable record changed after snapshot commit instead of reporting an empty catalogue
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > a later refresh retains the predecessor and presents the current immutable source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > lists a captured file before the Quality record snapshots, however old the file is
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > preserves stable source identities when no current native fact changed
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely denied object without its title, snippet, identity or prose
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely missing object without its title, snippet, identity or prose
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > an exact selected denied source receives generic unavailable admission rather than a stale-readable signal
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > failed native verification still refuses the catalogue instead of creating an empty success
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > does not refuse another project's list of its sources
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > still refuses a list of its own project, so a stale record never reads as current
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its canonical set'
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its project facet'
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with an empty canonical set'
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with a facet outside its canonical set'
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refreshes an included sibling and retains its immutable predecessor on the first page
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > discovers an included sibling’s existing native record before that data room has ever been opened
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not synchronize subsequent pages and still refuses stale records inside their scope
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refuses a sibling changed just after its own first-page capture
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > refuses a stale open project with a deleted program before supplying its sibling 282ms
+   → promise resolved "{ facets: { …(5) }, total: 1, …(2) }" instead of rejecting
+ × server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > refuses a stale open project with a unresolved anchor before supplying its sibling 113ms
+   → promise resolved "{ facets: { …(5) }, total: 1, …(2) }" instead of rejecting
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > omits a denied native object without a title or text
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > omits a project whose private grant is no longer in the current evaluated catalog
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > still verifies the actor when the canonical catalogue set is empty
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > refuses native content changed after the page SQL and before its final admission
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > retains the actor fence if membership is revoked during the final admission of B
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > runs as many project admissions for eight sources as for two
+ ↓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > still refuses the read when the person leaves the organization while its sources are being admitted
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > refuses a stale open project with a deleted program before supplying its sibling
+AssertionError: promise resolved "{ facets: { …(5) }, total: 1, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "currentTotal": 1,
++   "facets": {
++     "ctd": [],
++     "folder": [],
++     "kind": [
++       {
++         "count": 1,
++         "label": "qms",
++         "value": "qms",
++       },
++     ],
++     "project": [
++       {
++         "count": 1,
++         "label": "Sibling programme",
++         "value": "44444444-4444-4444-8444-444444444444",
++       },
++     ],
++     "study": [],
++   },
++   "sources": [
++     {
++       "agency": null,
++       "applicationNumber": null,
++       "applicationType": null,
++       "charCount": 56,
++       "checksum": "dbfe967a43ade4f3c8ac632a0158bab10179f89492dcc944b0fb67c460f84818",
++       "clientProgramId": "44444444-4444-4444-8444-444444444444",
++       "clientWorkspaceId": null,
++       "createdAt": 2026-11-13T23:08:41.149Z,
++       "dataEligible": true,
++       "disposition": null,
++       "documentDate": null,
++       "extractionStatus": "extracted",
++       "id": 1,
++       "indication": null,
++       "ingestionStatus": "ingested",
++       "isCurrent": true,
++       "linkedCsrReportId": null,
++       "linkedPrecedentId": null,
++       "metadata": {
++         "dossier": {
++           "evidenceKind": "qms",
++         },
++         "lifecycle": "draft",
++         "nativeRecord": true,
++         "originalFileAvailable": false,
++         "sourceScope": "project",
++       },
++       "officialUrl": null,
++       "organizationId": 71,
++       "originalFileAvailable": false,
++       "pageCount": null,
++       "phase": null,
++       "previousVersionId": null,
++       "processing": null,
++       "product": null,
++       "projectName": "Sibling programme",
++       "provenance": {
++         "extractionMethod": "native-record-projection",
++         "origin": "native_record_snapshot",
++         "recordSnapshot": {
++           "key": "quality:qms_documents:9:working",
++           "lifecycle": "draft",
++           "native": {
++             "authoringDocumentId": "33333333-3333-4333-8333-333333333333",
++             "id": "9",
++             "kind": "qms_documents",
++           },
++           "renderer": "quality-evidence:v1",
++           "sourceScope": "project",
++           "version": 1,
++           "workArea": "quality",
++         },
++       },
++       "snippet": null,
++       "sourceRecordIdentifier": "quality:qms_documents:9:working",
++       "sourceType": "client_document",
++       "sponsor": null,
++       "storedArtifactRef": null,
++       "studyName": null,
++       "studyRef": null,
++       "textAvailable": true,
++       "therapeuticArea": null,
++       "title": "Private controlled procedure",
++       "trialRegistryIdentifier": null,
++       "updatedAt": 2026-11-13T23:08:41.149Z,
++       "version": "2",
++       "visibilityClass": "tenant_private",
++     },
++   ],
++   "total": 1,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:265:43
+    263|         ? { status: 404, code: 'PROJECT_NOT_FOUND' } : { status: 409, …
+    264|       await expect(syncQualityProjectSources({ ...identity, programId:…
+    265|       await expect(catalog({ programIds })).rejects.toMatchObject(refu…
+       |                                           ^
+    266|     } finally {
+    267|       if (kind === 'deleted program') await pg.query('UPDATE regulator…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > refuses a stale open project with a unresolved anchor before supplying its sibling
+AssertionError: promise resolved "{ facets: { …(5) }, total: 1, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "currentTotal": 1,
++   "facets": {
++     "ctd": [],
++     "folder": [],
++     "kind": [
++       {
++         "count": 1,
++         "label": "qms",
++         "value": "qms",
++       },
++     ],
++     "project": [
++       {
++         "count": 1,
++         "label": "Sibling programme",
++         "value": "44444444-4444-4444-8444-444444444444",
++       },
++     ],
++     "study": [],
++   },
++   "sources": [
++     {
++       "agency": null,
++       "applicationNumber": null,
++       "applicationType": null,
++       "charCount": 56,
++       "checksum": "dbfe967a43ade4f3c8ac632a0158bab10179f89492dcc944b0fb67c460f84818",
++       "clientProgramId": "44444444-4444-4444-8444-444444444444",
++       "clientWorkspaceId": null,
++       "createdAt": 2026-11-13T23:08:41.431Z,
++       "dataEligible": true,
++       "disposition": null,
++       "documentDate": null,
++       "extractionStatus": "extracted",
++       "id": 2,
++       "indication": null,
++       "ingestionStatus": "ingested",
++       "isCurrent": true,
++       "linkedCsrReportId": null,
++       "linkedPrecedentId": null,
++       "metadata": {
++         "dossier": {
++           "evidenceKind": "qms",
++         },
++         "lifecycle": "draft",
++         "nativeRecord": true,
++         "originalFileAvailable": false,
++         "sourceScope": "project",
++       },
++       "officialUrl": null,
++       "organizationId": 71,
++       "originalFileAvailable": false,
++       "pageCount": null,
++       "phase": null,
++       "previousVersionId": null,
++       "processing": null,
++       "product": null,
++       "projectName": "Sibling programme",
++       "provenance": {
++         "extractionMethod": "native-record-projection",
++         "origin": "native_record_snapshot",
++         "recordSnapshot": {
++           "key": "quality:qms_documents:9:working",
++           "lifecycle": "draft",
++           "native": {
++             "authoringDocumentId": "33333333-3333-4333-8333-333333333333",
++             "id": "9",
++             "kind": "qms_documents",
++           },
++           "renderer": "quality-evidence:v1",
++           "sourceScope": "project",
++           "version": 1,
++           "workArea": "quality",
++         },
++       },
++       "snippet": null,
++       "sourceRecordIdentifier": "quality:qms_documents:9:working",
++       "sourceType": "client_document",
++       "sponsor": null,
++       "storedArtifactRef": null,
++       "studyName": null,
++       "studyRef": null,
++       "textAvailable": true,
++       "therapeuticArea": null,
++       "title": "Private controlled procedure",
++       "trialRegistryIdentifier": null,
++       "updatedAt": 2026-11-13T23:08:41.431Z,
++       "version": "2",
++       "visibilityClass": "tenant_private",
++     },
++   ],
++   "total": 1,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts:265:43
+    263|         ? { status: 404, code: 'PROJECT_NOT_FOUND' } : { status: 409, …
+    264|       await expect(syncQualityProjectSources({ ...identity, programId:…
+    265|       await expect(catalog({ programIds })).rejects.toMatchObject(refu…
+       |                                           ^
+    266|     } finally {
+    267|       if (kind === 'deleted program') await pg.query('UPDATE regulator…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 25 skipped (27)
+   Start at  23:08:35
+   Duration  6.09s (transform 1.12s, setup 148ms, import 1.83s, tests 3.89s, environment 0ms)
+

@@ -106,6 +106,6 @@ export function CreateDesignDrawer({ documentId, programId, onCancel, onDone, on
     sub: `Design ${saved.studyId} is already persisted. Retry only its link to this protocol.`, submitLabel: 'Retry binding', fields: [],
   } : FORM;
   return <>
-    <C2CForm key={saved?.studyId || 'new'} config={{ ...config, notice: error || undefined, busy: busy ? 'Saving governed changes…' : undefined }} onCancel={onCancel} onSubmit={submit} />
+    <C2CForm presentation="inline" key={saved?.studyId || 'new'} config={{ ...config, notice: error || undefined, busy: busy ? 'Saving governed changes…' : undefined }} onCancel={onCancel} onSubmit={submit} />
   </>;
 }

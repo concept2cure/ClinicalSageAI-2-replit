@@ -1,0 +1,14 @@
+{
+  "head": "e561b0c80ccc091e5c07a9c1dbbe6a96e59a1a6d",
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "exitCode": 1,
+  "sourceStableDuringRun": "not recorded; post-run probe interrupted receipt creation",
+  "observedFailure": "Pre-push warning ratchet: one no-console warning in the evidence inspector; remote-head probe then failed on expired CLI credential",
+  "rawLog": "push-2.log.gz",
+  "remoteHeadFromConnectedGitHub": "d44d5313ddf3e9c999055d5bdbfbeec2e8974d8d"
+}

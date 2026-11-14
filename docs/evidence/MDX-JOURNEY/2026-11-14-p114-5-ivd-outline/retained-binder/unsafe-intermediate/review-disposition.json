@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-11-14T02:03:29.219826+00:00",
+  "disposition": "Unsafe intermediate, rejected by root after downstream review; no final qualification or publication claim.",
+  "issue": "IVD biocompatibility becomes nonblocking when-applicable although the product records no tissue-contact or applicability decision; filing readiness drops checkApplicability and can claim complete.",
+  "resolutionRequested": "Preserve biocompatibility as blocking content, with accountable applicability rationale/evidence; retain accurate FDA conditional-form guidance.",
+  "sourceSnapshots": {
+    "server/services/pathway-engines/estar/estar-mapper.ts": {
+      "sha256": "5d9a332b5933a865c07d4d97f54c910b3af591f3598acad3053f17d4621bff1d",
+      "matchesQualifiedIntermediate": false,
+      "matchesQualifiedCohort": true
+    },
+    "server/services/pathway-engines/estar/estar-outline-requirements.ts": {
+      "sha256": "4000172288a7972bbf03d186d24ab03a10ffef79b37491e6cc1ead4ff3258261",
+      "matchesQualifiedIntermediate": true,
+      "matchesQualifiedCohort": true
+    },
+    "server/services/pathway-engines/estar/estar-filing-readiness.ts": {
+      "sha256": "8d448bc4c7db76339625c7c4b8deb5f1d69dd7ee2ca691846c5346d4559ca884",
+      "matchesQualifiedIntermediate": true,
+      "matchesQualifiedCohort": true
+    },
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts": {
+      "sha256": "65528a8593c905b35e4e9b435e5352b61dff8e25796ad573fe666760cd79cfbc",
+      "matchesQualifiedIntermediate": true,
+      "matchesQualifiedCohort": true
+    }
+  }
+}

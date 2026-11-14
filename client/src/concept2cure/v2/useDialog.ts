@@ -41,7 +41,33 @@ function focusable(panel: HTMLElement): HTMLElement[] {
 /* The open dialogs, oldest first. Each listens on the document, so a dialog opened over another (a reason sheet over
    the review route) would answer the same key too: one Escape closed both, and Tab was pulled back and forth between
    them until it could reach neither's controls (Quality review, 2026-11-10). Only the topmost answers. */
-const openDialogs: object[] = [];
+interface OpenDialog { panel: HTMLDivElement | null; opener: HTMLElement | null }
+const openDialogs: OpenDialog[] = [];
+
+function restoreWithin(panel: HTMLDivElement | null, target: HTMLElement | null) {
+  if (!panel) return;
+  if (target && panel.contains(target)) target.focus();
+  if (!panel.contains(document.activeElement)) panel.focus();
+}
+
+const inputOwnsKey = (event: KeyboardEvent) => event.isComposing || event.defaultPrevented;
+
+function retireDialog(me: OpenDialog) {
+  const at = openDialogs.indexOf(me);
+  if (at < 0) return;
+  const wasTop = at === openDialogs.length - 1;
+  // A surviving layer must not keep an opener in the retiring panel. Retain
+  // its predecessor so closing the whole stack still returns to the page.
+  for (const higher of openDialogs.slice(at + 1)) {
+    if (higher.opener && me.panel?.contains(higher.opener)) higher.opener = me.opener;
+  }
+  openDialogs.splice(at, 1);
+  const top = openDialogs[openDialogs.length - 1];
+  if (top) {
+    const target = wasTop ? me.opener : document.activeElement as HTMLElement | null;
+    restoreWithin(top.panel, target);
+  } else if (me.opener?.isConnected) me.opener.focus();
+}
 
 /**
  * @param enabled  Whether the dialog is currently open. Defaults to true, which
@@ -58,12 +84,12 @@ export function useDialog(onClose: () => void, enabled = true) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!enabled) return undefined;
-    const prev = document.activeElement as HTMLElement | null;
-    const me = {};
+    const me = { panel: ref.current, opener: document.activeElement as HTMLElement | null };
     openDialogs.push(me);
     ref.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (openDialogs[openDialogs.length - 1] !== me) return;
+      if (inputOwnsKey(e)) return;
       if (e.key === 'Escape') {
         e.stopPropagation();
         closeRef.current();
@@ -102,9 +128,7 @@ export function useDialog(onClose: () => void, enabled = true) {
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
-      const at = openDialogs.indexOf(me);
-      if (at >= 0) openDialogs.splice(at, 1);
-      prev?.focus?.();
+      retireDialog(me);
     };
   }, [enabled]);
   return ref;

@@ -1,0 +1,29 @@
+{
+  "startedAt": "2026-11-13T23:15:17.407185+00:00",
+  "elapsedSeconds": 12.77,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx",
+    "client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx",
+    "client/src/concept2cure/v2/__tests__/licensingEnterpriseAction.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "postbilling-inputs.json",
+  "inputCount": 58,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "postbilling-checks.txt.gz",
+  "outputSha256": "ed7bdfb364862d7f1461ad752333cfd59c3d202d2bccdaa15fd557171904754c",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": true
+}

@@ -1,0 +1,50 @@
+{
+  "testExit": 0,
+  "eslintExit": 0,
+  "elapsedSeconds": 26.611,
+  "sourceStable": true,
+  "headStable": true,
+  "declaredPins": 47,
+  "commands": [
+    [
+      "node_modules/.bin/vitest",
+      "run",
+      "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts",
+      "server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts",
+      "server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts",
+      "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+      "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+      "shared/regulatory/__tests__/filingSectionKey.test.ts",
+      "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+      "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+      "tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts",
+      "server/services/market-specs/__tests__/document-template-library.test.ts",
+      "--maxWorkers=1",
+      "--no-file-parallelism",
+      "--reporter=json",
+      "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/MDX-JOURNEY/2026-11-14-fda-510k-authoring-keys/green/tests.json"
+    ],
+    [
+      "node_modules/.bin/eslint",
+      "--no-cache",
+      "shared/regulatory/device-authoring-sections.ts",
+      "shared/regulatory/project-bootstrap.ts",
+      "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts",
+      "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+      "--format=json",
+      "--output-file=/workspace/ClinicalSageAI-2-replit/docs/evidence/MDX-JOURNEY/2026-11-14-fda-510k-authoring-keys/green/eslint.json"
+    ]
+  ],
+  "files": [
+    "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts",
+    "server/services/authoring/__tests__/device-builtin-authoring-templates.test.ts",
+    "server/services/authoring/__tests__/builtin-templates-carry-whole-outline.test.ts",
+    "server/services/authoring/__tests__/assembly-template-guidance.test.ts",
+    "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+    "shared/regulatory/__tests__/filingSectionKey.test.ts",
+    "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+    "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+    "tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts",
+    "server/services/market-specs/__tests__/document-template-library.test.ts"
+  ]
+}

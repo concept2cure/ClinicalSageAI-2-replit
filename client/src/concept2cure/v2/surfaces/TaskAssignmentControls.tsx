@@ -66,8 +66,9 @@ function AssignmentSession(props: TaskAssignmentControlsProps & { scope: TaskAss
   const [manual, setManual] = useState(props.initialMode === 'manual');
   const [saved, setSaved] = useState<TaskAssignmentResult | null>(null);
   const mounted = useRef(false); const generation = useRef(0); const sending = useRef(false);
+  const latest = useRef(props); latest.current = props;
   const prefix = useId();
-  const isCurrent = () => mounted.current && props.isCurrent();
+  const isCurrent = () => mounted.current && latest.current.isCurrent();
   const currentScope = (meta: TaskAssignmentMeta) => ({ ...props.scope, clientWorkspaceId: meta.clientWorkspaceId });
   const showFailure = (result: AssignmentFailure) => {
     setNote({ text: result.message, warning: true }); setNeedsRead(true); setUncertain(result.kind === 'unconfirmed');
@@ -91,10 +92,11 @@ function AssignmentSession(props: TaskAssignmentControlsProps & { scope: TaskAss
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const automaticAssign = async (meta: TaskAssignmentMeta) => {
-    if (sending.current || !isCurrent() || props.disabled) return;
+    if (sending.current || !isCurrent() || latest.current.disabled) return;
     sending.current = true; setBusy(true); setNote(null);
     const headers = () => taskAssignmentHeaders(currentScope(meta), isCurrent);
-    const result = props.onAutomatic ? await props.onAutomatic(meta, headers) : await autoAssignSavedTask(meta, headers, isCurrent);
+    const onAutomatic = latest.current.onAutomatic;
+    const result = onAutomatic ? await onAutomatic(meta, headers) : await autoAssignSavedTask(meta, headers, isCurrent);
     if (!isCurrent()) return;
     sending.current = false; setBusy(false);
     if (result.kind === 'unchanged') {
@@ -108,10 +110,10 @@ function AssignmentSession(props: TaskAssignmentControlsProps & { scope: TaskAss
     }
     if (result.kind !== 'confirmed') { showFailure(result); return; }
     setNote({ text: 'Assignment recorded. Rereading the saved assignee.', warning: false });
-    props.onSaved(); void read();
+    latest.current.onSaved(); void read();
   };
   const save = async () => {
-    if (sending.current || needsRead || !roster?.meta.canAssign || !isCurrent() || props.disabled) return;
+    if (sending.current || needsRead || !roster?.meta.canAssign || !isCurrent() || latest.current.disabled) return;
     const assigneeId = integer(selected); const why = reason.trim();
     if (!assigneeId || assigneeId === roster.meta.assigneeId || why.length < 3 || why.length > 1000 || !roster.data.some(row => row.id === selected)) return;
     sending.current = true; setBusy(true); setNote(null);
@@ -121,7 +123,7 @@ function AssignmentSession(props: TaskAssignmentControlsProps & { scope: TaskAss
     sending.current = false; setBusy(false);
     if (result.kind !== 'confirmed') { showFailure(result); return; }
     setSaved(result.data); setReason(''); setSelected(''); setNote({ text: 'Assignment saved.', warning: false });
-    props.onSaved(); void read();
+    latest.current.onSaved(); void read();
   };
   const disabled = busy || loading || Boolean(props.disabled);
   const state = { roster, loading, busy, error, note, needsRead, uncertain, selected, reason, manual, saved, prefix, disabled };

@@ -1,0 +1,66 @@
+{
+  "observedAt": "2026-11-13T22:33:45.619281+00:00",
+  "baselineHead": "2a667bf51ec9d5ff5445728e7026816af7ac393b",
+  "mergedHead": "2973e971b4c0f2b1b9948998163be8f657ac36af",
+  "changedNamedInputs": [
+    ".devcontainer/AGENT_RULES.md",
+    ".devcontainer/devcontainer.json",
+    "scripts/ops/codespaces-doctor-receipt-cases.mjs",
+    "scripts/ops/codespaces-doctor.mjs",
+    "scripts/ops/codespaces-doctor.test.mjs",
+    "scripts/ops/codespaces-provider-receipt.mjs",
+    "scripts/ops/verify-ana-answers.mjs",
+    "scripts/ops/verify-ana-answers.test.mjs"
+  ],
+  "runtimeObjectIdentities": {
+    "client": {
+      "baseline": "36c87ab0c85cfa62d77f3927d3d3be3e3a27973a",
+      "merged": "36c87ab0c85cfa62d77f3927d3d3be3e3a27973a"
+    },
+    "server": {
+      "baseline": "ecfa4cd10a189dae7995387a0cf143ed76f21e0a",
+      "merged": "ecfa4cd10a189dae7995387a0cf143ed76f21e0a"
+    },
+    "shared": {
+      "baseline": "ecdad276c70150980addc814bd088a1dcf229a4a",
+      "merged": "ecdad276c70150980addc814bd088a1dcf229a4a"
+    },
+    "migrations": {
+      "baseline": "de584a37734ecf543775818fbc061e3e68288c0b",
+      "merged": "de584a37734ecf543775818fbc061e3e68288c0b"
+    },
+    "scripts/demo": {
+      "baseline": "e3c8ebd2de9ebc3780052b5afc93ce61af9a6e2e",
+      "merged": "e3c8ebd2de9ebc3780052b5afc93ce61af9a6e2e"
+    },
+    ".devcontainer/post-create.sh": {
+      "baseline": "d510762f4ada8a844f75de3d197f39d0695af04f",
+      "merged": "d510762f4ada8a844f75de3d197f39d0695af04f"
+    },
+    ".devcontainer/post-start.sh": {
+      "baseline": "a117efadfa544c4676044424bee27d9e46a5dcd3",
+      "merged": "a117efadfa544c4676044424bee27d9e46a5dcd3"
+    },
+    "package.json": {
+      "baseline": "be0e187454c27963d7c357c583a7d48b75904274",
+      "merged": "be0e187454c27963d7c357c583a7d48b75904274"
+    },
+    "package-lock.json": {
+      "baseline": "e62f02e395948d52d941863242f5a851d22f580c",
+      "merged": "e62f02e395948d52d941863242f5a851d22f580c"
+    },
+    ".nvmrc": {
+      "baseline": "2bd5a0a98a36cc08ada88b804d3be047e6aa5b8a",
+      "merged": "2bd5a0a98a36cc08ada88b804d3be047e6aa5b8a"
+    },
+    ".npmrc": {
+      "baseline": "f9bd6bb2aa9ee639f9faeed85ed2dadc889e29fb",
+      "merged": "f9bd6bb2aa9ee639f9faeed85ed2dadc889e29fb"
+    }
+  },
+  "allListedRuntimeObjectsUnchanged": true,
+  "devcontainerRuntimeChange": "Only codespaces.openFiles adds the existing playbook; image, lifecycle commands, ports and package inputs are unchanged.",
+  "focusedChecks": "merged-checks.json:173/173; merged-lint.json:exit0; no live provider calls.",
+  "runtimeStampAtBrowserRehearsal": "2a667bf51ec9d5ff5445728e7026816af7ac393b",
+  "pending": "A normal post-start after the initial seeding finishes must update the app commit stamp. No final published-HEAD runtime claim is made by this bridge."
+}

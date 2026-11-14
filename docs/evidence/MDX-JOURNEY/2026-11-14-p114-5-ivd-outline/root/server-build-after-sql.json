@@ -1,0 +1,13 @@
+{
+  "head": "301a5b0c38f4fed786f886cd8259d4e92af03fc2",
+  "finishedHead": "301a5b0c38f4fed786f886cd8259d4e92af03fc2",
+  "command": [
+    "node",
+    "scripts/build-server.mjs"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 3.167,
+  "declaredSourceFiles": 12506,
+  "sourceStable": true,
+  "sourceChanges": []
+}

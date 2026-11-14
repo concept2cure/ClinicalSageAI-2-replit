@@ -2154,7 +2154,12 @@
   "classify_tmf_artifact": {
    "class": "confirm",
    "writes": "INSERT or UPDATE tmf_artifact_filings + chained audit row (recordTmfArtifactFiling)",
-   "site": "AnaToolExecutor.ts registerToolHandler('classify_tmf_artifact')"
+   "site": "AnaToolExecutor.ts registerToolHandler('classify_tmf_artifact')",
+   "present": {
+    "verb": "classify",
+    "object": "an artifact into the Trial Master File",
+    "source": "project"
+   }
   },
   "classify_tox_findings": {
    "class": "read",

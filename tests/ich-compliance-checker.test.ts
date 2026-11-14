@@ -7,11 +7,12 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  checkQ1A, checkQ3AandQ3B, checkQ3D, checkQ6AandQ6B,
+  checkQ1A, checkQ3AandQ3B, checkQ6AandQ6B,
   checkQ8, checkQ9, checkQ10,
   type ProjectInputs,
 } from '../server/services/cmc/ich-compliance-rules';
 import { checkQ2 } from '../server/services/cmc/ich-compliance-q2';
+import { checkQ3D } from '../server/services/cmc/ich-compliance-q3d';
 
 function emptyInputs(): ProjectInputs {
   return {
@@ -203,6 +204,65 @@ describe('ICH Q3D(R2) — elemental impurities', () => {
     inp.sourceObjects = [{ sourceKey: 'q3d_risk_assessment_v1', sourceType: 'elemental_impurities' }];
     const f = checkQ3D(inp);
     expect(f[0].status).toBe('pass');
+  });
+
+  /* The impurity register writes `impurity_profile` source objects. Until
+     2026-11-12 this rule never read one: C2C-201's Palladium row was assessed
+     on the register and in §3.2.S.3.2, and this check said no assessment
+     existed. The verdict is the impurity engine's. */
+  const registerRow = (over: Record<string, unknown> = {}) => ({
+    sourceType: 'impurity_profile',
+    sourceKey: 'impurity_profile:41',
+    sourcePayload: {
+      scope: 'drug_substance', impurityName: 'Palladium', impurityType: 'elemental',
+      observedLevel: '3', levelUnit: 'ppm', maximumDailyDose: '15 mg',
+      routeOfAdministration: 'oral', status: 'draft', ...over,
+    },
+  });
+
+  it('reads a recorded elemental impurity from the register and reports the engine verdict', () => {
+    const inp = emptyInputs();
+    inp.sourceObjects = [registerRow()];
+    const f = checkQ3D(inp);
+    expect(f).toHaveLength(1);
+    expect(f[0].ruleId).toBe('Q3D_OK');
+    expect(f[0].status).toBe('pass');
+    // 3 ppm × 15 mg/day = 0.045 µg/day against the oral PDE of 100 µg/day.
+    expect(f[0].evidence.join(' ')).toMatch(/Palladium: 0\.045 µg\/day against a permitted daily exposure of 100 µg\/day/);
+    expect(f[0].evidence.join(' ')).toContain("this material's contribution");
+  });
+
+  it('fails on a recorded elemental impurity above its PDE, whatever a specification mentions', () => {
+    const inp = emptyInputs();
+    inp.specs = [{ materialType: 'drug_substance', materialName: 'API', testParameters: { 'elemental impurities': '<5 ppm' } }];
+    inp.sourceObjects = [
+      registerRow(),
+      registerRow({ impurityName: 'Cd', observedLevel: '10', levelUnit: 'µg/day', maximumDailyDose: '' }),
+    ];
+    const f = checkQ3D(inp);
+    expect(f.map((x) => x.ruleId)).toEqual(['Q3D_ABOVE_PDE']);
+    expect(f[0].status).toBe('fail');
+    expect(f[0].message).toBe('1 of 2 recorded elemental impurities is above the ICH Q3D permitted daily exposure.');
+    expect(f[0].evidence.join(' ')).toMatch(/10 µg\/day against a permitted daily exposure of 5 µg\/day/);
+  });
+
+  it('warns, with the reason, on a recorded elemental impurity that cannot be compared', () => {
+    const inp = emptyInputs();
+    inp.sourceObjects = [registerRow({ maximumDailyDose: '' })];
+    const f = checkQ3D(inp);
+    expect(f.map((x) => x.ruleId)).toEqual(['Q3D_NOT_ASSESSABLE']);
+    expect(f[0].status).toBe('warning');
+    expect(f[0].evidence[0]).toMatch(/^Palladium: .*maximum daily dose/i);
+  });
+
+  it('does not read a retired row or a row of another impurity class', () => {
+    const inp = emptyInputs();
+    inp.sourceObjects = [
+      registerRow({ status: 'retired' }),
+      registerRow({ impurityName: 'Impurity A', impurityType: 'process-related', observedLevel: '0.08', levelUnit: '%' }),
+    ];
+    const f = checkQ3D(inp);
+    expect(f[0].ruleId).toBe('Q3D_NO_ASSESSMENT');
   });
 });
 

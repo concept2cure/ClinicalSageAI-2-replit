@@ -1,0 +1,31 @@
+{
+  "recordedAt": "2026-11-14T02:41:47.392596+00:00",
+  "codeHead": "524a3235da426197e0633fd2c58bc1cf9c00a801",
+  "tree": "d9111a18da180719bfb0c8acebbed5c3c6c0e9b6",
+  "knownCanonicalHead": "d44d5313ddf3e9c999055d5bdbfbeec2e8974d8d",
+  "publishedByThisContinuation": false,
+  "gitPushAuthentication": "invalid-credential",
+  "gitHubCLIUserHTTPStatus": 401,
+  "gitHubCLIRepoHTTPStatus": 401,
+  "connectedGitHubAppRepoAccess": true,
+  "connectedGitHubAppPushPermission": true,
+  "credentialHelperConfigured": false,
+  "storedGhAuthPresent": false,
+  "sshAgentOrKeyAvailable": false,
+  "plaintextCredentialPrinted": false,
+  "requiredNextStep": "Resume the authorized normal authenticated fetch/merge/push; no new token is needed from chat.",
+  "lastAuthenticationProbeHTTPStatus": 200,
+  "latestNormalPrepushExit": 0,
+  "latestNormalTypeErrors": 0,
+  "latestNormalLintGateCount": 89,
+  "latestNormalLintGateFailures": 0,
+  "authenticationRecoveredAt": "2026-11-14T02:46:19.791845+00:00",
+  "recoveredUserAPIHTTPStatus": 200,
+  "recoveredRepoPushPermission": true,
+  "subsequentCanonicalPublication": {
+    "sourceCommit": "fb1051afb653fd45f4b00020e809b6a5d7109b73",
+    "verifiedAt": "2026-11-14T03:57:45.532967+00:00",
+    "nativeReceipt": "publication-attempt-13.json",
+    "exitCode": 0
+  }
+}

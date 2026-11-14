@@ -25,6 +25,7 @@ vi.mock('../../config/load-env-files', () => ({ ENV_FILES: [] }));
 
 const ORIGINAL = { ...process.env };
 const ECS = { ECS_CONTAINER_METADATA_URI_V4: 'http://169.254.170.2/v4/0123456789abcdef-1234' };
+const RAILWAY_MARKERS = ['RAILWAY_PROJECT_ID', 'RAILWAY_ENVIRONMENT_ID'] as const;
 
 function bootWith(env: Record<string, string | undefined>) {
   for (const k of Object.keys(process.env)) delete process.env[k];
@@ -36,6 +37,7 @@ function bootWith(env: Record<string, string | undefined>) {
   });
   delete process.env.ECS_CONTAINER_METADATA_URI;
   if (!('ECS_CONTAINER_METADATA_URI_V4' in env)) delete process.env.ECS_CONTAINER_METADATA_URI_V4;
+  for (const marker of RAILWAY_MARKERS) if (!(marker in env)) delete process.env[marker];
   // Not inherited from the runner (CI's test job sets DATABASE_URL): on an ECS
   // task the boot refuses an owner URL (env-hosted-owner-credential.test.ts).
   for (const k of ['DATABASE_URL', 'DATABASE_URL_PROD', 'DATABASE_NEON_NEW_SECRET', 'NEON_DATABASE_URL', 'DATABASE_OWNER_URL', 'APP_SERVICE_DB_PASSWORD']) {
@@ -53,6 +55,52 @@ const OVERRIDES = [
   // A later override is refused too: the rule is the name's shape, not a list.
   'SOME_FUTURE_ACCEPT_RISK',
 ];
+
+function railwayOverrideCases(marker: string, errors: () => string, exit: () => unknown): void {
+  it.each(OVERRIDES)('refuses %s=true without ECS metadata', async name => {
+    bootWith({ [marker]: ' railway-id ', [name]: 'true' });
+    const { validateEnvironment } = await import('../env');
+    expect(() => validateEnvironment()).toThrow(/process\.exit\(1\)/);
+    expect(errors()).toContain(name);
+    expect(exit()).toHaveBeenCalledWith(1);
+  });
+
+  it.each([
+    ['STORAGE_ACCEPT_LOCAL_DISK', ' true '],
+    ['AUDIT_REQUIRE_ENFORCE', ' false '],
+  ])('refuses whitespace-padded %s=%j', async (name, value) => {
+    bootWith({ [marker]: 'railway-id', [name]: value });
+    const { validateEnvironment } = await import('../env');
+    expect(() => validateEnvironment()).toThrow(/process\.exit\(1\)/);
+    expect(errors()).toContain(name);
+  });
+
+  it('allows false or empty overrides and enabled audit enforcement', async () => {
+    bootWith({ [marker]: 'railway-id', CONCEPT2CURE_SIGNER_ACCEPT_HMAC: ' false ',
+      STORAGE_ACCEPT_LOCAL_DISK: '  ', AUDIT_REQUIRE_ENFORCE: 'true' });
+    const { validateEnvironment } = await import('../env');
+    expect(() => validateEnvironment()).not.toThrow();
+    expect(exit()).not.toHaveBeenCalled();
+  });
+
+  it('boots with no override', async () => {
+    bootWith({ [marker]: 'railway-id' });
+    const { validateEnvironment } = await import('../env');
+    expect(() => validateEnvironment()).not.toThrow();
+  });
+
+  it.each(['', ' \t '])('keeps self-hosted acceptance behavior for a blank marker %j', async value => {
+    bootWith({ [marker]: value, STORAGE_ACCEPT_LOCAL_DISK: 'true', AUDIT_REQUIRE_ENFORCE: 'false' });
+    const { validateEnvironment } = await import('../env');
+    expect(() => validateEnvironment()).not.toThrow();
+  });
+
+  it('does not apply hosted override policy outside production', async () => {
+    bootWith({ NODE_ENV: 'development', [marker]: 'railway-id', STORAGE_ACCEPT_LOCAL_DISK: 'true' });
+    const { validateEnvironment } = await import('../env');
+    expect(() => validateEnvironment()).not.toThrow();
+  });
+}
 
 describe('production boot posture: test routes and operator overrides', () => {
   let exitSpy: ReturnType<typeof vi.spyOn>;
@@ -143,5 +191,9 @@ describe('production boot posture: test routes and operator overrides', () => {
       expect(() => validateEnvironment()).not.toThrow();
       expect(exitSpy).not.toHaveBeenCalled();
     });
+  });
+
+  describe.each(RAILWAY_MARKERS)('Railway hosted marker %s', marker => {
+    railwayOverrideCases(marker, () => errorSpy.mock.calls.flat().join('\n'), () => exitSpy);
   });
 });

@@ -1,0 +1,282 @@
+{
+  "startedAt": "2026-11-14T03:42:51.324Z",
+  "projectId": "d91a5a21-1ed5-4c1d-8f06-e881483774be",
+  "protocolId": 1,
+  "studyId": "sd_75ad27f0add14a04a478139e78ee4c22",
+  "errors": [],
+  "mutations": [],
+  "backend": {
+    "commit": "8ee56a20fae52a1b82dce8233a8fd4f2fc99c333",
+    "startedAt": "2026-11-14T03:40:27.431Z"
+  },
+  "drawerAction": "Sidebar already closed",
+  "emptyScope": {
+    "name": "Unfiled protocols",
+    "value": "unfiled",
+    "nativeStatus": 200,
+    "nativeRows": 0,
+    "reason": "The sole synthetic protocol remains filed in the existing project; no record deleted or mocked",
+    "body": "TD-UI-001\n›\nStudy & Protocol Design\nStudy & Protocol Design\n\nStart or select a protocol, create or bind its study design, then use its statistics, assessments, design checks and review tools. Ask AnA to draft from project evidence and continue in the shared document canvas and editor.\n\nProtocol scope\nOpen project: TD-UI-001\nUnfiled protocols\nAll organization protocols\nStart study & protocol design\nNo protocol in development for TD-UI-001\nBegin clinical trial design by starting the project’s protocol record above. Its Study design step then opens the objectives, endpoints, population, study structure and control inputs, alongside statistics and the schedule of assessments.\nServes the ICH M11 protocol record\nAsk AnA to draft the synopsis"
+  },
+  "scope": "d91a5a21-1ed5-4c1d-8f06-e881483774be",
+  "layout": {
+    "pane": {
+      "x": 16,
+      "y": 1405.28125,
+      "width": 358,
+      "height": 3576.640625,
+      "right": 374,
+      "bottom": 4981.921875
+    },
+    "viewportWidth": 390,
+    "documentScrollWidth": 390
+  },
+  "actions": [
+    {
+      "text": "Unbind study design",
+      "x": 204.65625,
+      "y": 1537.921875,
+      "width": 169.34375,
+      "height": 36.75,
+      "right": 374,
+      "disabled": false
+    },
+    {
+      "text": "Record\nDose-escalation rules (BOIN)",
+      "x": 285,
+      "y": 2917.953125,
+      "width": 89,
+      "height": 36.75,
+      "right": 374,
+      "disabled": false
+    },
+    {
+      "text": "Record\nSite accrual plan",
+      "x": 285,
+      "y": 2976.078125,
+      "width": 89,
+      "height": 36.75,
+      "right": 374,
+      "disabled": false
+    },
+    {
+      "text": "Record\nMMRM planning assumptions",
+      "x": 285,
+      "y": 3034.203125,
+      "width": 89,
+      "height": 36.75,
+      "right": 374,
+      "disabled": false
+    },
+    {
+      "text": "Record\nExternal-control plan",
+      "x": 284.984375,
+      "y": 3092.328125,
+      "width": 89,
+      "height": 36.75,
+      "right": 373.984375,
+      "disabled": false
+    },
+    {
+      "text": "Record\nMaster-protocol structure",
+      "x": 285,
+      "y": 3150.078125,
+      "width": 89,
+      "height": 36.75,
+      "right": 374,
+      "disabled": false
+    },
+    {
+      "text": "Record\nRegistration titles",
+      "x": 285,
+      "y": 3207.828125,
+      "width": 89,
+      "height": 36.75,
+      "right": 374,
+      "disabled": false
+    },
+    {
+      "text": "ICH M11 protocol",
+      "x": 16,
+      "y": 3398.421875,
+      "width": 150.578125,
+      "height": 36.75,
+      "right": 166.578125,
+      "disabled": false
+    },
+    {
+      "text": "Statistical Analysis Plan skeleton",
+      "x": 16,
+      "y": 3443.171875,
+      "width": 236.6875,
+      "height": 36.75,
+      "right": 252.6875,
+      "disabled": false
+    },
+    {
+      "text": "Schedule of Activities",
+      "x": 16,
+      "y": 3487.921875,
+      "width": 171.765625,
+      "height": 36.75,
+      "right": 187.765625,
+      "disabled": false
+    },
+    {
+      "text": "Trial registry record",
+      "x": 195.765625,
+      "y": 3487.921875,
+      "width": 162.5,
+      "height": 36.75,
+      "right": 358.265625,
+      "disabled": false
+    },
+    {
+      "text": "CRF shell",
+      "x": 16,
+      "y": 3532.671875,
+      "width": 100.640625,
+      "height": 36.75,
+      "right": 116.640625,
+      "disabled": false
+    },
+    {
+      "text": "Trial schema",
+      "x": 124.640625,
+      "y": 3532.671875,
+      "width": 121.671875,
+      "height": 36.75,
+      "right": 246.3125,
+      "disabled": false
+    },
+    {
+      "text": "SPIRIT 2013 checklist",
+      "x": 16,
+      "y": 3577.421875,
+      "width": 171.140625,
+      "height": 36.75,
+      "right": 187.140625,
+      "disabled": false
+    },
+    {
+      "text": "Critical-to-quality factors",
+      "x": 16,
+      "y": 3622.171875,
+      "width": 191.953125,
+      "height": 36.75,
+      "right": 207.953125,
+      "disabled": false
+    },
+    {
+      "text": "USDM export",
+      "x": 215.953125,
+      "y": 3622.171875,
+      "width": 126.0625,
+      "height": 36.75,
+      "right": 342.015625,
+      "disabled": false
+    },
+    {
+      "text": "Decentralised elements",
+      "x": 16,
+      "y": 3666.921875,
+      "width": 186.109375,
+      "height": 36.75,
+      "right": 202.109375,
+      "disabled": false
+    },
+    {
+      "text": "WHO registration data set",
+      "x": 16,
+      "y": 3711.671875,
+      "width": 200.515625,
+      "height": 36.75,
+      "right": 216.515625,
+      "disabled": false
+    },
+    {
+      "text": "Dose escalation (BOIN)",
+      "x": 16,
+      "y": 3756.421875,
+      "width": 182.671875,
+      "height": 36.75,
+      "right": 198.671875,
+      "disabled": false
+    },
+    {
+      "text": "Enrollment forecast",
+      "x": 206.671875,
+      "y": 3756.421875,
+      "width": 163.171875,
+      "height": 36.75,
+      "right": 369.84375,
+      "disabled": false
+    },
+    {
+      "text": "Interim analysis characteristics",
+      "x": 16,
+      "y": 3801.171875,
+      "width": 228.984375,
+      "height": 36.75,
+      "right": 244.984375,
+      "disabled": false
+    },
+    {
+      "text": "MMRM sample size",
+      "x": 16,
+      "y": 3845.921875,
+      "width": 161.078125,
+      "height": 36.75,
+      "right": 177.078125,
+      "disabled": false
+    },
+    {
+      "text": "External-control plan",
+      "x": 185.078125,
+      "y": 3845.921875,
+      "width": 170.6875,
+      "height": 36.75,
+      "right": 355.765625,
+      "disabled": false
+    },
+    {
+      "text": "Multiplicity control",
+      "x": 16,
+      "y": 3890.671875,
+      "width": 157.03125,
+      "height": 36.75,
+      "right": 173.03125,
+      "disabled": false
+    },
+    {
+      "text": "Specimens and blood volume",
+      "x": 16,
+      "y": 3935.421875,
+      "width": 220.78125,
+      "height": 36.75,
+      "right": 236.78125,
+      "disabled": false
+    },
+    {
+      "text": "Master protocol structure",
+      "x": 16,
+      "y": 3980.171875,
+      "width": 198.1875,
+      "height": 36.75,
+      "right": 214.1875,
+      "disabled": false
+    }
+  ],
+  "sidebar": {
+    "className": "rail",
+    "x": 0,
+    "right": 0,
+    "width": 0,
+    "display": "none",
+    "visibility": "visible",
+    "transform": "none"
+  },
+  "visibleDesignText": "Study design\nThe USDM / ICH M11 design object this protocol is a projection of. The protocol document carries the registers; the design object carries the estimands, the endpoints, the statistical plan and the schedule.\nUnbind study design\nTD-UI-001 study design — SYNTHETIC\nPhase 2 · Fictional inflammatory condition for UI testing · draft\nStudy design id\nsd_75ad27f0add14a04a478139e78ee4c22\nBound\n2026-11-14\nStandards evaluated\nICH E9 §5.2, ICH E9 §5.4, ICH E9(R1), ICH E9(R1) §A.5\nDesign gates\nThe deterministic gate engine’s findings on the design object — ICH E9, E9(R1), E10 and E3, and ICH M11 §2/§3/§4/§6/§7/§10/§17. These are findings on the DESIGN, not on this document’s text.\nDesign is blocked: critical defensibility findings must be resolved before approval. (1 critical, 4 major, 1 minor).\nRisk level\ncritical\nBlocks approval\nyes\nCritical\nEST-001 — No estimand for primary endpoint. Endpoint \"Fictional symptom score change\" has no estimand. Per ICH E9(R1) every objective must be expressed as an estimand before the analysis is finalized. (ICH E9(R1)) Fix: Define the estimand: treatment condition, population, variable, intercurrent-event strategy, and population-level summary measure.\nMajor\nPWR-001 — No target power specified. The design does not state a target power. Fix: State target power (≥80% standard, ≥90% for confirmatory).\nMajor\nPOP-001 — No analysis populations defined. The design declares no analysis population, so the primary analysis has no defined analysis set. (ICH E9 §5.2) Fix: Define ITT (or the frame-appropriate primary set), per-protocol and safety populations, and mark the primary set.\nMajor\nMTH-001 — No planned analysis for primary endpoint \"Fictional symptom score change\". The statistical plan names no analysis method for this endpoint, so its primary analysis is not pre-specified. (ICH E9 §5.4) Fix: Add a planned analysis naming the method (e.g. MMRM, Cox proportional hazards, logistic regression) and the estimand it targets.\nMajor\nMIS-001 — No missing-data strategy specified. The statistical plan does not say how missing outcomes are handled in the primary analysis, so the estimand cannot be shown to be estimated. (ICH E9(R1) §A.5) Fix: Pre-specify the primary approach (e.g. MMRM under MAR, multiple imputation, tipping-point sensitivity) aligned with the estimand strategy.\nMinor\nPWR-003 — No sensitivity analysis across assumptions. Sample size rests on point assumptions with no sensitivity analysis across plausible ranges. A single-point estimate is a reviewer red-flag. Fix: Add a sensitivity analysis across effect-size and dropout ranges.\nPlanning inputs\nThe sponsor inputs the planning projections read. Each is a governed write to the design object, with a reason; nothing here is computed or assumed.\nDose-escalation rules (BOIN)\nNot Recorded\nRecord\nDose-escalation rules (BOIN)\nSite accrual plan\nNot Recorded\nRecord\nSite accrual plan\nMMRM planning assumptions\nNot Recorded\nRecord\nMMRM planning assumptions\nExternal-control plan\nNot Recorded\nRecord\nExternal-control plan\nMaster-protocol structure\nNot Recorded\nRecord\nMaster-protocol structure\nRegistration titles\nNot Recorded\nRecord\nRegistration titles\nThis design records no Schedule of Activities, so no activity location or specimen can be recorded.\nProjections of this design\nRead-only. Nothing is written back into the protocol — each of these is a projection of the study design object, produced by the deterministic engine, not of this document.\nICH M11 protocol\nStatistical Analysis Plan skeleton\nSchedule of Activities\nTrial registry record\nCRF shell\nTrial schema\nSPIRIT 2013 checklist\nCritical-to-quality factors\nUSDM export\nDecentralised elements\nWHO registration data set\nDose escalation (BOIN)\nEnrollment forecast\nInterim analysis characteristics\nMMRM sample size\nExternal-control plan\nMultiplicity control\nSpecimens and blood volume\nMaster protocol structure\nICH M11 protocol — A projection of the study design object as an ICH M11-structured protocol.\nStatistical Analysis Plan skeleton — A projection of the study design object’s statistical plan and estimands (ICH E9 / E9(R1)).\nSchedule of Activities — A projection of the study design object’s time-and-events grid (ICH M11 §1.3).\nTrial registry record — A projection of the study design object as a registry record — ClinicalTrials.gov under FDAAA 801 and EU CTIS under Regulation 536/2014.\nCRF shell — A projection of the study design object’s Schedule of Activities as a blank CRF set (CDISC CDASH).\nTrial schema — A projection of the study design object as the ICH M11 §1.2 trial schema — epochs, randomisation, arms.\nSPIRIT 2013 checklist — The study design object judged against the SPIRIT 2013 checklist, row by row — a checklist since superseded by SPIRIT 2025. Rows only a protocol section can evidence are not assessable from the design alone.\nCritical-to-quality factors — Critical-to-quality factors (ICH E6(R3)) derived from the study design object, each with the design element it came from. Ratings are default seeds.\nUSDM export — The study design object as a CDISC USDM-shaped object graph. Conformance is unverified: the USDM schema is not vendored, so nothing has been validated against it.\nDecentralised elements — Where each Schedule of Activities activity happens, per the FDA decentralized-elements guidance. An activity with no stated location is unstated — not assumed to be at the site.\nWHO registration data set — The study design object as the WHO Trial Registration Data Set (24 items). Sponsor, contacts, dates, ethics and results are supplied at registration, not by the design.\nDose escalation (BOIN) — The study design object’s dose-escalation rules, computed by the BOIN engine (Liu & Yuan 2015). A value marked engine default was not chosen by the sponsor.\nEnrollment forecast — Time to the planned sample size from the sponsor’s site accrual plan, by the Poisson–Gamma engine. Site rates are sponsor inputs; none is assumed.\nInterim analysis characteristics — Type I error, power and expected sample size of the study design object’s interim plan, computed exactly. A recorded boundary that departs from the spending function is shown as a discrepancy.\nMMRM sample size — The sample size the MMRM-analysed endpoint needs under the sponsor’s recorded assumptions, checked against the planned N. No assumption is supplied when one is missing.\nExternal-control plan — What the study design object pre-specifies about borrowing from an external control, and how strongly it borrows (FDA 2023 draft guidance).\nMultiplicity control — Whether the study design object’s multiplicity procedure holds the family-wise error at alpha over its confirmatory endpoints, by seeded simulation.\nSpecimens and blood volume — What the Schedule of Activities collects, what the lab manual still needs, and how much blood a participant gives. Reference points are expedited-review thresholds, not safety limits.\nMaster protocol structure — For a platform, basket, umbrella or MAMS design: what the plan states per sub-study and across them, against FDA’s master-protocol guidances.",
+  "outcome": "pass",
+  "completedAt": "2026-11-14T03:42:55.615Z"
+}

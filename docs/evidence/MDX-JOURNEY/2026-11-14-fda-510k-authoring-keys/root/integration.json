@@ -1,0 +1,22 @@
+{
+  "head": "7825f921fa9b1aeb1f81ed47955c42cc207eec2e",
+  "finishedHead": "7825f921fa9b1aeb1f81ed47955c42cc207eec2e",
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+    "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/MDX-JOURNEY/2026-11-14-fda-510k-authoring-keys/root/integration-tests.json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 13.563,
+  "sourceStable": true,
+  "sourceChanges": [],
+  "declaredSourceFiles": 13598,
+  "sourceSnapshotSha256": "4e55152cee4a182378fccf495f839701c021030499ada6a91187a3b8f17106db",
+  "sourcePins": "integration-source-pins.json.gz"
+}

@@ -1,0 +1,47 @@
+{
+  "revision": {
+    "commit": "4b82ba809bcde66e8d3632c85b46ebe7efefe1ad",
+    "startedAt": "2026-11-14T03:03:52.453Z"
+  },
+  "actor": "Ana Author",
+  "queries": [],
+  "emptyProtocol": {
+    "url": "http://127.0.0.1:5000/concept2cure/protocol-dev?program=d91a5a21-1ed5-4c1d-8f06-e881483774be",
+    "body": "Skip to content\nConcept2Cure.RI\nNew conversation\nSearch\nHome\nProjects\nTasks\nCommunication\nVault\nSubmission Center\nWork areas\nCMC / Module 3\nBiostatistics\nRisk-based monitoring\nQuality\nReporting & analytics\nRecents\nTrial design UI rehearsal — SYNTHETIC\nYour conversations appear here.\nAA\nAna Author\nConcept2Cure Therapeutics\nTD-UI-001\n›\nStudy & Protocol Design\nSearch\n⌘K\nStudy & Protocol Design\n\nStart or select a protocol, create or bind its study design, then use its statistics, assessments, design checks and review tools. Ask AnA to draft from project evidence and continue in the shared document canvas and editor.\n\nProtocol scope\nOpen project: TD-UI-001\nUnfiled protocols\nAll organization protocols\nStart a protocol\nNo protocol in development for TD-UI-001\nSections, objectives, the schedule of assessments, the risk register, the budget, amendments and review threads are all governed on one protocol document.\nServes the ICH M11 protocol record\nAsk AnA to draft the synopsis",
+    "buttons": [
+      "Concept2Cure.RI",
+      "",
+      "New conversation",
+      "Search",
+      "Home",
+      "Projects",
+      "Tasks",
+      "Communication",
+      "Vault",
+      "Submission Center",
+      "CMC / Module 3",
+      "Biostatistics",
+      "Risk-based monitoring",
+      "Quality",
+      "Reporting & analytics",
+      "Trial design UI rehearsal — SYNTHETIC",
+      "AAAna AuthorConcept2Cure Therapeutics",
+      "",
+      "TD-UI-001",
+      "Search⌘K",
+      "",
+      "",
+      "",
+      "",
+      "Start a protocol",
+      "Ask AnA to draft the synopsis"
+    ],
+    "studyDesignTabs": 0
+  },
+  "errors": [],
+  "projectUrl": "http://127.0.0.1:5000/concept2cure/project-home?program=d91a5a21-1ed5-4c1d-8f06-e881483774be",
+  "workAreas": {
+    "body": "Work areas\nStudy & Protocol Design\nBiostatistics\nCMC / Module 3\nRisk-based monitoring\nReports\nWork projects\nAdd a work project\n\nNone yet. A work project (CMC, a study's biostatistics, its monitoring) holds the work this filing is written from.",
+    "visible": true
+  }
+}

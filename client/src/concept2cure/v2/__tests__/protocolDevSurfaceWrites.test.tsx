@@ -466,7 +466,7 @@ describe('a protocol read that cannot be read is not an empty register (HS-C-1)'
     expect(await screen.findByText("Couldn't load the protocol")).toBeTruthy();
     expect(screen.queryByText(/No protocol in development/)).toBeNull();
     expect(screen.queryByText(/Ready to finalize/)).toBeNull();
-    expect(screen.queryByRole('button', { name: /Start a protocol/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Start (?:a protocol|study & protocol design)/ })).toBeNull();
   });
 
   it('a store that is not provisioned says so, and offers no start', async () => {
@@ -480,7 +480,7 @@ describe('a protocol read that cannot be read is not an empty register (HS-C-1)'
     render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
     expect(await screen.findByText(/isn.t set up on this installation/)).toBeTruthy();
     expect(screen.queryByText(/No protocol in development/)).toBeNull();
-    expect(screen.queryByRole('button', { name: /Start a protocol/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Start (?:a protocol|study & protocol design)/ })).toBeNull();
   });
 });
 
@@ -499,8 +499,8 @@ describe('empty state', () => {
     // name as the person's words (periodic review 2026-09-28, SEC-C-4).
     expect(String(p.onAsk.mock.calls[0][0])).toMatch(/project open in this workspace/);
     expect(String(p.onAsk.mock.calls[0][0])).not.toContain('C2C-101');
-    fireEvent.click(screen.getByRole('button', { name: /Start a protocol/ }));
-    expect(await screen.findByRole('dialog')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Start study & protocol design' }));
+    expect(await screen.findByRole('region', { name: 'Start a protocol' })).toBeTruthy();
   });
 });
 

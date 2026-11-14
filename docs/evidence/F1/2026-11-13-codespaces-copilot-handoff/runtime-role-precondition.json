@@ -1,0 +1,6 @@
+{
+  "exitCode": 1,
+  "errorCode": "28000",
+  "classification": "verifier input error; not an application connection failure",
+  "detail": "The first read-only role probe read DATABASE_URL, while the running server uses APP_DATABASE_URL. With no connectionString the standalone pg client attempted its default connection. Corrected by requiring the actual APP_DATABASE_URL from the same process; runtime-role.json records the later successful query. No product file changed and no secret was printed."
+}

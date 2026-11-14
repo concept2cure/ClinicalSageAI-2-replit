@@ -451,3 +451,25 @@ b8cee0745cdef80ef88c06fd265750e2945d2b37:server/services/ai-gateway/__tests__/se
 #   NODE_ENV=test), with a probe-only AUDIT_HMAC_SECRET whose value names itself as a probe secret and appears in no
 #   other file. It keys no deployed audit chain.
 a06ae96c83a203ad17a195453deb6f0d9e020740:docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b/probes/run.sh.txt:generic-api-key:8
+
+# status: not a secret (reviewed 2026-11-13, F1 history-provenance findings)
+# reason: An already-published evidence manifest records a Git commit identifier.
+#   The 40-hex value resolves to an existing commit; it is provenance, not a credential.
+4b2ed1cbae64bff187b8a5594fc41ca5e2ecb4dd:docs/evidence/F1/2026-11-13-codespaces-demo-continuation/source-and-artifact-hashes.json:generic-api-key:3
+
+# status: not a secret (reviewed 2026-11-13, F1 history-provenance findings)
+# reason: A repeating placeholder in an AWS mock_provider Terraform plan-only test.
+#   Exact-value search finds only Terraform tests and a historical evidence harness,
+#   with no production default or runtime import. No real provider credential is claimed.
+7310d3083ad2057f61e36646a9baefe7b9914616:terraform/modules/alb/tests/alb_timeouts.tftest.hcl:generic-api-key:30
+
+# status: not a secret (reviewed 2026-11-14, F1 GA CI continuation)
+# reason: These three published Codespaces input-manifest entries are single
+#   file/digest JSON pairs for scripts/visual-qa/api-fixtures.d.mts. Each value
+#   equals the SHA-256 of that exact same-commit source blob. The existing
+#   file-digest regex omits .mts; these exact historical fingerprints avoid a
+#   broader rule/path exception. No credential or revocation status changes.
+#   Independent verification: docs/evidence/F1/2026-11-14-ga-ci-continuation/.
+96cf2a157701e6beca42569c270885abb5a021a1:docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/merged-inputs.json:generic-api-key:4004
+96cf2a157701e6beca42569c270885abb5a021a1:docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/merged-lint-inputs.json:generic-api-key:4004
+d7a1884538510ef85c473564344b3cc831e24295:docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/inputs.json:generic-api-key:4002

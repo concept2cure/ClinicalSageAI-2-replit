@@ -1,0 +1,174 @@
+# Project Data Room selection across search and pages
+
+Plan: F1. Audit and bounded repair of the existing project-to-AnA and editor
+source handoffs. The original audit below precedes implementation; dated
+continuation receipts distinguish the checks actually completed.
+
+## What already exists
+
+- `client/src/concept2cure/v2/surfaces/ProjectHome.tsx` owns Data Room pins. Its lifecycle-refresh effect intersects every selected ID with the current page's groundable rows. A search or page change therefore silently removes a selected source that simply is not in that response. Its AnA handoff and `DataRoomBuildAction` also resolve selections only against the visible page, so deleting the pruning effect alone would leave off-page actions unusable or relying on stale facts.
+- `surfaces/projectSources.ts` owns the existing `SourcesPage`, URL builder and `sourceCanGround` predicate. The list already returns current/data eligibility, retained-data and processing facts. Original-file availability is separate from retained-data eligibility.
+- `ProjectHome` keys its workspace by selected project and account/session owner, retires local state on owner change, and clears the cross-surface `C2C_SOURCE_PINS`. `dataConnect.tsx` owns current read visits. Any delayed selection read and action must preserve these owners and the existing shell-project/session guards, including A-to-B-to-A retirement.
+- `editor/SourceAssemblyDialog.tsx::SourceAssemblyAction` validates selector identity and the existing five-source assembly limit. `useSourceAssemblyTarget.ts` checks the current target-document inventory; it does not freshly admit the selected sources. Actual source verification occurs in the saved editor's assembly preview/build. A manufactured editable target/template is not an appropriate preflight for ProjectHome.
+- `server/routes/c2c/projects.ts` already exposes `GET /api/c2c/projects/:id/sources`. `data-room-search.ts::parseDataRoomQuery` and `searchDataRoom` own its searched/paged projection. There is no exact-ID filter in that HTTP contract. Walking the entire catalogue to validate a few selected IDs would unnecessarily repeat Quality-heavy catalogue admission.
+- `source-read-access.ts::getCurrentReadableSourceScope` already accepts `{ organizationId, userId, programId, sourceIds }`. Exact selection requires every requested identity, current recorded-parent admission, native record freshness and a final access-scope check. `requireSourceReadScopeStillCurrent` rechecks the recorded scope. These existing facades should remain the read owners; no parallel source reader is needed.
+- Existing authoring exact-source readers in `authoring-assembly-sources.ts` and their assembly preview routes require a saved editable target and template. Workflow import preview is for workflow imports; binary import is a governed write. CSR Vault preview accepts a Vault document and recorded digest, rather than Data Room identities. None supplies a generic project-only exact Data Room read to reuse unchanged.
+- Existing tests in `projectHomeDataRoom.test.tsx` cover same-page pin handoff and page display; `projectHomeSourceReadScope.test.tsx`, `projectDocumentDisposition.test.tsx` and `projectHomeOwnershipBoundary.test.tsx` cover read failure, withdrawal, retained data and ownership retirement. They do not prove pin survival across search/page changes. Existing server route/read tests already exercise project access and native-record admission.
+
+Searches covered the current project route, authoring import/assembly routes and transports, source admission/projection helpers, selected-source design ownership and relevant tests. Deleted-history searches found no retired exact project-selection route or alternate pin owner. The old Project surface coordination hold is explicitly marked stale; Tasks/P131 remains outside this audit. Concurrent catalogue receipt work remains owned by the lead's other implementation session.
+
+## Proposed completion contract
+
+Extend the existing `GET /api/c2c/projects/:id/sources` contract with `?sourceIds=11,22`, retaining the same page shape. An explicitly present filter must contain one to twenty distinct, positive decimal PostgreSQL integer IDs (maximum 2147483647); reject blank, repeated/array-shaped, duplicate, malformed or oversized input. Twenty is the existing AnA selected-source admission ceiling; preserve the separate five-source editor assembly refusal. Reject combining exact IDs with `q`, `status`, `kind`, `from`, `to`, `current`, `scope`, `project`, `study`, `ctd`, `folder`, `limit`, `offset` or `includeUnscoped`. Exact mode must never silently widen, truncate or hide lifecycle rows through other list filters.
+
+Pass the exact IDs into both canonical scope admission and the existing SQL projection. Do not enumerate every project source or run whole-project Quality synchronization for this exact read: native selected records must pass their existing currentness admission. Preserve the route's current project and actor checks and its end-of-read scope recheck. Require a verified exact response for the captured project and the entire requested set; no missing, duplicate, unrelated or wrong-project identity qualifies as partial success.
+
+Retain deliberate selections across searches/pages in the existing Data Room owner, carrying the source selectors/checksums the person actually checked rather than silently substituting a newer version. Refresh facts for that exact selected set before an action, compare them with those checked identities, and refuse missing, changed, wrong-scope, ineligible or unverified results. A failed/pending read must deliver neither source pins nor an AnA ask; explicit selection is all-or-nothing. An actor/session, project visit or selected-set change retires every delayed response/action, including A-to-B-to-A transitions. Use the existing read-visit, captured session and shell-project guards; do not persist a second selection channel. Preserve existing action limits and refusal messages rather than silently truncating explicit choices.
+
+The first behavioral red case should select source A, search/page to B, retain A, select B, and verify exact A+B handoff after the current exact read. Repeat search and pagination separately. Green acceptance also requires selecting/unselecting while the exact read is delayed, retained readable data with unavailable original bytes, withdrawal/replacement/hash change, failed or malformed exact responses, actor/session/project retirement and delayed A-to-B-to-A refusal. Verify saved exact selectors reach the existing editor chooser without a borrowed target or a silently changed checksum. Server tests should prove strict filter parsing and all mutual exclusions, exact-ID admission/projection, no unrelated Quality catalogue scan, wrong-project/missing/native-stale refusal and the final access recheck. No provider call is needed.
+
+## Audit outcome
+
+The selection-loss defect is confirmed from current source and independently checked. No production source, existing test, route, rule, plan or gate was changed for this audit; no tests or broad compiler/build were run. This is a static finding, not an executed repair. Implementation is intentionally unclaimed pending the lead's bounded contract and non-overlapping source ownership. This turn's selected implementation remains the separate catalogue native-scope receipt repair.
+
+For the next Copilot/Codex session, start with the existing owners above: `ProjectHome.tsx`, `projectSources.ts`, `projects.ts`, `data-room-search.ts` and `source-read-access.ts`, plus their existing behavioral/route/native-reader tests. Read current coordination first and wait for the catalogue owner to release overlapping server files. Extend those owners within F1; do not change the design plan, its ledger, rules or gates.
+
+## Implementation continuation — 2026-11-13 23:58 UTC
+
+Following source publication `5a552f142`, the founder requested "Fix all".
+The latest canonical checkout has no overlapping active hold on the named
+selection paths. The preceding proposed completion contract is now the bounded
+F1 repair contract. Separate server/client workers own the existing files named
+in the coordination record; root owns integration, evidence and publication.
+Behavioral regressions must fail before changing runtime source. Implementation,
+tests and final acceptance remain unclaimed until their actual receipts below.
+
+### Server completion — 2026-11-14
+
+The existing parser/search owner now admits an exact `sourceIds` request through
+the canonical selected-source facade, requires the entire verified identity set,
+and projects only those admitted IDs. Native currentness and the final access
+recheck remain in place. Exact reads do not synchronize the whole Quality
+catalogue. Strict parsing rejects malformed, duplicate, oversized, repeated,
+array/bracket/dotted identities and every conflicting list filter. The existing
+GET route already returns recorded top-level and row `projectId`, so its source
+did not need a change. No reader, route, tool or service was added.
+
+Behavioral RED precedes runtime changes: 41/55 route cases and 14/44 native
+projection cases failed; later defensive regressions separately proved 4/4
+incomplete-admission failures and 9/9 literal array/dotted-query failures. The
+final four-suite set passes **128/128**, zero skips: route64, native projection48,
+processing3 and admission13. Strict changed-file lint passes with zero warnings.
+[`server-verification.json`](server-verification.json) binds source/log hashes,
+commands and counts; `server-*.txt.gz` retain actual failing/passing output.
+Client and whole-checkout verification follow separately; no provider call or
+hosted-Codespace acceptance is implied by these server checks.
+
+### Client completion — 2026-11-14
+
+The existing Data Room now retains checked IDs and their recorded SHA-256
+across searches and pages. AnA and the existing document chooser receive
+the complete selection only after its fresh exact response confirms every
+recorded parent, checksum and eligible lifecycle. Malformed, partial, changed,
+withdrawn and unreadable selections refuse the action. Account/session/project
+visits and selection changes retire delayed reads, including A-to-B-to-A and
+late JSON bodies. Upload/refresh changes abort the pending attempt and permit
+an explicit retry. Successful editor ownership survives intentional navigation
+into the existing receiver; pending reads do not.
+
+The original implicit ten-newest action, twenty-source explicit AnA limit and
+five-source editor limit remain. Retained readable data does not require the
+original binary. The six existing client suites pass **155/155**, no skips,
+after the initial three behavioral failures and a later pagination regression.
+The latter exposed the old initial/no-op search timer resetting a later page;
+the timer now runs only when the trimmed search changes. Existing compatibility
+fixtures now return the exact response and await the handoff, preserving their
+original outcome assertions. Independent read-only lifecycle review found no
+concrete blocker. Root's final validation-helper extraction preserves the
+six-warning baseline: lint has zero errors and zero new warnings.
+
+[`client-verification.json`](client-verification.json) binds final source/test
+hashes and counts; the adjacent compressed reports retain actual red/green and
+lint evidence. The disjoint server/client focused total is **283 passing**.
+Whole-checkout build/compiler/publication receipts follow separately.
+
+### Canonical integration — 2026-11-14
+
+The normal merge at `ff42399a7` retains canonical `985559c5b` and its published
+collaboration intake, locked peer-message and gateway account-use repairs.
+All eleven focused source/test hashes remain unchanged after that merge.
+The complete production build exits **0**; Vite completes in 22.96 seconds.
+A bounded Gitleaks 8.28 scan of the unpublished local source commit reports
+zero findings and no scanner errors with lazy fetching disabled; this is not
+a full-history scan. [`integration-verification.json`](integration-verification.json)
+and [`integration-build.txt.gz`](integration-build.txt.gz) record these boundaries.
+The normal push hook runs the final combined compiler, without bypass; origin
+identity is checked after successful publication.
+
+The separate native offboarding suite still has its reproduced **3 failed /
+3 passed** result. The founder's private-profile export/erasure choice remains
+pending; no profile policy or export/purge acceptance was weakened. This repair
+does not claim live-provider, scientific-release or hosted-Codespace acceptance.
+
+### Final compiler correction and canonical refresh — 2026-11-14
+
+The first normal push refused `4041374b4` on one real compiler error, TS2345:
+the current-visit plus selected-response validator returned a boolean without
+declaring the `SourcesPage` type predicate required by `liveGetOrNull`.
+`a0c3c0e41` supplies that annotation; runtime validation is unchanged. The
+actual compiler refusal is retained in `integration-typecheck-red.txt.gz`.
+No baseline, gate or refusal assertion was changed.
+
+The subsequent normal merge `7f3a15330` preserves canonical `2e5ae2e71`, including
+the published CSR-writing/current-account integration and automatic repository
+health refresh. The ten-file combined focused run passes **283/283**, zero
+skips, in 64.97 seconds; the refreshed complete production build exits **0**
+(Vite25.45s). `integration-verification.json` records the final eleven source/test
+hashes separately from the earlier pre-annotation receipts, with the adjacent
+`integration-final-*.txt.gz` logs. The normal push hook checks the final whole
+program again before publication. The private-profile choice remains pending.
+
+### Verified compiler and Quality task integration — 2026-11-14
+
+The normal hook at `5fb1189b6` passes all **89** lint-job gates and the complete
+compiler with **0 errors / exit0**. The upload then loses a real ref race to
+canonical `3692f44ad`; the actual mixed outcome is retained in
+`integration-compiler-green-ref-race.txt.gz`, not represented as a successful push.
+The ordinary merge `c9c632136` preserves the incoming native Quality audit-task
+repair. Its two focused suites pass **67/67**, zero skips, and the refreshed
+complete production build exits **0** (Vite25.19s). All eleven selection source
+and test hashes remain unchanged. The integration JSON and adjacent Quality
+logs identify those separate revisions; the next normal hook checks the final
+combined compiler again. No force, gate/baseline bypass or privacy-policy change.
+
+### Collaboration receipt integration — 2026-11-14
+
+The next ordinary push at `3e7c90d9b` again passes all89 gates and compiler0,
+then loses a second ref race to canonical `cd407d470`. The actual outcome is
+retained in `integration-second-compiler-green-ref-race.txt.gz`. Ordinary merge
+`0a2c957ae` preserves its collaboration message/task receipt and shell fixture
+repair; the three affected suites pass **63/63**, zero skips, and the refreshed
+production build exits **0** (Vite23.62s). All eleven selection source/test
+hashes remain unchanged. The final hook checks the complete merged tree again.
+The coordination record requests a publication slot without pausing any lane;
+normal merge/push continues. The private-profile policy choice stays pending.
+
+
+### Combined selection integration — 2026-11-14
+
+The subsequent [combined implementation packet](../2026-11-14-project-source-selection/README.md)
+reconciles this published repair with the independent continuation in the same
+existing owners. It adds a canonical-derived complete `selection` attestation,
+pending-store refusal, deliberate Clear selection recovery and a route access
+recheck after usage/grading. The existing abort/debounce, parent/digest and raw
+tenant/count guards and both regression sets remain. Consequently the final
+route now changes; the earlier route-unmodified statement above describes its
+original source revision, not this combined contract.
+
+Combined verification passes303 client and199 server cases (502 total), with
+full compiler0 and all89 normal gates passing at the recorded integration
+revisions. Actual local search/clear/exact-read/chooser/single-editor-start
+checks pass. Native publication status, exact revisions, retained ref races and
+authentication recovery are recorded in the linked packet. Earlier raw receipts
+remain unchanged. Deferred AnA dispatch and live-provider acceptance are not
+claimed by these checks.

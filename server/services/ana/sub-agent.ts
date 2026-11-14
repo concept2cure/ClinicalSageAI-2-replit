@@ -44,7 +44,8 @@ import {
 import { getTenantScope } from '../../db/tenantStore.js';
 import { runRefusingModelCalls, bindOwnerPrivateModelChildRequest, CONVERSATION_DEFAULT_TIER } from '../ai-gateway/model-call-scope.js';
 import type { CoordinationModel, RunCoordinationHost } from './run-events.js';
-import { startAgentCoordination, queueAgentProgress, flushAgentProgress, agentModelContext, recordAgentReport, beginAgentRun, type AgentRun } from './sub-agent-stream.js';
+import { startAgentCoordination, queueAgentProgress, flushAgentProgress, executeMeasuredAgentCheck, recordMeasuredAgentCheck,
+  agentModelContext, recordAgentReport, beginAgentRun, holdFor, type AgentRun } from './sub-agent-stream.js';
 import type { AnyAnaTool, GatewayRequest } from '../ai-gateway/types.js';
 import type { AgenticToolEvent } from './agentic-tool-dispatch.js';
 import type { DraftSourceContext } from './draft-project-sources.js';
@@ -227,43 +228,46 @@ async function runHarnessChecks(
   childCtx: ToolContext,
   offered: ReadonlySet<string>,
   ids: { runId: string; parentRunId: string },
-  evidence?: { sourceSpans?: readonly AgentSourceSpan[]; steps: AgentStep[]; onReading?: (reading: CheckReading) => void },
+  evidence: { sourceSpans?: readonly AgentSourceSpan[]; steps: AgentStep[]; onReading(reading: CheckReading, elapsedMs: number | null): void;
+    measure<T>(check: () => Promise<T>): Promise<{value:T;elapsedMs:number|null}> },
 ): Promise<{ readings: CheckReading[]; outputs: Array<{ check: CheckReading['check']; output: string }> }> {
   const { getToolHandler } = await import('./AnaToolExecutor.js');
-  const readings: CheckReading[] = [];
-  const outputs: Array<{ check: CheckReading['check']; output: string }> = [];
+  const readings: CheckReading[] = [], outputs: Array<{ check: CheckReading['check']; output: string }> = [];
   for (const check of HARNESS_CHECKS) {
     if (!offered.has(check)) {
-      addCheckReading(readings, { check, outcome: 'not_assessed', statement: `${CHECK_SUBJECT[check]}: not checked; the check is not available in this conversation.` }, evidence?.onReading);
+      addCheckReading(readings, { check, outcome: 'not_assessed', statement: `${CHECK_SUBJECT[check]}: not checked; the check is not available in this conversation.` }, evidence.onReading,null);
       continue;
     }
     if (check === 'check_dossier_consistency' && !Number.isInteger(childCtx.projectId)) {
-      addCheckReading(readings, dossierCheckSkipped(Boolean(childCtx.projectRef)), evidence?.onReading);
+      addCheckReading(readings, dossierCheckSkipped(Boolean(childCtx.projectRef)), evidence.onReading,null);
       continue;
     }
     const handler = getToolHandler(check);
-    let output: string;
+    let output: string, reading: CheckReading | undefined, elapsedMs: number | null = null;
     try {
-      output = handler
-        ? await runRefusingModelCalls({ ...ids, tool: check }, () =>
-            handler(CHECK_INPUT[check](text, Number(childCtx.projectId)), childCtx),
-          )
-        : JSON.stringify({ error: `${check} is not registered.` });
+      if (handler) {
+        const measured = await evidence.measure(async () => {
+          const output = await runRefusingModelCalls({ ...ids, tool: check }, () => handler(CHECK_INPUT[check](text, Number(childCtx.projectId)), childCtx));
+          return {output,reading:CHECK_READER[check](output)};
+        });
+        ({ output,reading } = measured.value); elapsedMs = measured.elapsedMs;
+      } else output = JSON.stringify({ error: `${check} is not registered.` });
     } catch (err) {
       output = JSON.stringify({ error: err instanceof Error ? err.message : String(err) });
     }
     outputs.push({ check, output });
-    addCheckReading(readings, CHECK_READER[check](output), evidence?.onReading);
+    addCheckReading(readings, reading ?? CHECK_READER[check](output), evidence.onReading,elapsedMs);
   }
-  if (evidence?.sourceSpans?.length) {
-    const result = await runSourceSpanChecks(text, evidence.sourceSpans, childCtx, { offered, ids, steps: evidence.steps });
-    addCheckReading(readings, result.reading, evidence?.onReading);
+  if (evidence.sourceSpans?.length) {
+    const handler = offered.has('read_vault_document') ? getToolHandler('read_vault_document') : undefined;
+    const { value:result,elapsedMs } = await evidence.measure(() => runSourceSpanChecks(text,evidence.sourceSpans ?? [],childCtx,{ ids,steps:evidence.steps,handler }));
+    addCheckReading(readings, result.reading, evidence.onReading,elapsedMs);
     outputs.push(result.output);
   }
   return { readings, outputs };
 }
-function addCheckReading(readings: CheckReading[], reading: CheckReading, notify?: (reading: CheckReading) => void): void {
-  readings.push(reading); notify?.(reading);
+function addCheckReading(readings: CheckReading[], reading: CheckReading, notify: (reading: CheckReading, elapsedMs: number | null) => void,elapsedMs:number|null): void {
+  readings.push(reading); notify(reading,elapsedMs);
 }
 
 /** Read each referenced source through the same scoped, read-only tool boundary as the child. */
@@ -271,12 +275,11 @@ async function runSourceSpanChecks(
   text: string,
   sourceSpans: readonly AgentSourceSpan[],
   childCtx: ToolContext,
-  scope: { offered: ReadonlySet<string>; ids: { runId: string; parentRunId: string }; steps: AgentStep[] },
+  scope: { ids: { runId: string; parentRunId: string }; steps: AgentStep[];
+    handler: ((input:Record<string,unknown>,ctx?:ToolContext)=>Promise<string>) | undefined },
 ) {
-  const { getToolHandler } = await import('./AnaToolExecutor.js');
-  const { offered, ids, steps } = scope;
+  const { ids, steps,handler } = scope;
   const sources = new Map<string, Record<string, unknown> | null>();
-  const handler = offered.has('read_vault_document') ? getToolHandler('read_vault_document') : undefined;
   for (const span of sourceSpans) {
     if (sources.has(span.artifact_id)) continue;
     const input = { artifact_id: span.artifact_id, max_chars: Math.max(...sourceSpans.filter(s => s.artifact_id === span.artifact_id).map(s => s.source_end)) };
@@ -326,14 +329,14 @@ interface SourceClaimCheck {
 }
 /** No supplied source prose or classification reaches this issuer. The existing
  * Vault loader binds current actor/project, exact version UUID and extraction. */
-async function runSourceClaimChecks(run: AgentRun, ctx: ToolContext, offered: ReadonlySet<string>): Promise<SourceClaimCheck> {
+async function runSourceClaimChecks(run: AgentRun, ctx: ToolContext, offered: ReadonlySet<string>, sourceTools: typeof import('./draft-project-sources.js')): Promise<SourceClaimCheck> {
   const unavailable: SourceClaimCheck = { reading: { check: 'source_claims', outcome: 'error',
     statement: 'Stored-source clinical figures: current project source access could not be established. Claims remain unverified.' },
   output: { check: 'source_claims', output: JSON.stringify({ method: SOURCE_CLAIM_METHOD, qualification: 'unverified', reason: 'SOURCE_UNAVAILABLE' }) },
   tiers: [3], assertCurrent: async () => {} };
   if (!offered.has('read_project_document')) return unavailable;
   try {
-    const { loadDraftProjectSources, assertDraftSourceContextCurrent, draftSourceSensitivityTiers } = await import('./draft-project-sources.js');
+    const { loadDraftProjectSources, assertDraftSourceContextCurrent, draftSourceSensitivityTiers } = sourceTools;
     const context: DraftSourceContext = await runRefusingModelCalls({ runId: run.runId, parentRunId: run.host.parentRunId, tool: 'read_project_document' },
       () => loadDraftProjectSources(run.brief.sourceDocumentIds, { ...ctx, signal: run.signal }, run.brief.textToCheck));
     const result = compareStoredSourceClaims(run.brief.textToCheck!, context.sources);
@@ -413,13 +416,6 @@ async function modelRecorder(): Promise<(response: { provider?: string | null; m
       approvedForHighRisk: entry?.approvedForHighRisk === true,
     };
   };
-}
-
-/** Wait while the person has the run paused. False when it will not go on. */
-async function holdFor(run: AgentRun): Promise<boolean> {
-  const outcome = await run.host.hold({ reason: 'person' }, run.signal);
-  if (outcome !== 'running') run.heldOutcome = outcome;
-  return outcome === 'running' && !run.signal.aborted;
 }
 
 /**
@@ -543,22 +539,24 @@ async function prepareAgentChecks(run: AgentRun, childCtx: ToolContext) {
     run.measured.total = HARNESS_CHECKS.length + Number(Boolean(run.brief.sourceSpans?.length)) + Number(Boolean(run.brief.sourceDocumentIds?.length));
     queueAgentProgress(run, 'checking');
   }
-  const onReading = (reading: CheckReading) => {
-    if (reading.outcome !== 'not_assessed' && reading.outcome !== 'error') run.measured.completed++;
-    queueAgentProgress(run, 'checking');
-  };
+  const onReading = (reading: CheckReading,elapsedMs:number|null) => recordMeasuredAgentCheck(run,reading,elapsedMs);
   const checks =
     run.brief.textToCheck !== undefined
       ? await runHarnessChecks(run.brief.textToCheck, childCtx, offered, { runId: run.runId, parentRunId: run.host.parentRunId },
-        { sourceSpans: run.brief.sourceSpans, steps: run.steps, onReading })
+        { sourceSpans: run.brief.sourceSpans, steps: run.steps, onReading,measure: check => executeMeasuredAgentCheck(run,check) })
       : null;
-  const source = run.brief.sourceDocumentIds ? await runSourceClaimChecks(run, childCtx, offered) : null;
-  if (source && checks) { checks.readings.push(source.reading); checks.outputs.push(source.output); onReading(source.reading); }
+  const sourceTools = run.brief.sourceDocumentIds ? await import('./draft-project-sources.js') : null;
+  const measuredSource = sourceTools ? await executeMeasuredAgentCheck(run,() => runSourceClaimChecks(run,childCtx,offered,sourceTools)) : null;
+  const source = measuredSource?.value ?? null;
+  if (source && checks) { checks.readings.push(source.reading); checks.outputs.push(source.output); onReading(source.reading,measuredSource?.elapsedMs ?? null); }
   await flushAgentProgress(run);
   return { checks, source };
 }
 async function runAdvisory(run: AgentRun, childCtx: ToolContext, prepared: Awaited<ReturnType<typeof prepareAgentChecks>>) {
-  try { return { response: await runChildLoop(run, childCtx, prepared.checks?.readings ?? [], prepared.source), advisoryFailure: undefined }; }
+  try {
+    queueAgentProgress(run,'started'); await flushAgentProgress(run);
+    return { response: await runChildLoop(run, childCtx, prepared.checks?.readings ?? [], prepared.source), advisoryFailure: undefined };
+  }
   catch (error) {
     if (run.signal.aborted || !prepared.checks) throw error;
     return { response: null, advisoryFailure: classifyAgentFailure(error, run.usage.modelCalls) };

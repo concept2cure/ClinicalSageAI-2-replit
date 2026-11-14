@@ -16,6 +16,7 @@
  * docs/design/UI_V2_REGISTRY_RECONCILIATION_2026-07-06.md.
  */
 import { deferredSurfaceDescription } from './deferred-capability-inventory';
+import { APP_REGISTRY } from '../regulatory/app-registry';
 import type { ComplianceRail, UiSurface } from './ui-surface-registry';
 
 // Shorthand for the two near-universal rails (mirrors the main file).
@@ -523,7 +524,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // none), so no screen claims it and production refuses it.
   {
     id: 'protocol-dev',
-    label: 'The protocol workspace',
+    label: APP_REGISTRY.study_protocol_design.label,
     navTier: 'project',
     layoutMode: 'protocol-dev',
     group: 'authoring',
@@ -539,7 +540,7 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Protocol authoring hub (C2C-17..22): full eCTD-style section tree, SoA grid, risk register (5×5), milestones, budget/feasibility, amendments, deviations/CAPA, reviews, informed consent — deterministic completeness gate on finalize (ICH M11 / 45 CFR 46 / PHS Policy).',
+    notes: 'Study design and clinical trial design in the protocol workspace. Protocol authoring hub (C2C-17..22): full eCTD-style section tree, SoA grid, risk register (5×5), milestones, budget/feasibility, amendments, deviations/CAPA, reviews, informed consent — deterministic completeness gate on finalize (ICH M11 / 45 CFR 46 / PHS Policy).',
   },
   {
     id: 'research-admin',

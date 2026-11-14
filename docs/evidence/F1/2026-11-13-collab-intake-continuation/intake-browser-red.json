@@ -1,0 +1,20 @@
+{
+  "mode": "red",
+  "scope": "Running app with real fictional-account initialization; directory/task writes controlled in browser; no messages or task writes forwarded.",
+  "cases": [
+    {
+      "scenario": "unknown-task",
+      "requestCount": 2,
+      "falseUnsentClaim": true,
+      "repeatBlocked": false
+    },
+    {
+      "scenario": "close-and-reopen",
+      "newDialogRetained": false,
+      "originalTaskProjected": true,
+      "taskRequestCount": 1
+    }
+  ],
+  "pageErrors": [],
+  "status": "passed"
+}

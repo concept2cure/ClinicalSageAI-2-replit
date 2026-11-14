@@ -28,6 +28,10 @@ const source = (id: number, programId: string, extra: Record<string, unknown> = 
   metadata: { dossier: { evidenceKind: 'protocol', ctdSection: '5.3.5', suggestedFolder: 'module-5' } },
   provenance: { fileUploadId: `file_${id}` }, ...extra,
 });
+const nativeReceipt = (sourceScope = 'organization') => ({
+  version: 1, renderer: 'quality-evidence:v1', workArea: 'quality', key: 'quality:qms_suppliers:9',
+  sourceScope, native: { kind: 'qms_suppliers', id: '9' }, lifecycle: 'pending_review',
+});
 const grade = { grade: 'C', score: 71, cap: null, engine: 'data-room-grade v1', gradedAt: '2026-11-10T00:00:00.000Z',
   basis: [{ criterion: 'currency', points: 15, max: 15, detail: 'Current: no later capture replaced it.' }] };
 
@@ -75,7 +79,68 @@ describe('list_project_documents with catalog:true', () => {
     expect(out.message).toMatch(/never set or change one/);
     expect(out.message).toMatch(/"Use in this project"/);
   });
+});
 
+describe('native Quality records in the existing catalog receipt', () => {
+  it('keeps organization context distinct from project records and uploads in the same catalog receipt', async () => {
+    h.searchDataRoom.mockResolvedValue({ total: 3, sources: [
+      source(1, OPEN),
+      source(9, OPEN, { version: '2.1',
+        metadata: { dossier: { evidenceKind: 'qms' }, nativeRecord: true, sourceScope: 'project', lifecycle: 'rejected' },
+        provenance: { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), lifecycle: 'approved' } } }),
+      source(10, OTHER, { version: null, metadata: { dossier: { evidenceKind: 'qms' } },
+        provenance: { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt('project'),
+          key: 'quality:capa_records:10', native: { kind: 'capa_records', id: '10' }, lifecycle: 'open' } } }),
+    ], facets: { project: [] } });
+    const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
+    expect(out).toMatchObject({ total: 3, returned: 3, truncated: false });
+    expect(out.items[0]).toMatchObject({ nativeRecord: null, fileable: true, projectId: OPEN,
+      ctdSection: '5.3.5', proposedFolder: 'module-5', grade: { grade: 'C', score: 71 } });
+    expect(out.items[1]).toMatchObject({ projectId: OPEN, kind: 'qms', fileable: false,
+      nativeRecord: { workArea: 'quality', sourceScope: 'organization', kind: 'qms_suppliers', id: '9',
+        lifecycle: 'approved', version: '2.1' } });
+    expect(out.items[2]).toMatchObject({ projectId: OTHER, fileable: false,
+      nativeRecord: { workArea: 'quality', sourceScope: 'project', kind: 'capa_records', id: '10', lifecycle: 'open', version: null } });
+    expect(out.message).toMatch(/3 source capture\(s\)/);
+    expect(out.message).toMatch(/native records/i);
+    expect(out.message).toMatch(/organization context does not establish project-specific evidence/i);
+    expect(out.message).toMatch(/a native lifecycle describes that record/i);
+    expect(out.message).toMatch(/capture placement and grade do not establish scientific or regulatory approval of a project deliverable/i);
+  });
+
+  it.each([
+    ['missing origin', { recordSnapshot: nativeReceipt() }],
+    ['other origin', { origin: 'chat_upload', recordSnapshot: nativeReceipt() }],
+    ['missing receipt', { origin: 'native_record_snapshot' }],
+    ['array receipt', { origin: 'native_record_snapshot', recordSnapshot: [] }],
+    ['unknown receipt schema', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), version: 2 } }],
+    ['unknown renderer', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), renderer: 'other' } }],
+    ['unknown scope', { origin: 'native_record_snapshot', recordSnapshot: nativeReceipt('study') }],
+    ['missing scope', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), sourceScope: undefined } }],
+    ['unknown work area', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), workArea: 'other' } }],
+    ['missing identity', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), native: null } }],
+    ['array identity', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), native: [] } }],
+    ['empty kind', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), native: { kind: ' ', id: '9' } } }],
+    ['numeric id', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), native: { kind: 'qms_suppliers', id: 9 } } }],
+    ['empty lifecycle', { origin: 'native_record_snapshot', recordSnapshot: { ...nativeReceipt(), lifecycle: '' } }],
+  ])('does not invent a native classification from %s or conflicting metadata', async (_label, provenance) => {
+    h.searchDataRoom.mockResolvedValue({ total: 1, sources: [source(9, OPEN, { provenance,
+      metadata: { dossier: { evidenceKind: 'qms' }, nativeRecord: true, sourceScope: 'project', lifecycle: 'approved' } })], facets: {} });
+    const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
+    expect(out.items[0]).toMatchObject({ sourceId: 9, projectId: OPEN, kind: 'qms', nativeRecord: null, fileable: false });
+    expect(out.message).toMatch(/null nativeRecord.*not.*file or project-specific/i);
+  });
+
+  it('does not coerce an invalid source version into a native document version', async () => {
+    h.searchDataRoom.mockResolvedValue({ total: 1, sources: [source(9, OPEN, { version: 2,
+      provenance: { origin: 'native_record_snapshot', recordSnapshot: nativeReceipt() } })], facets: {} });
+    const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
+    expect(out.items[0].nativeRecord).toBeNull();
+    expect(out.items[0].version).toBe(2);
+  });
+});
+
+describe('catalog Vault documents and project narrowings', () => {
   it('lists the Vault\'s documents of the same projects with the engine\'s grade, as the screen does', async () => {
     h.listVaultForCatalog.mockResolvedValue({ total: 1, facets: { project: [], kind: [], ctd: [], folder: [] }, documents: [{
       documentId: 'd1', title: 'Protocol v3', projectName: 'Other project', projectId: OTHER, evidenceKind: 'protocol', ctdSection: '5.3.5.1',
@@ -84,7 +149,7 @@ describe('list_project_documents with catalog:true', () => {
     const out = JSON.parse(await listDataCatalogForAna({ catalog: true }, scope));
     expect(h.listVaultForCatalog.mock.calls[0]).toMatchObject([7, { programIds: [OPEN, OTHER] }]);
     expect(out).toMatchObject({ vaultTotal: 1, vaultDocuments: [{ documentId: 'd1', folder: 'Module 5 · Clinical', project: 'Other project', grade: { grade: 'C', score: 71 } }] });
-    expect(out.message).toMatch(/2 captured file\(s\) and 1 Vault document\(s\)/);
+    expect(out.message).toMatch(/2 source capture\(s\) and 1 Vault document\(s\)/);
     expect(out.vaultDocuments[0].dataset.tables[0]).toMatchObject({ name: 'ADVS', standard: 'ADaM', rows: 32139 });
     // A failed Vault read is said; the captures are still answered.
     h.listVaultForCatalog.mockRejectedValue(new Error('down'));

@@ -1,0 +1,29 @@
+{
+  "startedAt": "2026-11-14T01:28:42.833712+00:00",
+  "elapsedSeconds": 6.593,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx",
+    "-t",
+    "data room cut by the server window"
+  ],
+  "exitCode": 1,
+  "sourceDrift": [],
+  "inputs": "automatic-compatibility-inputs.json",
+  "inputCount": 25,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "automatic-window-before.txt.gz",
+  "outputSha256": "76140b56f9927abfe642df4e78f3515235fee3cb919d4dbfcfa8e7408c70ad72",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

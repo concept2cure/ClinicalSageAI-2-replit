@@ -1,0 +1,14 @@
+{
+  "head": "006353ba29c0e122ddcbb9c9450f634c1c2784dc",
+  "finishedHead": "006353ba29c0e122ddcbb9c9450f634c1c2784dc",
+  "command": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 326.459,
+  "declaredSourceFiles": 12516,
+  "sourceStable": true,
+  "sourceChanges": []
+}

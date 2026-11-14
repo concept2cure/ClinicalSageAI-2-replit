@@ -1,0 +1,37 @@
+{
+  "startedAt": "2026-11-14T02:08:46.442391+00:00",
+  "elapsedSeconds": 89.054,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyOwnership.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartChannel.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "integrated-client-inputs.json",
+  "inputCount": 20,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "integrated-client.txt.gz",
+  "outputSha256": "9de5d830b9c8d79562884c730da5c5f9d844e0bc01a6dbba1c1c97c2860d664d",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": true
+}
