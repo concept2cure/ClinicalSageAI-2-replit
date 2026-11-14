@@ -5,11 +5,12 @@ import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 type Row = Record<string, unknown>;
 const text = (value: unknown) => value == null ? '' : String(value);
 
-export function useProtocolWorkNavigation({ initialSection, sections, pending, dialogs, tabs }: {
+export function useProtocolWorkNavigation({ initialSection, initialTab, sections, pending, dialogs, tabs }: {
   initialSection: string; sections: Row[]; pending: boolean; dialogs: unknown[];
+  initialTab?: string;
   tabs: readonly { id: string }[];
 }) {
-  const [tab, setTab] = useState('document');
+  const [tab, setTab] = useState(() => initialTab && tabs.some(item => item.id === initialTab) ? initialTab : 'document');
   const [activeSec, setActiveSec] = useState(initialSection);
   const [navigationNotice, setNavigationNotice] = useState<string | null>(null);
   const pendingReason = pending ? 'Save the pending section changes before switching work.'

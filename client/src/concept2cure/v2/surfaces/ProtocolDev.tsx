@@ -20,7 +20,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { shellProgramName, shellProgramId, useShellProject } from '../shellProject';
 import { ProtocolWorkspaceDoc } from './ProtocolDevWorkspace';
-import { ProtocolSelectionBar, useProtocolSelection } from './ProtocolDevSelection';
+import { ProtocolSelectionBar, useProtocolSelection, type ProtocolStartIntent } from './ProtocolDevSelection';
 import '../styles/protocol-dev-editing.css';
 import { consumeNavParams, NAV_PARAMS_EVENT, surfaceLeaveRefusal } from '../navParams';
 
@@ -172,7 +172,7 @@ function ProtocolEmptyState({ onAsk }: { onAsk: (msg: string) => void }) {
         <EmptyState
           icon={I.fileText}
           title={program ? `No protocol in development for ${program}` : 'No protocol in development yet'}
-          hint="Sections, objectives, the schedule of assessments, the risk register, the budget, amendments and review threads are all governed on one protocol document."
+          hint="Begin clinical trial design by starting the project’s protocol record above. Its Study design step then opens the objectives, endpoints, population, study structure and control inputs, alongside statistics and the schedule of assessments."
           regulation="Serves the ICH M11 protocol record"
         />
         <div className="pde-empty-actions">
@@ -189,6 +189,7 @@ function ProtocolEmptyState({ onAsk }: { onAsk: (msg: string) => void }) {
 
 export function ProtocolWorkspace(props: SurfaceViewProps) {
   const programId = shellProgramId(useShellProject());
+  const [startIntent, setStartIntent] = useState<(ProtocolStartIntent & { programId: string }) | null>(null);
   const [requestedScope, setScope] = useState<string | null>(() => {
     const value = new URLSearchParams(window.location.search).get('protocolScope');
     return value === 'all' || value === 'unfiled' ? value : null;
@@ -203,6 +204,7 @@ export function ProtocolWorkspace(props: SurfaceViewProps) {
       const refusal = surfaceLeaveRefusal();
       setNavigationError(refusal);
       if (refusal) return;
+      setStartIntent(null);
       const scopeParam = params.protocolScope === 'unfiled' || params.protocolScope === 'all' ? params.protocolScope : null;
       const url = new URL(window.location.href); url.searchParams.set('protocol', params.protocol);
       if (scopeParam) url.searchParams.set('protocolScope', scopeParam); else url.searchParams.delete('protocolScope');
@@ -220,6 +222,7 @@ export function ProtocolWorkspace(props: SurfaceViewProps) {
     setScope(value);
   };
   const changeScope = (value: string) => {
+    setStartIntent(null);
     const url = new URL(window.location.href); url.searchParams.delete('protocol');
     window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
     rememberScope(value);
@@ -227,12 +230,23 @@ export function ProtocolWorkspace(props: SurfaceViewProps) {
   return <>
     {navigationError && <div className="pde-refusal" role="alert">{navigationError}</div>}
     <ScopedProtocolWorkspace key={`${programId}:${scope}:${navigationEpoch}`} {...props}
-      programId={programId} scope={scope} setScope={changeScope} onCreatedScope={rememberScope} />
+      programId={programId} scope={scope} setScope={changeScope} onCreatedScope={rememberScope}
+      startIntent={startIntent}
+      onStarted={(intent) => { if (programId && intent.current()) setStartIntent({ ...intent, programId }); }}
+      clearStart={() => setStartIntent(null)}
+      consumeStart={(id) => setStartIntent(current => current?.id === id ? null : current)} />
   </>;
 }
 
-function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onCreatedScope }: SurfaceViewProps & {
+function initialProtocolWorkTab(intent: (ProtocolStartIntent & { programId: string }) | null, doc: PdevDoc | undefined, programId: string | null) {
+  return intent?.current() && intent.programId === programId && String(doc?.id) === String(intent.id)
+    && doc?.programId === programId && doc?.kind === 'clinical' ? 'study-design' : undefined;
+}
+
+function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onCreatedScope, startIntent, onStarted, clearStart, consumeStart }: SurfaceViewProps & {
   programId: string | null; scope: string; setScope: (scope: string) => void; onCreatedScope: (scope: string) => void;
+  startIntent: (ProtocolStartIntent & { programId: string }) | null; onStarted: (intent: ProtocolStartIntent) => void;
+  clearStart: () => void; consumeStart: (id: number) => void;
 }) {
   const [reloadKey, setReloadKey] = useState(0);
   const selection = useProtocolSelection(scope, reloadKey);
@@ -244,6 +258,10 @@ function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onC
     [loading, error, empty, doc, openSectionId, program],
   );
   usePublishSurfaceContext('protocol-dev', anaContext);
+  const initialTab = initialProtocolWorkTab(startIntent, doc, programId);
+  useEffect(() => {
+    if (startIntent && (!startIntent.current() || doc && String(doc.id) === String(startIntent.id))) consumeStart(startIntent.id);
+  }, [startIntent, doc, consumeStart]);
 
   /* The honest states are gated on there being NO document, not on `loading`.
      `useLiveData` sets `loading` on every refetch while keeping the last
@@ -279,12 +297,13 @@ function ScopedProtocolWorkspace({ onAsk, onNav, programId, scope, setScope, onC
   // One root for the shell's .page-full row: the bar above the protocol, not beside it (protocol-dev-editing.css .pde-shell).
   return <div className="pde-shell">
     <ProtocolSelectionBar selection={selection} programId={programId} programName={program}
-      scope={scope} setScope={setScope} onCreated={created} />
+      scope={scope} setScope={setScope} onCreated={created} onStarted={onStarted} onSelectionChange={clearStart} />
     {!doc && selection.selectedId && !loading
       ? <div className="pde-refusal" role="alert" style={{ margin: 16 }}>The selected protocol is unavailable in this scope. Select another protocol or change scope.</div>
       : !doc ? <ProtocolEmptyState onAsk={onAsk} />
       : <ProtocolWorkspaceDoc key={doc.id}
           doc={doc as never} onAsk={onAsk} onNav={onNav} refreshing={loading} reloadError={error}
+          initialTab={initialTab}
           onChanged={() => setReloadKey((key) => key + 1)} onOpenSection={setOpenSectionId} />}
   </div>;
 
