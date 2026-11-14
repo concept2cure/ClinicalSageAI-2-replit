@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T08:51:38.824Z",
+  "generatedAt": "2026-11-14T09:07:32.002Z",
   "git": {
-    "sha": "fd3a6442cfd96841461b02bc9a119665d8375f80",
+    "sha": "7b88e7542793fbecd4894fc992b867d2edaecf63",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2411,7 +2411,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 448010
+        "bytes": 448917
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2431,7 +2431,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "bytes": 247652
+        "bytes": 252147
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2514,16 +2514,16 @@
         "bytes": 142387
       },
       {
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "bytes": 141316
+      },
+      {
         "file": "server/storage.ts",
         "bytes": 140097
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 139697
-      },
-      {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "bytes": 138732
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2559,7 +2559,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "bytes": 127437
+        "bytes": 127798
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2625,7 +2625,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 9126
+        "lines": 9137
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
@@ -2653,7 +2653,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 4671
+        "lines": 4734
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2728,12 +2728,12 @@
         "lines": 2992
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2893
+        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
+        "lines": 2924
       },
       {
-        "file": "client/src/concept2cure/components/ana/useAnaChat.ts",
-        "lines": 2885
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2893
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2769,7 +2769,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
-        "lines": 2467
+        "lines": 2471
       },
       {
         "file": "server/routes/submissions.ts",
