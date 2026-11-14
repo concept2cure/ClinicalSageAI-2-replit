@@ -9,7 +9,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { notifyObserver } from './agentic-tool-dispatch.js';
 import { captureCurrentRunSourceGate } from '../ai-gateway/model-call-scope.js';
-import { workerLabel, type WorkerPhase } from '@shared/ana/turn-timeline';
+import { workerLabel, type WorkerPhase, type WorkerEstimate } from '@shared/ana/turn-timeline';
 import type { createActiveTimer, SubAgentHost } from './sub-agent.js';
 import type { AgentBrief } from './sub-agent-limits.js';
 import type { ToolContext } from './AnaToolExecutor.js';
@@ -22,6 +22,7 @@ import { newGenerationCapture } from '../ai-gateway/generation-capture.js';
 import { budgetToolResultsForModel, type ToolResultEntry } from './agentic-loop.js';
 import { toolEvidence, type EvidenceEntry } from './answer-grounding.js';
 import type { AgentStep } from './sub-agent-shape.js';
+import type { CheckReading } from './sub-agent-result.js';
 
 /** Private model-derived frames wait for encrypted chat/record/audit commit.
  * Monitoring stays live; hiding the client team view never affects this gate. */
@@ -183,13 +184,54 @@ export async function startAgentCoordination(run: AgentRun): Promise<void> {
   queueAgentProgress(run, 'started'); await flushAgentProgress(run);
 }
 export function queueAgentProgress(run: AgentRun, phase: WorkerPhase): void {
+  if (phase !== 'checking') run.measured.estimate = null;
+  if (['waiting','held','stopped'].includes(phase)) run.measured.invalidated = true;
   const coordinator = run.coordination; if (!coordinator) return;
-  const intentId = `progress:${run.host.parentStep}:${++run.operation}`, measured = { ...run.measured };
+  const intentId = `progress:${run.host.parentStep}:${++run.operation}`;
+  const measured = { completed:run.measured.completed,total:run.measured.total,basis:run.measured.basis,
+    estimate: run.measured.estimate ? { ...run.measured.estimate } : null };
   run.ledger = run.ledger.then(async () => { await coordinator.host.progress(coordinator.handle, phase,
-    { intentId, completed: measured.completed, total: measured.total, basisKind: measured.basis, model: run.models.at(-1) }); }).catch(() => { run.ledgerFailed = true; });
+    { intentId, completed: measured.completed, total: measured.total, basisKind: measured.basis, estimate: measured.estimate, model: run.models.at(-1) }); }).catch(() => { run.ledgerFailed = true; });
+}
+
+/** Measure one whole declared deterministic check, including its scoped reads.
+ * Its own progress queue settles first; ledger, imports, advice and held time
+ * never become samples. A check interrupted by a hold is not extrapolated. */
+export async function executeMeasuredAgentCheck<T>(run: AgentRun, check: () => Promise<T>): Promise<{ value: T; elapsedMs: number | null }> {
+  await run.ledger;
+  const heldBefore = run.host.heldMs(), started = performance.now();
+  const value = await check();
+  const elapsedMs = performance.now() - started, heldAfter = run.host.heldMs();
+  const valid = [started,elapsedMs,heldBefore,heldAfter].every(Number.isFinite) && elapsedMs >= 0 &&
+    heldBefore >= 0 && heldBefore === heldAfter && (run.measured.lastHeldMs === null || run.measured.lastHeldMs === heldBefore) && !run.signal.aborted && !run.ledgerFailed;
+  run.measured.lastHeldMs = heldAfter;
+  return { value,elapsedMs: valid ? elapsedMs : null };
+}
+export function recordMeasuredAgentCheck(run: AgentRun, reading: CheckReading, elapsedMs: number | null): void {
+  const measured = run.measured, assessed = !['not_assessed','error'].includes(reading.outcome);
+  if (assessed) measured.completed++;
+  if (!assessed || elapsedMs === null || !Number.isFinite(elapsedMs) || elapsedMs < 0) measured.invalidated = true;
+  else measured.durations.push(elapsedMs);
+  measured.estimate = approximateRemainingChecks(measured);
+  queueAgentProgress(run,'checking');
+}
+function approximateRemainingChecks(measured: AgentRun['measured']): WorkerEstimate | null {
+  const { completed,total,durations } = measured;
+  if (measured.invalidated || measured.basis !== 'deterministic_checks' || total === null || !Number.isSafeInteger(total) ||
+      total <= completed || durations.length < 3 || durations.length !== completed) return null;
+  const remaining = total - completed;
+  const lowerMs = Math.floor(Math.min(...durations) * remaining), upperMs = Math.ceil(Math.max(...durations) * remaining);
+  if (![lowerMs,upperMs].every(Number.isSafeInteger)) return null;
+  return { basis:'observed_check_durations',scope:'remaining_checks',lowerMs,upperMs,sampleCount:durations.length,at:new Date().toISOString() };
 }
 export async function flushAgentProgress(run: AgentRun): Promise<void> {
   await run.ledger; if (run.ledgerFailed) throw new Error('COORDINATION_UNAVAILABLE');
+}
+/** Wait while the person has the run paused. False when it will not go on. */
+export async function holdFor(run: AgentRun): Promise<boolean> {
+  const outcome = await run.host.hold({ reason: 'person' }, run.signal);
+  if (outcome !== 'running') run.heldOutcome = outcome;
+  return outcome === 'running' && !run.signal.aborted;
 }
 export async function agentModelContext(run: AgentRun) {
   const coordinator = run.coordination; if (!coordinator) return null;
@@ -200,6 +242,7 @@ export async function agentModelContext(run: AgentRun) {
   } };
 }
 export async function recordAgentReport(run: AgentRun, result: string): Promise<void> {
+  run.measured.estimate = null;
   const coordinator = run.coordination; if (!coordinator) return;
   // A cancelled source checkpoint may have refused queued progress. The final
   // content-free stop receipt still has to reach the durable ledger.
@@ -232,7 +275,8 @@ export interface AgentRun {
   ledger: Promise<void>;
   ledgerFailed: boolean;
   operation: number;
-  measured: { completed: number; total: number | null; basis: 'deterministic_checks' | 'observed_steps' };
+  measured: { completed: number; total: number | null; basis: 'deterministic_checks' | 'observed_steps';
+    durations: number[]; invalidated: boolean; lastHeldMs: number | null; estimate: WorkerEstimate | null };
 }
 
 export function beginAgentRun(brief: AgentBrief, host: SubAgentHost, ctx: ToolContext, timer: AgentRun['timer']): AgentRun {
@@ -247,7 +291,8 @@ export function beginAgentRun(brief: AgentBrief, host: SubAgentHost, ctx: ToolCo
     heldOutcome: null,
     finished: { phase: 'finished', runId, status: 'failed' },
     coordination: null, ledger: Promise.resolve(), ledgerFailed: false, operation: 0,
-    measured: { completed: 0, total: null, basis: brief.role === 'verify' ? 'deterministic_checks' : 'observed_steps' },
+    measured: { completed: 0, total: null, basis: brief.role === 'verify' ? 'deterministic_checks' : 'observed_steps',
+      durations: [],invalidated: false,lastHeldMs: null,estimate: null },
     emit: frame => notifyObserver('agent emit', () => host.emit(frame)),
   };
   return run;

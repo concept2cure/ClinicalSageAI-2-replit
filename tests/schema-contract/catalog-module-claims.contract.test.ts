@@ -59,6 +59,8 @@ const DDL_TABLES = [
   'organizations', 'users', 'projects', 'module_subscriptions', 'available_modules',
   'concept2cure_artifacts', 'concept2cure_messages', 'activity_feed',
 ];
+/** Later catalog writers also read this table; use its owning migration. */
+const CATALOG_PREREQUISITES = ['migrations/20260615_tmf_artifact_filings.sql'];
 
 /**
  * The real `CREATE TABLE available_modules`, read from the migration that
@@ -70,11 +72,12 @@ const DDL_TABLES = [
  */
 function baseDdl(): string[] {
   const src = fs.readFileSync(path.join(REPO_ROOT, DDL_SOURCE), 'utf8');
-  return DDL_TABLES.map((t) => {
+  const ddl = DDL_TABLES.map((t) => {
     const m = src.match(new RegExp(`CREATE TABLE "${t}" \\([\\s\\S]*?\\n\\);`));
     if (!m) throw new Error(`${t} DDL not found in ${DDL_SOURCE}`);
     return m[0];
   });
+  return [...ddl, ...CATALOG_PREREQUISITES.map((file) => fs.readFileSync(path.join(REPO_ROOT, file), 'utf8'))];
 }
 
 interface ClaimRule {

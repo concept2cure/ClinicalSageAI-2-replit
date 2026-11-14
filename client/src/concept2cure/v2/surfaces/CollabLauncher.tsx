@@ -3,7 +3,9 @@ import { I } from '../icons';
 import { liveGetOrNull } from '../dataConnect';
 import { useDialog } from '../useDialog';
 import { getSurfaceMeta } from '../registryModel';
-import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, errorCodeOf, serverMessage } from '@/lib/queryClient';
+import { authService } from '@/services/portal/authService';
+import { captureAuthoringSession, useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import {
   SURFACE_CTX, CL_MOD, CL_MOD_OPTIONS, CL_TYPE, CL_PRI, CL_PRI_LABEL, clModLabel,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
@@ -65,6 +67,7 @@ interface QuickTaskForm {
 }
 
 interface QuickTaskProps {
+  intakeCurrent: () => boolean;
   ctx: C2CContext;
   onClose: () => void;
   onCreated?: (t: C2CTask) => void;
@@ -72,6 +75,7 @@ interface QuickTaskProps {
 }
 
 interface CollabDiscussProps {
+  intakeCurrent: () => boolean;
   ctx: C2CContext;
   onClose: () => void;
   onCreated?: (t?: C2CTask) => void;
@@ -83,6 +87,7 @@ interface CollabLayerProps {
 
 interface ToastState {
   type: 'task' | 'msg';
+  scope: number;
   t?: C2CTask;
 }
 
@@ -126,7 +131,7 @@ function emit(): void {
   });
 }
 
-let ctx: C2CContext = {
+const emptyContext = (): C2CContext => ({
   surfaceId: 'home',
   surfaceLabel: 'Home',
   // No project until the shell reports one. This used to initialise to
@@ -139,7 +144,8 @@ let ctx: C2CContext = {
   entityId: null,
   entityLabel: null,
   moduleType: 'Regulatory',
-};
+});
+let ctx = emptyContext();
 
 /* ── Live org directory ──────────────────────────────────────────────────────
    These two lists used to be fixtures: TB_TEAM, a roster of seven invented
@@ -165,6 +171,23 @@ let team: Record<string, TeamMember> = {};
 let projects: ProjectEntry[] = [];
 let dirState: 'idle' | 'loading' | 'ready' | 'error' = 'idle';
 
+interface DirectoryScope { id: number; owner: ReturnType<typeof captureAuthoringSession>; blocked: boolean }
+let directoryScope: DirectoryScope | null = null;
+let directorySerial = 0;
+
+/** Retire cached intake state by the existing account/access guard, not bearer text. */
+function currentDirectoryScope(): DirectoryScope {
+  if (directoryScope?.owner.sameRevision()) return directoryScope;
+  const owner = captureAuthoringSession();
+  // One fenced owner for the whole adoption window; no render/read loop while
+  // the replacement session is still being verified by the auth service.
+  if (directoryScope?.blocked && !owner.sameRevision()) return directoryScope;
+  directoryScope = { id: ++directorySerial, owner, blocked: !owner.sameRevision() };
+  team = {}; projects = []; tasks = []; ctx = emptyContext(); dirState = 'idle';
+  return directoryScope;
+}
+const directoryCurrent = (scope: DirectoryScope) => scope === currentDirectoryScope() && scope.owner.sameRevision();
+
 interface AssigneeRow { id: string; name: string; label?: string }
 interface ProjectRow {
   id: number | string; name?: string; code?: string; projectType?: string; status?: string;
@@ -174,12 +197,14 @@ interface ProjectRow {
 
 /** Load the org directory once per session. Re-entrant-safe; emits on settle. */
 async function loadDirectory(): Promise<void> {
-  if (dirState === 'loading' || dirState === 'ready') return;
+  const scope = currentDirectoryScope();
+  if (!directoryCurrent(scope) || ['loading', 'ready'].includes(dirState)) return;
   dirState = 'loading';
   const [people, progs] = await Promise.all([
     liveGetOrNull<{ data?: AssigneeRow[] } | AssigneeRow[]>('/api/task-management/assignees'),
     liveGetOrNull<ProjectRow[]>('/api/projects'),
   ]);
+  if (!directoryCurrent(scope)) return;
 
   const peopleRows: AssigneeRow[] = Array.isArray(people.data)
     ? people.data
@@ -274,9 +299,9 @@ export const C2C = {
   /* Real org roster and programme list — see the note above. Exposed as getters
      so every existing `C2C.team` / `C2C.projects` read picks up the loaded
      directory without threading state through the components. */
-  get team(): Record<string, TeamMember> { return team; },
-  get projects(): ProjectEntry[] { return projects; },
-  get directoryState(): 'idle' | 'loading' | 'ready' | 'error' { return dirState; },
+  get team(): Record<string, TeamMember> { currentDirectoryScope(); return team; },
+  get projects(): ProjectEntry[] { currentDirectoryScope(); return projects; },
+  get directoryState(): 'idle' | 'loading' | 'ready' | 'error' { currentDirectoryScope(); return dirState; },
   loadDirectory,
   mod: CL_MOD,
 
@@ -284,6 +309,7 @@ export const C2C = {
     return CL_MOD[m] || MODULE_COLOR_UNKNOWN;
   },
   list(): C2CTask[] {
+    currentDirectoryScope();
     return tasks;
   },
   subscribe(fn: Subscriber): () => void {
@@ -312,6 +338,7 @@ export const C2C = {
   /* Surface context -- App calls this on every navigation; surfaces may
      refine it for entity-level granularity (a section, a case, a filing). */
   setSurface(id: string, label?: string): void {
+    currentDirectoryScope();
     const d = SURFACE_CTX[id] || SURFACE_CTX.home;
     ctx = {
       surfaceId: id,
@@ -325,6 +352,7 @@ export const C2C = {
     emit();
   },
   setContext(patch: Partial<C2CContext>): void {
+    currentDirectoryScope();
     ctx = { ...ctx, ...patch };
     emit();
   },
@@ -350,6 +378,7 @@ export const C2C = {
    * work and still win, they are just no longer the only writer.
    */
   getContext(): C2CContext {
+    currentDirectoryScope();
     const live: C2CContext = { ...ctx };
 
     try {
@@ -382,6 +411,7 @@ export const C2C = {
   },
 
   addTask(task: Partial<C2CTask> & Record<string, unknown>): C2CTask {
+    currentDirectoryScope();
     const id = (task.taskId as string) || ('C2C-TASK-' + (2300 + Math.floor(Math.random() * 699)));
     const t: C2CTask = {
       status: 'pending', progress: 0, comments: 0, attachments: 0,
@@ -412,6 +442,7 @@ export const C2C = {
     emit();
   },
   open(mode?: string, patch?: Partial<C2CContext>): void {
+    currentDirectoryScope();
     if (patch) ctx = { ...ctx, ...patch };
     window.dispatchEvent(new CustomEvent('c2c:open-collab', { detail: { mode: mode || 'task' } }));
   },
@@ -433,7 +464,32 @@ function clAvatar(id: string): string {
 
 /* ── Quick task -- unifiedTasks intake, context pre-filled ── */
 
-function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTaskProps) {
+const knownRefusal = (status: number) => status >= 400 && status < 500 && status !== 408;
+const taskCreateRefused = (status: number, code: unknown) => code !== 'OUTCOME_UNKNOWN' &&
+  (code === 'AUDIT_WRITE_FAILED' || knownRefusal(status));
+
+/** A receipt must name an object row without contradicting successful storage. */
+function acknowledgedRow(payload: unknown): Record<string, unknown> | null {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  const { data, success } = payload as { data?: unknown; success?: unknown };
+  if ((success !== undefined && success !== true) || !data || typeof data !== 'object' || Array.isArray(data)) return null;
+  return data as Record<string, unknown>;
+}
+
+/** Adopt only a persisted task identity, never a truthy value or an invented id. */
+function acknowledgedTask(payload: unknown): Record<string, unknown> | null {
+  const row = acknowledgedRow(payload);
+  return row && typeof row.taskId === 'string' && row.taskId.trim() ? row : null;
+}
+
+function acknowledgedMessage(payload: unknown): boolean {
+  const row = acknowledgedRow(payload);
+  // notification-service.requiredNumber returns a nonnegative safe integer.
+  return !!row && typeof row.id === 'number' && Number.isSafeInteger(row.id) && row.id >= 0;
+}
+
+function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard, intakeCurrent }: QuickTaskProps) {
+  const [owner] = useState(captureAuthoringSession);
   // The open project, as the task project it is. `surfaceCtx.project` is the
   // shell's regulatory_programs UUID, never a projects.id, so it is resolved
   // against the loaded list (taskProjectFor) and not used as the value. With no
@@ -460,6 +516,18 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
   // states. Nothing is reported as created unless the server said so.
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState('');
+  const submitted = useRef(false);
+  const [outcomeUnknown, setOutcomeUnknown] = useState(false);
+  const blocked = saving || outcomeUnknown;
+  const createFailure = (status: number, payload: unknown, code = errorCodeOf(payload)) => {
+    if (!intakeCurrent()) return;
+    const refused = taskCreateRefused(status, code);
+    submitted.current = !refused;
+    setOutcomeUnknown(!refused);
+    setSaveErr(refused
+      ? serverMessage(payload) ?? `Couldn’t create the task (HTTP ${status}). Nothing was saved.`
+      : 'Whether the task was saved is unknown. Check the task board before trying again.');
+  };
 
   /* `who` is the assignee the CLIENT can name — which, for "auto", is nobody.
      C2C.optimalFor deliberately returns '' (its own note explains why: the
@@ -492,13 +560,14 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
    *     any the client can compute.
    */
   const create = async (another: boolean) => {
-    if (!f.title.trim() || saving) return;
+    if (!intakeCurrent() || !owner.sameRevision() || !f.title.trim() || submitted.current) return;
     // A task belongs to a project. With projects to choose from and none
     // chosen, nothing is sent: the server would store it under no project.
     if (C2C.projects.length > 0 && !C2C.projects.some(p => p.id === f.project)) {
       setSaveErr('Choose the project this task belongs to. Nothing was saved.');
       return;
     }
+    submitted.current = true;
     setSaving(true);
     setSaveErr('');
 
@@ -542,16 +611,12 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
     try {
       const res = await apiRequest('POST', '/api/tasks/tasks', body);
       const json = await res.json().catch(() => null);
-      const serverTask = (json as { data?: Record<string, unknown> } | null)?.data;
-      if (!res.ok || !serverTask?.taskId) {
-        // `json.error` was read first and rendered as-is, so an envelope of the
-        // shape { error: 'ASSIGNEE_NOT_IN_ORG', message: '<a real sentence>' }
-        // showed the enum token. serverMessage prefers the sentence and rejects
-        // codes and infrastructure text; the domain fallback is kept because it
-        // states what was not saved.
-        setSaveErr(
-          serverMessage(json) ?? `Couldn’t create the task (HTTP ${res.status}). Nothing was saved.`,
-        );
+      if (!owner.sameRevision()) return;
+      const serverTask = acknowledgedTask(json);
+      if (!res.ok || !serverTask) {
+        // A success without a receipt, or an unconfirmed commit, is not a
+        // rollback. Keep this intake from issuing a duplicate create.
+        createFailure(res.ok ? 0 : res.status, res.ok ? null : json);
         return;
       }
       // Adopt the persisted row: real taskId, and the assignee the SERVER chose
@@ -579,18 +644,17 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           : [],
       });
       onCreated?.(t);
-      if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
+      if (another) {
+        if (intakeCurrent()) { submitted.current = false; setF(p => ({ ...p, title: '', note: '' })); }
+      } else { onClose(); }
     } catch (e) {
-      // Only ApiRequestError carries an already-reduced message; anything else
-      // is a browser-native throw ("Failed to fetch") that must not be shown.
-      const known = (e as { name?: unknown })?.name === 'ApiRequestError';
-      setSaveErr(
-        known && (e as Error).message
-          ? (e as Error).message
-          : 'Couldn’t reach the task service. Nothing was saved.',
-      );
+      if (!owner.sameRevision()) return;
+      const error = e as Partial<ApiRequestError> | null;
+      const known = error?.name === 'ApiRequestError';
+      createFailure(known ? error.status ?? 0 : 0,
+        known ? error.payload ?? { message: error.message } : null, known ? error.code : undefined);
     } finally {
-      setSaving(false);
+      if (owner.sameRevision() && intakeCurrent()) setSaving(false);
     }
   };
 
@@ -704,7 +768,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           action was ungoverned — the worst direction for a claim to be wrong in
           a Part 11 product. What remains true is only the delivery gap. */}
       <div className="cl-note">
-        <span className="ico">{I.check}</span>Saved to the task board, recorded in the Part 11 audit trail, and the assignee is notified in the app. Email notification is not available yet.
+        <span className="ico">{I.check}</span>When creation succeeds, the task is saved to the task board and recorded in the audit trail; an assigned teammate is notified in the app. Email notification is not available yet.
       </div>
       {saveErr && (
         <div className="cl-warn" role="alert">
@@ -728,8 +792,8 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
             {I.grid || I.arrowRight} Go to board
           </button>
         )}
-        <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || saving}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
-        <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || saving}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
+        <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || blocked}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
+        <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || blocked}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
       </div>
     </div>
   );
@@ -737,7 +801,8 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
 
 /* ── Collaborate -- post a message / @mention / route, optionally -> task ── */
 
-function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussProps) {
+function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated, intakeCurrent }: CollabDiscussProps) {
+  const [owner] = useState(captureAuthoringSession);
   /* No recipient until one is picked from the REAL roster.
      This initialised to `'sm'` — one of the retired TB_TEAM fixture short-ids
      ('jc' / 'mw' / 'sm' / …). Those keys no longer exist: `C2C.team` is keyed by
@@ -759,7 +824,6 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
   const submitted = useRef(false);
   const [delivery, setDelivery] = useState<'unsent' | 'confirmed' | 'unknown'>('unsent');
   const locked = sending || delivery !== 'unsent';
-  const knownRefusal = (status: number) => status >= 400 && status < 500 && status !== 408;
   const taskFailure = (refused: boolean, detail: string) => setSendErr(refused
     ? 'The message was sent, but the task was not created — ' + detail + '. Create it from the task board if it is still needed.'
     : 'The message was sent, but whether the task was created is unknown. Check the task board before trying to create it again.');
@@ -781,7 +845,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
      GET /api/task-management/assignees (see the loader above, `team[String(r.id)]`),
      so the picked key IS `recipientUserId`. */
   const send = async () => {
-    if (!body.trim() || sending || submitted.current) return;
+    if (!intakeCurrent() || !owner.sameRevision() || !body.trim() || sending || submitted.current) return;
     const recipientUserId = Number(to);
     if (!Number.isInteger(recipientUserId) || recipientUserId <= 0) {
       setSendErr('Pick who this goes to — a message with no recipient cannot be delivered.');
@@ -798,23 +862,27 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         sourceEntityType: surfaceCtx.entityType || undefined,
         sourceEntityId: (surfaceCtx.entityId || surfaceCtx.surfaceId || '').slice(0, 200) || undefined,
       });
-      if (!res.ok) {
-        const b = await res.json().catch(() => null);
+      if (!owner.sameRevision()) return;
+      const receipt = await res.json().catch(() => null);
+      if (!owner.sameRevision()) return;
+      if (!res.ok || !acknowledgedMessage(receipt)) {
         setSending(false);
-        if (!knownRefusal(res.status)) {
+        // HTTP success alone cannot confirm delivery or admit the second write.
+        if (res.ok || !knownRefusal(res.status)) {
           setDelivery('unknown');
           setSendErr('Whether your message was sent is unknown. Check with the recipient before sending it again.');
           return;
         }
         submitted.current = false;
         setSendErr(
-          'Not sent — ' + (serverMessage(b) ?? `the server refused the message (HTTP ${res.status})`) +
+          'Not sent — ' + (serverMessage(receipt) ?? `the server refused the message (HTTP ${res.status})`) +
             '. Nothing was delivered.',
         );
         return;
       }
       setDelivery('confirmed');
     } catch (e) {
+      if (!owner.sameRevision()) return;
       setSending(false);
       if (e instanceof ApiRequestError && knownRefusal(e.status)) {
         submitted.current = false;
@@ -865,10 +933,12 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
       try {
         const tres = await apiRequest('POST', '/api/tasks/tasks', taskBody);
         const tjson = await tres.json().catch(() => null);
-        const serverTask = (tjson as { data?: Record<string, unknown> } | null)?.data;
-        if (!tres.ok || !serverTask?.taskId) {
+        if (!owner.sameRevision()) return;
+        const serverTask = acknowledgedTask(tjson);
+        if (!tres.ok || !serverTask) {
           setSending(false);
-          taskFailure(knownRefusal(tres.status), serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`);
+          taskFailure(!tres.ok && taskCreateRefused(tres.status, errorCodeOf(tjson)),
+            serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`);
           return;
         }
         // Adopt the SERVER's row, exactly as the create modal does — the id in
@@ -888,8 +958,9 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         });
         onCreated?.();
       } catch (e) {
+        if (!owner.sameRevision()) return;
         setSending(false);
-        taskFailure(e instanceof ApiRequestError && (knownRefusal(e.status) || e.code === 'AUDIT_WRITE_FAILED'),
+        taskFailure(e instanceof ApiRequestError && taskCreateRefused(e.status, e.code ?? errorCodeOf(e.payload)),
           e instanceof Error ? e.message : String(e));
         return;
       }
@@ -962,8 +1033,9 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
    once and lives on every screen, so that was the same gap on every screen in
    the product. The two mode buttons were likewise plain buttons whose selected
    state was carried by a class, visible to sighted users only. */
-function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
+function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard, intakeCurrent }: {
   tab: string;
+  intakeCurrent: () => boolean;
   setTab: (t: string) => void;
   onClose: () => void;
   ctx: C2CContext;
@@ -1000,8 +1072,8 @@ function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
         </div>
         <div className="cl-body" id="cl-panel" role="tabpanel" aria-labelledby={tabId}>
           {tab === 'task'
-            ? <QuickTask ctx={ctx} onClose={onClose} onCreated={onCreated} onGoToBoard={onGoToBoard} />
-            : <CollabDiscuss ctx={ctx} onClose={onClose} onCreated={onCreated} />}
+            ? <QuickTask ctx={ctx} onClose={onClose} onCreated={onCreated} onGoToBoard={onGoToBoard} intakeCurrent={intakeCurrent} />
+            : <CollabDiscuss ctx={ctx} onClose={onClose} onCreated={onCreated} intakeCurrent={intakeCurrent} />}
         </div>
       </div>
     </div>
@@ -1020,9 +1092,14 @@ function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
    Removed 2026-09-28; every entry it had is one click away in the header. ── */
 
 export function CollabLayer({ onNav }: CollabLayerProps) {
+  useAuthoringReadSession(authService.getUser());
+  const scope = currentDirectoryScope();
   const [, setTick] = useState(0);
   const [open, setOpen] = useState(false);
+  const [openScope, setOpenScope] = useState(0);
   const [tab, setTab] = useState('task');
+  const visit = useRef({ id: 0, open: false, tab: 'task' });
+  const [intake, setIntake] = useState(0);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => C2C.subscribe(() => setTick(x => x + 1)), []);
@@ -1032,19 +1109,25 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   // needed by these forms. loadDirectory is re-entrant-safe and emits when it
   // settles, which re-renders through the subscription above.
   useEffect(() => {
-    if (open) void C2C.loadDirectory();
-  }, [open]);
+    if (open && openScope === scope.id) void C2C.loadDirectory();
+  }, [open, openScope, scope]);
 
   useEffect(() => {
+    const openCurrent = (mode: string) => {
+      const current = currentDirectoryScope();
+      if (!current.owner.sameRevision()) return;
+      visit.current = { id: visit.current.id + 1, open: true, tab: mode };
+      setIntake(visit.current.id); setTab(mode);
+      setOpenScope(current.id); setOpen(true);
+    };
     const openH = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      setTab((detail && detail.mode) || 'task');
-      setOpen(true);
+      openCurrent((detail && detail.mode) || 'task');
     };
     const keyH = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.shiftKey && e.key.toLowerCase() === 't') {
-        e.preventDefault(); setTab('task'); setOpen(true);
+        e.preventDefault(); openCurrent('task');
       }
     };
     window.addEventListener('c2c:open-collab', openH);
@@ -1062,24 +1145,39 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   }, [toast]);
 
   const currentCtx = C2C.getContext();
+  // UI dismissal retires this visit only; same-account server operations may
+  // still finish and publish their real receipt/board refresh below.
+  const intakeCurrent = () => visit.current.open && visit.current.id === intake && directoryCurrent(scope);
+  const closeIntake = () => {
+    if (!intakeCurrent()) return;
+    visit.current.open = false; setOpen(false);
+  };
+  const selectTab = (next: string) => {
+    if (!directoryCurrent(scope) || !visit.current.open || visit.current.tab === next) return;
+    visit.current = { ...visit.current, id: visit.current.id + 1, tab: next };
+    setIntake(visit.current.id); setTab(next);
+  };
   // Both callers report a task the server saved, so an open task board re-reads
   // (TaskBoard listens) instead of showing it only after a reload.
   const created = (t?: C2CTask) => {
-    setToast(t ? { type: 'task', t } : { type: 'msg' });
+    if (!directoryCurrent(scope)) return;
+    setToast(t ? { type: 'task', t, scope: scope.id } : { type: 'msg', scope: scope.id });
     try { window.dispatchEvent(new CustomEvent(TASK_SAVED_EVENT)); } catch { /* no window */ }
   };
 
   return (
     <>
       {/* the modal */}
-      {open && (
+      {open && openScope === scope.id && scope.owner.sameRevision() && (
         <CollabModal
+          key={`${scope.id}:${intake}`}
           tab={tab}
-          setTab={setTab}
-          onClose={() => setOpen(false)}
+          setTab={selectTab}
+          intakeCurrent={intakeCurrent}
+          onClose={closeIntake}
           ctx={currentCtx}
           onCreated={created}
-          onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }}
+          onGoToBoard={() => { if (intakeCurrent()) { onNav?.('tasks'); closeIntake(); } }}
         />
       )}
 
@@ -1088,7 +1186,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
           the title (2026-10-31 client demo); it names the task and the
           assignee the server chose. The 'msg' toast follows "Send & assign",
           which saved its task too — it said "not saved to the org board yet". */}
-      {toast && (
+      {toast && toast.scope === scope.id && (
         <div className="cl-toast" role="status">
           <span className="cl-toast-ic">{I.check}</span>
           {toast.type === 'task' && toast.t

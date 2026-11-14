@@ -1,0 +1,729 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts
+{
+  "timestamp": "2026-11-14T00:17:26.478Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > schedules the native lead in organization scope with a locked current writer and an atomic audit row 32ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > keeps an unchanged task identity, progress and manual assignee without audit churn 15ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > uses the acting editor only when the current native audit has no lead 17ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > compares canonical payloads independently of key insertion order and Date serialization 13ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is in_progress 15ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became in_progress
+{
+  "timestamp": "2026-11-14T00:17:30.778Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became closed
+{
+  "timestamp": "2026-11-14T00:17:30.791Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became cancelled
+{
+  "timestamp": "2026-11-14T00:17:30.803Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old in_progress close arrives last
+{
+  "timestamp": "2026-11-14T00:17:30.816Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old cancelled close arrives last
+{
+  "timestamp": "2026-11-14T00:17:30.825Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row date claim before closing any task
+{
+  "timestamp": "2026-11-14T00:17:30.836Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row number claim before closing any task
+{
+  "timestamp": "2026-11-14T00:17:30.845Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is closed 14ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is cancelled 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > withdraws the task when the current planned audit has no date 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became in_progress 15ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became closed 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became cancelled 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old in_progress close arrives last 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old cancelled close arrives last 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row date claim before closing any task 11ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row scope claim before closing any task
+{
+  "timestamp": "2026-11-14T00:17:30.858Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row lead claim before closing any task
+{
+  "timestamp": "2026-11-14T00:17:30.867Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses stale dates even when there is no existing task to protect
+{
+  "timestamp": "2026-11-14T00:17:30.876Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses a false completed outcome for the current cancelled audit
+{
+  "timestamp": "2026-11-14T00:17:30.884Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:04
+{
+  "timestamp": "2026-11-14T00:17:30.933Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:04"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:0
+{
+  "timestamp": "2026-11-14T00:17:30.939Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:0"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:-4
+{
+  "timestamp": "2026-11-14T00:17:30.946Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:-4"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row number claim before closing any task 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row scope claim before closing any task 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row lead claim before closing any task 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses stale dates even when there is no existing task to protect 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses a false completed outcome for the current cancelled audit 8ms
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refreshes same-date task text in place after a confirmed number change 18ms
+   → expected 'scheduled' to be 'unchanged' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refreshes same-date task text in place after a confirmed scope change 11ms
+   → expected 'scheduled' to be 'unchanged' // Object.is equality
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > uses the canonical date comparison even if a delayed caller asks to keep everything 13ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:04 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:0 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:-4 6ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:2147483648
+{
+  "timestamp": "2026-11-14T00:17:30.952Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:2147483648"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:4:extra
+{
+  "timestamp": "2026-11-14T00:17:30.959Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4:extra"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key audit:4
+{
+  "timestamp": "2026-11-14T00:17:30.966Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "audit:4"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses prefix reconciliation instead of treating it as an audited native key
+{
+  "timestamp": "2026-11-14T00:17:30.972Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "prefix": "qms-internal-audit:"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired project payload
+{
+  "timestamp": "2026-11-14T00:17:30.984Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired metadata payload
+{
+  "timestamp": "2026-11-14T00:17:30.991Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired description payload
+{
+  "timestamp": "2026-11-14T00:17:30.999Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired due time payload
+{
+  "timestamp": "2026-11-14T00:17:31.006Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:2147483648 6ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:4:extra 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key audit:4 6ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses prefix reconciliation instead of treating it as an audited native key 6ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired project payload 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired metadata payload 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired description payload 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired due time payload 7ms
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > preserves manual assignee, progress and identity on same-date number edits 14ms
+   → expected 'scheduled' to be 'unchanged' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > preserves manual assignee, progress and identity on same-date scope edits 11ms
+   → expected 'scheduled' to be 'unchanged' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a title race or failure 12ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a audit race or failure
+{
+  "timestamp": "2026-11-14T00:17:31.076Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task audit unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 5
+{
+  "timestamp": "2026-11-14T00:17:31.085Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:5"
+    },
+    "err": "The current native internal audit could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 99
+{
+  "timestamp": "2026-11-14T00:17:31.093Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:99"
+    },
+    "err": "The current native internal audit could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive actor
+{
+  "timestamp": "2026-11-14T00:17:31.102Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive organization
+{
+  "timestamp": "2026-11-14T00:17:31.110Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on removed membership
+{
+  "timestamp": "2026-11-14T00:17:31.120Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on viewer actor
+{
+  "timestamp": "2026-11-14T00:17:31.129Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Current Quality write authority is required"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on ambiguous membership
+{
+  "timestamp": "2026-11-14T00:17:31.137Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on unknown native state
+{
+  "timestamp": "2026-11-14T00:17:31.146Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The current native internal audit could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > checks the current actor even for a close-only request with no open task
+{
+  "timestamp": "2026-11-14T00:17:31.154Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a description race or failure 11ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a status race or failure 11ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a audit race or failure 12ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "existing",
+      "cancelled",
+      12,
+      Object {
+        "expectedStatus": "in_progress",
+        "organizationId": 7,
+      },
+      Object {
+        "select": [Function select],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 5 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 99 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive actor 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive organization 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on removed membership 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on viewer actor 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on ambiguous membership 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on unknown native state 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > checks the current actor even for a close-only request with no open task 7ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create failure
+{
+  "timestamp": "2026-11-14T00:17:31.166Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task writer unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after transition audit failure
+{
+  "timestamp": "2026-11-14T00:17:31.177Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task audit unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create audit failure
+{
+  "timestamp": "2026-11-14T00:17:31.188Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task audit unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after status CAS failure
+{
+  "timestamp": "2026-11-14T00:17:31.199Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The source task changed before its status could be reconciled"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create failure 13ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after transition audit failure 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create audit failure 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after status CAS failure 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refreshes same-date task text in place after a confirmed number change
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refreshes same-date task text in place after a confirmed scope change
+AssertionError: expected 'scheduled' to be 'unchanged' // Object.is equality
+
+Expected: "unchanged"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:184:53
+    182|     await pg.query(field === 'number' ? 'UPDATE qms_internal_audits SE…
+    183|     const desired = internalAuditTaskPlan({ ...native,...changed },12)…
+    184|     expect(await replaceSourceTask(input(changed))).toBe('unchanged');
+       |                                                     ^
+    185|     expect(await tasks()).toEqual([{ ...before[0],title: desired.title…
+    186|     expect(await audits()).toEqual([{ task_id: 'existing',command: 'ta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > preserves manual assignee, progress and identity on same-date number edits
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > preserves manual assignee, progress and identity on same-date scope edits
+AssertionError: expected 'scheduled' to be 'unchanged' // Object.is equality
+
+Expected: "unchanged"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:222:53
+    220|     await pg.query(field === 'number' ? 'UPDATE qms_internal_audits SE…
+    221|     const desired = internalAuditTaskPlan({ ...native,...changed },12)…
+    222|     expect(await replaceSourceTask(input(changed))).toBe('unchanged');
+       |                                                     ^
+    223|     expect(await tasks()).toEqual([{ ...before,title: desired.title,de…
+    224|     expect(h.create).not.toHaveBeenCalled(); expect(h.transition).not.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a title race or failure
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a description race or failure
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a status race or failure
+AssertionError: expected 'scheduled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:248:86
+    246|       };
+    247|     }
+    248|     expect(await replaceSourceTask(input({ scope: 'Updated current aud…
+       |                                                                                      ^
+    249|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+    250|     expect(h.create).not.toHaveBeenCalled(); expect(h.transition).not.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a audit race or failure
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "existing",
+      "cancelled",
+      12,
+      Object {
+        "expectedStatus": "in_progress",
+        "organizationId": 7,
+      },
+      Object {
+        "select": [Function select],
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:250:71
+    248|     expect(await replaceSourceTask(input({ scope: 'Updated current aud…
+    249|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+    250|     expect(h.create).not.toHaveBeenCalled(); expect(h.transition).not.…
+       |                                                                       ^
+    251|     expect((await pg.query('SELECT scope FROM qms_internal_audits WHER…
+    252|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 44 passed (52)
+   Start at  00:17:23
+   Duration  7.43s (transform 1.58s, setup 149ms, import 2.74s, tests 4.16s, environment 0ms)
+

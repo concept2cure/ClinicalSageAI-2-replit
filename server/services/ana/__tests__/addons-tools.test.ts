@@ -56,6 +56,10 @@ describe('Effort + COI tools — context + validation guards', () => {
 });
 
 describe('Sponsored-programs connector tools — context + input guards', () => {
+  it.each([['search_grants_gov', { query: 'cancer' }], ['screen_restricted_party', { party_name: 'Acme' }]] as const)('%s refuses a valid query without an authenticated actor', async (name, input) => {
+    const out = JSON.parse(await getToolHandler(name)!({ ...input, userId: 999 }, { organizationId: 1 } as never));
+    expect(out.error).toContain('Current authenticated user required');
+  });
   it('search_grants_gov requires tenant context', async () => {
     const out = JSON.parse(await getToolHandler('search_grants_gov')!({ query: 'cancer' }, { humanConfirmed: true } as any));
     expect(out.error).toMatch(/tenant context/);

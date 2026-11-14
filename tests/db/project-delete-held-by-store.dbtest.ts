@@ -72,17 +72,24 @@ beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 2 });
   await cleanup().catch(() => {});
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug) VALUES ($1, $2) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
+    `INSERT INTO organizations (name, slug, status) VALUES ($1, $2, 'active')
+     ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status RETURNING id, uuid`,
     [`${PROBE} org`, `${PROBE}-org`],
   );
   orgId = Number(org.rows[0].id);
   orgUuid = String(org.rows[0].uuid);
   const user = await owner.query(
-    `INSERT INTO users (email, name, password_hash) VALUES ($1, 'PD', 'x')
-     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+    `INSERT INTO users (email, name, password_hash, status) VALUES ($1, 'PD', 'x', 'active')
+     ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status RETURNING id`,
     [`${PROBE}@dbtest.local`],
   );
   userId = Number(user.rows[0].id);
+  // The router reads current membership; the harness's claimed role is not authority.
+  await owner.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
+     ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`,
+    [orgId, userId],
+  );
   const ws = await owner.query(
     `INSERT INTO client_workspaces (organization_id, name, slug) VALUES ($1, 'Main', $2) RETURNING id`,
     [orgId, `${PROBE}-ws`],

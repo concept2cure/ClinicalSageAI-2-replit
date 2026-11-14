@@ -19,7 +19,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { TurnSummary, TurnSummarySheet } from '../TurnSummary';
 import { AnaActivity } from '../AnaActivity';
@@ -36,7 +36,7 @@ beforeEach(() => {
   fetchMock.mockReset();
   (globalThis.fetch as unknown) = fetchMock;
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 const EVENTS: TimelineEvent[] = [
   { seq: 1, at: at(0), round: 1, kind: 'note', text: 'I will look in the Vault first.' },
@@ -79,6 +79,25 @@ function wordsOf(li: Element): string {
 
 /** Each row as its words: what a person reads, top to bottom. */
 const rowTexts = (container: HTMLElement) => Array.from(container.querySelectorAll('.ana-summary-list > li')).map(wordsOf);
+
+it('keeps historical worker estimates explicitly recorded across time and reload, never as a current countdown', () => {
+  vi.useFakeTimers(); vi.setSystemTime(T0);
+  const worker: TimelineEvent = { kind: 'worker', seq: 1, at: at(0), round: 1,
+    parent: 'parent_1', worker: 'w1', revision: 4, parentStep: 's1', task: null, role: 'verify', workKind: 'verification',
+    label: 'Check assigned work', phase: 'checking', outcome: null, completed: 3, total: 5, basis: 'deterministic_checks',
+    parentDisposition: 'pending', receipt: { eventId: '10000000-0000-4000-8000-000000000001', eventHash: SHA },
+    estimate: { basis: 'observed_check_durations', scope: 'remaining_checks', lowerMs: 1000, upperMs: 2000, sampleCount: 3, at: at(0) } };
+  const turn = turnWith({ timeline: [worker, { kind: 'end', seq: 2, at: at(0), round: 1, outcome: 'answered', stoppedReason: null }] });
+  const { unmount } = render(<TurnSummary turn={turn} live={false} />);
+  const recorded = screen.getByText(/^Recorded estimate at /);
+  expect(recorded.textContent).toContain('approximately 1–2 seconds');
+  expect(recorded.textContent).toContain(new Date(at(0)).toLocaleString());
+  expect(screen.queryByText(/^Remaining checks:/)).toBeNull();
+  act(() => { vi.advanceTimersByTime(60_000); });
+  expect(screen.getByText(/^Recorded estimate at /)).toBe(recorded);
+  unmount(); render(<TurnSummary turn={turn} live={false} />);
+  expect(screen.getByText(/^Recorded estimate at /).textContent).toBe(recorded.textContent);
+});
 
 describe('1. (client half) the same rows live and from the record', () => {
   it('rows built from the live frames equal the rows built from the /summary payload', async () => {

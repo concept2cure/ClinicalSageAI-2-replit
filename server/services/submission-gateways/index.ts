@@ -36,7 +36,7 @@ import { resolvePdfARequirement } from '../ectd/pdfa-requirement';
 import { buildLeafManifest, type SequenceLeafManifestEntry } from '../ectd/sequence-manifest';
 import { assertBundleLeafSecurity } from './bundle-leaf-security';
 import { pool } from '../../db';
-import { clientAccountRefusal, resolveGatewayAccount, resolveGatewayAccountForUse, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
+import { captureGatewayTransmitRequest, clientAccountRefusal, resolveGatewayAccount, resolveGatewayAccountForUse, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
 import { ADAPTER_UNSOURCED } from './transport-refusals';
 import { archiveSentPackage, type SentPackageRecord } from './sent-package-archive';
 
@@ -282,6 +282,7 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
       let sentLeaves: SequenceLeafManifestEntry[] | undefined;
       try {
         assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
+        req = captureGatewayTransmitRequest(req);
         assertDispatchBinding(req);
         sentLeaves = sentLeafManifest(req);
         if (UNSOURCED_GATEWAYS.has(key)) {
@@ -325,14 +326,14 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
         // The exact bytes, kept before they leave: the last step here, so a
         // package refused above is not stored, and a copy that cannot be kept
         // refuses the send (sent-package-archive.ts, 2026-10-29 W5/D7).
-        sentPackage = await archiveSentPackage(req, impl.region, impl.gateway);
+        sentPackage = Object.freeze({ ...await archiveSentPackage(req, impl.region, impl.gateway) });
         // Archival can await remote storage. A client may revoke or rotate the
         // account during that wait, so the earlier resolved credentials alone
         // no longer authorize this attempt. Recheck without changing identity
         // or falling back to a platform account, immediately before transport.
         account = await resolveGatewayAccountForUse(pool, account, {
           organizationId: req.organizationId, region: impl.region, gateway: impl.gateway, environment: req.environment,
-        });
+        }, req, sentPackage);
       } catch (err) {
         throw markRefusedBeforeWire(err);
       }

@@ -1,0 +1,18 @@
+{
+  "programId": "8ec9eeb3-fedc-4113-8baf-101c63e34216",
+  "documentId": "3cfb277f-7240-421c-8149-40876dbbd244",
+  "expected": "baseline",
+  "providerCalls": 0,
+  "errors": [],
+  "pendingDisabled": false,
+  "prepared": {
+    "projectId": "8ec9eeb3-fedc-4113-8baf-101c63e34216",
+    "documentId": "3cfb277f-7240-421c-8149-40876dbbd244",
+    "sectionId": null,
+    "sectionCode": null,
+    "savedRecordOnly": true,
+    "authoringSectionId": null
+  },
+  "matchingSavedSections": 0,
+  "outcome": "reproduced"
+}

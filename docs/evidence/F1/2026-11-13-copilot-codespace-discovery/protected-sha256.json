@@ -1,0 +1,9 @@
+{
+  ".github/copilot-instructions.md": "255c995a7e687d5f1c6a41bb613a1a6193e3eb6282a799bf02e3425af4b5a4ae",
+  ".github/COPILOT_INSTRUCTIONS.md": "ecf76d8e25dd7b766e35f428d154aea13c1bdb52211ed0d9ac8c875190347d8a",
+  "AGENTS.md": "d8f04719726e6a63b2d02afbf0584d9e50d0c67f256095fd79f1ebc8f77cc3e1",
+  "CLAUDE.md": "780bc5a494d4cb1fbb5e706e0dbc52229bb9a3e32236b7ebe8c810b7f1d6a169",
+  "docs/design/ONE_DESIGN_PLAN.md": "24c813b2f596e64010677878cb5d492c50ab280a8a6f948f842f727b20d3014a",
+  "docs/design/one-design-plan.json": "73b2962e059bf63ef89e671a1bac51fe2cfd5a80cd628ff20da885a327ec3cae",
+  "scripts/ci/check-one-design-plan.mjs": "c1d934ff03331bccc8c6c11646c2f3693c424e5623699b462472b6a46aed1188"
+}

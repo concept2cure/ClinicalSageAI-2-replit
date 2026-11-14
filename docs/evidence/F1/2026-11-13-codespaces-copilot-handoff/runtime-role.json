@@ -1,0 +1,10 @@
+{
+  "observedAt": "2026-11-13T22:26:46.343Z",
+  "source": "APP_DATABASE_URL from the live server process environment; values not printed",
+  "runtime_role": "app_service",
+  "row_security": "on",
+  "superuser": false,
+  "bypass_rls": false,
+  "owned_public_tables": 0,
+  "ownerAliasPresent": false
+}

@@ -198,6 +198,16 @@ this session.
 
 ### Holds on other files (one session per file, plan §4.6)
 
+**Internal-audit task currentness, Codex 2026-11-13 (F1; ends on publication or 2026-11-14 02:00 UTC):** holds only the unheld dispatcher/current-plan validation/transactional reconciliation regions of `server/services/tasking/source-task.ts` for existing `qms_internal_audit`, plus new test-only `server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts`. Root owns only the obsolete generic-audit example in `__tests__/source-task-quality-project.test.ts` (move the generic-path control to another existing generic source). Existing `nativeTaskPlacement` and P-111 producer holds are preserved byte-for-byte; no training, periodic-review semantics, UI, route, schema or model changes. Inventory `.design/claude-convergence/F1-QUALITY-INTERNAL-AUDIT-TASKS-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-quality-internal-audit-tasks/`. Root owns Git, the sole compiler and integration.
+
+2026-11-14 internal-audit task source completion: all implementation files are frozen, with independent review clear. Final SQL/adjacent validation passes157/157 across eight suites, including53 audit cases, and scoped lint has zero errors/warnings. Delayed plans are checked against the current locked native record; same-date text refresh preserves task identity, manual assignment and progress with text/status CAS and transactional lineage. The initial close/replacement candidate and its failed text-preservation controls remain in evidence as superseded. Held placement/planner code is unchanged. These source/evidence holds release with canonical publication; root retains only Git/compiler/integration receipts. No provider or hosted-Codespace qualification is claimed.
+
+2026-11-14 internal-audit integration: canonical changes through `985559c5b` are preserved by normal merge. The first compiler diagnoses seven fixture-only unknown-row errors; three query type annotations fix them without changing assertions or production source. Typed audit53/53 and lint0 pass again. The full Node22 compiler at `398d9921c` passes0/baseline0 with native exit0. Root publishes this batch through normal hooks; the original failed and final passing receipts remain in the evidence packet above.
+
+**Native Quality currentness, Codex 2026-11-13 (F1 D2/D4; ends on publication or 2026-11-14 00:00 UTC):** holds `server/services/clinical-regulatory-evidence/record-source.ts` current-title admission only and its `__tests__/record-source-access.test.ts`; separately `data-room-search.ts` catalogue scope/refresh/final checks and `__tests__/native-catalogue-current-records.pglite.test.ts`. Focused new test-only files may be named before edits. Existing Quality projection/content, training, source-access, Project and Reporting UI holds remain intact. Pre-edit inventory `.design/claude-convergence/F1-NATIVE-QUALITY-CURRENTNESS-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-native-quality-currentness/`. Root owns integration, the sole compiler and Git; no provider calls or policy changes.
+
+**Copilot Codespaces handoff, Codex 2026-11-13 (F1; ends on publication or 2026-11-13 23:00 UTC):** holds only `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md`, the Copilot handoff link in `docs/operations/CODESPACES_NEON_OPENAI_RECOVERY.md`, and this continuation's existing design/evidence recovery packet. Link current roadmap, coordination, startup and presenter owners from the guide the devcontainer already opens. Both `.github` instruction files remain unchanged: the normal plan gate requires a founder decision for them, and the exact proposed correction is retained in the recovery design packet. No product, startup, model or credential changes. Root owns Git and normal publication.
+
 **Codespaces demo recovery, Codex 2026-11-13 (F1/L1 D1/D2; ends at the slice publication or 2026-11-13 21:30 UTC, whichever is first):** holds only `.devcontainer/post-start.sh`'s CSR browser-bootstrap/preparation block (not the provider-value comparison/restart lines); a new test-only `scripts/ops/codespaces-csr-browser.test.mjs`; the `codespaces:doctor:test` script in `package.json`; and `scripts/demo/launch-demo/packs/lumen.mjs`'s report/bundle/schedule helpers plus their focused test. The provider-restart owner's `codespaces-startup.test.mjs` is untouched. Inventory `.design/claude-convergence/F1-CODESPACES-DEMO-RECOVERY-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-demo-recovery/`. No model/provider/credential behavior, UI or governed release gate change. Root owns dependency installation, Git and final image/branch checks.
 
 Publication note from the Codex F1 continuation, 2026-11-06: after two ref-race
@@ -1777,3 +1787,281 @@ continued runtime health. No implementation hold remains.
 2026-11-13 F1 Codespaces continuation scoped hold: existing `docs/evidence/DEMO/2026-11-05-csr-lifecycle/walk-common.cjs` only for the reproduced eight-row Uploads preparation blocker. Root owns this repair; no product-screen changes.
 
 2026-11-13 F1 Codespaces continuation release: bootstrap key recovery, existing CDISC upload-list helper and operator/evidence work verified; all continuation holds released after integration. Native Bookworm setup/CDISC prepare/cached-start and Lumen report review path passed; hosted Codespaces API403 and no-provider limits retained in evidence.
+
+### Codex continued implementation — activity ownership and credential audit, 2026-11-13
+
+The founder asked to continue all existing work after the demo handoff. This **F1 / W1 / D2** slice starts at
+`2a667bf51`; the Anna epic owner's latest note releases all source (`cc5a05d4b7`). The following narrowly scoped
+holds end at canonical publication or **2026-11-14 01:00 UTC**, whichever comes first. Other lanes retain their
+own holds; no plan/ledger or qualification status is changed.
+
+| Holder | Existing files and scope |
+|---|---|
+| Credential agent | `server/services/connectors/connector-registry.ts` prior-state/audit-reason handling only; `server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts` |
+| Activity agent | `client/src/concept2cure/v2/useAgentActivity.ts` background reader only; `client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx` regression coverage |
+| Measured-time agent | `server/services/ana/sub-agent.ts`, `sub-agent-stream.ts`, `run-events.ts`, `turn-plan.ts` for the existing deterministic-check estimate only; existing `sub-agent.test.ts` and `run-coordination-dispositions.test.ts` tests |
+| Credential agent, second bounded repair | Existing connector registry credential-use/search functions; `server/services/integrations/connector-search.ts`, `server/routes/knowledge-base.ts`, `server/services/ana/AnaToolExecutor.ts` connector-search call sites only, and `server/services/deep-research-orchestrator.ts`; existing connector/search regression tests only, named before edits |
+| Activity agent, adjacent fixture repair | `client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx` two stale ordinary-refresh notice cases only; activity source is committed and released to root |
+| Root | This entry, existing `docs/evidence/ANA-AGENTS/2026-09-27/README.md`, integration, Git and the sole full compiler |
+| Root, released estimate display | Existing `useAgentActivity.ts` worker formatter, `AnaWorkPanel.tsx`, `TurnSummary.tsx`, and existing `conversationRemembers.test.tsx` / `turnSummary.test.tsx`; live observation-window expiry and explicitly recorded historical estimates only |
+
+The evidence README's dated **What already exists** inventory precedes implementation. Both agents reproduce
+their specific failures before fixes. Read-only actor-propagation and measured-ETA investigations hold no further
+source beyond the assignments above. Measured-time implementation follows the existing evidence README's explicit
+whole-check timing contract. Root now owns the released worker-time formatter and its existing panel/conversation
+tests. Connector actor propagation follows the evidence README's trusted-caller contract and the exact second
+credential assignment above; the agent names any additional existing regression file before changing it.
+No new source file, screen, route, table, provider, model or dependency is approved by this continuation.
+
+**2026-11-13 implementation and runtime completion:** all assigned source is committed and frozen. Existing
+credential reason suites pass90/90, connector actor suites198/198, measured-check producer suites189/189 and
+the combined activity/Reporting/estimate/Summary UI suites134/134; overlapping counts are not added. Full
+TypeScript passes0 against baseline0 at `15b41dda4`, after fixing four fixture-only type annotations; the two
+affected suites pass121/121. Changed-file lint has no errors or warning growth. Merged doctor126/126 and
+AnA verifier47/47 pass without provider requests. Normal default startup in the existing declared Codespace
+image exits0 and serves that exact candidate; all seven cached stamp/log hashes and modification times remain
+unchanged. Six actual current-account/project UI checks pass, including default-off Show team and all14 existing
+administration credential cards. Zero credential writes, provider turns or page errors. The observed project has
+no running workers and no available overall ETA; no fake progress is inserted. Database/schema/storage are
+healthy; AnA remains explicitly `no_provider`, so this is not a live-model or qualification pass. Independent
+reviews close all in-scope findings. The existing evidence README records the exact scope and limits.
+**All source and evidence holds in this continuation's table release with canonical publication of this entry.**
+Root retains only ordinary Git publication and final version/health verification; the rehearsal agent remains
+runtime/scratch-only. Other lanes' holds and broader roadmap/model acceptance remain unchanged.
+
+**Codex provider/AnA completion repair, 2026-11-13 (F1 W1 D1/D2), completed; holds released by this source commit:** repaired only `scripts/ops/codespaces-doctor.mjs`, `scripts/ops/codespaces-doctor.test.mjs`, `scripts/ops/verify-ana-answers.mjs`, `scripts/ops/verify-ana-answers.test.mjs`, the existing recovery guide's AnA-check paragraph and its own evidence/design packet. Two scoped workers split doctor and AnA verifier; the doctor split private `codespaces-provider-receipt.mjs` and focused `codespaces-doctor-receipt-cases.mjs` inside scripts/ops to preserve lint limits and the existing test command. Root owns integration/Git. Correct false-success completion receipts only; no provider call, new key, route, model or approval change.
+
+**Codex collaboration-context repair, 2026-11-13 (F1 W1/D2), completed; holds released by this source commit:** repaired only `v2/surfaces/AuthoringCollab.tsx` and a focused lock-context test (the two existing auth test mocks only preserve real exports), plus `v2/surfaces/CollabLauncher.tsx` directory/session lines (not S12 workProject lines) and a focused directory-context test. Existing takeover intent must not follow a different section, and the existing directory must not retain a previous account. Root owns evidence/runtime/Git; two workers split those files. TaskBoard, TaskTray, CommunicationCenter and other held screens remain with their owners. No external messages, new module, route, service, table, model or provider change.
+
+## Codespaces and Copilot handoff — 2026-11-13
+
+F1/W1 D1–D2, Codex continuation: holds only `.devcontainer/AGENT_RULES.md` and the existing Codespaces operator guide for canonical pull/start/verification handoff. Ends at publication or 2026-11-13 23:45 UTC, whichever comes first. Existing boot/doctor/demo source is read-only unless an actual reproduced blocker is reserved separately; no other owner is paused. Root owns Git, installation and all runtime/check jobs. Inventory `.design/claude-convergence/F1-CODESPACES-COPILOT-HANDOFF-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/`. No protected instruction/plan change, UI change, new capability or model/credential-policy bypass.
+
+2026-11-13 F1 Codespaces/Copilot handoff source completion: the existing agent rules and single operator procedure are complete; these two documentation holds release with publication. Fresh declared-image setup passes 81/81 at its named baseline; integrated focused checks pass 173/173 and scoped lint passes. The real synthetic CSR browser rerun passes with 119/119 saved bodies, physical draft Word/PDF and scientific preview; the original failed observer and interrupted startup remain explicit. Root retains only its evidence/design/this-entry receipt scope and owned local runtime until the complete normal-start/current-stamp check. No other owner is paused; no provider, qualification or hosted-Codespace acceptance is claimed.
+
+2026-11-13 F1 Codespaces/Copilot final runtime receipt: source publication `50019d14e` is confirmed on canonical origin. All 89 normal lint gates passed. The exact-image local normal startup completes after the explicitly documented managed-proxy download recovery; all three current tree/identity seed stamps match and the native seven-step CDISC browser preparation passes through data freeze. Cached startup exits 0 in 5.9 seconds. `/api/version` matches published `50019d14e`; `/readyz` is 503 only for expected `ana: no_provider`. The packet retains earlier interrupted/failed verifier attempts, and no live provider, scientific release, filing delivery, hosted Codespace or 10,000-page acceptance is claimed. All continuation holds release with this evidence publication; root only performs the final published-HEAD restart/health check.
+
+### Codex final integration follow-up — delayed billing action ownership, 2026-11-13
+
+The activity/credential/measured-check continuation is published at canonical
+`277a47e767c5fed14023109b2c29c4ee0b84f5bb`, confirmed by Git and connected GitHub; all89 CI lint gates and full
+TypeScript0/baseline0 pass. **Every hold in that continuation's table is released.** A read-only review of the
+incoming `1cddec661` checkout repair finds a delayed response UI-attribution gap; its existing13 contract tests
+pass and server authorization is unchanged. The evidence README records the pre-edit inventory and bounded
+repair using the existing `captureAuthoringSession` helper.
+
+Under F1/W1, the keyboard verification agent now holds only existing
+`client/src/concept2cure/v2/surfaces/LicensingSurface.tsx` checkout/portal callback response ownership and
+`client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx`. Root holds only this entry, the existing
+AnA evidence README, integration/Git and the sole full compiler. These holds end at publication or
+**2026-11-14 01:00 UTC**, whichever comes first. No shared helper, billing backend, status/invoice reader,
+new source file, screen, provider, dependency, model or qualification gate is in scope. The rehearsal agent
+remains runtime/scratch-only, with the existing demo held stable until final version verification.
+
+**Follow-up completion:** corrected exact-baseline RED proves14 actual assertion failures and five real ordinary
+refresh controls pass; final focused32/32 and adjacent50/50 pass on the frozen source. Zero lint errors and no
+warning growth (three existing source warnings, zero test warnings), existing code-line ceiling preserved.
+Independent final review has no finding. Only the two held files change; shared helper, transport, status/invoice
+readers and server authority remain unchanged. **These two source holds and root's evidence/coordination holds
+release with canonical publication of this completion.** Root then retains only Git receipts and the ordinary
+cached exact-version/health check in the existing local Codespace-image runtime; no live-model qualification,
+hosted Codespace, Stripe settlement or broader regulatory/commercial acceptance is declared.
+
+Publication request, Codex collaboration-context repair, 2026-11-13 23:10 UTC: two canonical ref races followed every normal gate passing, including full compiler0 and 89 CI gates each time. Under rule6, a 15-minute publication window is requested from the coordinating session. No callable cross-session channel reaches it from this task; no other lane is claimed paused. Ordinary fetch/merge/retry continues, with no force or skipped hooks. Verified source279a6f144, both disjoint canonical billing/activity/connector updates preserved.
+
+**Codex collaboration-intake continuation, 2026-11-13 (F1 W1/D2; ends at publication):** holds only CollabLauncher.tsx QuickTask/CollabDiscuss request outcome and intake-lifetime callbacks, plus focused intake/outcome tests and its own design/evidence. S12 workProject mapping lines, directory/account guards and other held task/agency screens are preserved. Two read-only audits reproduced/inspect delayed-response and lost-acknowledgement cases; one worker owns all launcher source edits after both baseline regressions are retained. Root owns runtime, integration and Git. No new screen/API/service/model or external message.
+
+**Collaboration-intake completion:** 59/59 focused and adjacent tests pass on the frozen source; genuine extended RED20 failures/10 controls is retained. Unknown task acknowledgements block immediate duplicate writes without inventing a persisted row; definite refusals and audit rollbacks allow correction. Exact intake visits protect replacement drafts while same-account submitted writes and optional task chains finish. Controlled running-UI RED/GREEN checks pass with no forwarded task/message mutation; lint has no errors or warning growth. Independent review has no functional blocker. Static note now describes successful creation conditionally. This continuation's source/design/evidence holds release with canonical publication; root retains integration/Git and owned runtime only. OpenAI setup stays deferred.
+
+Publication request, Codex project-management/intelligence repair, 2026-11-13 23:34 UTC: two normal canonical pushes lost remote-ref races after compiler 0 and all 89 CI gates passed. Under the existing rule 6 guidance, a 15-minute slot is requested for 23:50 UTC to 2026-11-14 00:05 UTC if the coordinating session can allocate it (at least 15 minutes ahead). No callable cross-session channel reaches that session here, and no other lane is claimed paused. Ordinary fetch/merge/retry continues with no force or skipped hook. Source `e36d1650a` preserves native Quality scope in the existing AnA catalog and real membership in the deletion fixture; the published billing, collaboration and Quality-currentness repairs are retained. This request ends on successful publication.
+
+2026-11-13 F1 Codespaces/Copilot integration closure: later canonical actor/activity, billing-session and collaboration-context repairs are preserved by normal merges. This continuation records full compiler0/baseline0 at `a10861e8c` and `a5c92a646`, plus separate444/50/66 focused runs and real119-section CSR working-copy/preview browser reruns. The final collaboration merge `75247cc6d` has no production TS/config/package delta against canonical `532cf4145`; prior and incoming compiler receipts retain their own revisions. All source/evidence holds are released; root retains only ordinary publication and final exact-version/readiness verification. No live provider, clinical qualification, agency delivery, hosted Codespace or10,000-page claim is made.
+
+Publication request, Codex Codespaces/Copilot handoff, 2026-11-13 23:36 UTC: two canonical ref races followed all 89 normal lint gates passing. Under rule 6, this continuation requests a 15-minute publication window (23:36–23:51 UTC) from the coordinating session. No callable cross-session channel reaches that session here, and no other lane is claimed paused. The ordinary merge/push path continues. Latest native Quality source is preserved at merge `f774de54a`; its 40 focused cases, clean lint and real CSR browser pass. Earlier compiler, source and browser receipts remain named; no hosted/live-provider/clinical release claim.
+
+### Codex fix-all continuation — 2026-11-13 23:58 UTC
+
+The founder asked to fix all remaining findings after publication `5a552f142`.
+This F1/W1 continuation reserves only the existing Data Room selection owners below,
+until publication or 2026-11-14 02:00 UTC, whichever comes first. Other lanes are not
+paused. The pre-edit inventory and exact-ID/all-or-nothing completion contract are
+in `docs/evidence/F1/2026-11-13-project-source-pin-read-audit/README.md`.
+
+| Holder | Existing files and scope |
+|---|---|
+| Server worker | `server/routes/c2c/projects.ts` existing sources GET only, `server/services/clinical-regulatory-evidence/data-room-search.ts` exact-ID query parsing/projection only, and existing source-route/search tests; canonical source admission is reused, no new reader or route |
+| Client worker | `client/src/concept2cure/v2/surfaces/ProjectHome.tsx` existing Data Room selection/actions only, `surfaces/projectSources.ts`, and existing Data Room/source-read/ownership/disposition tests; no other ProjectHome feature |
+| Root | This record, existing audit/evidence, isolated synthetic database reproduction, integration/Git and sole whole-program compiler/build |
+
+The separate private-profile offboarding finding is being reproduced against the
+existing isolated UTF8 PostgreSQL fixture database with `app_service` and enforced
+RLS. The founder has been asked to choose the export/erasure treatment explicitly
+left open at lines 721–730; no disclosure, erasure-policy, private-profile RLS,
+plan/ledger, purge door or test-acceptance change is authorized by this reservation.
+No provider call, new screen/service/table/tool/dependency or filing/PQ claim.
+
+**Fix-all selection completion, 2026-11-14:** source and tests are frozen at
+`b40217a60`, preserved after canonical merge `ff42399a7` through `985559c5b`.
+Server128/128 and client155/155 pass; no skips, lint errors or warning growth.
+Independent client lifecycle review closes all findings. The complete merged
+production build exits0, and the bounded unpublished-source secret scan has
+zero findings/errors. Workers are closed; root retains only integration/Git,
+the normal compiler/push gates and exact remote verification. These selection
+holds release on publication. The three isolated offboarding failures remain
+explicitly pending the founder's profile export/disposal choice; no profile
+RLS, export, purge, plan, gate or assertion was changed to hide them.
+
+Publication request, project selection continuation, 2026-11-14 01:51 UTC:
+two normal retries passed all 89 gates and the full compiler with 0 errors,
+then lost ref races to 3692f44ad and cd407d470. Under rule 6, a 15-minute publication
+slot is requested for 02:10–02:25 UTC (at least 15 minutes ahead) if the coordinating session
+can allocate it. No callable cross-session channel reaches that session here;
+no other lane is claimed paused. Ordinary fetch/merge/push continues without
+force or skipped hooks. This continuation's frozen selection-file reservation
+extends only through 02:30 UTC or publication, whichever comes first, for Git
+integration; no additional implementation scope is taken. The request ends
+on successful publication.
+
+**Codex collaboration receipt follow-up, 2026-11-14 (F1 W1/D2; ends at publication):** holds only existing CollabLauncher.tsx Collaborate message/optional-task acknowledgement handling and focused receipt tests, plus its own design/evidence. Existing QuickTask/lifecycle/account fixes and S12 mapping are preserved; TaskBoard/TaskTray/CommunicationCenter and other held screens stay untouched. Two audits are test/read-only; one source owner follows retained RED proofs. Root owns runtime/integration/Git. User reports AnA working in their Codespace; no provider setup or live message is in scope.
+
+**Collaboration receipt follow-up completion:** source frozen with97/97 focused/adjacent tests and23/23 shell/accessibility checks. Genuine message RED15fail/10controls and optional-task RED8fail/12controls, plus controlled running-UI RED/GREEN, are retained. Partial message/task outcomes now use actual persisted identities without inventing rows or automatically resending a confirmed message. The existing shellChromeTruth auth mock retains real exports; the same6 fixture failures reproduce at canonical baseline before its repair. Zero lint errors or warning growth; independent review has no blocker. This continuation's launcher/test/design/evidence holds release with canonical publication. Root retains ordinary Git integration and owned local runtime only. User confirms AnA working in their Codespace; provider setup is untouched.
+
+### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
+
+The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical
+`841c41466`. Holds below end at publication or **2026-11-14 02:00 UTC**, whichever comes first; no other owner is
+paused and no plan/ledger or qualification status changes.
+
+#### What already exists
+
+`ana/turn-plan.ts` already owns the active-worker predicate and locked, idempotent peer-message append. Its
+metadata-only path omits recipient lifecycle admission; private text preparation checks it before later awaits.
+Extend that same locked append, preserving existing sender/private-source/limit/replay behavior. The existing
+`ana/__tests__/run-coordination-dispositions.test.ts` supplies the real PGlite fixture. Retired agent monitors and
+the deleted run-control registry supply no replacement admission boundary.
+
+Peer review follow-up, named before edits: the same agent may snapshot message input primitives, basis rows and
+model metadata before any preparation/append await, preserving one intent/capture/event identity even if an
+internal caller mutates its input object. Existing production parsed callers provide fresh objects; no external
+exploit is claimed. This remains inside `turn-plan.ts`'s message method and its existing coordinator regression
+home; the existing `turn-plan-and-context.test.ts` is also reserved for a private-text race/snapshot control if its
+fixture supports one without changing production source or policy elsewhere.
+
+The two reserved coordinator test homes may relocate the existing lost-COMMIT/idempotence case unchanged
+between them, using the same canonical fixture and preserving every assertion, to keep the added private
+preparation/recipient-stop control readable within both existing code-line ceilings. No new fixture or file.
+
+`submission-gateways/gateway-accounts.ts` and `index.ts` already bind encrypted account authority across archive,
+but lack the roadmap's per-use credential event and fresh initiating-person check there. Reuse unchanged
+`part11/signing-authority-gate.ts` policy and `audit/audit-write-outcome.ts`; record actual account ID/last-change
+and retained package references, not an invented grant/revision or private fingerprint. Capture the existing
+server-generated authorization actor before awaits, matching the request actor; do not describe that plain typed
+structure as private signature proof. The existing `gateway-accounts.test.ts` is the primary regression home.
+The AnA evidence README records the full pre-edit contract, searches and limits. RIM's held FDA/ceremony/filing
+files and comment-only index work remain untouched; the index hold below is its account-use functional callsite.
+
+| Holder | Existing files and exact scope |
+|---|---|
+| Peer lifecycle agent | `server/services/ana/turn-plan.ts` recipient admission in the locked message append only; existing `server/services/ana/__tests__/run-coordination-dispositions.test.ts` |
+| Gateway custody agent | `server/services/submission-gateways/gateway-accounts.ts` account-use identity/audit checkpoint; `index.ts` functional request snapshot and existing account-use callsite only; existing `__tests__/gateway-accounts.test.ts`; any additional existing compatibility fixture named before edits |
+| Root | This inventory/coordination entry, existing `docs/evidence/ANA-AGENTS/2026-09-27/README.md`, integration, Git and the sole full compiler |
+
+No new source file, table, route, model, provider, dependency or human-authorization policy is introduced. This
+proves bounded message admission and pre-adapter credential use; final FDA wire freshness and broader acceptance
+retain their existing owners and evidence gates. Implementation agents make no Git/runtime/compiler changes.
+
+Gateway compatibility regression homes named before edits: existing `submission-gateways/__tests__/`
+`transmit-authorization.test.ts`, `refused-before-wire.test.ts`, `transmit-guard-reports-checks.test.ts`,
+`transmit-records-what-was-sent.test.ts`, `transmit-leaf-security.test.ts`, `sent-package-kept.test.ts`,
+`pre-transmit-check.test.ts` and `fda-esg-client-account.test.ts`. Only explicit valid-current-signer and durable
+audit fixture outcomes may be reconciled where the tightened checkpoint actually reaches them; production
+exemptions or mocking away account freshness are not allowed. Primary PGlite custody tests must keep the real
+current-signing policy, account store and chained audit. The gateway owner allocates these disjoint fixtures to
+a helper after its interface is stable; root remains the sole Git/compiler owner.
+
+Further existing gateway regression homes named before any compatibility edit: `pdfa-requirement.test.ts`,
+`sent-record-rederive.test.ts`, `gateway-qualification.test.ts`, `health-canada-gateway.test.ts`,
+`pmda-gateway-unverified.test.ts`, and `governed-transmit-signature.test.ts`,
+`governed-transmit-pretransmit-record.test.ts`, `governed-transmit-leaf-manifest.test.ts`,
+`governed-transmit-independence.test.ts`, `governed-transmit-unapproved.test.ts` in the same existing test folder.
+Only reproduced fixture incompatibilities from the stricter checkpoint may be reconciled; signing, independence,
+package, qualification and before-wire refusal assertions remain. The gateway owner runs the integrated suites
+after source freeze and assigns any failing disjoint fixture to the compatibility helper.
+
+**Implementation completion:** all assigned source and test workers are frozen and closed. Final peer suites
+pass98/98, with eight lifecycle RED cases, three snapshot RED cases and the private prepare/stop race RED under
+an exact-source one-predicate removal. Final gateway integration passes205/205 across19 suites, including the
+primary39 actual account/member/chained-audit cases. Nine existing compatibility fixtures are reconciled without
+weakening refusal/freshness/qualification assertions; the deterministic PDF round-trip fixture's original host
+dependency is reproduced against original source. No lint errors or warning growth; independent review closes
+all findings. Existing evidence above records exact scope and limits. Root retains normal integration/Git and
+the sole full compiler; the rehearsal agent is runtime/scratch-only. **All source, test and evidence holds in this
+continuation release with canonical publication of this completion.** No other lane is paused or declared accepted.
+
+
+### Codex CSR medical-writing repair continuation, 2026-11-13 (F1 / W1 / D2)
+
+Current source `841c41466`; inventory `.design/claude-convergence/F1-ANA-CSR-WRITING-2026-11-13.md`, evidence `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Narrow holds end at canonical publication or **2026-11-14 02:37 UTC**, whichever comes first. Existing source only; no other lane is paused. The held draft/accept handler in `server/routes/authoring.router.ts` is excluded.
+
+| Holder | Existing files and bounded scope |
+|---|---|
+| Root | `server/services/ana/statistical-narrator.ts`; only `narrate_statistical_result` handler in `AnaToolExecutor.ts` and `NARRATE_STATISTICAL_RESULT` in `evidence-literature-tool-defs.ts`; focused narrator tests, this entry/design/evidence, integration/Git and sole full compiler |
+| Method worker | `server/services/ana/skills/library/medical-writing.ts`, `clinical.ts`, `server/services/ana/medical-writing.ts`, `server/services/ind/ctd/csr-e3-writing.ts`; existing `server/eval/pq/run-pq.ts` IA preflight remaining-action text and focused tests only |
+| Delivery worker | `server/services/ana/AnaDocumentDraftingService.ts` ordinary CSR writing/manual admission and local explicit manual refusal only; `server/services/authoring/authoring-draft-template.ts` validated drafting context/binding; focused service/template tests only |
+
+Preserve current source/actor/privacy/model/independent-review gates and exact attested derivative payload. No protocol criteria, model registry, qualification approval or UI change. No source branch/worktree or new product owner is created.
+
+
+CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source `1ea68c474` is integrated normally with current intake/catalog source at `78c381c3c`. All implementation workers are frozen. Narrator38/3 and delivery250/9 pass; writing method, selection and oncology successors remain separate in `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Current-intake57/3 and fresh merged production build pass with11,926 source hashes stable. Scoped lint has zero errors/no warning growth. The existing approved protocol/model/source/checker/scientific gates are unchanged; no model training or clinical qualification is claimed. Source holds named in this continuation release with canonical publication of this completion; root retains only Git, final gates and publication receipts. No other owner is paused.
+### Codex continuation — verified report references and Railway beta assessment, 2026-11-14
+
+Canonical starting revision `3692f44ad`. The founder reports successful real OpenAI-key drafting in Codespaces;
+this is user-attested functional evidence, not an independently witnessed run or model PQ. Continue existing
+**F1/W1/D2** AnA coordination and, in a separate bounded **F1/W2/D1** lane, assess Railway beta hosting. This is
+an assessment and existing hosted-policy repair, not deployment authorization or a change to AWS launch gates.
+
+#### What already exists
+
+`server/services/ana/run-events.ts` verifies the ledger before projecting workers/messages; `turn-plan.ts` exposes
+that projection to its host. `sub-agent-shape.ts` serializes parent team context, and `agentic-workflow-tools.ts`
+serves the existing team action. Recorded worker reports already carry `reportSha256`, but normal parent context
+omits the report reference required by existing `update_plan.worker_dispositions`. Extend that same verified pass
+and context with bounded, content-free latest report receipts/hashes (maximum six), never a latest progress or
+disposition receipt masquerading as a report. Preserve source admission, privacy, ledger verification and budgets.
+The existing real-worker stream and PGlite coordination fixtures will prove reachability without a test-computed
+hash oracle. Searches covered report/revision/rework/team/receipt aliases, unreachable callers and full deletion
+history for agent-swarm/monitor/control-registry homes; no replacement projection exists. Terminal-worker restart,
+extra budgets and a full autonomous rework loop are outside this repair.
+
+`server/startup/env.ts` already refuses production hosted owner credentials and policy overrides, but recognizes
+only ECS metadata. Extend its private hosted predicate to nonblank automatic `RAILWAY_PROJECT_ID` or
+`RAILWAY_ENVIRONMENT_ID`, preserving the same policy/alias set and marker-free self-hosted behavior. Existing
+`env-hosted-owner-credential.test.ts` and `env-production-overrides-posture.test.ts` are the RED/GREEN homes.
+
+`Dockerfile.optimized` already supplies the production Node22/document/OCR image and provision target;
+`docker-compose.beta.yml` names the app, PostgreSQL/pgvector, Redis, ClamAV and embeddings. Existing database
+provision/migration scripts, readiness, shutdown and AWS S3/KMS custody remain canonical. Railway-specific config,
+workflow or deleted-history implementation was not found. Existing `docs/deployment/DEPLOYMENT.md` contains an
+obsolete Vercel recipe and generic Railway steps; `deployment-guide.md` still calls deleted `deploy.sh`.
+Converge those existing documentation homes onto the current image/database contract with official pricing,
+storage/security limitations, a concrete operator sequence and explicit unexecuted acceptance checks. Do not
+restore deleted Vercel/Replit/Celery deployment stacks or invent another image, worker service or provider.
+
+| Holder | Existing files and scope |
+|---|---|
+| Report-reference agent | `server/services/ana/{run-events,turn-plan,sub-agent-shape,agentic-workflow-tools}.ts`; existing `server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts`, `server/services/ana/__tests__/{run-coordination-dispositions,sub-agent-hostable}.test.ts` only |
+| Hosted-runtime agent | `server/startup/env.ts`; existing `server/startup/__tests__/{env-hosted-owner-credential,env-production-overrides-posture}.test.ts` only |
+| Root | This inventory, existing AnA evidence README, `docs/deployment/{DEPLOYMENT,deployment-guide}.md`, official-source assessment, integration, Git and sole full compiler |
+
+These narrow holds end at publication or **2026-11-15 00:00 UTC**, whichever comes first. No other lane is paused.
+No new production file, dependency, table, screen, route, tool, model or infrastructure is introduced. Agents do
+not mutate Git/runtime/compiler state. Interface contracts above are approved; root releases each implementation
+after this inventory and the matching evidence entry are written.
+
+**Implementation freeze:** hosted policy passes75/75 after30 genuine RED failures; verified report-reference
+reachability passes90/90 after actual-parent and corrected exact-baseline RED. Scoped lint has zero errors/no
+warning growth. Independent review closes both source slices and the costed deployment assessment. Worker
+test/lint processes are closed and source/test holds transfer to root for integration; no further worker edits.
+Canonical08044016b is merged normally without source-scope overlap. Root retains Git, adjacent integration,
+sole normal pre-push compiler, publication and owned Codespace verification. All holds release on successful
+canonical publication. Railway acceptance, paid provision, clinical qualification and AWS launch remain unclaimed.

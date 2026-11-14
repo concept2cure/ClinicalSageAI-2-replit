@@ -46,7 +46,7 @@ describe('gateway credentials and qualification are independent', () => {
   ])('refuses a sequence binding that disagrees with verified request facts: %j', async (mismatch) => {
     const error = await getGateway('fda', 'esg').transmit({
       authorization: { kind: 'governed-signature', signatureActionId: 'actual-signature', actorUserId: 3 },
-      organizationId: 7, environment: 'staging', bundle: { sha256: 'actual-bundle' },
+      organizationId: 7, userId: 3, environment: 'staging', bundle: { sha256: 'actual-bundle' },
       dispatchBinding: { attemptId: '00000000-0000-4000-8000-000000000001', organizationId: 7, sequenceId: 41, signatureActionId: 'actual-signature', bundleSha256: 'actual-bundle', ...mismatch },
     } as any).then(() => null, (err) => err);
     expect(error).toBeInstanceOf(TransmitAuthorizationError);
@@ -61,7 +61,7 @@ describe('gateway credentials and qualification are independent', () => {
     try {
       const failure = await getGateway(region, gateway).transmit({
         authorization: { kind: 'governed-signature', signatureActionId: 'sig', actorUserId: 3 },
-        organizationId: 7, environment: 'staging',
+        organizationId: 7, userId: 3, environment: 'staging',
         // A refused protocol must never inspect or open a package, regardless of credentials.
       } as any).then(() => null, (err) => err);
       expect(failure).toBeInstanceOf(UnverifiedTransportError);

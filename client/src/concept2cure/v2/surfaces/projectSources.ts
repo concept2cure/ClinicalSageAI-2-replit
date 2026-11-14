@@ -11,6 +11,8 @@ import type { SourceCatalog } from '../editor/SourceCatalogLine';
 import { sourceHasGroundingText } from '@shared/data-room-processing-status';
 
 export interface SourceRow {
+  /** Recorded source parent, carried by exact selection reads. */
+  projectId?: string | null;
   textAvailable?: boolean | null;
   processing?: import('@shared/data-room-processing-status').DataRoomProcessingSummary | null;
   id: number;
@@ -39,6 +41,7 @@ export interface SourceRow {
 
 /** One page of the project's Data Room, as GET /:id/sources answers it. */
 export interface SourcesPage {
+  projectId?: string;
   sources: SourceRow[];
   /** Usage counts include only citations visible with the caller's current access. */
   usageScope?: 'accessible-citations';
@@ -65,6 +68,27 @@ export function sourcesUrl(pid: string, term: string, offset: number): string {
   if (offset > 0) params.set('offset', String(offset));
   const qs = params.toString();
   return `/api/c2c/projects/${pid}/sources${qs ? `?${qs}` : ''}`;
+}
+
+/** Explicit checks belong to the selection, independently of its visible search/page. */
+export type CheckedSource = Pick<SourceRow, 'id' | 'title' | 'checksum'>;
+export const ANA_SELECTED_SOURCE_LIMIT = 20;
+export function selectedSourcesUrl(pid: string, checked: readonly CheckedSource[]): string | null {
+  const ids = checked.map(source => source.id);
+  if (!ids.length || ids.length > ANA_SELECTED_SOURCE_LIMIT || new Set(ids).size !== ids.length
+    || !ids.every(id => Number.isSafeInteger(id) && id > 0 && id <= 2_147_483_647)) return null;
+  return `/api/c2c/projects/${encodeURIComponent(pid)}/sources?${new URLSearchParams({ sourceIds: ids.join(',') })}`;
+}
+
+/** A fresh read must confirm the entire checked set and its recorded bytes/parent. */
+export function selectedSourcesRead(value: unknown, pid: string, checked: readonly CheckedSource[]): value is SourcesPage {
+  if (!isSourcesPage(value) || value.projectId !== pid || value.sources.length !== checked.length) return false;
+  const ids = new Set(value.sources.map(source => source.id));
+  return ids.size === checked.length && checked.every(selected => value.sources.some(source => source.id === selected.id
+    && source.projectId === pid && source.isCurrent === true && source.dataEligible === true
+    && typeof selected.checksum === 'string' && /^[0-9a-f]{64}$/i.test(selected.checksum)
+    && typeof source.checksum === 'string' && /^[0-9a-f]{64}$/i.test(source.checksum)
+    && source.checksum === selected.checksum && sourceCanGround(source)));
 }
 
 /** Whether this source's text is available to draft from: persisted text and recorded processing state. */

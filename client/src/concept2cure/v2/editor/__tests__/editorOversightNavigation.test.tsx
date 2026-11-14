@@ -3,7 +3,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Editor } from '@tiptap/core';
-import type { EditorBridge } from '../DocumentWorkbench';
+import { DocumentWorkbench, type EditorBridge } from '../DocumentWorkbench';
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 vi.mock('@/services/portal/authService', async original => {
@@ -18,7 +18,7 @@ vi.mock('../../surfaces/AuthoringCreateExport', () => ({ AuthoringCreateExport: 
 vi.mock('../../surfaces/AuthoringPlaceIntoFiling', () => ({ AuthoringPlaceIntoFiling: () => null }));
 import { DocumentCanvas } from '../DocumentCanvas';
 import { AuthoringRemedies } from '../AuthoringRemedies';
-import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
+import { deferred, openEditorControl } from './workbenchAssemblyBuild.testSupport';
 import { authService, type AuthUser } from '@/services/portal/authService';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000001';
@@ -89,6 +89,98 @@ function dirtySection() {
   fireEvent.change(screen.getByLabelText('Reason for change'), { target: { value: 'Correct the evidence description' } });
   return node;
 }
+
+function sectionDraftHost() {
+  const onAsk = vi.fn();
+  const onNav = vi.fn();
+  const onBack = vi.fn();
+  const reloadDocs = vi.fn(async () => undefined);
+  const element = (savedRefreshKey = 0) => <DocumentWorkbench docs={[{ ...doc, product_code: null }]}
+    docsState="ready" status="all" programId={PID} pinnedDocId={DOC} onNav={onNav} onAsk={onAsk}
+    reloadDocs={reloadDocs} embedded={{ onBack, savedRefreshKey }} surfaceActionId={null} consumeDeepLinks={false} />;
+  const view = render(element());
+  return { onAsk, onNav, refresh: () => view.rerender(element(1)) };
+}
+
+function expectSavedSectionAsk(onAsk: ReturnType<typeof vi.fn>, section = sections[0]) {
+  expect(onAsk).toHaveBeenCalledOnce();
+  expect(onAsk.mock.calls[0][0]).toBe('Draft this section from the linked section evidence.');
+  expect(onAsk.mock.calls[0][1]).toMatchObject({
+    authoringDocument: { docId: DOC, programId: PID, sectionId: section.id },
+    moduleContext: { documentId: DOC, documentTitle: doc.title, sectionId: section.id,
+      sectionCode: section.code, sectionTitle: section.title, sectionUpdatedAt: section.updated_at, savedRecordOnly: true },
+    authoringContext: { projectId: PID, artifactId: DOC, sectionId: section.id,
+      sectionCode: section.code, sectionTitle: section.title, sectionUpdatedAt: section.updated_at },
+  });
+}
+
+describe('section drafting waits for the exact current saved section read', () => {
+  it('withholds the section ask while the title and AnA menu are available, then carries the admitted section', async () => {
+    const read = deferred<Response>();
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`
+      ? read.promise : normal(method, url, body));
+    const host = sectionDraftHost();
+    await screen.findByTestId('ed-ana');
+    expect(screen.getAllByText(doc.title).length).toBeGreaterThan(0);
+    const draft = openEditorControl('Draft with AnA', 'ana');
+    expect(draft.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(draft);
+    expect(host.onAsk).not.toHaveBeenCalled();
+    expect(host.onNav).not.toHaveBeenCalled();
+    await act(async () => read.resolve(ok({ sections })));
+    await waitFor(() => expect(openEditorControl('Draft with AnA', 'ana').getAttribute('aria-disabled')).not.toBe('true'));
+    fireEvent.click(openEditorControl('Draft with AnA', 'ana'));
+    expectSavedSectionAsk(host.onAsk);
+    expect(host.onNav).not.toHaveBeenCalled();
+  });
+
+  it('keeps a failed read unavailable through a delayed refresh, then uses only the refreshed section', async () => {
+    const refreshed = deferred<Response>();
+    const normal = apiRequest.getMockImplementation()!;
+    let sectionReads = 0;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`
+      ? ++sectionReads === 1 ? Promise.resolve({ ...ok({ error: 'Unavailable sections' }), ok: false, status: 503 }) : refreshed.promise
+      : normal(method, url, body));
+    const host = sectionDraftHost();
+    documentView();
+    await waitFor(() => expect(screen.getAllByText(/sections not read|Couldn’t read this document’s sections/).length).toBeGreaterThan(0));
+    const draft = openEditorControl('Draft with AnA', 'ana');
+    expect(draft.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(draft);
+    expect(host.onAsk).not.toHaveBeenCalled();
+    expect(host.onNav).not.toHaveBeenCalled();
+    host.refresh();
+    await waitFor(() => expect(sectionReads).toBe(2));
+    expect(openEditorControl('Draft with AnA', 'ana').getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(openEditorControl('Draft with AnA', 'ana'));
+    expect(host.onAsk).not.toHaveBeenCalled();
+    const current = { ...sections[1], updated_at: SAVED_AT };
+    await act(async () => refreshed.resolve(ok({ sections: [current] })));
+    await waitFor(() => expect(openEditorControl('Draft with AnA', 'ana').getAttribute('aria-disabled')).not.toBe('true'));
+    fireEvent.click(openEditorControl('Draft with AnA', 'ana'));
+    expectSavedSectionAsk(host.onAsk, current);
+    expect(host.onNav).not.toHaveBeenCalled();
+  });
+
+  it('preserves document review while a section read is pending', async () => {
+    const read = deferred<Response>();
+    const normal = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation((method: string, url: string, body?: unknown) => url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`
+      ? read.promise : normal(method, url, body));
+    const host = sectionDraftHost();
+    await screen.findByTestId('ed-ana');
+    const review = openEditorControl('Review document', 'ana');
+    expect(review.getAttribute('aria-disabled')).not.toBe('true');
+    fireEvent.click(review);
+    expect(host.onAsk).toHaveBeenCalledOnce();
+    expect(host.onAsk.mock.calls[0][1]).toMatchObject({ authoringDocument: { docId: DOC, programId: PID },
+      moduleContext: { documentId: DOC, sectionId: null } });
+    expect(host.onAsk.mock.calls[0][1].authoringDocument.sectionId).toBeUndefined();
+    expect(host.onNav).not.toHaveBeenCalled();
+    await act(async () => read.resolve(ok({ sections })));
+  });
+});
 
 describe('document-review remedies open the actual section editor', () => {
   it('opens another saved section in Section view before applying its tracked fix', async () => {

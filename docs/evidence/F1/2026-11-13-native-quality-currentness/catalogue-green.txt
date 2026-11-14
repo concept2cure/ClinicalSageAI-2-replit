@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > refuses a readable record changed after snapshot commit instead of reporting an empty catalogue 32ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > a later refresh retains the predecessor and presents the current immutable source 80ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > lists a captured file before the Quality record snapshots, however old the file is 86ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue facts during a concurrent update > preserves stable source identities when no current native fact changed 86ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely denied object without its title, snippet, identity or prose 42ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > omits a genuinely missing object without its title, snippet, identity or prose 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > an exact selected denied source receives generic unavailable admission rather than a stale-readable signal 50ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > native catalogue omission stays private > failed native verification still refuses the catalogue instead of creating an empty success 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > does not refuse another project's list of its sources 63ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > a changed Quality record in one project > still refuses a list of its own project, so a stale record never reads as current 48ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its canonical set' 182ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'outside its project facet' 87ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with an empty canonical set' 64ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not inspect a readable stale sibling 'with a facet outside its canonical set' 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refreshes an included sibling and retains its immutable predecessor on the first page 115ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > discovers an included sibling’s existing native record before that data room has ever been opened 80ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > does not synchronize subsequent pages and still refuses stale records inside their scope 55ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > the Data catalog admits only its effective canonical projects > refuses a sibling changed just after its own first-page capture 30ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > omits a denied native object without a title or text 97ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > omits a project whose private grant is no longer in the current evaluated catalog 77ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > still verifies the actor when the canonical catalogue set is empty 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > refuses native content changed after the page SQL and before its final admission 95ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > catalogue scope preserves privacy and its final admission fence > retains the actor fence if membership is revoked during the final admission of B 97ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > runs as many project admissions for eight sources as for two 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts > one read admits a project once, however many of its sources it lists > still refuses the read when the person leaves the organization while its sources are being admitted 10ms
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  22:45:31
+   Duration  7.28s (transform 1.11s, setup 134ms, import 1.85s, tests 5.07s, environment 0ms)
+

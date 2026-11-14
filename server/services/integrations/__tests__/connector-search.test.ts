@@ -35,12 +35,12 @@ function makeDeps(over: Partial<ConnectorSearchDeps> = {}): ConnectorSearchDeps 
 describe('searchConnectedRepositories', () => {
   it('searches only configured+healthy connectors and reports the rest as skipped', async () => {
     const deps = makeDeps();
-    const res = await searchConnectedRepositories(42, { query: 'protocol' }, deps);
+    const res = await searchConnectedRepositories(42, { query: 'protocol', actorUserId: 11 }, deps);
 
     expect(deps.searchConnectors).toHaveBeenCalledWith(42, ['google-drive'], {
       keywords: ['protocol'],
       limit: 8,
-    });
+    }, 11);
     expect(res.searched).toEqual(['google-drive']);
     expect(res.skipped).toEqual(
       expect.arrayContaining([
@@ -56,7 +56,7 @@ describe('searchConnectedRepositories', () => {
 
   it('flags unknown requested connectors and short-circuits when none are usable', async () => {
     const deps = makeDeps();
-    const res = await searchConnectedRepositories(42, { query: 'x', connectors: ['box', 'nope'] }, deps);
+    const res = await searchConnectedRepositories(42, { query: 'x', connectors: ['box', 'nope'], actorUserId: 11 }, deps);
 
     expect(deps.searchConnectors).not.toHaveBeenCalled();
     expect(res.documents).toEqual([]);
@@ -80,12 +80,12 @@ describe('searchConnectedRepositories', () => {
         { connectorId: 'onedrive', results: [], error: 'token expired' },
       ]),
     });
-    const res = await searchConnectedRepositories(7, { query: 'x', limit: 999 }, deps);
+    const res = await searchConnectedRepositories(7, { query: 'x', limit: 999, actorUserId: 11 }, deps);
 
     expect(deps.searchConnectors).toHaveBeenCalledWith(7, ['google-drive', 'onedrive'], {
       keywords: ['x'],
       limit: 25, // clamped
-    });
+    }, 11);
     expect(res.resultCount).toBe(1);
     expect(res.skipped).toEqual([{ connector: 'onedrive', reason: 'token expired' }]);
   });
@@ -94,8 +94,35 @@ describe('searchConnectedRepositories', () => {
     const deps = makeDeps({
       searchConnectors: vi.fn().mockResolvedValue([{ connectorId: 'google-drive', results: [], error: 'token expired' }]),
     });
-    const res = await searchConnectedRepositories(1, { query: 'protocol' }, deps);
+    const res = await searchConnectedRepositories(1, { query: 'protocol', actorUserId: 11 }, deps);
     expect(res.searched).toEqual([]);
     expect(res.skipped).toContainEqual({ connector: 'google-drive', reason: 'token expired' });
+  });
+
+  it.each([11, null])('forwards the captured actor %s to the registry', async actorUserId => {
+    const deps = makeDeps();
+
+    await searchConnectedRepositories(42, { query: 'protocol', actorUserId }, deps);
+
+    expect(deps.searchConnectors).toHaveBeenCalledWith(42, ['google-drive'], {
+      keywords: ['protocol'], limit: 8,
+    }, actorUserId);
+  });
+
+  it('retains the initiating actor if params change while the catalog read is pending', async () => {
+    const params = { query: 'protocol', actorUserId: 11 };
+    const deps = makeDeps({
+      getConnectorCatalog: vi.fn(async () => {
+        params.actorUserId = 12;
+        return catalog;
+      }),
+    });
+
+    await searchConnectedRepositories(42, params, deps);
+
+    expect(params.actorUserId).toBe(12);
+    expect(deps.searchConnectors).toHaveBeenCalledWith(42, ['google-drive'], {
+      keywords: ['protocol'], limit: 8,
+    }, 11);
   });
 });

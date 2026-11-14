@@ -1,0 +1,24 @@
+{
+  "revision": "398d9921c",
+  "command": "npm exec --yes --package=node@22 --package=npm@10 -- env TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental",
+  "exitCode": 0,
+  "typeErrors": 0,
+  "baseline": 0,
+  "sourceHashes": {
+    "server/services/tasking/source-task.ts": "97bd094f3c32a190b2b7e8074d5c079ecc3b94403aaba8c1c6f1b817bb6f91c4",
+    "server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts": "682ac7745c90e59dfbe409a621ed90b2efcf0a25ba93f8b8d98e2bc21b682a24",
+    "server/services/tasking/__tests__/source-task-quality-project.test.ts": "4156e91b79b3678063596cb4c10ed898ec0193d238dbae24a0c4443d84dc758e"
+  },
+  "combinedBehavioralTests": {
+    "passed": 157,
+    "suites": 8,
+    "auditCases": 53,
+    "receipt": "audit-task-text-refresh-regression.txt"
+  },
+  "afterTypeAnnotations": {
+    "passed": 53,
+    "receipt": "audit-task-fixture-types-green.txt",
+    "assertionsAndProductionSourceUnchanged": true
+  },
+  "scope": "Native internal-audit task reconciliation; no provider or hosted-Codespace execution"
+}
