@@ -1,0 +1,51 @@
+The mutation: the header back to rendering meta(rows) unconditionally, which is
+what shipped.
+
+-          {headerMeta(live, rows, meta)}{' '}
++          {meta(rows)}{' '}
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/cmcRegisterCardHonesty.test.tsx
+
+ FAIL  > states NO figure when the read failed
+ FAIL  > says plainly that it was not loaded, rather than going silent
+ FAIL  > states no figure while the read is still in flight
+
+AssertionError: expected 'organization-wide — ICH Q2 — 0/0 vali…' not to match
+  /\d+\s*\/\s*\d+\s*validated/
+
+- Expected:  /\d+\s*\/\s*\d+\s*validated/
++ Received:  "organization-wide — ICH Q2 — 0/0 validated · all projects — open one to narrow"
+
+      Tests  3 failed | 3 passed (6)
+
+Restored. 6 passed.
+
+The three that keep passing under the mutation are the ones that must: the
+figure over a resolved read with rows, the figure over a register read and
+found empty, and the scope note surviving a failed read. A fix that silenced
+the line altogether would fail those instead.
+
+────────────────────────────────────────────────────────────────────────────
+The same mutation in the RUNNING app
+────────────────────────────────────────────────────────────────────────────
+
+Signed in as the dev user, C2C-201 open, Study records, with ONLY
+/api/cmc/analytical-methods answered 500 and every other read left alone:
+
+  BEFORE: "Analytical method library"  organization-wide — ICH Q2 — 0/0 validated · this project   [ERROR body]
+  AFTER:  "Analytical method library"  Not loaded · this project                                   [ERROR body]
+
+The other registers on the tab, same page load, same moment — untouched by
+the fix, because their reads resolved:
+
+  Drug substance              §3.2.S — 1 substance · this project                                  [rows]
+  Characterisation studies    0 studies — 0 of 3 characterisation questions answered · all projects [empty]
+  Manufacturing processes     0 processes — 0 with recorded steps — 0 validated · all projects      [empty]
+  Drug product                §3.2.P — 1 product · this project                                     [rows]
+  Process validation          0 processes — 0 complete — 3-stage lifecycle · all projects           [empty]
+  Formulation records         0 versions — 0 current — 0 with a component overage · all projects    [empty]
+  Materials                   0 materials — 0 excipients — 0 novel — … · all projects               [empty]
+  Container closure systems   0 systems — 0 qualified — 0 with an E&L study · all projects          [empty]
+
+Those zeros are facts: each of those registers was read and holds nothing.
+That is exactly the distinction the fix preserves.
