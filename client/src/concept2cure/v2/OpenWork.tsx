@@ -2,9 +2,9 @@
  * Your open work — what is waiting for the signed-in person, in three groups:
  * tasks assigned to them (sections to write, deliverables from a project's
  * Plan), approvals they sign, and reviews. One reading and one rendering for
- * the two places that show it: the top bar's "Your work" panel (TaskTray.tsx)
- * and Home's "Your open items" (HomeSections.tsx; CLIENT_JOURNEY_2026-10-25.md,
- * pass 5, decision 9). Moved here from TaskTray, unchanged in what it reads and
+ * the places that show it: the top bar's "Your work" panel (TaskTray.tsx),
+ * Home's "Your open items" (HomeSections.tsx; CLIENT_JOURNEY_2026-10-25.md,
+ * pass 5, decision 9) and Tasks' Mine (TaskNeedList.tsx; P-131 item 2). Moved here from TaskTray, unchanged in what it reads and
  * says, so Home does not draw a second copy.
  *
  * Reads (each degrades on its own; a failed read is said, never an empty list):
@@ -19,6 +19,7 @@ import { liveGetOrNull, useLiveData } from './dataConnect';
 import { clModLabel } from './fixtures/collab-data';
 import { openNotificationRecord } from './notificationNavigation';
 import { NOTICE_UUID } from '@shared/types/notification-navigation';
+import { orderByNeed, type NeedFacts } from './surfaces/taskOrderOfNeed';
 
 export interface MyWorkItem {
   taskId: string;
@@ -80,6 +81,12 @@ export function dueLabel(iso: string | null): string {
   if (days === 0) return 'due today';
   if (days === 1) return 'due tomorrow';
   return `due in ${days}d`;
+}
+
+/** What the order of need reads of one assigned item. Overdue is my-work.ts's, the one rule; a review
+ *  route member that waits on an earlier step is outside the triage, so it is passed with no due date. */
+export function myWorkNeed(t: MyWorkItem): NeedFacts {
+  return { key: t.taskId, priority: t.priority, dueIso: t.waitingOn ? null : t.dueDate, overdue: t.overdue };
 }
 
 /** The three reads. `full` false reads only my-work (the bell's badge while its panel is closed). */
@@ -158,10 +165,8 @@ function WorkRow({ tone, title, sub, onOpen }: { tone: 'err' | 'warn' | 'ok'; ti
 function AssignedGroup({ workLoading, workError, assigned, go, openTask }: {
   workLoading: boolean; workError?: string; assigned: MyWorkItem[]; go: Go; openTask: (taskId: string) => void;
 }) {
-  // Overdue first, then due-soon, then the rest — the triage order.
-  const ordered = [...assigned].sort((a, b) =>
-    Number(b.overdue) - Number(a.overdue) || Number(b.dueSoon) - Number(a.dueSoon)
-  );
+  // The order of need (taskOrderOfNeed.ts; P-131 item 3), the same rule as the Tasks page.
+  const ordered = orderByNeed(assigned, myWorkNeed, Date.now());
   const tone = (t: MyWorkItem) => (t.overdue ? 'err' : t.dueSoon || t.blocked ? 'warn' : 'ok');
   /* A review route member is signed on its version, which the Review board
      opens (RR1b); the task board refuses every write to it. One that waits on
@@ -288,7 +293,10 @@ function NamedReviewGroup({ go }: { go: Go }) {
   );
 }
 
-export function OpenWorkGroups({ workLoading, workError, assigned, queue, queueError, approvalRows, approvalsError, go, openTask }: {
+export function OpenWorkGroups({ workLoading, workError, assigned, queue, queueError, approvalRows, approvalsError, go, openTask, assignedListed = true }: {
+  /** False where the page lists the assigned tasks itself (Tasks, whose grouped list is that list): the
+   *  approvals and reviews are listed here, the tasks are not listed twice. */
+  assignedListed?: boolean;
   workLoading: boolean;
   workError?: string;
   assigned: MyWorkItem[];
@@ -304,7 +312,7 @@ export function OpenWorkGroups({ workLoading, workError, assigned, queue, queueE
 }) {
   return (
     <>
-      <AssignedGroup workLoading={workLoading} workError={workError} assigned={assigned} go={go} openTask={openTask} />
+      {assignedListed && <AssignedGroup workLoading={workLoading} workError={workError} assigned={assigned} go={go} openTask={openTask} />}
       <ApprovalsGroup assigned={assigned} approvalRows={approvalRows} approvalsError={approvalsError} go={go} openTask={openTask} />
       <NamedReviewGroup go={go} />
       <ReviewGroup queue={queue} queueError={queueError} go={go} />

@@ -62,6 +62,9 @@ async function mount() {
       <TaskBoard {...({ onAsk: vi.fn(), onNav: vi.fn() } as unknown as React.ComponentProps<typeof TaskBoard>)} />
     </QueryClientProvider>,
   );
+  /* The List is the first view now (D6.md §A.4 step 5; P-131). These cases read the board's cards, so they
+     open the Board, one click away; the List's own case below opens the List. */
+  fireEvent.click(await screen.findByRole('button', { name: 'Board' }));
   return screen.findByRole('button', { name: `Open ${FLAGGED.title}` });
 }
 const expectReadable = (el: HTMLElement) => {
@@ -94,17 +97,18 @@ describe('the board’s own classes do not collide with page rules', () => {
   });
 });
 
-describe('cards and the table say which project a task belongs to', () => {
-  it('names the project on every card, and the table has Project in place of Task ID', async () => {
+describe('cards and the List say which project a task belongs to', () => {
+  /* The table became the List (D6.md §A.4 step 5): on a list that spans projects each row names its
+     project; no row carries the task id. */
+  it('names the project on every card and on every List row, and never the task id', async () => {
     const flagged = await mount();
     expect(within(flagged).getByText('BX-204 Oncology IND')).toBeTruthy();
     expect(within(screen.getByRole('button', { name: `Open ${FROM_WORKFLOW.title}` })).getByText('MD-11 510(k)')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
-    const head = document.querySelector('.tb-table .ct-head') as HTMLElement;
-    expect(head.textContent).toMatch(/^Project/);
-    expect(head.textContent).not.toMatch(/Task ID/);
-    const rows = Array.from(document.querySelectorAll('.tb-table .ct-row'));
-    expect(rows.map(r => r.firstElementChild?.textContent)).toEqual(['BX-204 Oncology IND', 'MD-11 510(k)']);
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    expect(within(screen.getByRole('button', { name: `Open ${FLAGGED.title}` })).getByText(/BX-204 Oncology IND/)).toBeTruthy();
+    expect(within(screen.getByRole('button', { name: `Open ${FROM_WORKFLOW.title}` })).getByText(/MD-11 510\(k\)/)).toBeTruthy();
+    expect(document.querySelector('.ct-head')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Task ID/);
   });
 
   it('draws no type pill for a task with no type', async () => {
@@ -116,10 +120,10 @@ describe('cards and the table say which project a task belongs to', () => {
 });
 
 describe('no internal ids or developer vocabulary on screen', () => {
-  it('the board, its table and its analytics', async () => {
+  it('the board, its List and its analytics', async () => {
     await mount();
     expectReadable(document.body);
-    fireEvent.click(screen.getByRole('button', { name: 'Table' }));
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
     expectReadable(document.body);
     fireEvent.click(screen.getByRole('button', { name: 'Analytics' }));
     await screen.findByText(/Task overdue → send notification/);

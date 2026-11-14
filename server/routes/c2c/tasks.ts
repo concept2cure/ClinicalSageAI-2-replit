@@ -23,14 +23,9 @@ import { projects, projectTasks } from '../../../shared/schema';
 import { createScopedLogger } from '../../utils/logger';
 import { authMiddleware } from '../../auth';
 import { requireOrganizationContext, tenantContextMiddleware } from '../../middleware/tenantContext';
-import {
-  concept2cureRateLimiter,
-  getOrganizationId,
-  paramStr,
-  sendError,
-  sendSuccess,
-} from './shared';
+import { concept2cureRateLimiter, getOrganizationId, paramStr, sendError, sendSuccess } from './shared';
 import { admittedProjectId, projectAdmissionMiddleware } from './project-access';
+import { normalizeTaskStatus } from '../../services/unified-work/unified-work-view';
 import { cmcNextActions, readProjectCmcReadiness } from '../../services/cmc/project-cmc-readiness';
 
 const logger = createScopedLogger('concept2cure-tasks');
@@ -557,14 +552,14 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
       )
       .orderBy(desc(projectTasks.createdAt));
 
+    // One status vocabulary: this router writes 'in_progress', the schema documents 'in-progress', and a task in
+    // review is under way. Counted through the cross-store view's normalizer, so none of them reads as stalled.
+    const statusOf = (t: unknown) => normalizeTaskStatus((t as { status?: unknown }).status);
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => (t as any).status === 'done').length;
-    const blockedTasks = tasks.filter(t => (t as any).status === 'blocked').length;
-    const overdueTasks = tasks.filter(t => {
-      const dueDate = (t as any).dueDate;
-      return dueDate && new Date(dueDate) < new Date() && (t as any).status !== 'done';
-    }).length;
-    const inProgressTasks = tasks.filter(t => (t as any).status === 'in-progress').length;
+    const completedTasks = tasks.filter(t => statusOf(t) === 'done').length;
+    const blockedTasks = tasks.filter(t => statusOf(t) === 'blocked').length;
+    const overdueTasks = tasks.filter(t => (t as any).dueDate && new Date((t as any).dueDate) < new Date() && statusOf(t) !== 'done').length;
+    const inProgressTasks = tasks.filter(t => statusOf(t) === 'in_progress').length;
 
     // Compute health score (0-100). With no tasks there is nothing to score: null, never 100 (P-122).
     let healthScore: number | null = null;

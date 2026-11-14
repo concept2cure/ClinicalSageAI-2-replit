@@ -78,15 +78,18 @@ afterEach(() => {
 
 // The signing ceremony is the shared EsignModal, whose password re-check is a
 // react-query mutation, so the board mounts inside a provider.
-const mount = () =>
+const renderBoard = () =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}>
       <TaskBoard {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof TaskBoard>)} />
     </QueryClientProvider>,
   );
+/* The List is the first view now (D6.md §A.4 step 5; P-131). These cases are about the board's cards and
+   their controls, so they open the Board, one click away. */
+const mount = async () => { renderBoard(); fireEvent.click(await screen.findByRole('button', { name: 'Board' })); };
 
 async function openArchiveConfirm() {
-  mount();
+  await mount();
   fireEvent.click(await screen.findByRole('button', { name: `Open ${TASK.title}` }));
   const detail = await screen.findByRole('dialog', { name: 'Task detail' });
   fireEvent.click(within(detail).getByRole('button', { name: `Archive "${TASK.title}"` }));
@@ -120,7 +123,7 @@ describe('archive — a refusal is shown in the panel, and the task is not repor
   });
 
   it('refuses a reason over 1000 characters with a sentence that says so, and sends nothing', async () => {
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: `Open ${TASK.title}` }));
     const detail = await screen.findByRole('dialog', { name: 'Task detail' });
     fireEvent.click(within(detail).getByRole('button', { name: `Archive "${TASK.title}"` }));
@@ -161,7 +164,7 @@ describe('§11.50 signing — an expired session is not a silent reset', () => {
     };
     // The dialog's own password re-check passes; the session then fails on the PATCH.
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) })));
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
     const modal = await screen.findByRole('dialog');
     fireEvent.change(within(modal).getByLabelText(/Reason for this action/), { target: { value: 'Reviewed against the criteria.' } });
@@ -191,7 +194,7 @@ describe('§11.50 signing — an expired session is not a silent reset', () => {
       } as Response;
     };
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) })));
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
     const modal = await screen.findByRole('dialog');
     fireEvent.change(within(modal).getByLabelText(/Reason for this action/), { target: { value: 'Reviewed against the criteria.' } });
@@ -213,7 +216,7 @@ describe('stale board — a completion someone else already made is not reported
     writes = async () => {
       throw new ApiRequestError(message, 409, { code: 'CONFLICT_STALE', error: message }, 'CONFLICT_STALE');
     };
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
 
     await waitFor(() => expect(document.body.textContent).toContain(message));
@@ -232,7 +235,7 @@ describe('an unknown outcome — a move whose COMMIT was lost is not reported as
     writes = async () => {
       throw lost();
     };
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
 
     await waitFor(() => expect(document.body.textContent).toContain(unknown));
@@ -250,7 +253,7 @@ describe('an unknown outcome — a move whose COMMIT was lost is not reported as
       throw lost();
     };
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ valid: true }) })));
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Advance' }));
     const modal = await screen.findByRole('dialog');
     fireEvent.change(within(modal).getByLabelText(/Reason for this action/), { target: { value: 'Reviewed against the criteria.' } });
@@ -272,7 +275,7 @@ describe('new task — a refusal is not a "network error"', () => {
     writes = async () => {
       throw new ApiRequestError('Insufficient permissions', 403, { error: 'Insufficient permissions' });
     };
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: /New task/i }));
     const dialog = await screen.findByRole('dialog', { name: /New task/i });
     fireEvent.change(within(dialog).getByLabelText(/^Title/), { target: { value: 'Draft 2.7.3' } });
@@ -289,7 +292,7 @@ describe('new task — a refusal is not a "network error"', () => {
       throw new ApiRequestError('The assignee is not a member of this organization. Nothing was created.', 400,
         { success: false, code: 'ASSIGNEE_NOT_MEMBER', error: 'The assignee is not a member of this organization. Nothing was created.' });
     };
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: /New task/i }));
     const dialog = await screen.findByRole('dialog', { name: /New task/i });
     fireEvent.change(within(dialog).getByLabelText(/^Title/), { target: { value: 'Draft 2.7.3' } });
@@ -309,7 +312,7 @@ describe('new task — a refusal is not a "network error"', () => {
 
 describe('workflow auto-assign — an assignment that did not happen is not reported as done', () => {
   async function startWorkflow() {
-    mount();
+    await mount();
     fireEvent.click(await screen.findByRole('button', { name: /Start workflow/ }));
     const dialog = await screen.findByRole('dialog', { name: 'Start workflow from template' });
     await within(dialog).findByText('Draft');

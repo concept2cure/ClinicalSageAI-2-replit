@@ -206,7 +206,7 @@ describe('project read failure and complete filter validation', () => {
     expectRefusal(outcome, /project.*could not be read/i);
     if (outcome.status === 'failed') expect(outcome.reason).not.toMatch(/no project named/i);
     expect((screen.getByRole('combobox', { name: 'Filter by module' }) as HTMLSelectElement).value).toBe('all');
-    expect(screen.getByRole('button', { name: 'My tasks' }).classList.contains('on')).toBe(false);
+    expect(screen.getByRole('button', { name: 'Mine' }).getAttribute('aria-pressed')).toBe('false');
     await expectRows();
   });
 
@@ -228,7 +228,7 @@ describe('project read failure and complete filter validation', () => {
     await mount(); await expectRows();
     expect(apply('tasking.filter', { module: 'cmc', mine: 'true' }).status).toBe('applied');
     expect((screen.getByRole('combobox', { name: 'Filter by module' }) as HTMLSelectElement).value).toBe('cmc');
-    expect(screen.getByRole('button', { name: 'My tasks' }).classList.contains('on')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Mine' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.queryByRole('button', { name: `Open ${TASKS[1].title}` })).toBeNull();
   });
 
@@ -237,7 +237,7 @@ describe('project read failure and complete filter validation', () => {
     expectRefusal(apply('tasking.filter', { project: 'BX-204', module: 'absent-module', mine: 'true' }), /no module named/i);
     expect((screen.getByRole('combobox', { name: 'Filter by project' }) as HTMLSelectElement).value).toBe('all');
     expect((screen.getByRole('combobox', { name: 'Filter by module' }) as HTMLSelectElement).value).toBe('all');
-    expect(screen.getByRole('button', { name: 'My tasks' }).classList.contains('on')).toBe(false);
+    expect(screen.getByRole('button', { name: 'Mine' }).getAttribute('aria-pressed')).toBe('false');
     await expectRows();
   });
 
@@ -246,7 +246,7 @@ describe('project read failure and complete filter validation', () => {
     expect(apply('tasking.filter', { project: 'BX-204', module: 'cmc', mine: 'true' }).status).toBe('applied');
     expect((screen.getByRole('combobox', { name: 'Filter by project' }) as HTMLSelectElement).value).toBe('31');
     expect((screen.getByRole('combobox', { name: 'Filter by module' }) as HTMLSelectElement).value).toBe('cmc');
-    expect(screen.getByRole('button', { name: 'My tasks' }).classList.contains('on')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Mine' }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.queryByRole('button', { name: `Open ${TASKS[1].title}` })).toBeNull();
   });
 

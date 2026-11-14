@@ -101,4 +101,19 @@ describe('Home: your open items, listed', () => {
     expect(await within(section).findByText(/Couldn't load your tasks/)).toBeTruthy();
     expect(within(section).queryByText(/Nothing assigned to you right now/)).toBeNull();
   });
+  /* P-131 item 3: one order of need wherever a person's work is listed. A critical task due in five days
+     (outside the 48-hour "due soon") is needed before a low one due tomorrow; overdue work stays first. */
+  it('lists the work assigned to you in the order of need, the same rule as the Tasks page', async () => {
+    const day = 86_400_000;
+    const at = (d: number) => new Date(Date.now() + d * day).toISOString();
+    const lowSoon = { ...TASK, taskId: 'T-LOW', title: 'Low, due tomorrow', priority: 'low', dueDate: at(1), overdue: false, dueSoon: true };
+    const critical = { ...TASK, taskId: 'T-CRIT', title: 'Critical, due in five days', priority: 'critical', dueDate: at(5), overdue: false, dueSoon: false };
+    const late = { ...TASK, taskId: 'T-LATE', title: 'Low, overdue', priority: 'low', dueDate: at(-2), overdue: true, dueSoon: false };
+    serve({ myWork: () => ok({ success: true, data: { ...MY_WORK, items: [lowSoon, critical, late], total: 3 } }) });
+    mount();
+    const section = await screen.findByTestId('home-open-items');
+    await within(section).findByRole('button', { name: /Low, due tomorrow/ });
+    const titles = Array.from(section.querySelectorAll('.tt-item-title')).map((n) => n.textContent);
+    expect(titles.slice(0, 3)).toEqual(['Low, overdue', 'Critical, due in five days', 'Low, due tomorrow']);
+  });
 });

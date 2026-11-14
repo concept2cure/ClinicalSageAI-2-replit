@@ -73,18 +73,21 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); clearAuthToken(); });
 
-const mount = () =>
+const renderBoard = () =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <TaskBoard {...({ onAsk: () => {}, onNav: vi.fn() } as unknown as React.ComponentProps<typeof TaskBoard>)} />
     </QueryClientProvider>,
   );
+/* The List is the first view now (D6.md §A.4 step 5; P-131). These cases are about the board's cards and
+   their controls, so they open the Board, one click away. */
+const mount = async () => { renderBoard(); fireEvent.click(await screen.findByRole('button', { name: 'Board' })); };
 const card = (title: string) => screen.findByRole('button', { name: `Open ${title}` });
 const FLAG = 'Blocking the submission';
 
 describe("TaskBoard: another store's blocking work", () => {
   it('flags a review blocker and a critical-to-quality task as blocking, with the board\'s flag', async () => {
-    mount();
+    await mount();
     for (const t of [REVIEW_BLOCKER, CRITICAL_TO_QUALITY]) {
       const flag = within(await card(t.title)).getByTitle(FLAG);
       expect(flag.className).toMatch(/\btb-flag\b/);
@@ -92,13 +95,13 @@ describe("TaskBoard: another store's blocking work", () => {
   });
 
   it('invents no blocker: plain work and the board\'s own task carry no flag', async () => {
-    mount();
+    await mount();
     expect(within(await card(PLAIN.title)).queryByTitle(FLAG)).toBeNull();
     expect(within(await card(OWN.title)).queryByTitle(FLAG)).toBeNull();
   });
 
   it('does not call blocking work blocked: it stays in its own column, and Blocked counts only the hold', async () => {
-    mount();
+    await mount();
     const flagged = await card(REVIEW_BLOCKER.title);
     expect(within(flagged).queryByText('Blocked')).toBeNull();
     expect(flagged.closest('.tb-col')?.querySelector('.tb-col-h')?.textContent).toMatch(/Pending|To do|Open/i);
@@ -109,7 +112,7 @@ describe("TaskBoard: another store's blocking work", () => {
   });
 
   it('counts the work holding the submission by the cross-store rule: blocked, or recorded as blocking', async () => {
-    mount();
+    await mount();
     await card(OWN.title);
     fireEvent.click(screen.getByRole('button', { name: 'Analytics' }));
     const label = screen.getAllByText(FLAG).find((el) => el.classList.contains('metric-l'));

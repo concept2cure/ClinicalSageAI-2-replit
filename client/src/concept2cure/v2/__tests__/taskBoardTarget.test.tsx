@@ -362,6 +362,8 @@ describe('native callbacks cannot outlive their actor session', () => {
     board = [{ ...first, status: 'review', progress: 90, approvalRequired: true }];
     patchTask = async () => { throw new ApiRequestError('A signature is required.', 428, { code: 'ESIGN_REQUIRED' }, 'ESIGN_REQUIRED'); };
     const mounted = render(view()); await settleBoard();
+    // The List is the first view (D6.md §A.4 step 5); a card's Advance is on the Board, one click away.
+    fireEvent.click(screen.getByRole('button', { name: 'Board' }));
     fireEvent.click(screen.getByRole('button', { name: 'Advance' }));
     const signer = await screen.findByRole('dialog');
     const reason = within(signer).getByLabelText(/Reason for this action/);

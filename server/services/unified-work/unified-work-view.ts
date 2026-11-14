@@ -27,7 +27,7 @@
  * @module server/services/unified-work/unified-work-view
  */
 
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, notInArray, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import type { RequestDb, RequestSqlClient } from '../../db/requestDb';
 import { workProjectsReadableBy } from '../tasking/task-project';
@@ -74,6 +74,12 @@ export interface UnifiedWorkItem {
   /** ISO timestamp, or null when the system tracks no due date. */
   dueAt: string | null;
   ownerName: string | null;
+  /**
+   * The person the owning store records as responsible, by user id: project_tasks.assignee_id,
+   * c2c_project_work_items.owner_id or unified_tasks.assignee_id. Null when the store records none, and always for a
+   * filing, whose store records no owner (P-131 item 6: "Mine" and my-work include work owned in another store).
+   */
+  ownerId: number | null;
   /** True when this item blocks progress (blocker, critical path, or agency hold). */
   blocking: boolean;
   /** Origin-specific detail: blockerType / moduleType / catalog key. */
@@ -93,6 +99,74 @@ export function normalizePriority(raw: unknown): UnifiedWorkPriority | null {
   if (v === 'major') return 'high';
   if (v === 'minor') return 'low';
   return null;
+}
+
+// ── The order of need (P-131 item 3) ─────────────────────────────────────────
+//
+// One rule wherever a person's work is listed (Tasks, the top bar, Home, AnA): overdue first, then due within seven
+// days, then later, then no date. Within each: critical, urgent, high, medium, low, then no priority. Then the earlier
+// due date, then a stable key. The client's comparator is the same function on its side, tested with the same cases.
+
+/** When a piece of work is due, relative to now. */
+export type NeedGroup = 'overdue' | 'due_week' | 'later' | 'no_date';
+const NEED_GROUP_RANK: Record<NeedGroup, number> = { overdue: 0, due_week: 1, later: 2, no_date: 3 };
+const NEED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+function dueMsOf(dueAt: string | Date | null | undefined): number | null {
+  if (dueAt == null || dueAt === '') return null;
+  const ms = dueAt instanceof Date ? dueAt.getTime() : Date.parse(dueAt);
+  return Number.isNaN(ms) ? null : ms;
+}
+
+/** The group a due date falls in. An absent or unreadable date is "no date", never an invented one. */
+export function needGroup(dueAt: string | Date | null | undefined, now: number): NeedGroup {
+  const ms = dueMsOf(dueAt);
+  if (ms === null) return 'no_date';
+  if (ms < now) return 'overdue';
+  return ms <= now + NEED_WINDOW_MS ? 'due_week' : 'later';
+}
+
+const PRIORITY_RANK: Record<UnifiedWorkPriority, number> = { urgent: 1, high: 2, medium: 3, low: 4 };
+
+/**
+ * A priority's place in the order: critical 0, urgent 1, high 2, medium 3, low 4, anything else 5. Any store's
+ * spelling is read through normalizePriority; 'critical' is checked first because the shared scale folds it into
+ * 'urgent', and the order keeps it above.
+ */
+export function priorityRank(raw: unknown): number {
+  if (String(raw ?? '').trim().toLowerCase() === 'critical') return 0;
+  const p = normalizePriority(raw);
+  return p ? PRIORITY_RANK[p] : 5;
+}
+
+/** What the order of need reads from any list's row. `key` is the row's own stable identity. */
+export interface NeedKey {
+  dueAt: string | Date | null | undefined;
+  priority: unknown;
+  key: string;
+}
+
+/** The order of need: group, then priority, then the earlier date, then the key. Pure and total. */
+export function compareByNeed(a: NeedKey, b: NeedKey, now: number): number {
+  const group = NEED_GROUP_RANK[needGroup(a.dueAt, now)] - NEED_GROUP_RANK[needGroup(b.dueAt, now)];
+  if (group !== 0) return group;
+  const rank = priorityRank(a.priority) - priorityRank(b.priority);
+  if (rank !== 0) return rank;
+  const ad = dueMsOf(a.dueAt), bd = dueMsOf(b.dueAt);
+  if (ad !== null && bd !== null && ad !== bd) return ad - bd;
+  if (a.key === b.key) return 0;
+  return a.key < b.key ? -1 : 1;
+}
+
+/**
+ * A list in the order of need, by any row's own fields. Rows `finished` names follow the open ones, in the same
+ * order: finished work is not overdue, whatever its date said. Returns a new array; the input is not changed.
+ */
+export function sortByNeed<T>(rows: readonly T[], need: (row: T) => NeedKey, now: number, finished?: (row: T) => boolean): T[] {
+  return [...rows].sort((a, b) => {
+    const done = finished ? Number(finished(a)) - Number(finished(b)) : 0;
+    return done !== 0 ? done : compareByNeed(need(a), need(b), now);
+  });
 }
 
 function iso(value: unknown): string | null {
@@ -211,6 +285,7 @@ export interface TaskRowLike {
   moduleType?: string | null;
   blockedReason?: string | null;
   criticalToQuality?: boolean | null;
+  assigneeId?: number | null;
 }
 
 export function taskToUnified(r: TaskRowLike): UnifiedWorkItem {
@@ -225,6 +300,7 @@ export function taskToUnified(r: TaskRowLike): UnifiedWorkItem {
     priority: normalizePriority(r.priority),
     dueAt: iso(r.dueDate),
     ownerName: null,
+    ownerId: r.assigneeId ?? null,
     // A blocked task, or one flagged critical-to-quality that isn't finished.
     blocking: status === 'blocked' || (!!r.criticalToQuality && status !== 'done'),
     detail: r.blockedReason ?? r.moduleType ?? null,
@@ -241,6 +317,7 @@ export interface WorkItemRowLike {
   priority?: string | null;
   dueAt?: Date | string | null;
   ownerName?: string | null;
+  ownerId?: number | null;
   blockerType?: string | null;
   ctdSection?: string | null;
 }
@@ -259,6 +336,7 @@ export function workItemToUnified(r: WorkItemRowLike): UnifiedWorkItem {
     priority: normalizePriority(r.priority),
     dueAt: iso(r.dueAt),
     ownerName: r.ownerName ?? null,
+    ownerId: r.ownerId ?? null,
     blocking: !!r.blockerType && status !== 'done',
     detail: r.blockerType ?? r.ctdSection ?? null,
   };
@@ -272,6 +350,7 @@ export interface UnifiedTaskRowLike {
   priority?: string | null;
   dueDate?: Date | string | null;
   assigneeName?: string | null;
+  assigneeId?: number | null;
   moduleType?: string | null;
   criticalPath?: boolean | null;
   blockedBy?: string[] | null;
@@ -303,6 +382,7 @@ export function unifiedTaskToUnified(r: UnifiedTaskRowLike): UnifiedWorkItem {
     priority: normalizePriority(r.priority),
     dueAt: iso(r.dueDate),
     ownerName: r.assigneeName ?? null,
+    ownerId: r.assigneeId ?? null,
     // Only unfinished work blocks. Completed/cancelled rows may retain their
     // dependency history without continuing to hold the submission timeline.
     blocking:
@@ -333,6 +413,8 @@ export function filingToUnified(r: FilingRowLike): UnifiedWorkItem {
     priority: null,
     dueAt: iso(r.decisionDueAt),
     ownerName: null,
+    // A tracked filing's store records no owner.
+    ownerId: null,
     // The agency is waiting on the sponsor — that blocks the filing.
     blocking: status === 'blocked',
     detail: r.catalogKey ?? null,
@@ -375,6 +457,15 @@ export interface LoadUnifiedWorkInput {
    * Callers that pass nothing get exactly what they got before.
    */
   rollUpFor?: { userId: number; role: string | null | undefined; executor: RequestSqlClient };
+  /**
+   * Narrow every store to the work it records as this person's (P-131 item 6): project_tasks.assignee_id,
+   * c2c_project_work_items.owner_id, unified_tasks.assignee_id. A tracked filing records no owner, so none is read.
+   * The organisation predicate stays on every read. The work projects' roll-up (a project read) is not narrowed.
+   */
+  ownedBy?: number;
+  /** Leave out the c2c_project_work_items of these source types: work another read already lists (my-work leaves
+   *  out the review threads and review tasks, which the tray reads from their own store). */
+  excludeWorkItemSourceTypes?: readonly string[];
 }
 
 export interface UnifiedWorkResult {
@@ -487,43 +578,28 @@ export function markSubtasks(items: UnifiedWorkItem[], rows: UnifiedTaskRowLike[
  * is true when any did not, and the driver's reason is logged.
  */
 export async function loadUnifiedWork(input: LoadUnifiedWorkInput, database: Pick<RequestDb, 'select'> = db): Promise<UnifiedWorkResult> {
-  const { organizationId, projectId, includeCompleted = false } = input;
+  const { organizationId, projectId, includeCompleted = false, ownedBy } = input;
+  if (ownedBy !== undefined && !(Number.isSafeInteger(ownedBy) && ownedBy > 0)) throw new Error('loadUnifiedWork: ownedBy must be a user id');
+  // Each read keeps its organisation predicate; the project and the owner only ever narrow it.
+  const project = (column: unknown) => (projectId !== undefined ? eq(column as never, projectId) : undefined);
+  const owner = (column: unknown) => (ownedBy !== undefined ? eq(column as never, ownedBy) : undefined);
 
-  const tasks = await readSource<TaskRowLike>(
-    'project_tasks',
-    database
-      .select()
-      .from(projectTasks)
-      .where(
-        projectId !== undefined
-          ? and(eq(projectTasks.organizationId, organizationId), eq(projectTasks.projectId, projectId))
-          : eq(projectTasks.organizationId, organizationId),
-      ),
-  );
+  const tasks = await readSource<TaskRowLike>('project_tasks', database.select().from(projectTasks).where(
+    and(eq(projectTasks.organizationId, organizationId), project(projectTasks.projectId), owner(projectTasks.assigneeId)),
+  ));
 
-  const workItems = await readSource<WorkItemRowLike>(
-    'c2c_project_work_items',
-    database
-      .select()
-      .from(c2cProjectWorkItems)
-      .where(
-        projectId !== undefined
-          ? and(eq(c2cProjectWorkItems.orgId, organizationId), eq(c2cProjectWorkItems.projectId, projectId))
-          : eq(c2cProjectWorkItems.orgId, organizationId),
-      ),
-  );
+  const excluded = input.excludeWorkItemSourceTypes?.length
+    ? notInArray(c2cProjectWorkItems.sourceType, [...input.excludeWorkItemSourceTypes]) : undefined;
+  const workItems = await readSource<WorkItemRowLike>('c2c_project_work_items', database.select().from(c2cProjectWorkItems).where(
+    and(eq(c2cProjectWorkItems.orgId, organizationId), project(c2cProjectWorkItems.projectId), owner(c2cProjectWorkItems.ownerId), excluded),
+  ));
 
-  const filings = await readSource<FilingRowLike>(
-    'estar_submissions',
-    database
-      .select()
-      .from(estarSubmissions)
-      .where(
-        projectId !== undefined
-          ? and(eq(estarSubmissions.organizationId, organizationId), eq(estarSubmissions.projectId, projectId))
-          : eq(estarSubmissions.organizationId, organizationId),
-      ),
-  );
+  // A tracked filing's store records no owner: narrowed to one person there is none to read, so none is read.
+  const filings = ownedBy !== undefined
+    ? { rows: [] as FilingRowLike[], read: { ran: true as const, rowCount: 0 } }
+    : await readSource<FilingRowLike>('estar_submissions', database.select().from(estarSubmissions).where(
+      and(eq(estarSubmissions.organizationId, organizationId), project(estarSubmissions.projectId)),
+    ));
 
   // The canonical org board. Terminal rows are excluded here (not in the
   // adapter) so an org's full history doesn't drown the outstanding view, and
@@ -531,29 +607,14 @@ export async function loadUnifiedWork(input: LoadUnifiedWorkInput, database: Pic
   // carries them — the same task must not appear twice.
   const openStatuses = ['pending', 'in-progress', 'review', 'blocked'];
   const boardStatuses = includeCompleted ? [...openStatuses, 'completed', 'cancelled'] : openStatuses;
-  const notAMirror = sqlDistinctFromProjectTask();
-  const boardTasks = await readSource<UnifiedTaskRowLike>(
-    'unified_tasks',
-    database
-      .select()
-      .from(unifiedTasks)
-      .where(
-        projectId !== undefined
-          ? and(
-              eq(unifiedTasks.organizationId, organizationId),
-              eq(unifiedTasks.projectId, projectId),
-              inArray(unifiedTasks.status, boardStatuses),
-              isNull(unifiedTasks.deletedAt),
-              notAMirror,
-            )
-          : and(
-              eq(unifiedTasks.organizationId, organizationId),
-              inArray(unifiedTasks.status, boardStatuses),
-              isNull(unifiedTasks.deletedAt),
-              notAMirror,
-            ),
-      ),
-  );
+  const boardTasks = await readSource<UnifiedTaskRowLike>('unified_tasks', database.select().from(unifiedTasks).where(and(
+    eq(unifiedTasks.organizationId, organizationId),
+    project(unifiedTasks.projectId),
+    inArray(unifiedTasks.status, boardStatuses),
+    isNull(unifiedTasks.deletedAt),
+    sqlDistinctFromProjectTask(),
+    owner(unifiedTasks.assigneeId),
+  )));
 
   const rolled = projectId !== undefined && input.rollUpFor
     ? await rollUpWorkProjectTasks(database, organizationId, projectId, boardStatuses, input.rollUpFor)
