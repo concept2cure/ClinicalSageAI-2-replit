@@ -1,0 +1,26 @@
+{
+  "status": "component_verified",
+  "testsPassed": 48,
+  "testsFailed": 0,
+  "testsPending": 0,
+  "uniqueFiles": 5,
+  "sourcePins": 28,
+  "sourceStable": true,
+  "headStable": true,
+  "head": "3692f44adc02ba891ae7e6876a990ad5f8d31740",
+  "candidateOutlineNodes": 47,
+  "requiredBiocompatibilityReview": true,
+  "sourceFreeze": "source-after.json",
+  "matrix": "current-test-matrix.json",
+  "realSql": "PGlite actual production migrations, composite FK, scaffoldProjectDocuments and recordGovernedAction",
+  "actualPinnedFormSha256": "df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1",
+  "limits": [
+    "No native PostgreSQL runtime/RLS claim",
+    "No Acrobat execution",
+    "No human or agency acceptance",
+    "No deployment qualification",
+    "No automatic upgrade of retained documents",
+    "No device transmission"
+  ],
+  "publication": "Root-owned; not established by this component packet"
+}

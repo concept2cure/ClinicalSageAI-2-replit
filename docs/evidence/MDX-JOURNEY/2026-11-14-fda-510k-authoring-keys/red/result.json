@@ -1,0 +1,18 @@
+{
+  "command": [
+    "node_modules/.bin/vitest",
+    "run",
+    "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "--reporter=json",
+    "--outputFile=docs/evidence/MDX-JOURNEY/2026-11-14-fda-510k-authoring-keys/red/tests.json"
+  ],
+  "runtime": "Node22",
+  "head": "c6d7aaddf8c61b98d6e82fe4fa5126a34452e804",
+  "sourceStable": true,
+  "passed": 2,
+  "failed": 5,
+  "pending": 0,
+  "meaning": "Actual SQL packs exist with 38/47 keys while all three library templates return ten unfileable numerical sections; the IVD and UK controls pass."
+}

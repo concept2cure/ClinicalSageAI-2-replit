@@ -23,6 +23,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -84,7 +85,7 @@ function mockApi(sourcesResponse: (url: string) => Response) {
       const ids = new URL(url, 'https://fixture.test').searchParams.get('sourceIds');
       if (!ids || !response.ok) return response;
       const body = await response.json(); const selected = ids.split(',').map(Number);
-      return ok({ ...body, projectId: PID, sources: body.sources.filter((row: { id: number }) => selected.includes(row.id))
+      return ok({ ...body, projectId: PID, selection: { scope: 'verified-accessible-sources', sourceIds: selected }, sources: body.sources.filter((row: { id: number }) => selected.includes(row.id))
         .map((row: object) => ({ ...row, projectId: PID })) });
     }
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-301', code: 'BX301' });

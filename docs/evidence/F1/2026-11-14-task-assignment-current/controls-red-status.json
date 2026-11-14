@@ -1,0 +1,11 @@
+{
+  "sourceSha256": "94b4d46f9d1eeb52795aa1ea7d540bae456d5873c6c105fb966ec6e527f0a03d",
+  "testSha256": "1e4de0e1099fa39aa7d264712a12d51c70ea19e4df82d7f1cca25c64c825b56c",
+  "tests": 23,
+  "failed": 4,
+  "passed": 19,
+  "sourceUnchanged": true,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "scope": "Real React and assignment transport with intercepted fictional responses; no production source, Git, runtime, provider or real assignment mutation."
+}

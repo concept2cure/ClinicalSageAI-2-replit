@@ -1,0 +1,43 @@
+diff --git a/server/services/pathway-engines/estar/estar-mapper.ts b/server/services/pathway-engines/estar/estar-mapper.ts
+index cf59cfc61..0f349aa41 100644
+--- a/server/services/pathway-engines/estar/estar-mapper.ts
++++ b/server/services/pathway-engines/estar/estar-mapper.ts
+@@ -280,7 +280,9 @@ const baseSlots: SlotDef[] = [
+      them a technical-screening hold. For the same reason it cannot be checked
+      for contradictions: there is no "no" answer to contradict. Adding a
+      patient-contact flag is an intake change and an SME question, not
+-     something to infer. */
++     something to infer. A non-contacting device can record its accountable
++     applicability rationale here; absence of any assessment is not proof that
++     nothing is owed. */
+   always('biocompatibility', 'Biocompatibility', 'ISO 10993-1 (contact category and duration)',
+     any(dt('biocompatibility'), ti('biocompatibilit'))),
+ 
+@@ -449,7 +451,26 @@ const IVD_PERFORMANCE_SLOTS: SlotDef[] = [
+         ti('clinical sensitivity', 'clinical specificity', 'clinical performance'))),
+ ];
+ 
+-const SLOTS_510K_IVD: SlotDef[] = [...SLOTS_510K, ...IVD_PERFORMANCE_SLOTS];
++/* P-114 item 5: the actual IVD v7.1 USA selection hides BenchTesting and
++   shows AnimalTesting (the Canadian selection does the reverse). Analytical
++   performance remains independently required. Animal testing is an applicant
++   applicability question, not a second mandatory generic bench report.
++
++   Keep the existing biocompatibility review required: the form has a
++   non-contact answer, but this mapper has no recorded answer to establish it.
++   `when-applicable` alone does not block ready, so relaxing that requirement
++   would silently admit an unassessed device. Non-IVD and De Novo keep their
++   existing registries. */
++const SLOTS_510K_IVD: SlotDef[] = [
++  ...SLOTS_510K.map((s) =>
++    s.id === 'performance-testing'
++      ? whenApplicable(s.id, 'Animal performance testing (where applicable)',
++          'FDA IVD eSTAR — Performance Testing › Animal Testing',
++          'animal studies apply to the device and its intended use',
++          any(dt('animal_testing', 'animal_performance'), ti('animal performance', 'animal testing')))
++      : s),
++  ...IVD_PERFORMANCE_SLOTS,
++];
+ 
+ const SLOTS_DE_NOVO: SlotDef[] = [
+   ...baseSlots,

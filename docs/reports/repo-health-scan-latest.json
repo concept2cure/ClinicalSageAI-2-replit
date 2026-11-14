@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T02:03:36.799Z",
+  "generatedAt": "2026-11-14T04:40:57.327Z",
   "git": {
-    "sha": "08044016b7f17440fdb3d50448824dd3d31387bd",
+    "sha": "ec174c8125424e37119426a5abc1b9e944ea70a3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2419,7 +2419,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 362954
+        "bytes": 365165
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2439,7 +2439,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 203253
+        "bytes": 209808
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2454,6 +2454,10 @@
         "bytes": 179488
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "bytes": 178202
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "bytes": 176923
       },
@@ -2462,16 +2466,12 @@
         "bytes": 172591
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 172544
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx",
         "bytes": 172058
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 161965
+        "bytes": 162747
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2495,11 +2495,11 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 146284
+        "bytes": 146805
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "bytes": 145516
+        "bytes": 145793
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2511,7 +2511,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 141850
+        "bytes": 142387
       },
       {
         "file": "server/storage.ts",
@@ -2570,12 +2570,12 @@
         "bytes": 125356
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 124562
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 125145
       },
       {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 122645
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "bytes": 124562
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2629,7 +2629,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6911
+        "lines": 6944
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2668,12 +2668,12 @@
         "lines": 3910
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "lines": 3605
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3691
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3597
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3605
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2682,6 +2682,10 @@
       {
         "file": "server/services/intelligent-report-engine.ts",
         "lines": 3573
+      },
+      {
+        "file": "server/services/module3Composer.ts",
+        "lines": 3533
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
@@ -2694,10 +2698,6 @@
       {
         "file": "server/routes/c2c/project-vault.ts",
         "lines": 3480
-      },
-      {
-        "file": "server/services/module3Composer.ts",
-        "lines": 3435
       },
       {
         "file": "server/routes/report-os.ts",
@@ -2720,12 +2720,12 @@
         "lines": 3042
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2992
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2997
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2991
+        "file": "server/routes/auth.ts",
+        "lines": 2992
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2741,7 +2741,7 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "lines": 2756
+        "lines": 2772
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2753,11 +2753,11 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2571
+        "lines": 2581
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-        "lines": 2556
+        "lines": 2561
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Insights.tsx",
@@ -2840,12 +2840,12 @@
         "lines": 2207
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 2164
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 2173
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 2153
+        "file": "server/routes/concept2cure.ts",
+        "lines": 2164
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",

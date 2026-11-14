@@ -84,6 +84,14 @@ export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   { docType: 'fast_track', packAgency: 'fda', label: 'fast track designation request', registryIds: ['US_FAST_TRACK'] },
   { docType: 'rmat', packAgency: 'fda', label: 'RMAT designation request', registryIds: ['US_RMAT'] },
   { docType: 'psp', packAgency: 'fda', label: 'pediatric study plan', registryIds: ['US_PSP'] },
+  // 2026-11-13 (S12 sweep item 3): three FDA filings that are one document each and
+  // were created as a full NDA, because nothing said what they were. A priority
+  // review request is asked for with the application it concerns; the environmental
+  // assessment is its Module 1.12.14 document (21 CFR part 25); a 15-day alert report
+  // is an E2B(R3) case report (21 CFR 314.80(c)(1)), not eCTD content.
+  { docType: 'priority_review', packAgency: 'fda', label: 'priority review designation request', registryIds: ['US_PRIORITY_REVIEW'] },
+  { docType: 'environmental_assessment', packAgency: 'fda', label: 'environmental assessment', registryIds: ['US_EA'] },
+  { docType: 'icsr_15day', packAgency: 'fda', label: '15-day alert report', registryIds: ['US_ICSR_15DAY'] },
   // ── US biotech filing completion (2026-10-29) ──
   // docs/design/US_BIOTECH_FILING_COMPLETION_2026-10-27.md. One class per exact
   // identity, so each scaffolds its own lifecycle record's parts and never the

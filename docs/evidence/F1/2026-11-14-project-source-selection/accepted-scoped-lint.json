@@ -1,0 +1,33 @@
+{
+  "startedAt": "2026-11-14T01:20:29.663764+00:00",
+  "elapsedSeconds": 5.184,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+    "server/routes/c2c/projects.ts",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "accepted-inputs.json",
+  "inputCount": 24,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "accepted-scoped-lint.txt.gz",
+  "outputSha256": "2544332b9a4885213911fd57a742c6b4e42ba38c27db22c78cccf9ca940965dd",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

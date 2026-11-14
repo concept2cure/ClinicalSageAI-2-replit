@@ -1,0 +1,250 @@
+{
+  "baseline": "5a552f142",
+  "passed": true,
+  "rows": [
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+      "baselineSha256": "5cd73d69ec182711b5dafa6d5d0c9c19c18560f2300fa67a2f2e0af0a0c3b4b7",
+      "currentSha256": "ec6c4c367a59043b0c111cdcb383b104e213602918fe03b34f3dacd6f3b876d3",
+      "baseline": {
+        "errors": 0,
+        "warnings": 6,
+        "messages": [
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Function 'DataRoom' has too many lines (318). Maximum allowed is 100.",
+            "line": 457,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 457,
+            "endColumn": 18
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'DataRoom' has a complexity of 68. Maximum allowed is 15.",
+            "line": 457,
+            "column": 1,
+            "messageId": "complex",
+            "endLine": 457,
+            "endColumn": 18
+          },
+          {
+            "ruleId": "max-lines",
+            "severity": 1,
+            "message": "File has too many lines (1848). Maximum allowed is 500.",
+            "line": 679,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 2454,
+            "endColumn": 1
+          },
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Function 'ProjectWorkspace' has too many lines (443). Maximum allowed is 100.",
+            "line": 1850,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 1850,
+            "endColumn": 26
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'ProjectWorkspace' has a complexity of 195. Maximum allowed is 15.",
+            "line": 1850,
+            "column": 1,
+            "messageId": "complex",
+            "endLine": 1850,
+            "endColumn": 26
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Arrow function has a complexity of 52. Maximum allowed is 15.",
+            "line": 2046,
+            "column": 33,
+            "messageId": "complex",
+            "endLine": 2046,
+            "endColumn": 35
+          }
+        ]
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 6,
+        "messages": [
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Function 'DataRoom' has too many lines (381). Maximum allowed is 100.",
+            "line": 477,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 477,
+            "endColumn": 18
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'DataRoom' has a complexity of 84. Maximum allowed is 15.",
+            "line": 477,
+            "column": 1,
+            "messageId": "complex",
+            "endLine": 477,
+            "endColumn": 18
+          },
+          {
+            "ruleId": "max-lines",
+            "severity": 1,
+            "message": "File has too many lines (1930). Maximum allowed is 500.",
+            "line": 680,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 2539,
+            "endColumn": 1
+          },
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Function 'ProjectWorkspace' has too many lines (443). Maximum allowed is 100.",
+            "line": 1935,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 1935,
+            "endColumn": 26
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Function 'ProjectWorkspace' has a complexity of 195. Maximum allowed is 15.",
+            "line": 1935,
+            "column": 1,
+            "messageId": "complex",
+            "endLine": 1935,
+            "endColumn": 26
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Arrow function has a complexity of 52. Maximum allowed is 15.",
+            "line": 2131,
+            "column": 33,
+            "messageId": "complex",
+            "endLine": 2131,
+            "endColumn": 35
+          }
+        ]
+      }
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/projectSources.ts",
+      "baselineSha256": "feb25846b1b6f12944bc0a78c8a86ccf37ec08d937ba39941f14db557e18e922",
+      "currentSha256": "95a694949333ae15f1a9d899a8982602dd555efc03eb2ea2aceb385042e79a88",
+      "baseline": {
+        "errors": 0,
+        "warnings": 0,
+        "messages": []
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 0,
+        "messages": []
+      }
+    },
+    {
+      "file": "server/routes/c2c/projects.ts",
+      "baselineSha256": "a63a8a7f9c4df5e16288aaf861bbf8ee0b8130ef0c2f70d6e1dd369ab5097d02",
+      "currentSha256": "291e1be31376c7e237c4f366d5e812c99033ebfa386b084db4ebe926c7d9e3df",
+      "baseline": {
+        "errors": 0,
+        "warnings": 3,
+        "messages": [
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Async arrow function has too many lines (320). Maximum allowed is 100.",
+            "line": 818,
+            "column": 54,
+            "messageId": "exceed",
+            "endLine": 818,
+            "endColumn": 56
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 121. Maximum allowed is 15.",
+            "line": 818,
+            "column": 54,
+            "messageId": "complex",
+            "endLine": 818,
+            "endColumn": 56
+          },
+          {
+            "ruleId": "max-lines",
+            "severity": 1,
+            "message": "File has too many lines (1720). Maximum allowed is 500.",
+            "line": 843,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 2571,
+            "endColumn": 1
+          }
+        ]
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 3,
+        "messages": [
+          {
+            "ruleId": "max-lines-per-function",
+            "severity": 1,
+            "message": "Async arrow function has too many lines (320). Maximum allowed is 100.",
+            "line": 818,
+            "column": 54,
+            "messageId": "exceed",
+            "endLine": 818,
+            "endColumn": 56
+          },
+          {
+            "ruleId": "complexity",
+            "severity": 1,
+            "message": "Async arrow function has a complexity of 121. Maximum allowed is 15.",
+            "line": 818,
+            "column": 54,
+            "messageId": "complex",
+            "endLine": 818,
+            "endColumn": 56
+          },
+          {
+            "ruleId": "max-lines",
+            "severity": 1,
+            "message": "File has too many lines (1728). Maximum allowed is 500.",
+            "line": 843,
+            "column": 1,
+            "messageId": "exceed",
+            "endLine": 2580,
+            "endColumn": 1
+          }
+        ]
+      }
+    },
+    {
+      "file": "server/services/clinical-regulatory-evidence/data-room-search.ts",
+      "baselineSha256": "0e74f6abd139249abc43dae9f4d450c7d09287800ed0e7399e68cc2d66c0a3f0",
+      "currentSha256": "3da0d1c452911a239d901d009784eb6e7f82c7764d9f760ad58e433474832748",
+      "baseline": {
+        "errors": 0,
+        "warnings": 0,
+        "messages": []
+      },
+      "current": {
+        "errors": 0,
+        "warnings": 0,
+        "messages": []
+      }
+    }
+  ]
+}

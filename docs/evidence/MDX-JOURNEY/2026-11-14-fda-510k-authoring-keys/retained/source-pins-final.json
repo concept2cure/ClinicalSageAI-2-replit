@@ -1,0 +1,57 @@
+[
+  {
+    "path": "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+    "sha256": "1d097387f7935d4da44702f5c7b0aa6569011da6bcc2a54b4a1d0202e734aede",
+    "bytes": 10927
+  },
+  {
+    "path": "tests/schema-contract/fda-510k-authoring-keys.contract.test.ts",
+    "sha256": "df0f5287dbac45453a416486e51b0709707c9d7c8279f75d21d0540e908e330d",
+    "bytes": 7306
+  },
+  {
+    "path": "shared/regulatory/device-authoring-sections.ts",
+    "sha256": "c1c8d704790acb62d44ee0fa5f17e20ea85ae71606147bc8bfe19075a5e36025",
+    "bytes": 26015
+  },
+  {
+    "path": "shared/regulatory/project-bootstrap.ts",
+    "sha256": "4345cc4f523bb226cc007eb58059a4b384e474aed7e4eccb146ce4695e0033b9",
+    "bytes": 125145
+  },
+  {
+    "path": "server/services/authoring/authoring-template-guidance.ts",
+    "sha256": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "bytes": 7435
+  },
+  {
+    "path": "server/services/authoring/builtin-authoring-templates.ts",
+    "sha256": "1529078944a8ce787a8ce5d188f075612c5fdf6129497d36579398f73f6a2196",
+    "bytes": 11642
+  },
+  {
+    "path": "server/services/authoring/authoring-template-sections.ts",
+    "sha256": "38077467589bc226d55bd9c515ca3d6af2f2cced2d3144478a8ffaa0e3b31b7c",
+    "bytes": 7754
+  },
+  {
+    "path": "server/services/authoring/revision-ledger.ts",
+    "sha256": "273fab4bf21344dc65c6017233a7b34db52a0d6287213ee006283cefab629c8d",
+    "bytes": 15369
+  },
+  {
+    "path": "server/services/market-specs/document-template-library.ts",
+    "sha256": "c0c7d29f03370831b4ffd7c52f55e15d307ff3e5856b9b725515ce0f88c6639a",
+    "bytes": 38633
+  },
+  {
+    "path": "migrations/20261005c_k510_denovo_estar_outline_v1_1.sql",
+    "sha256": "856d61ae3f294c29744a7e5e9f80daff2e9689b40923c26d786bf867b6fffa91",
+    "bytes": 18383
+  },
+  {
+    "path": "migrations/20261114_k510_ivd_estar_outline_v1_0.sql",
+    "sha256": "f7bbdc3860d2db8512032fd9756c0f10d66e079915adde5d1fb457c4c21e0906",
+    "bytes": 9539
+  }
+]

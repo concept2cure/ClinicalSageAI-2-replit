@@ -1,0 +1,91 @@
+{
+  "passed": true,
+  "files": [
+    {
+      "path": "scripts/db/migration-set.mjs",
+      "errors": 0,
+      "warnings": 4,
+      "baselineWarnings": 4
+    },
+    {
+      "path": "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "server/routes/c2c/projects.ts",
+      "errors": 0,
+      "warnings": 3,
+      "baselineWarnings": 3
+    },
+    {
+      "path": "server/services/c2c/__tests__/ivd-510k-rule-pack-selection.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "server/services/c2c/rule-pack-lookup.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "server/services/c2c/scaffold-project-documents.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "server/services/pathway-engines/estar/estar-mapper.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "server/services/vault/__tests__/ivd-retained-binder.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "server/services/vault/vault-folders.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "shared/regulatory/device-authoring-sections.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "shared/regulatory/project-bootstrap.ts",
+      "errors": 0,
+      "warnings": 2,
+      "baselineWarnings": 2
+    },
+    {
+      "path": "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    },
+    {
+      "path": "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0
+    }
+  ],
+  "warningCount": 9,
+  "errorCount": 0
+}

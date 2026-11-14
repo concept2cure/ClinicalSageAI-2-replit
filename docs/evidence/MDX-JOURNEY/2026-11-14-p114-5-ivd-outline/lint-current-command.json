@@ -1,0 +1,24 @@
+{
+  "command": [
+    "npx",
+    "eslint",
+    "--no-ignore",
+    "scripts/db/migration-set.mjs",
+    "server/routes/c2c/__tests__/projects-create-regional-devices.test.ts",
+    "server/routes/c2c/projects.ts",
+    "server/services/c2c/__tests__/ivd-510k-rule-pack-selection.test.ts",
+    "server/services/c2c/rule-pack-lookup.ts",
+    "server/services/c2c/scaffold-project-documents.ts",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+    "server/services/pathway-engines/estar/estar-mapper.ts",
+    "server/services/vault/__tests__/ivd-retained-binder.test.ts",
+    "server/services/vault/vault-folders.ts",
+    "shared/regulatory/device-authoring-sections.ts",
+    "shared/regulatory/project-bootstrap.ts",
+    "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+    "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+    "--format=json"
+  ],
+  "exitCode": 0,
+  "stderr": ""
+}

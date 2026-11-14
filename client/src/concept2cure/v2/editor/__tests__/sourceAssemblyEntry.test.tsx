@@ -8,6 +8,7 @@ vi.mock('@/services/portal/authService', async original => {
   const actual = await original<typeof import('@/services/portal/authService')>();
   return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }) };
 });
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 import { SourceAssemblyAction, SourceAssemblyDialog } from '../SourceAssemblyDialog';
 import { authService } from '@/services/portal/authService';
@@ -54,7 +55,7 @@ beforeEach(async () => {
     if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources`)) {
       const ids = new URL(path, 'https://fixture.test').searchParams.get('sourceIds')?.split(',').map(Number);
       const selected = ids ? sources.filter(row => ids.includes(row.id)) : sources;
-      return ok({ success: true, projectId: PROGRAM, sources: selected.map(row => ({ ...row, projectId: PROGRAM })),
+      return ok({ success: true, projectId: PROGRAM, ...(ids ? { selection: { scope: 'verified-accessible-sources', sourceIds: ids } } : {}), sources: selected.map(row => ({ ...row, projectId: PROGRAM })),
         total: selected.length, currentTotal: selected.length, page: { limit: 50, offset: 0 }, window: { shown: selected.length, truncated: false } });
     }
     if (path === `/api/c2c/projects/${PROGRAM}`) return ok({ id: PROGRAM, name: 'Original project', code: 'P191' });

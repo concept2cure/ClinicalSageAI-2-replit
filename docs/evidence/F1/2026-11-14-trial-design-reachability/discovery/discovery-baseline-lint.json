@@ -1,0 +1,19 @@
+[
+  {
+    "filePath": "shared/constants/ui-surface-registry.ui-v2.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (1110). Maximum allowed is 500.",
+        "line": 628,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1437,
+        "endColumn": 1
+      }
+    ]
+  }
+]

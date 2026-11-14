@@ -1,0 +1,184 @@
+[
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList210",
+    "type": "dropdown",
+    "caption": "Did you perform Stability of Sample(s) Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList210"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList220",
+    "type": "dropdown",
+    "caption": "Did you perform Validation of Specimens Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList220"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList230",
+    "type": "dropdown",
+    "caption": "Did you perform Trueness Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList230"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList110",
+    "type": "dropdown",
+    "caption": "Did you perform Precision (Repeatability/Reproducibility) Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList110"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList120",
+    "type": "dropdown",
+    "caption": "Did you perform Linearity Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList120"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList130",
+    "type": "dropdown",
+    "caption": "Did you perform Analytical Sensitivity/Detection Limit(s) Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList130"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList140",
+    "type": "dropdown",
+    "caption": "Do you have Assay Measuring Range information to include in this submission?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList140"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList150",
+    "type": "dropdown",
+    "caption": "Did you perform Analytical Specificity/Interference Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList150"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList160",
+    "type": "dropdown",
+    "caption": "Did you perform Assay Cut-Off Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList160"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList170",
+    "type": "dropdown",
+    "caption": "Do you have Traceability information to include in this submission?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList170"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList185",
+    "type": "dropdown",
+    "caption": "Did you perform Carry-Over Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList185"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList240",
+    "type": "dropdown",
+    "caption": "Did you perform High Dose Hook Effect Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList240"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList250",
+    "type": "dropdown",
+    "caption": "Did you perform Validation of the Assay Procedure Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList250"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList190",
+    "type": "dropdown",
+    "caption": "Do you have other supportive analytical performance data to include in this submission?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.AssayPerformance.PTDropDownList190"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList110",
+    "type": "dropdown",
+    "caption": "Did you perform Precision (Repeatability/Reproducibility) Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList110"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList120",
+    "type": "dropdown",
+    "caption": "Did you perform Linearity Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList120"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList150",
+    "type": "dropdown",
+    "caption": "Did you perform Analytical Specificity/Interference Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList150"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList200",
+    "type": "dropdown",
+    "caption": "Did you perform Instrument Accuracy Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList200"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList210",
+    "type": "dropdown",
+    "caption": "Did you perform Carry-Over Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList210"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList220",
+    "type": "dropdown",
+    "caption": "Do you have other supportive instrument performance data to include in this submission?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnalyticalPerformance.InstrumentPerformance.PTDropDownList220"
+  },
+  {
+    "somPath": "root.PerformanceTesting.BenchTesting.PTDropDownList410",
+    "type": "dropdown",
+    "caption": "Do you have Bench Testing to include in this submission?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.BenchTesting.PTDropDownList410"
+  },
+  {
+    "somPath": "root.PerformanceTesting.BenchTesting.BenchTestingQs.PTAttachment420.Type",
+    "type": "dropdown",
+    "caption": "",
+    "inDatasets": false,
+    "dataSomPath": null
+  },
+  {
+    "somPath": "root.PerformanceTesting.ComparisonStudies.PTDropDownList260",
+    "type": "dropdown",
+    "caption": "Did you perform Method Comparison Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.ComparisonStudies.PTDropDownList260"
+  },
+  {
+    "somPath": "root.PerformanceTesting.ComparisonStudies.PTDropDownList270",
+    "type": "dropdown",
+    "caption": "Did you perform Validation of Specimens/Matrix Comparison Study?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.ComparisonStudies.PTDropDownList270"
+  },
+  {
+    "somPath": "root.PerformanceTesting.ReferenceRange.PTDropDownList510",
+    "type": "dropdown",
+    "caption": "Do you have Reference Range/Expected Values information to include in this submission?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.ReferenceRange.PTDropDownList510"
+  },
+  {
+    "somPath": "root.PerformanceTesting.AnimalTesting.PTDropDownList610",
+    "type": "dropdown",
+    "caption": "Do you have Animal Testing to include in this submission?",
+    "inDatasets": true,
+    "dataSomPath": "root.PerformanceTesting.AnimalTesting.PTDropDownList610"
+  }
+]

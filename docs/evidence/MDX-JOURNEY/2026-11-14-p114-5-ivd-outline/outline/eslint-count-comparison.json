@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "mode": "Actual unchanged per-file warning counts; no exact diagnostic message equality claim",
+  "files": [
+    {
+      "path": "shared/regulatory/device-authoring-sections.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0
+    },
+    {
+      "path": "shared/regulatory/project-bootstrap.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 2,
+      "currentWarnings": 2
+    }
+  ],
+  "newTestWarnings": 0
+}

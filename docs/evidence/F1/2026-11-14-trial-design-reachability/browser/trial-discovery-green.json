@@ -1,0 +1,87 @@
+{
+  "revision": {
+    "commit": "4b82ba809bcde66e8d3632c85b46ebe7efefe1ad",
+    "startedAt": "2026-11-14T03:03:52.453Z"
+  },
+  "actor": "Ana Author",
+  "actorRoles": [
+    "admin",
+    "user"
+  ],
+  "nativeReads": [
+    "/api/protocol-dev?view=index&programId=d91a5a21-1ed5-4c1d-8f06-e881483774be",
+    "/api/protocol-dev?view=index&programId=d91a5a21-1ed5-4c1d-8f06-e881483774be"
+  ],
+  "queries": [
+    {
+      "query": "Trial design",
+      "body": "Projects\nTrial design UI rehearsal — SYNTHETIC\nTD-UI-001\nPages\nStudy & Protocol Design\nAsk AnA: \"Trial design\"",
+      "options": [
+        "",
+        "Trial design UI rehearsal — SYNTHETICTD-UI-001",
+        "Study & Protocol Design",
+        "Ask AnA: \"Trial design\""
+      ],
+      "destination": "http://127.0.0.1:5000/concept2cure/protocol-dev?program=d91a5a21-1ed5-4c1d-8f06-e881483774be",
+      "scopeValue": "d91a5a21-1ed5-4c1d-8f06-e881483774be",
+      "scope": [
+        {
+          "value": "d91a5a21-1ed5-4c1d-8f06-e881483774be",
+          "options": [
+            {
+              "text": "Open project: TD-UI-001",
+              "value": "d91a5a21-1ed5-4c1d-8f06-e881483774be"
+            },
+            {
+              "text": "Unfiled protocols",
+              "value": "unfiled"
+            },
+            {
+              "text": "All organization protocols",
+              "value": "all"
+            }
+          ]
+        }
+      ],
+      "destinationBody": "Skip to content\nConcept2Cure.RI\nNew conversation\nSearch\nHome\nProjects\nTasks\nCommunication\nVault\nSubmission Center\nWork areas\nCMC / Module 3\nBiostatistics\nRisk-based monitoring\nQuality\nReporting & analytics\nRecents\nTrial design UI rehearsal — SYNTHETIC\nYour conversations appear here.\nAA\nAna Author\nConcept2Cure Therapeutics\nTD-UI-001\n›\nStudy & Protocol Design\nSearch\n⌘K\nStudy & Protocol Design\n\nStart or select a protocol, create or bind its study design, then use its statistics, assessments, design checks and review tools. Ask AnA to draft from project evidence and continue in the shared document canvas and editor.\n\nProtocol scope\nOpen project: TD-UI-001\nUnfiled protocols\nAll organization protocols\nStart study & protocol design\nNo protocol in development for TD-UI-001\nBegin clinical trial design by starting the project’s protocol record above. Its Study design step then opens the objectives, endpoints, population, study structure and control inputs, alongside statistics and the schedule of assessments.\nServes the ICH M11 protocol record\nAsk AnA to draft the synopsis"
+    },
+    {
+      "query": "Study design",
+      "body": "Pages\nFDA CRL library\nBiostatistics\nStudy & Protocol Design\nAsk AnA: \"Study design\"",
+      "options": [
+        "",
+        "FDA CRL library",
+        "Biostatistics",
+        "Study & Protocol Design",
+        "Ask AnA: \"Study design\""
+      ],
+      "destination": "http://127.0.0.1:5000/concept2cure/protocol-dev",
+      "scopeValue": "d91a5a21-1ed5-4c1d-8f06-e881483774be",
+      "scope": [
+        {
+          "value": "d91a5a21-1ed5-4c1d-8f06-e881483774be",
+          "options": [
+            {
+              "text": "Open project: TD-UI-001",
+              "value": "d91a5a21-1ed5-4c1d-8f06-e881483774be"
+            },
+            {
+              "text": "Unfiled protocols",
+              "value": "unfiled"
+            },
+            {
+              "text": "All organization protocols",
+              "value": "all"
+            }
+          ]
+        }
+      ],
+      "destinationBody": "Skip to content\nConcept2Cure.RI\nNew conversation\nSearch\nHome\nProjects\nTasks\nCommunication\nVault\nSubmission Center\nWork areas\nCMC / Module 3\nBiostatistics\nRisk-based monitoring\nQuality\nReporting & analytics\nRecents\nTrial design UI rehearsal — SYNTHETIC\nYour conversations appear here.\nAA\nAna Author\nConcept2Cure Therapeutics\nTD-UI-001\n›\nStudy & Protocol Design\nSearch\n⌘K\nStudy & Protocol Design\n\nStart or select a protocol, create or bind its study design, then use its statistics, assessments, design checks and review tools. Ask AnA to draft from project evidence and continue in the shared document canvas and editor.\n\nProtocol scope\nOpen project: TD-UI-001\nUnfiled protocols\nAll organization protocols\nStart study & protocol design\nNo protocol in development for TD-UI-001\nBegin clinical trial design by starting the project’s protocol record above. Its Study design step then opens the objectives, endpoints, population, study structure and control inputs, alongside statistics and the schedule of assessments.\nServes the ICH M11 protocol record\nAsk AnA to draft the synopsis"
+    }
+  ],
+  "emptyProtocol": null,
+  "errors": [],
+  "completedAt": "2026-11-14T03:22:02.271Z",
+  "registrySourceHash": "9464ea49048996a9daae12ab411bebe0f6e46faa4f1ac43f2204b5ea78775e63",
+  "scope": "read-only discovery HMR overlay; flow still in progress"
+}

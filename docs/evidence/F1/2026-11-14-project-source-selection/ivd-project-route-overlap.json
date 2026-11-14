@@ -1,0 +1,6 @@
+{
+  "before": "291e1be31376c7e237c4f366d5e812c99033ebfa386b084db4ebe926c7d9e3df",
+  "after": "fb8595b471e25499859fa116177c2242c8aeb5f65f348e16b6d31c308005980a",
+  "changedOnly": "One productType argument in project creation scaffold; entire remainder including exact GET selection/after-grading admission is byte-identical.",
+  "baseHead": "1df5a34af7621e3630a71d694e840bec1687b6ab"
+}

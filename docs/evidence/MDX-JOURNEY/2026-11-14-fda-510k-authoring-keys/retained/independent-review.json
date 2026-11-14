@@ -1,0 +1,63 @@
+{
+  "reviewedAt": "2026-11-14T03:48:24.115Z",
+  "targets": [
+    {
+      "registryId": "US_510K",
+      "count": 38,
+      "exactKeysLabelsFlagsAndOrder": true,
+      "E1Required": true,
+      "E5Required": true,
+      "templateId": "519dfd9a-dc91-57ea-a6b5-d45259d8b6c1",
+      "templateSnapshot": "edd6a20e0f40453098ac3812555158b56bb83af42be0a487dd4aef095e6f7a99",
+      "mode": "manual",
+      "kind": "preparation",
+      "aiDraftable": false
+    },
+    {
+      "registryId": "US_510K_MOD",
+      "count": 38,
+      "exactKeysLabelsFlagsAndOrder": true,
+      "E1Required": true,
+      "E5Required": true,
+      "templateId": "0bcadb22-d9d9-5175-94da-19fc7d34fb0a",
+      "templateSnapshot": "856e1cf206917bfa508a7b270c227393f55c418ca5aca55cdb46f2d625ff153e",
+      "mode": "manual",
+      "kind": "preparation",
+      "aiDraftable": false
+    },
+    {
+      "registryId": "US_CDX_510K",
+      "count": 47,
+      "exactKeysLabelsFlagsAndOrder": true,
+      "E1Required": true,
+      "E5Required": false,
+      "templateId": "50953bfa-0352-5463-baae-3a6e98490254",
+      "templateSnapshot": "f96a35f89299f74280f82b8e4bba7b534ee96b279572da843d03b500448142ed",
+      "mode": "manual",
+      "kind": "preparation",
+      "aiDraftable": false
+    },
+    {
+      "registryId": "US_510K_IVD",
+      "count": 47,
+      "exactKeysLabelsFlagsAndOrder": true,
+      "E1Required": true,
+      "E5Required": false,
+      "templateId": "b99b2df7-d155-500c-93b9-80ca8c451cce",
+      "templateSnapshot": "1322cba64cf1808c37624e96e35452f4ec8a74ccd1a3e12db6e9e72dc9642876",
+      "mode": "manual",
+      "kind": "preparation",
+      "aiDraftable": false
+    }
+  ],
+  "genericGuidanceHasNoIvd": true,
+  "genericRowsAreCopies": true,
+  "ivdSourceHash": "2bbae431bb4416cdd4518986d3ba95c15c8ab55f6d0167d0841b979e3c066b46",
+  "ukBlueprintHash": "339918c79e9926e2c29d1aade56de07e0e6efc97e8adf3908e8b41958e80d38d",
+  "historicalSource": {
+    "id": "519dfd9a-dc91-57ea-a6b5-d45259d8b6c1",
+    "sha256": "14f3dc252c4f830045b994b94a926329e9abe0d86b64179db948ac1108ef17b4",
+    "count": 10
+  },
+  "currentSourceDiffersFromHistorical": true
+}

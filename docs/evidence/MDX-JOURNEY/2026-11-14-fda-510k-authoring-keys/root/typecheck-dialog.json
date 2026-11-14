@@ -1,0 +1,16 @@
+{
+  "head": "36dafdf56b14dd91961498c5dc5514280656800d",
+  "finishedHead": "36dafdf56b14dd91961498c5dc5514280656800d",
+  "command": [
+    "node",
+    "scripts/ci/typecheck-no-regression.mjs",
+    "--incremental"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 326.5,
+  "sourceStable": true,
+  "sourceChanges": [],
+  "declaredSourceFiles": 13601,
+  "sourceSnapshotSha256": "515dd98d278ff0dadefc085310961ac06f120495714183865c597fb97a281e13",
+  "sourcePins": "typecheck-dialog-source-pins.json.gz"
+}

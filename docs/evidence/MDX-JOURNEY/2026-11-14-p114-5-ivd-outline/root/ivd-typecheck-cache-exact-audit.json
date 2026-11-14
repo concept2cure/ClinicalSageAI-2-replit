@@ -1,0 +1,12 @@
+{
+  "tsVersion": "5.6.3",
+  "hashAlgorithm": "Actual installed TypeScript getSourceFileVersionAsHashFromText(ts.sys, ts.sys.readFile(file)); strips source-map directives as the compiler does",
+  "cacheMtime": "2026-11-14T03:12:05.757Z",
+  "cacheStable": true,
+  "fileCount": 15907,
+  "matched": 15907,
+  "mismatchCount": 0,
+  "mismatches": [],
+  "missingCount": 0,
+  "missing": []
+}

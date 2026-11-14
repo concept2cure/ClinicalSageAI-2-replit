@@ -1,7 +1,8 @@
 /**
- * C2CForm — the governed data-entry drawer (kit app/data-entry.jsx).
+ * C2CForm — shared governed data entry (kit app/data-entry.jsx).
  *
- * A right-side panel built from a typed field schema
+ * One typed field schema, presented inline in the main workflow or in the
+ * existing right-side panel for callers that still use it
  * (text / textarea / select / seg / date / number / password), with
  * required-field validation and an optional Part 11 governed note.
  * 15 kit surfaces mount this via `window.C2CForm`; on port they import
@@ -10,6 +11,7 @@
 import React from 'react';
 import { registerCeremonyOpen } from './ceremony';
 import { I } from './icons';
+import { registerSurfaceLeaveGuard } from './navParams';
 import { useDialog } from './useDialog';
 
 export interface C2CFormFieldOption {
@@ -88,6 +90,8 @@ export interface C2CFormConfig {
 
 export interface C2CFormProps {
   config: C2CFormConfig;
+  /** Inline shares every field and safeguard without a modal wrapper or focus trap. */
+  presentation?: 'inline' | 'drawer';
   onCancel: () => void;
   onSubmit: (values: Record<string, string>) => void;
   /** Told the field and value of every edit, so a caller can make one field's
@@ -143,8 +147,51 @@ function useFieldValues(fields: ReadonlyArray<C2CFormField>, busy: string | unde
 /** A field has a description when it states one or declares a changing part. */
 const hasDesc = (f: C2CFormField) => Boolean(f.desc) || f.descStatus !== undefined;
 
-export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField: customField }: C2CFormProps) {
+/** Main-flow forms hand off focus without owning the rest of the page. */
+function useInlineForm(panelRef: React.RefObject<HTMLDivElement | null>, inline: boolean) {
+  React.useLayoutEffect(() => {
+    if (!inline) return undefined;
+    const panel = panelRef.current;
+    const opener = document.activeElement as HTMLElement | null;
+    const release = registerSurfaceLeaveGuard(() => 'Finish or cancel the open form before switching work.');
+    panel?.focus();
+    return () => {
+      release();
+      // A person may now work elsewhere in the page. Only return focus if it
+      // remains in this form; never focus a disconnected or superseded opener.
+      if (panel?.contains(document.activeElement) && opener?.isConnected) opener.focus();
+    };
+  }, [inline, panelRef]);
+}
+
+function FormFrame({ inline, config, noticeId, panelRef, onCancel, children }: {
+  inline: boolean;
+  config: C2CFormConfig;
+  noticeId: string;
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  onCancel: () => void;
+  children: React.ReactNode;
+}) {
+  const panel = <div
+    className={'de' + (inline ? ' de-inline' : '')}
+    role={inline ? 'region' : 'dialog'}
+    aria-modal={inline ? undefined : true}
+    aria-label={config.title}
+    aria-describedby={config.notice ? noticeId : undefined}
+    aria-busy={config.busy ? true : undefined}
+    tabIndex={-1}
+    ref={panelRef}
+  >{children}</div>;
+  return inline ? panel : (
+    <div className="de-bd" onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel(); }}>
+      {panel}
+    </div>
+  );
+}
+
+export function C2CForm({ config, presentation = 'drawer', onCancel, onSubmit, onFieldChange, renderField: customField }: C2CFormProps) {
   const { eyebrow, title, sub, fields = [], submitLabel = 'Save', governed } = config;
+  const inline = presentation === 'inline';
 
   /**
    * Every control needs an id so its `<label>` can point at it.
@@ -203,7 +250,8 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField
      drawer used to handle Escape itself and never moved focus at all, so a
      keyboard user opening "Record identifiers" was left focused on the page
      behind the overlay. */
-  const panelRef = useDialog(onCancel);
+  const panelRef = useDialog(onCancel, !inline);
+  useInlineForm(panelRef, inline);
 
   // The ceremony channel: while this form is mounted, AnA's surface actions
   // can refuse view changes that would disturb it (see v2/ceremony.ts).
@@ -287,26 +335,16 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField
   };
 
   return (
-    <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-      <div
-        className="de"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        aria-describedby={config.notice ? noticeId : undefined}
-        aria-busy={config.busy ? true : undefined}
-        tabIndex={-1}
-        ref={panelRef}
-      >
+      <FormFrame inline={inline} config={config} noticeId={noticeId} panelRef={panelRef} onCancel={onCancel}>
         <div className="de-h">
           <div>
             {eyebrow && <div className="de-h-eye">{eyebrow}</div>}
             <div className="de-h-t">{title}</div>
             {sub && <div className="de-h-s">{sub}</div>}
           </div>
-          <button className="de-x" onClick={onCancel} aria-label="Close">
+          {!inline && <button className="de-x" onClick={onCancel} aria-label="Close">
             {I.close}
-          </button>
+          </button>}
         </div>
         <div className="de-body">
           {/* A <p>, not a <div>: `.de-field.half:nth-of-type(odd)` counts the
@@ -318,7 +356,7 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField
           )}
           {config.busy && <p className="de-desc" role="status">{config.busy}</p>}
           {!config.busy && fields.map((f) => (
-            <div key={f.key} className={'de-field' + (f.half ? ' half' : '')}>
+            <div key={f.key} className={'de-field' + (!inline && f.half ? ' half' : '')}>
               {/* A seg is a radiogroup, not a labellable control, so its label
                   is referenced by id rather than pointing at an input. The
                   required marker is decorative — `aria-required` on the control
@@ -363,7 +401,6 @@ export function C2CForm({ config, onCancel, onSubmit, onFieldChange, renderField
             {governed ? I.lock : I.check} {submitLabel}
           </button>
         </div>
-      </div>
-    </div>
+      </FormFrame>
   );
 }
