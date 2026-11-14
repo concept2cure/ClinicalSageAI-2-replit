@@ -71,6 +71,10 @@ jobs:
       DATABASE_URL: postgresql://postgres@localhost:5432/c2c_tier5_smoke?sslmode=disable
       # The dev server boots at 127.0.0.1:5000; the browser drives the same origin.
       BASE_URL: http://127.0.0.1:5000
+      # Seed and authenticate the same explicit fictional account in every spec.
+      ADMIN_EMAIL: smoke-admin@trialsage.test
+      ADMIN_NAME: Browser Smoke Administrator
+      SMOKE_USER_EMAIL: smoke-admin@trialsage.test
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

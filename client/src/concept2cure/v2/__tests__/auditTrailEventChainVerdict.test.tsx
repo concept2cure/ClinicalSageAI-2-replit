@@ -127,6 +127,18 @@ describe('Audit trail — the audit_events chain verdict in the chain banner', (
     expect(seen.current?.summary).not.toMatch(/audit-event chain is verified intact/);
   });
 
+  /* Demo walk 5.u6 (2026-11-12): the line under the second chain read "A second chain, kept per organisation, that
+     some services write to instead of the ledger". To a Part 11 buyer that says records bypass the audit trail. The
+     ledger and this chain are both read on this screen; the line says what the chain is and that it is verified on
+     its own, and makes no claim about where any service should write. */
+  it('describes the second chain as a separate, separately verified chain, not as writes that bypass the ledger', async () => {
+    serve({ [CHAIN]: () => ok(EMPTY_PRE_FIX) });
+    mount();
+    await screen.findByText('Audit-event chain: no entries yet');
+    expect(region().textContent).not.toMatch(/instead of the ledger/);
+    expect(region().textContent).toMatch(/A separate hash chain, kept per organisation and verified on its own/);
+  });
+
   it('an unhashed chain reads "not verifiable", not the raw key, and is not intact', async () => {
     serve({ [CHAIN]: () => ok({ ...INTACT, chainStatus: 'unverifiable', integrityValid: null, totalEntries: 3, unhashedEntries: 3, verifiedEntries: 0 }) });
     const { seen } = mount();
@@ -161,6 +173,111 @@ describe('Audit trail — the audit_events chain verdict in the chain banner', (
     mount();
     expect(await screen.findByText('Audit-event chain not verified')).toBeTruthy();
     expect(region().textContent).not.toMatch(/intact|pending/);
+  });
+});
+
+/* 2026-11-12, docs/evidence/D5-AUDIT-EVENT-CHAIN/2026-11-12/. The server's walk
+   now says what it found in one sentence, tells an altered entry from one that
+   does not follow its predecessor, and reports a chain it could not place as
+   not verifiable. This screen composed its own detail from two counts, so each
+   of those read wrongly here. The bodies below are the route's, as it answers
+   (server/routes/part11-compliance.ts). */
+const OMITS = 'The before and after values of a change are not part of the hash, so this does not show they are unaltered.';
+const SAYS_INTACT = `All 4210 audit entries match the hash recorded when each was written, computed over its sequence, event, entity, user, timestamp, reason and predecessor hash, and each follows the entry before it. ${OMITS}`;
+const UNLINKED = {
+  ...INTACT, chainStatus: 'unverifiable', integrityValid: null, totalEntries: 12, verifiedEntries: 12, unhashedEntries: 0, unlinkedEntries: 1,
+  compliance: { tamperEvident: '1 of 12 audit entries names no entry before it although one was recorded, so that link could not be checked.' },
+};
+const ALTERED = {
+  ...INTACT, chainStatus: 'broken', integrityValid: false, totalEntries: 9, verifiedEntries: 7, brokenLinks: 2, contentBreaks: 1, pointerBreaks: 1,
+  brokenLinkDetails: [{ id: 1, sequenceNumber: 4, kind: 'content' }, { id: 77, sequenceNumber: 6, kind: 'pointer' }],
+  compliance: { tamperEvident: '1 entry does not match the hash recorded when it was written; 1 entry does not follow the entry before it.' },
+};
+
+describe('Audit trail — the audit-event verdict says what the server found', () => {
+  it('a chain that could not be placed does not read "0 of 12 entries carry no record hash"', async () => {
+    serve({ [CHAIN]: () => ok(UNLINKED) });
+    const { seen } = mount();
+    expect(await screen.findByText('Audit-event chain not verifiable')).toBeTruthy();
+    expect(region().textContent).not.toMatch(/carry no record hash/);
+    expect(region().textContent).toMatch(/1 of 12 audit entries names no entry before it although one was recorded/);
+    await waitFor(() => expect(eventFacts(seen)?.auditEventChain).toMatchObject({ verdict: 'not verifiable', unlinkedEntries: 1, unhashedEntries: 0 }));
+    expect(seen.current?.summary).not.toMatch(/carry no record hash/);
+    expect(seen.current?.summary).toMatch(/NOT VERIFIABLE over 12 entries\. 1 of 12 audit entries names no entry before it/);
+  });
+
+  it('without the server\'s sentence it names only a cause the server sent, and guesses none', async () => {
+    serve({ [CHAIN]: () => ok({ ...UNLINKED, compliance: undefined }) });
+    mount();
+    await screen.findByText('Audit-event chain not verifiable');
+    expect(region().textContent).toMatch(/1 of 12 entries names no entry before it although one was recorded, so that link could not be checked/);
+    cleanup();
+    serve({ [CHAIN]: () => ok({ ...UNLINKED, compliance: undefined, unlinkedEntries: undefined, unhashedEntries: undefined }) });
+    mount();
+    await screen.findByText('Audit-event chain not verifiable');
+    expect(region().textContent).toMatch(/The chain could not be verified over 12 entries/);
+    expect(region().textContent).not.toMatch(/Some of|carry no record hash/);
+  });
+
+  it('intact says what was checked and that the before and after values are not part of it, on screen and to AnA', async () => {
+    serve({ [CHAIN]: () => ok({ ...INTACT, compliance: { tamperEvident: SAYS_INTACT } }) });
+    const { seen } = mount();
+    await screen.findByText('Audit-event chain intact');
+    expect(region().textContent).toContain(SAYS_INTACT);
+    await waitFor(() => expect(eventFacts(seen)?.auditEventChain).toMatchObject({ verdict: 'intact', found: SAYS_INTACT }));
+    expect(seen.current?.summary).toContain(OMITS);
+  });
+
+  it('an altered entry is not called a broken link, and the entries that did not verify are named', async () => {
+    serve({ [CHAIN]: () => ok(ALTERED) });
+    const { seen } = mount();
+    expect(await screen.findByText('Audit-event chain verification failed')).toBeTruthy();
+    expect(region().textContent).not.toMatch(/broken links?/);
+    expect(region().textContent).toMatch(/1 entry does not match the hash recorded when it was written/);
+    const list = region().querySelector('details');
+    expect(list?.querySelector('summary')?.textContent).toBe('Entries that did not verify');
+    expect([...list!.querySelectorAll('li')].map((li) => li.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
+      'AUD-1 does not match the hash recorded when it was written',
+      'AUD-77 does not follow the entry before it',
+    ]);
+    await waitFor(() => expect(eventFacts(seen)?.auditEventChain).toMatchObject({
+      verdict: 'broken', alteredEntries: 1, outOfSequenceEntries: 1, failedEntries: ['AUD-1', 'AUD-77'],
+    }));
+    expect(seen.current?.summary).not.toMatch(/broken link/);
+  });
+
+  it('a named entry that is loaded in the table opens there; one that is not is named without a control', async () => {
+    serve({
+      [LEDGER]: () => body({ success: true, data: [{ ...ENTRY, id: 'AUD-1' }], meta: { chain: { store: 'audit_logs', ok: true, rowsChecked: 3, legacyRows: 0, sequencedRows: 3 } } }),
+      [CHAIN]: () => ok(ALTERED),
+    });
+    mount();
+    await screen.findByText('Audit-event chain verification failed');
+    expect(screen.queryByText(/AUD-1 — Entry detail/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Open entry AUD-1' }));
+    expect(await screen.findByText(/AUD-1 — Entry detail/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Open entry AUD-77' })).toBeNull();
+    expect(region().textContent).toMatch(/AUD-77/);
+  });
+
+  it('says how many are listed when the server listed only the first of them', async () => {
+    serve({ [CHAIN]: () => ok({ ...ALTERED, brokenLinks: 34 }) });
+    mount();
+    await screen.findByText('Audit-event chain verification failed');
+    expect(region().textContent).toMatch(/The first 2 of 34 are listed\./);
+  });
+
+  it('a status this screen will not call intact does not print the server\'s intact sentence under it', async () => {
+    serve({ [CHAIN]: () => ok({ ...INTACT, integrityValid: null, compliance: { tamperEvident: SAYS_INTACT } }) });
+    mount();
+    await screen.findByText('Audit-event chain not verified');
+    expect(region().textContent).not.toMatch(/match the hash recorded/);
+  });
+
+  it('names an audit-event entry as the trail\'s table does', async () => {
+    const { readFileSync } = await import('node:fs');
+    const ledger = readFileSync('server/routes/audit-trail-ledger.routes.ts', 'utf8');
+    expect(ledger, 'the table\'s id for an audit-event entry changed; the banner names entries by it').toContain('id: `AUD-${String(row.id)}`');
   });
 });
 

@@ -1,0 +1,31 @@
+{
+  "head": "2b545d84c21720a1c75c814a23c92b8306270720",
+  "scope": "Frozen combined canonical selection owner and additive guards, both passing regression sets, before merge commit/publication.",
+  "files": {
+    ".typecheck-baseline.json": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx": "c52d0847256097422ce3da046f0b425f0a873d92ca985c2e43e092e6024f52de",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx": "6ce89e1597fc01c4db9214402325fd40a4bdadc40916c1db0e2c10a4b23cd643",
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "60ab7ea22d933a554a53083e44f8f875b7da2121995683bce2df08f2be2e2fe1",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx": "6a31ab85a5b78e0c2effa46a828e7f9fead4e4083e542812f93668fc7db4d09e",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx": "c616d3c52d555204bfce0eb7bc1b58566c5dd0919c788ec3e9a61b7aba531a77",
+    "client/src/concept2cure/v2/dataConnect.tsx": "cab6e1af7b7c52839392784955dbd9ea7a0e26bd97a416a737f8c19e37d205cc",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "459a9ecd258b42cbdab494a3770747d65fa40df0ff07536bf0cc20edd19cf47e",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "7083c121b5574a288aa475eeca5805e7c47e0d8bd64f137f4854cdf064741f92",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "34c158d08d683ae1f3b93f5cffe70e548d1cccb759e56ecbc3ef37ff075a287f",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "648b0b695c8e9b81dc54a3635d4aac7e7ab044b6a36eb4195cdcfe5e60198324",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "0ba4e5ecb9bbe06aa78a2357a5246fcf201141445e80f13f0ed57098c630defd",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts": "3dc2a1ef970385a7c964a9960a7a8b3514cadfacb1e7ebff3e510079488e639a",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "shared/data-room-processing-status.ts": "86396fc9a0bccac5f589586c67775f0008b896ca4b0a1eb7a56c5148d5f0aacf",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx": "fe17488fbc1b72d8b02a8e4487d19befc3c8e3193413b6cc688a746d168ca7b9",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": "803ad429027d62697009330f1aa0254ab795e6b1c81752279d0ff16524832924",
+    "server/routes/c2c/projects.ts": "291e1be31376c7e237c4f366d5e812c99033ebfa386b084db4ebe926c7d9e3df",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "5e83bd692ec5f58e45623c132dc64852ad2c1124b5721c07aaca2f8486d385e6",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "55ef47f84a2503f814970166d56f9f64e8d3dd7f4c87641fe42d4bfaa266d09f",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "4846a43b8ec0c2b7abcc0a9c65d0ac3be510c091f9e9a61e5dbf8a22949df5c7"
+  }
+}

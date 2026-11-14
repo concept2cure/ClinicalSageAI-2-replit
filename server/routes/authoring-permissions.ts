@@ -13,6 +13,7 @@ import {
   normalizeAuthoringRole,
   resolveAuthoringDocumentScope,
   revokeAuthoringPermission,
+  documentStatusAllowsAction,
 } from '../services/authoring/authoring-permissions';
 
 const router = Router();
@@ -42,16 +43,27 @@ function requestContext(req: Request) {
 
 type PermissionContext = ReturnType<typeof requestContext>;
 
-async function requirePermissionManager(client: RequestSqlClient, ctx: PermissionContext): Promise<void> {
+/**
+ * Who may manage this document's access. Authority is decided as for a document that can change; the seal is a
+ * separate question, asked only of a change (2026-11-12, demo walk 1.u5). Who holds access to a sealed record is
+ * part of that record, so its manager reads the list; before this, every frozen or approved document answered the
+ * read with the seal refusal, and a non-manager was told "sealed" rather than that they do not manage access.
+ */
+async function requirePermissionManager(
+  client: RequestSqlClient,
+  ctx: PermissionContext,
+  intent: 'read' | 'change' = 'change',
+): Promise<void> {
   const scope = await resolveAuthoringDocumentScope(client, ctx.tenantId, ctx.docId);
-  const decision = await decideAuthoringPermission({ pool: client, principal: ctx.principal, scope, action: 'manage_permissions' });
-  if (decision.reason === 'object-not-found') {
-    throw new PermissionRefusal(404, 'AUTHORING_OBJECT_NOT_FOUND', 'Authoring document not found.');
+  if (!scope) throw new PermissionRefusal(404, 'AUTHORING_OBJECT_NOT_FOUND', 'Authoring document not found.');
+  const authority = await decideAuthoringPermission({
+    pool: client, principal: ctx.principal, scope: { ...scope, documentStatus: 'draft' }, action: 'manage_permissions',
+  });
+  if (!authority.allowed) {
+    throw new PermissionRefusal(403, 'AUTHORING_PERMISSION_ADMIN_FORBIDDEN', 'Only a document owner or platform administrator may manage permissions.');
   }
-  if (!decision.allowed) {
-    throw new PermissionRefusal(403, 'AUTHORING_PERMISSION_ADMIN_FORBIDDEN', decision.reason === 'document-immutable'
-      ? 'Access cannot be changed while this document is sealed or archived.'
-      : 'Only a document owner or platform administrator may manage permissions.');
+  if (intent === 'change' && !documentStatusAllowsAction(scope.documentStatus, 'manage_permissions')) {
+    throw new PermissionRefusal(403, 'AUTHORING_PERMISSION_ADMIN_FORBIDDEN', 'Access cannot be changed while this document is sealed or archived.');
   }
 }
 
@@ -114,7 +126,7 @@ function refusal(res: Response, error: unknown, verb: string): void {
 router.get('/authoring/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
     const ctx = requestContext(req);
-    await requirePermissionManager(getPool(), ctx);
+    await requirePermissionManager(getPool(), ctx, 'read');
     const permissions = await listAuthoringPermissions(getPool(), ctx.tenantId, ctx.docId);
     res.json({ success: true, docId: ctx.docId, permissions });
   } catch (error) { refusal(res, error, 'list'); }

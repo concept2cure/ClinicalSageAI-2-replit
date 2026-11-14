@@ -1,0 +1,20 @@
+{
+  "programId": "8ec9eeb3-fedc-4113-8baf-101c63e34216",
+  "documentId": "3cfb277f-7240-421c-8149-40876dbbd244",
+  "expected": "fixed",
+  "providerCalls": 0,
+  "errors": [],
+  "pendingDisabled": true,
+  "prepared": {
+    "projectId": "8ec9eeb3-fedc-4113-8baf-101c63e34216",
+    "documentId": "3cfb277f-7240-421c-8149-40876dbbd244",
+    "sectionId": "6f4d0ae8-b5ab-4aa5-a3f8-10dfc61e2738",
+    "sectionCode": "1",
+    "sectionUpdatedAt": "2026-11-13T20:00:21.624Z",
+    "savedRecordOnly": true,
+    "authoringSectionId": "6f4d0ae8-b5ab-4aa5-a3f8-10dfc61e2738",
+    "authoringSectionUpdatedAt": "2026-11-13T20:00:21.624Z"
+  },
+  "matchingSavedSections": 1,
+  "outcome": "passed"
+}

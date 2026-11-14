@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-11-14T02:14:49.875725+00:00",
+  "elapsedSeconds": 30.395,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "docs/evidence/F1/2026-11-14-project-source-selection/selected-source-walk.cjs",
+    "repaired"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "integrated-publication-inputs.json",
+  "inputCount": 25,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "docs/evidence/F1/2026-11-14-project-source-selection/selected-source-walk.cjs": "9cc1bc15b125bd7ac1687901ce65a09138fe943bae94dc9ca87a61019bf141c5"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "integrated-browser.txt.gz",
+  "outputSha256": "6bf86dd848ccf4f48fc73ad2a506e292d655f7f8acb9f003e8afcf3f1a69f76c",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

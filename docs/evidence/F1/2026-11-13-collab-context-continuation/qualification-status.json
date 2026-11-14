@@ -1,0 +1,54 @@
+{
+  "base": "337b87b6864b96d1395a1e99b561f6a1c60d0b03",
+  "node": "22.23.5",
+  "combinedUnit": {
+    "tests": 66,
+    "files": 7,
+    "failed": 0
+  },
+  "red": {
+    "lock": {
+      "failed": 12,
+      "controls": 14
+    },
+    "directory": {
+      "failed": 7,
+      "controls": 2
+    }
+  },
+  "compiler": {
+    "errors": 0,
+    "exitCode": 0,
+    "scope": "Full canonical compiler; before integration of incoming LicensingSurface/documentation commits; normal push hook repeats for merged source"
+  },
+  "lint": {
+    "errors": 0,
+    "addedWarnings": 0,
+    "sourceWarningsDecrease": 1,
+    "newTestAndBrowserRunnerWarnings": 0
+  },
+  "browser": {
+    "sectionSwitch": "actual app; real fictional project; lock/presence boundary intercepted; old and new intent verified",
+    "accountSwitch": "actual app with injected synthetic B session/directory; old recipient and draft removed",
+    "forwardedMessageOrTaskPosts": 0,
+    "pageErrors": 0
+  },
+  "peerReviews": "No blocking findings in either read-only cross review",
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx": "aecbcbf8c1c20edd9352d1f578fd3293d94d6cf936175d277165291a24461075",
+    "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx": "d16995eaa97f2d62602017ce651ae31a9ca7ccc6be70d51d4eabf2d5bfd13717",
+    "client/src/concept2cure/v2/__tests__/authoringCollab.test.tsx": "3c9005f1bac0671f0a5857ff2560dfbd48c479462835405752dee0ce393c894a",
+    "client/src/concept2cure/v2/__tests__/authoringCollabRoomUnknown.test.tsx": "9805c608f0257ca63d9a145947764c7fc52428904cfc5700eca1fbf8c47f91e6",
+    "client/src/concept2cure/v2/__tests__/authoringCollabContext.test.tsx": "cd15fc47629ce1255840df46a1438c3a902c56edb559ed0655905ff137a05100",
+    "client/src/concept2cure/v2/__tests__/collabDirectoryContext.test.tsx": "e8454d7389337406e7a2bacfcfa0c37ce0d124a1b96d4f90011f42996623d365"
+  },
+  "liveProviderQualified": false,
+  "hostedCodespacesQualified": false,
+  "firstIntegratedPush": {
+    "compilerErrors": 0,
+    "ciLintGates": 89,
+    "gateFailures": 0,
+    "remoteRefRace": true,
+    "advancedTo": "c36ec97e99125a2c7c129f8f4eb38f34bb3991d0"
+  }
+}

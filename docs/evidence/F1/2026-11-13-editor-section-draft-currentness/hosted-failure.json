@@ -1,0 +1,24 @@
+{
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "runId": 43507358580,
+  "headSha": "b9cd90c9d92e3e2058c37c0e20192409605ea56b",
+  "jobId": 132168387448,
+  "artifactId": 14076728340,
+  "failedStep": "Run the WO-06 governed golden journey",
+  "result": { "passed": 1, "failed": 1, "skipped": 0 },
+  "failure": {
+    "test": "first session: create an IND project, add a source, assign, draft with AnA, send for review, see what is left",
+    "file": "tests/e2e/golden-customer-journey.e2e.ts",
+    "line": 415,
+    "assertion": "The prepared section identity matches exactly one admitted saved section",
+    "actualMatchingSections": 0,
+    "sectionsResponseStatus": 200
+  },
+  "successfulSteps": [
+    "Provision the application schema from scratch",
+    "Run the authenticated browser smoke",
+    "Qualify every launch app access boundary",
+    "Qualify every launch app keyboard access"
+  ],
+  "retrieval": "GitHub connector job/step metadata and downloaded workflow artifact; decoded job-log wrapper returned Transport closed twice."
+}

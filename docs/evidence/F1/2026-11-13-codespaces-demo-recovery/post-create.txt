@@ -1,0 +1,481 @@
+C2C Codespace setup (Node.js 22, PostgreSQL 16 + pgvector, local database)
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+npm warn deprecated rimraf@2.7.1: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+npm warn deprecated popper.js@1.16.1: You can find the new Popper v2 at @popperjs/core, this package is dedicated to the legacy v1
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+npm warn deprecated fstream@1.0.12: This package is no longer supported.
+npm warn deprecated glob@11.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated deep-diff@1.0.2: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+npm warn deprecated uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+> concept2cure-riai@1.0.0 prepare
+> [ -n "$CI" ] || husky || true
+
+
+added 2420 packages, and audited 2421 packages in 1m
+
+363 packages are looking for funding
+  run `npm fund` for details
+
+72 vulnerabilities (9 low, 61 moderate, 2 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice
+
+> concept2cure-riai@1.0.0 codespaces:doctor:test
+> node --test scripts/ops/codespaces-doctor.test.mjs scripts/ops/codespaces-startup.test.mjs scripts/ops/codespaces-neon-policy.test.mjs scripts/ops/codespaces-csr-browser.test.mjs
+
+TAP version 13
+# Subtest: a present Playwright package recovers missing browser through the actual shell preparation
+ok 1 - a present Playwright package recovers missing browser through the actual shell preparation
+  ---
+  duration_ms: 495.761112
+  type: 'test'
+  ...
+# Subtest: a failed browser repair skips preparation and recovers on the next start
+ok 2 - a failed browser repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 172.889207
+  type: 'test'
+  ...
+# Subtest: a present Playwright package recovers missing deps through the actual shell preparation
+ok 3 - a present Playwright package recovers missing deps through the actual shell preparation
+  ---
+  duration_ms: 125.588121
+  type: 'test'
+  ...
+# Subtest: a failed deps repair skips preparation and recovers on the next start
+ok 4 - a failed deps repair skips preparation and recovers on the next start
+  ---
+  duration_ms: 191.040761
+  type: 'test'
+  ...
+# Subtest: healthy browser preparation and an already prepared restart install nothing
+ok 5 - healthy browser preparation and an already prepared restart install nothing
+  ---
+  duration_ms: 63.996532
+  type: 'test'
+  ...
+# Subtest: an installed wrong Playwright version is replaced by the existing exact pin
+ok 6 - an installed wrong Playwright version is replaced by the existing exact pin
+  ---
+  duration_ms: 73.581631
+  type: 'test'
+  ...
+# Subtest: a successful installer is followed by a real launch check before claiming preparation ready
+ok 7 - a successful installer is followed by a real launch check before claiming preparation ready
+  ---
+  duration_ms: 142.032613
+  type: 'test'
+  ...
+# Subtest: Neon owner + pooler runtime on the same database are eligible for a read-only check
+ok 8 - Neon owner + pooler runtime on the same database are eligible for a read-only check
+  ---
+  duration_ms: 1.804428
+  type: 'test'
+  ...
+# Subtest: Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime
+ok 9 - Codespaces never silently chooses a different DB, invalid TLS or the owner for runtime
+  ---
+  duration_ms: 1.303043
+  type: 'test'
+  ...
+# Subtest: request-serving Codespaces fails closed on any inherited DB owner/maintenance secret
+ok 10 - request-serving Codespaces fails closed on any inherited DB owner/maintenance secret
+  ---
+  duration_ms: 0.414284
+  type: 'test'
+  ...
+# Subtest: a runtime-only Codespace can qualify without an owner credential in the API process
+ok 11 - a runtime-only Codespace can qualify without an owner credential in the API process
+  ---
+  duration_ms: 0.229696
+  type: 'test'
+  ...
+# Subtest: Neon connection errors are classified without returning credential-bearing messages
+ok 12 - Neon connection errors are classified without returning credential-bearing messages
+  ---
+  duration_ms: 0.241053
+  type: 'test'
+  ...
+# Subtest: read-only Neon PostgreSQL probe verifies hostname and refuses remote plaintext
+ok 13 - read-only Neon PostgreSQL probe verifies hostname and refuses remote plaintext
+  ---
+  duration_ms: 0.591481
+  type: 'test'
+  ...
+# Subtest: Codespaces startup reports missing or weak signing credentials before claiming readiness
+ok 14 - Codespaces startup reports missing or weak signing credentials before claiming readiness
+  ---
+  duration_ms: 0.24599
+  type: 'test'
+  ...
+# Subtest: Codespaces refuses a green database when tenant RLS is off or unset
+ok 15 - Codespaces refuses a green database when tenant RLS is off or unset
+  ---
+  duration_ms: 0.600023
+  type: 'test'
+  ...
+# Subtest: an app role must actually run RLS and must not own unforced RLS tables
+ok 16 - an app role must actually run RLS and must not own unforced RLS tables
+  ---
+  duration_ms: 0.414134
+  type: 'test'
+  ...
+# Subtest: OpenAI quota is distinct from a rate limit, auth failure or governance gate
+ok 17 - OpenAI quota is distinct from a rate limit, auth failure or governance gate
+  ---
+  duration_ms: 0.428676
+  type: 'test'
+  ...
+# Subtest: OpenAI auth probe is no-charge GET; billable POST requires explicit request
+ok 18 - OpenAI auth probe is no-charge GET; billable POST requires explicit request
+  ---
+  duration_ms: 0.463278
+  type: 'test'
+  ...
+# Subtest: Anthropic authentication checks models without a drafting or billable request
+ok 19 - Anthropic authentication checks models without a drafting or billable request
+  ---
+  duration_ms: 0.426283
+  type: 'test'
+  ...
+# Subtest: Anthropic missing or empty models never reports provider readiness
+ok 20 - Anthropic missing or empty models never reports provider readiness
+  ---
+  duration_ms: 0.163737
+  type: 'test'
+  ...
+# Subtest: Anthropic provider responses distinguish auth, policy, billing and rate limits
+ok 21 - Anthropic provider responses distinguish auth, policy, billing and rate limits
+  ---
+  duration_ms: 5.875782
+  type: 'test'
+  ...
+# Subtest: Anthropic model discovery is opt-in and is required only when requested
+ok 22 - Anthropic model discovery is opt-in and is required only when requested
+  ---
+  duration_ms: 0.640234
+  type: 'test'
+  ...
+# Subtest: missing key never triggers OpenAI request
+ok 23 - missing key never triggers OpenAI request
+  ---
+  duration_ms: 0.129846
+  type: 'test'
+  ...
+# Subtest: DB contract failures never imply readiness
+ok 24 - DB contract failures never imply readiness
+  ---
+  duration_ms: 0.176616
+  type: 'test'
+  ...
+# Subtest: overall startup cannot be marked ready on a missing DB even when OpenAI key exists
+ok 25 - overall startup cannot be marked ready on a missing DB even when OpenAI key exists
+  ---
+  duration_ms: 0.143196
+  type: 'test'
+  ...
+# Subtest: doctor does not probe external provider or application without explicit flags
+ok 26 - doctor does not probe external provider or application without explicit flags
+  ---
+  duration_ms: 0.346352
+  type: 'test'
+  ...
+# Subtest: a misleading 200 /readyz cannot qualify degraded, unseeded or incomplete app state
+ok 27 - a misleading 200 /readyz cannot qualify degraded, unseeded or incomplete app state
+  ---
+  duration_ms: 0.618952
+  type: 'test'
+  ...
+# Subtest: running app with simulated AnA is not accepted as real model readiness
+ok 28 - running app with simulated AnA is not accepted as real model readiness
+  ---
+  duration_ms: 0.398431
+  type: 'test'
+  ...
+# Subtest: Anthropic probe names which approved drafting versions the key can see, across pages
+ok 29 - Anthropic probe names which approved drafting versions the key can see, across pages
+  ---
+  duration_ms: 0.427093
+  type: 'test'
+  ...
+# Subtest: A working key that sees no approved drafting version is blocked, not passed
+ok 30 - A working key that sees no approved drafting version is blocked, not passed
+  ---
+  duration_ms: 0.1795
+  type: 'test'
+  ...
+# Subtest: --expect-anthropic-models reaches the Anthropic probe from the command line
+ok 31 - --expect-anthropic-models reaches the Anthropic probe from the command line
+  ---
+  duration_ms: 0.430979
+  type: 'test'
+  ...
+# Subtest: the drafting-call probe sends one small request the current API accepts, to the first approved model
+ok 32 - the drafting-call probe sends one small request the current API accepts, to the first approved model
+  ---
+  duration_ms: 0.728437
+  type: 'test'
+  ...
+# Subtest: an account with no credit is named as that, whatever the model list said
+ok 33 - an account with no credit is named as that, whatever the model list said
+  ---
+  duration_ms: 0.264819
+  type: 'test'
+  ...
+# Subtest: a model the account cannot use is tried no further than the approved list, and the result names which answered
+ok 34 - a model the account cannot use is tried no further than the approved list, and the result names which answered
+  ---
+  duration_ms: 0.223486
+  type: 'test'
+  ...
+# Subtest: no approved model answering is blocked as model access; a refused key and a rate limit keep their own codes
+ok 35 - no approved model answering is blocked as model access; a refused key and a rate limit keep their own codes
+  ---
+  duration_ms: 0.236987
+  type: 'test'
+  ...
+# Subtest: the drafting-call probe is opt-in, needs a key and a model list, and is required once asked for
+ok 36 - the drafting-call probe is opt-in, needs a key and a model list, and is required once asked for
+  ---
+  duration_ms: 1.130883
+  type: 'test'
+  ...
+# Subtest: Neon automation never silently clones the previous production/default branch
+ok 37 - Neon automation never silently clones the previous production/default branch
+  ---
+  duration_ms: 2.340546
+  type: 'test'
+  ...
+# Subtest: general C2C agent does not create a second untracked Neon PR branch
+ok 38 - general C2C agent does not create a second untracked Neon PR branch
+  ---
+  duration_ms: 0.476628
+  type: 'test'
+  ...
+# Subtest: Neon proof refuses reused branch and fails if cleanup could not delete its created ID
+ok 39 - Neon proof refuses reused branch and fails if cleanup could not delete its created ID
+  ---
+  duration_ms: 0.188294
+  type: 'test'
+  ...
+# Subtest: each PR preview validates an isolated branch and cleans its exact ID in the same run
+ok 40 - each PR preview validates an isolated branch and cleans its exact ID in the same run
+  ---
+  duration_ms: 0.370388
+  type: 'test'
+  ...
+# Subtest: enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint
+ok 41 - enabled PR preview migration never uses unmasked credentials or a pooled DDL endpoint
+  ---
+  duration_ms: 0.433594
+  type: 'test'
+  ...
+# Subtest: CI-created Neon branches are schema-only and expire if a runner or PR cleanup is lost
+ok 42 - CI-created Neon branches are schema-only and expire if a runner or PR cleanup is lost
+  ---
+  duration_ms: 0.248734
+  type: 'test'
+  ...
+# Subtest: Codespaces agent config has no committed production Neon parent or owner runtime secret
+ok 43 - Codespaces agent config has no committed production Neon parent or owner runtime secret
+  ---
+  duration_ms: 0.600876
+  type: 'test'
+  ...
+# Subtest: agent policy does not claim GPT automatically qualifies as a regulatory drafter
+ok 44 - agent policy does not claim GPT automatically qualifies as a regulatory drafter
+  ---
+  duration_ms: 0.460644
+  type: 'test'
+  ...
+# Subtest: Codespaces keeps real tenant isolation on without permitting owner credentials
+ok 45 - Codespaces keeps real tenant isolation on without permitting owner credentials
+  ---
+  duration_ms: 0.965795
+  type: 'test'
+  ...
+# Subtest: Codespaces shell hooks and startup script have valid bash syntax
+ok 46 - Codespaces shell hooks and startup script have valid bash syntax
+  ---
+  duration_ms: 9.590308
+  type: 'test'
+  ...
+# Subtest: sourcing Codespaces startup retains an injected Neon DSN, not .env or localhost
+ok 47 - sourcing Codespaces startup retains an injected Neon DSN, not .env or localhost
+  ---
+  duration_ms: 6.640052
+  type: 'test'
+  ...
+# Subtest: missing Codespaces DSNs stay missing rather than becoming postgres:postgres localhost
+ok 48 - missing Codespaces DSNs stay missing rather than becoming postgres:postgres localhost
+  ---
+  duration_ms: 33.983715
+  type: 'test'
+  ...
+# Subtest: Codespaces main path gates on the doctor before any legacy mutation
+ok 49 - Codespaces main path gates on the doctor before any legacy mutation
+  ---
+  duration_ms: 11.37133
+  type: 'test'
+  ...
+# Subtest: Codespaces local database: the owner credential never reaches the app process
+ok 50 - Codespaces local database: the owner credential never reaches the app process
+  ---
+  duration_ms: 4.126947
+  type: 'test'
+  ...
+# Subtest: Codespaces boot does not seed an admin using owner or app role
+ok 51 - Codespaces boot does not seed an admin using owner or app role
+  ---
+  duration_ms: 0.818984
+  type: 'test'
+  ...
+# Subtest: a running app started without a model key this start holds is restarted, not kept
+ok 52 - a running app started without a model key this start holds is restarted, not kept
+  ---
+  duration_ms: 0.505181
+  type: 'test'
+  ...
+# Subtest: a healthy backend from another or unknown served commit is restarted after a pull
+ok 53 - a healthy backend from another or unknown served commit is restarted after a pull
+  ---
+  duration_ms: 12.573111
+  type: 'test'
+  ...
+# Subtest: a healthy backend at the current commit is retained unless it lacks a newly supplied key
+ok 54 - a healthy backend at the current commit is retained unless it lacks a newly supplied key
+  ---
+  duration_ms: 8.446604
+  type: 'test'
+  ...
+# Subtest: a corrected ANTHROPIC_API_KEY restarts the actual healthy-app decision without revealing either value
+ok 55 - a corrected ANTHROPIC_API_KEY restarts the actual healthy-app decision without revealing either value
+  ---
+  duration_ms: 36.854474
+  type: 'test'
+  ...
+# Subtest: a corrected OPENAI_API_KEY restarts the actual healthy-app decision without revealing either value
+ok 56 - a corrected OPENAI_API_KEY restarts the actual healthy-app decision without revealing either value
+  ---
+  duration_ms: 57.552954
+  type: 'test'
+  ...
+# Subtest: matching provider values retain the running app
+ok 57 - matching provider values retain the running app
+  ---
+  duration_ms: 130.309333
+  type: 'test'
+  ...
+# Subtest: a newly supplied key still restarts an app whose process lacks it
+ok 58 - a newly supplied key still restarts an app whose process lacks it
+  ---
+  duration_ms: 60.826466
+  type: 'test'
+  ...
+# Subtest: absent terminal provider keys retain existing running keys without disclosure
+ok 59 - absent terminal provider keys retain existing running keys without disclosure
+  ---
+  duration_ms: 11.655193
+  type: 'test'
+  ...
+# Subtest: empty terminal provider keys preserve the existing absent-key behavior
+ok 60 - empty terminal provider keys preserve the existing absent-key behavior
+  ---
+  duration_ms: 9.467367
+  type: 'test'
+  ...
+# Subtest: served-commit check accepts only an exact complete matching public build stamp
+ok 61 - served-commit check accepts only an exact complete matching public build stamp
+  ---
+  duration_ms: 243.972805
+  type: 'test'
+  ...
+# Subtest: npm run dev reaches its local tsx binary after the existing startup gate
+ok 62 - npm run dev reaches its local tsx binary after the existing startup gate
+  ---
+  duration_ms: 116.528908
+  type: 'test'
+  ...
+# Subtest: npm run dev:local reaches its local tsx binary after the existing startup gate
+ok 63 - npm run dev:local reaches its local tsx binary after the existing startup gate
+  ---
+  duration_ms: 106.762366
+  type: 'test'
+  ...
+# Subtest: the demo seed is given the approver as its second signer
+ok 64 - the demo seed is given the approver as its second signer
+  ---
+  duration_ms: 0.372931
+  type: 'test'
+  ...
+# Subtest: the approver is designated as the QMS approver, through the governed route, before the demo seed
+ok 65 - the approver is designated as the QMS approver, through the governed route, before the demo seed
+  ---
+  duration_ms: 0.334274
+  type: 'test'
+  ...
+# Subtest: the Codespace installs what the document exports need, and a failed install never blocks the start
+ok 66 - the Codespace installs what the document exports need, and a failed install never blocks the start
+  ---
+  duration_ms: 60.632734
+  type: 'test'
+  ...
+# Subtest: the start says AnA answers and drafts only when the drafting call with this key was answered
+ok 67 - the start says AnA answers and drafts only when the drafting call with this key was answered
+  ---
+  duration_ms: 0.282586
+  type: 'test'
+  ...
+# Subtest: the Codespace app has an attestation signing key of its own, on a new and on an existing state
+ok 68 - the Codespace app has an attestation signing key of its own, on a new and on an existing state
+  ---
+  duration_ms: 56.50448
+  type: 'test'
+  ...
+1..68
+# tests 68
+# suites 0
+# pass 68
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1326.036768
+[c2c-codespace] Installing PostgreSQL 16 + pgvector.
+[c2c-codespace] Adding the PostgreSQL apt repository (apt.postgresql.org, bookworm-pgdg).
+[c2c-codespace] Installing what the document exports need: fonts-noto-core fonts-noto-cjk libreoffice-writer libreoffice-common fonts-liberation libxml2-utils (a few minutes the first time).
+[c2c-codespace] Document export tools installed.
+[c2c-codespace] Provisioning the database (npm run db:provision; first run takes several minutes).
+[c2c-codespace] Database provisioned and verified as the app_service role.
+[c2c-codespace] Sign-in accounts ready: Ana Author, Rhea Reviewer, Ava Approver, Mo Monitor, Quinn Quality, Sam Statistician, Cal CMC.
+[c2c-codespace] Setup complete. post-start starts the app on port 5000.

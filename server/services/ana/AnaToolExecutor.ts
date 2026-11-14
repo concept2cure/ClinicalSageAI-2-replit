@@ -29,7 +29,8 @@ import { ProgramReadAccessError } from '../c2c/current-program-access';
 import type { PoolClient } from 'pg';
 import { SchedulePreservationConflict } from '../projects/schedule-of-events/preservation';
 import type { ScheduleExecutionContext } from '../projects/schedule-of-events';
-import { isGovernedContentWriteTool } from './governed-write-tools.js';
+import { governedWriteModelRefusal } from './governed-write-tools.js';
+export { governedWriteRefusal } from './governed-write-tools.js';
 import { critiqueSavedDocument } from './saved-document-critique';
 import { reviewSavedSectionWriting } from './saved-section-writing-review';
 import { frameToolOutput } from './tool-output-frame.js';
@@ -38,7 +39,6 @@ import { registeredToolTier } from './governed-tool-gate.js';
 import { foreignProgramRefusal, foreignRecordRefusal } from './tool-record-scope.js';
 import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
-import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
 import { getGateway } from '../ai-gateway/gateway';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { looksLikeProgramUuid } from '../../lib/project-id.js';
@@ -69,6 +69,7 @@ import { recordArtifactProvenance } from '../provenance/artifact-provenance';
 import { searchPubmed } from '../integrations/pubmed-client.js';
 import { searchMedicareCoverage } from '../integrations/cms-coverage-client.js';
 import { searchConnectedRepositories } from '../integrations/connector-search.js';
+import { isCredentialActorId } from '../connectors/connector-registry.js';
 import { searchRegulatoryCorrespondence } from '../integrations/correspondence-search.js';
 import { createCalendarEvent } from '../integrations/calendar-event.js';
 import { searchHubSpotCrm, type HubSpotObject } from '../integrations/hubspot-client.js';
@@ -557,12 +558,8 @@ function preHandlerRefusal(
   }
   const privateRefusal = ownerPrivateToolRefusal(name, input, ctx);
   if (privateRefusal) return privateRefusal;
-  if (isGovernedContentWriteTool(name) && !isServedModelApprovedForHighRisk(ctx?.servingModel)) {
-    return {
-      code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
-      result: JSON.stringify(governedWriteRefusal(name, ctx?.servingModel)),
-    };
-  }
+  const modelRefusal = governedWriteModelRefusal(name, ctx?.servingModel);
+  if (modelRefusal) return { code: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', result: JSON.stringify(modelRefusal) };
   const auth = toolAuthorizationOf(name, input);
   if (auth.class === 'refuse' && auth.refusedBy !== 'handler') {
     return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
@@ -690,23 +687,6 @@ export function servedModelOf(
   response: { provider?: string | null; model?: string | null; requestId?: string | null } | null | undefined,
 ): { provider: string | null; model: string | null; requestId: string | null } {
   return { provider: response?.provider ?? null, model: response?.model ?? null, requestId: response?.requestId ?? null };
-}
-
-/** What a governed-write tool returns instead of writing, when the model is not approved. */
-export function governedWriteRefusal(
-  tool: string,
-  served: { provider?: string | null; model?: string | null } | null | undefined,
-) {
-  const who = served?.model ? `${served.provider ?? 'unknown'}/${served.model}` : 'an unidentified model';
-  return {
-    error: 'MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE',
-    tool,
-    servedBy: served?.model ?? null,
-    message:
-      `${tool} was not run: it stores text the model wrote in a governed record, and this turn was answered by ` +
-      `${who}, which is not approved for regulatory drafting. Nothing was saved. Ask again with Thorough effort ` +
-      'to have an approved model draft it.',
-  };
 }
 
 /** Retrieve a registered tool handler, or undefined if the name is unknown. */
@@ -2374,6 +2354,8 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
   if (!query.trim()) {
     return JSON.stringify({ error: 'search_connected_repositories requires a non-empty query.' });
   }
+  const actorUserId = ctx?.userId;
+  if (!isCredentialActorId(actorUserId)) return JSON.stringify({ error: 'Current authenticated user required to search connected repositories.' });
 
   const connectors = Array.isArray(input.connectors)
     ? (input.connectors as unknown[]).filter((c): c is string => typeof c === 'string')
@@ -2383,6 +2365,7 @@ registerToolHandler('search_connected_repositories', async (input, ctx) => {
   try {
     const result = await searchConnectedRepositories(Number(organizationId), {
       query,
+      actorUserId,
       connectors,
       limit: maxResults,
     });
@@ -2445,7 +2428,9 @@ registerToolHandler('narrate_statistical_result', async (input) => {
   if (!endpoint.trim() || !analysisType) {
     return JSON.stringify({ error: 'narrate_statistical_result requires endpoint and a valid analysis_type.' });
   }
-  const num = (v: unknown): number | undefined => (typeof v === 'number' && !Number.isNaN(v) ? v : undefined);
+  // Preserve invalid supplied numeric fields for the narrator's explicit
+  // refusal flags; do not silently turn them into an omitted value.
+  const num = (v: unknown): number | undefined => v === undefined ? undefined : typeof v === 'number' ? v : Number.NaN;
   const arms = Array.isArray(input.arms)
     ? (input.arms as any[])
         .filter(a => a && typeof a.name === 'string')
@@ -2462,6 +2447,10 @@ registerToolHandler('narrate_statistical_result', async (input) => {
     ciLevel: num(input.ci_level),
     pValue: num(input.p_value),
     alpha: num(input.alpha),
+    method: typeof input.method === 'string' ? input.method : undefined,
+    hypothesis: typeof input.hypothesis === 'string' ? input.hypothesis : undefined,
+    sidedness: typeof input.sidedness === 'string' ? input.sidedness : undefined,
+    prespecified: typeof input.prespecified === 'boolean' ? input.prespecified : undefined,
     exploratory: typeof input.exploratory === 'boolean' ? input.exploratory : undefined,
     multiplicityControlled: typeof input.multiplicity_controlled === 'boolean' ? input.multiplicity_controlled : undefined,
   });
@@ -14502,10 +14491,12 @@ registerToolHandler('search_grants_gov', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'search_grants_gov requires tenant context.' });
   const query = typeof input.query === 'string' ? input.query.trim() : '';
   if (!query) return JSON.stringify({ error: 'A query is required to search Grants.gov.' });
+  const actorUserId = ctx.userId, organizationId = ctx.organizationId;
+  if (!isCredentialActorId(actorUserId)) return JSON.stringify({ error: 'Current authenticated user required to search Grants.gov.' });
   const limit = Math.min(typeof input.limit === 'number' ? input.limit : 15, 50);
   const { searchConnectors } = await import('../connectors/connector-registry.js');
   try {
-    const [res] = await searchConnectors(ctx.organizationId, ['grants_gov'], { keywords: [query], limit });
+    const [res] = await searchConnectors(organizationId, ['grants_gov'], { keywords: [query], limit }, actorUserId);
     if (res?.error) return JSON.stringify({ error: `Grants.gov search failed: ${res.error}` });
     const opportunities = (res?.results ?? []).map((r) => ({ id: r.id, title: r.title, summary: r.summary, url: r.url, ...r.metadata }));
     return JSON.stringify({
@@ -14522,9 +14513,11 @@ registerToolHandler('screen_restricted_party', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'screen_restricted_party requires tenant context.' });
   const partyName = typeof input.party_name === 'string' ? input.party_name.trim() : '';
   if (!partyName) return JSON.stringify({ error: 'party_name is required to screen against SAM.gov exclusions.' });
+  const actorUserId = ctx.userId, organizationId = ctx.organizationId;
+  if (!isCredentialActorId(actorUserId)) return JSON.stringify({ error: 'Current authenticated user required for SAM.gov screening.' });
   const { searchConnectors } = await import('../connectors/connector-registry.js');
   try {
-    const [res] = await searchConnectors(ctx.organizationId, ['sam_exclusions'], { sponsor: partyName, limit: 25 });
+    const [res] = await searchConnectors(organizationId, ['sam_exclusions'], { sponsor: partyName, limit: 25 }, actorUserId);
     if (res?.error) {
       // Most commonly: the SAM.gov connector is not configured for this org.
       return JSON.stringify({ status: 'unavailable', message: `SAM.gov screening is not available: ${res.error}. Configure the SAM.gov connector (API key) in connector settings.` });

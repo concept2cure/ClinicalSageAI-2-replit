@@ -129,7 +129,7 @@ A project is the whole regulatory life of a product, worked in one place:
 |---|---|---|
 | AnA knows the project and the person | Memory: `server/services/memory/`, `memory-orchestrator.ts`, `memory-context-assembler.ts`, `memory-consolidation-job.ts`, `server/services/client-intelligence-memory.ts`. Project intelligence: `server/services/intelligence/project-intelligence-service.ts`. The user profile and interactions: `server/services/ana-context-router.ts` (`buildUserContext`, `recordUserInteraction`). Memory acceptance: `server/services/ana-ri/memory-acceptance.ts`. Memory routes: `server/routes/mdx-ana-memory.ts`. Question flows: `server/services/ana/intelligence-questions/`. | One AnA that carries each project's knowledge and the person's preferences into every turn. It asks the questions that find what is missing, and pushes back (S4). |
 | The team on licensed seats | Seats: `server/services/seat-licensing.ts`, `server/services/licensing/`. Sharing: `server/routes/c2c/project-sharing.ts`, `server/services/project-sharing-access.ts`, `shared/project-sharing.ts`. Screens: `surfaces/ProjectTeamSharing.tsx`, `ProjectTeamResponsibilities.tsx`. | Seats and the team shown and used in the project page (S9, on D3's layout). |
-| Tasks: what is due, and what is mine | Tasking: `server/services/tasking/`, `server/routes/c2c/tasks.ts`. Screens: `surfaces/TaskBoard.tsx`, `TaskAssignmentControls.tsx`, `v2/TaskTray.tsx`. Deadlines: `server/services/ana/deadline-radar.ts`. | Each person's due work for the project, by date, in the project and in Tasks (S9). |
+| Tasks: what is due, and what is mine | Tasking: `server/services/tasking/`, `server/routes/c2c/tasks.ts`. Screens: `surfaces/TaskBoard.tsx`, `TaskAssignmentControls.tsx`, `v2/TaskTray.tsx`. Deadlines: `server/services/ana/deadline-radar.ts`. | Each person's needed work across every project, in order of need, in the project and in Tasks, with AnA's greeting and suggestion on Tasks. Work with no owner is listed, and AnA tracks both (P-131; S9, D6, D1, S4). |
 | Extract commitments | The capability, registered with no handler: `server/services/ana-capability-registry.ts` (`extract-commitments`). The risk tier: `server/services/ai-governance/risk-tiers.ts`. Fulfilment: `server/services/ha-interactions/commitment-fulfilment.ts`, `server/routes/commitment-fulfil-route.ts`, `surfaces/CommitmentFulfilment.tsx`, `CommitmentRow.tsx`. AnA's commitment tools (`create_regulatory_commitment`, `review_commitment_portfolio`, `fulfill_regulatory_commitment`) are held for `lifecycle-mgmt` in `ana-launch-scope.inventory.json`. Proposing an agency letter's questions: G3. | The handler: AnA proposes, a person confirms, each commitment lands with its source, owner and due date, and shows as due work (S9). |
 | The plan, its schedule and its goals | `surfaces/ProjectPlan.tsx`, `PlanAssign.tsx`. Milestones: `server/routes/protocol-milestones.ts`. Schedule of events: `server/routes/project-schedule-of-events.ts`. The milestone and progress columns of `regulatory_programs`. The objective: S1. | The project's goals and schedule, with progress against them visible on the project (S9, S1). |
 | Assembly, publishing and submission | The editor's assembly: `editor/AuthoringAssemblyBuild.tsx`, `assemblyBuild*.ts`. eCTD: S5. | See S5. |
@@ -925,6 +925,62 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `
   No check is marked passed in full.
 - **Next.** Two S4 test-only items remain: a joined child → parent merge → lock case, and the canary in a whole turn (the
   assembled prompt bundle and the turn record). Then the founder's decisions on the product items.
+
+#### S4 — AnA's Claude path after the demo: walked, swept, and five defects fixed (2026-11-12, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-09-claude-path-walk/` (`README.md` for the walks, `FINDINGS.md` for the
+sweep) and `docs/evidence/SPINE/S4/2026-11-12-draft-model-recorded/`.
+
+- **What the walks are.** A person's turn in a real browser, on the real server and a real PostgreSQL with RLS on.
+  The provider is a local stand-in, because this container has no Anthropic key. So they show what the app sends and
+  does, and they do not show that any real key works.
+- **Fixed on 2026-11-09, on trunk** (`78e07c9ac2`, `d8febe0207`, `c5926d7d8b`, `45dbe6a695`, `367bdf0d21`): every
+  AnA turn was refused; one email address refused a whole conversation; a confidential read ended the turn with no
+  explanation; "Start a document" went to the model that may not draft. Two of the four rest on founder decisions of
+  that day: the conversation starts at Tier 1, and the tier rule judges the copy that is sent.
+- **Fixed on 2026-11-12**, each with a test that failed first:
+  - A draft AnA saves in a live turn read "model not recorded" for good. A reader now gets the model once the turn's
+    record is filed; nothing stored is rewritten (`5e063cab58`).
+  - Drafting requests by a document's everyday name (CSR, IB, SAP and others) reach the approved drafting model.
+  - A governed write by a model that may not draft is refused before the person is asked to confirm it.
+  - The Module 2.4 and 2.6 drafting tools no longer mark a turn restricted when the project has no studies.
+  - `run_agent`'s description no longer says every child call is local-only (`f9357302ae` for these four).
+- **Open, for the founder** (`FINDINGS.md`):
+  - a personal rule saved in "What AnA remembers" makes every later turn for that person fail;
+  - an uploaded document is CONFIDENTIAL until reclassified, so AnA on Claude will not read it;
+  - AnA's own drafts are read back at Tier 3;
+  - the conversation's history reaches Claude unclassified since the Tier 1 decision (the revisit promised on
+    2026-11-09).
+- **Open, for this epic.** The release gate reads a tool-saved draft's run where it expects a record
+  (`governed-machine-claims.ts`). It cannot be shown failing until a model passes PQ. Two narrow client and council
+  items are in `FINDINGS.md`.
+- **Phase 0 is unchanged: acceptance pending.** The two S4 test-only items of 2026-11-09 are still open. The ten spike
+  suites were rerun on `a9b5af1873`: 266 of 266.
+
+#### S4 — Anna runtime Phase 0: the two S4 test-only items of 2026-11-09 (2026-11-12, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-12-spike-check-1-joined/` and
+`docs/evidence/SPINE/S4/2026-11-12-spike-check-2-canary-whole-turn/`.
+
+- **Check 1, joined** (`26ed5c6a78`). One case, one database, one run: a drafter and a verifier as distinct
+  workers; the real comparison rejects a figure its source contradicts; the parent rejects, then accepts a corrected
+  draft only as a proposal, which writes no document; a child is refused the merge even with a confirmation; the
+  person merges exactly the accepted text; the release gate holds it; after a person's replacement and the
+  saved-document checks it is filed by the hash of its bytes; and the decisions are rebuilt from the audit alone.
+  Shown failing three ways. **Not joined: a signature.** The filed record is a released draft, not a sealed one.
+- **Check 2, the key across whole turns.** In the running app, with the server's provider key set to a random
+  marker, six turns ran four tools and a sub-agent. All 13 provider calls carried the key in its header. It was in
+  no request body, nothing the browser exchanged, no row of the database and no line of the server's log. A second
+  marker a person typed was found in the first three, so those searches can see. **Not covered:** a tenant's
+  captured credential in a whole turn (its surface needs a second factor this walk does not have), and the other
+  786 registered tools.
+- **Verdict: acceptance pending, unchanged.** No S4 test-only item named on 2026-11-09 is left. What remains is:
+  - RIM's item on check 3 (reapproval after the one-byte change);
+  - S5's item on check 2 (a per-use credential event for gateway-account transmits);
+  - the founder's decisions on checks 5, 6 and 7 (a "never again" trigger, a version for the placement policy,
+    content-aware classification, automatic de-identification, qualified local weights);
+  - P-107's measured p95, which needs a real provider key: every run so far used a stand-in that answers at once.
+- **Next.** The go or no-go of §14.6 is put to the founder on this record.
 
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
@@ -2581,7 +2637,14 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
     its words from the pathway the project files: a De Novo reads "similar devices" and "classification and special
     controls", not "predicate" and "substantial equivalence". Its section link asks for the filing by its governed
     class. Walked in the running app on a new De Novo project. Found and recorded: M23 to M25.
-- **Next.** P-114's items 3 and 5: the EU technical file per project (M3), and the IVD 510(k) outline (M6(a)).
+  - **P-114 item 3 landed** (`cfa3f6d671`,
+    `docs/evidence/MDX-JOURNEY/2026-11-12-p114-3-eu-technical-file-per-project/`). The route that assembles a
+    project's own EU technical file existed with no caller. The IVD and CER screens' "Assemble technical file" now
+    calls it for an EU IVDR or EU MDR project, and such a project is not offered the FDA eSTAR. A file that is not
+    complete is said to be incomplete. A project on an FDA route is unchanged. Walked in the running app on new EU
+    IVDR and EU MDR projects: nothing written (422, said as such), then one section written and the ZIP downloaded
+    (200, registered, audit row chained). Found and recorded: M26 to M30.
+- **Next.** P-114's item 5: the IVD 510(k) outline (M6(a)).
 
 #### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions; D2's click-through (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
 
@@ -2883,6 +2946,41 @@ lanes' files (the IND registers and forms, the Part 11 chain view, the CMC clien
 
 **For the founder.** P-125 "Not decided here", and the eleven questions the scout collected (in this session's
 `COORDINATION.md` row): the first six decide the most.
+
+#### L1 (row D2) and F1 — the regulatory-document AI lane: the Phase 2 CSR demo, AnA's tier start, the demo-day re-walk, and readiness that belongs to a project (session `session_017CFkfG9BWXkZddxgGjkoFY`, 2026-11-02 to 2026-11-12)
+
+The founder, 2026-11-02: "I have a demo of our platform coming up for a phase two CSR report project. Focus there
+and fully aligned to our roadmap." And 2026-11-12: finish the work in flight, stay on the roadmap and the rules, and
+move the platform closer to people using it at GA.
+
+| What | Commits | Evidence |
+|---|---|---|
+| The Phase 2 CSR path walked on the CDISC pilot; a demo-mode reply is no longer saved as an AI draft; the CSR scientific review offers the document's frozen study data | `c226754e3`, `c29fdcb4e`, `d39a037dc`, `0dbaa3215` | `docs/evidence/D2-CSR/2026-11-02-phase2-demo-walk/README.md` |
+| F8: a CSR section that still holds a data placeholder cannot pass the scientific review, so it cannot be approved, signed, frozen, exported or filed | `0563a8274`, `559f8057f`, `6dcc56be2` | the same README, "Addendum" |
+| AnA's conversation reaches a frontier model again: a run starts at tier 1, each classified source it reads raises it, and restored derivative text is recorded at tier 2. The founder chose this start on 2026-11-09; the AnA runtime lane reached the same fix and the two were merged (`78e07c9ac`) | `d8febe020` | the README, "Demo day, 2026-11-09" |
+| A fresh Codespace installs playwright before it prepares the CSR study | `80561f8de` | the same README |
+| The demo runbook; then, after the demo, its two wrong steps corrected (the reviewer's path; Send for review before the review) | `b3f19ee7c`, `d35a86e38`, `c7876641f` | the README, "Demo runbook" |
+| The demo-day re-walk: 79 findings on `51c52751e`, each of the 55 a client would notice checked on `a9b5af187` (14 fixed, 16 partly, 25 open), with holders | `c7876641f` | `docs/evidence/DEMO/2026-11-09-demo-day-rewalk/` |
+| S12 sweep finding 92: the Investigator's Brochure readiness is one project's, admitted through the Projects check, and counts only the sections that need project data | `b6d35728c` | `docs/evidence/F1/2026-11-12-ib-readiness-one-project/` |
+| Home says a project's status in words, as Projects does | `f39b6a82b` | `docs/evidence/F1/2026-11-12-home-status-in-words/` |
+
+**Found, and with whom.** The re-walk's open findings that no later record carries are in
+`.design/claude-convergence/COORDINATION.md`, "Found by the demo-day re-walk", by holder. Two are policy, not
+repair: a Vault upload is stored Confidential unless the upload says otherwise, so with a first-party model AnA can
+read no uploaded source until a person classifies it Internal (P-115 item 6; the mechanism is S4's); and a person's
+own saved rules are recorded at tier 3, so an account that has one has every turn refused on a frontier model.
+
+**For the founder.**
+- The Investigator's Brochure check is still a page. The reach map (row 7; §4 rank 3) puts it inside the IB document
+  in the one editor, as the CSR's study-data build is, and removes the page. Removing a page is the founder's under
+  P-122 item 2. One yes or no.
+- No model answer has been seen on any drafting path from this lane: every walk ran with a refused key. P-115's
+  order starts with the founder's key and one whole-report build.
+
+**Next.** With filing types (`011Fyq…`), split by file on 2026-11-12: the New document list shows one row per
+document (14 documents are listed twice under one name; 14 US lifecycle documents exist as a refused worksheet and
+a draftable twin, and a project's start opens the refused one). Filing types lands the lifecycle rows' drafting
+first. Then the "at risk this week" rows name their project, once the Projects list carries the id they are keyed by.
 
 #### F1 — AnA's answer check, and this lane's own refusals (session `session_01TTTQ1hpdMr1yAMVYH4nYdE`, 2026-11-12)
 

@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-11-13T20:01:52.776Z",
+  "scope": "disposable local Codespaces-mode fixture, not hosted Codespaces",
+  "version": {
+    "httpStatus": 200,
+    "commit": "d06fb86ec904beb947e8641994f13f9eb3a0d27e"
+  },
+  "health": {
+    "httpStatus": 200
+  },
+  "ready": {
+    "httpStatus": 503,
+    "schemaState": "ready",
+    "anaState": "no_provider",
+    "capabilityRegistry": "seeded",
+    "dependencies": {
+      "database": "ok",
+      "schema": "ok",
+      "storage": "ok",
+      "ana": "down"
+    }
+  }
+}

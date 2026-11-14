@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { readTimelineEvent } from '@shared/ana/turn-timeline';
 
 import { subAgentsHostable, ownerPrivateStreamBuffer } from '../sub-agent-stream';
-import { runAgentInputForWire, runAgentResultForWire } from '../sub-agent-shape';
+import { runAgentInputForWire, runAgentResultForWire, recordedTeamContext } from '../sub-agent-shape';
 
 describe('subAgentsHostable', () => {
   it.each([
@@ -29,6 +29,15 @@ describe('subAgentsHostable', () => {
 });
 
 describe('owner-private live output capture', () => {
+  it('includes only content-free report references in recorded model team context',() => {
+    const receipt={eventId:'11111111-1111-4111-8111-111111111111',eventHash:'a'.repeat(64),sequence:3,at:'2026-11-14T02:00:00.000Z',text:'PRIVATE_RECEIPT_CANARY'};
+    const report={worker:'w1',receipt,reportSha256:'b'.repeat(64),text:'PRIVATE_REPORT_CANARY',reason:'PRIVATE_REASON_CANARY',source:'PRIVATE_SOURCE_CANARY'};
+    const board={workers:[],messages:[],reports:[report]};
+    const result=recordedTeamContext(board);
+    expect(JSON.parse(result)).toHaveProperty('reports',[{worker:'w1',reportSha256:'b'.repeat(64),receipt:{
+      eventId:receipt.eventId,eventHash:receipt.eventHash,sequence:receipt.sequence,at:receipt.at}}]);
+    for(const canary of ['PRIVATE_RECEIPT_CANARY','PRIVATE_REPORT_CANARY','PRIVATE_REASON_CANARY','PRIVATE_SOURCE_CANARY'])expect(result).not.toContain(canary);
+  });
   it('keeps worker briefs, reports, peer text and source bodies out of the operational wire', () => {
     expect(runAgentInputForWire({ role: 'research', objective: 'PRIVATE_CANARY_384', instructions: 'SECRET', text: 'PEER_SECRET' }, 's1'))
       .toEqual({ action: 'spawn', assignment: 's1', role: 'research' });

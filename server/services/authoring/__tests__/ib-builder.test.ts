@@ -30,6 +30,9 @@ import {
   resolveAvailability,
   detectSectionGaps,
   sectionStatus,
+  sectionNeedsData,
+  ibSectionRows,
+  ibCompleteness,
   buildInvestigatorBrochure,
   type IBBuildRequest,
   type IBSection,
@@ -162,6 +165,34 @@ describe('gap detection and section verdict', () => {
     const gaps = detectSectionGaps(effects, onlyClinical);
     expect(gaps).toHaveLength(1); // safety missing
     expect(sectionStatus(effects, onlyClinical, gaps)).toBe('partial');
+  });
+});
+
+// 2026-11-12, S12 sweep finding 92. The readiness figure counted the title page, the
+// confidentiality statement and the table of contents as "ready", so a project with
+// nothing recorded read above zero.
+describe('the readiness view counts only the sections that need project data', () => {
+  const none = { product: false, nonclinical: false, clinical: false, safety: false, none: true } as const;
+
+  it('marks front matter and references as needing no project data, and every other section as needing it', () => {
+    const rows = ibSectionRows(none);
+    expect(rows.filter(r => !r.needsData).map(r => r.number)).toEqual(['0', '0a', '0b', '7']);
+    expect(rows.find(r => r.number === '2')).toMatchObject({ needsData: true, status: 'missing' });
+    for (const section of flattenSections()) expect(sectionNeedsData(section)).toBe(section.inputs.some(d => d !== 'none'));
+  });
+
+  it('reads 0 with nothing available, and 100 only when every data section has its data', () => {
+    expect(ibCompleteness(ibSectionRows(none))).toBe(0);
+    expect(ibCompleteness(ibSectionRows({ product: true, nonclinical: true, clinical: true, safety: true, none: true }))).toBe(100);
+    const productOnly = ibSectionRows({ ...none, product: true });
+    const counted = productOnly.filter(r => r.required && r.needsData);
+    expect(ibCompleteness(productOnly)).toBe(Math.round((counted.filter(r => r.status === 'rendered').length / counted.length) * 100));
+    expect(ibCompleteness(productOnly)).toBeGreaterThan(0);
+    expect(ibCompleteness(productOnly)).toBeLessThan(100);
+  });
+
+  it('an empty list has no figure to give', () => {
+    expect(ibCompleteness([])).toBe(0);
   });
 });
 

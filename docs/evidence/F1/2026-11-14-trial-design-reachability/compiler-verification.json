@@ -1,0 +1,21 @@
+{
+  "revision": "83f45b24837f0df7b383ddd6e068698b0d62827b",
+  "command": "npm exec --yes --package=node@22 --package=npm@10 -- env TYPECHECK_HEAP_MB=12288 node scripts/ci/typecheck-no-regression.mjs --incremental",
+  "exitCode": 0,
+  "errors": 0,
+  "baseline": 0,
+  "preservedUpstream": "13568639d",
+  "sourceHashes": {
+    "client/src/concept2cure/v2/surfaces/ProtocolDev.tsx": "120f8f7cbc46c0161dec9fe6aa1833c9c5d252845dd7e2e730893e2c053ca47f",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevSelection.tsx": "54e91969d899547465645ebce0e21d462944dbf90b6e0eb9a00d5aac59c8e736",
+    "client/src/concept2cure/v2/surfaces/ProtocolDevWorkspace.tsx": "ac7fef9aaab4e04713adfa39d0c9e8f2c928fdc55e97cd456d7c8ac2e9ac9645",
+    "client/src/concept2cure/v2/surfaces/ProtocolWorkNavigation.ts": "2b63a4c14e090709f8c5b35d9814b26467b7b257c3b0ff6313ed15a3d37bb1be",
+    "client/src/concept2cure/v2/__tests__/protocolTrialDesignStart.test.tsx": "e8b31d7cef2df933026a185b4f157b996f5395dcdbe5e7c3d1f08e47c1cc1816",
+    "client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx": "a9d6933c347a22b88b330d0680a546290a517b191a7eb08d5956948b2af461bf",
+    "shared/constants/ui-surface-registry.ui-v2.ts": "9464ea49048996a9daae12ab411bebe0f6e46faa4f1ac43f2204b5ea78775e63",
+    "client/src/concept2cure/v2/__tests__/trialDesignDiscovery.test.tsx": "5382152a7c60991377cc8f2dd1fe2a906299bc4bf203cf2cf654160843240935",
+    "client/src/concept2cure/v2/__tests__/registryModel.test.ts": "d9e57f57e2a612287addb06d1f6e917f30f3cf64861de2ec29feedede330c39a"
+  },
+  "browserCandidate": "8ee56a20fae52a1b82dce8233a8fd4f2fc99c333",
+  "browserSourceHashesStillMatch": true
+}

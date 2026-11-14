@@ -1,0 +1,8 @@
+ × client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx > DocumentAuthoring — the canvas with no document open follows the document read > says the documents are loading while the list is being read, and offers no New document 5043m
+   → Unable to find an element with the text: Loading documents…. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx > DocumentAuthoring — the canvas with no document open follows the document read > says the list could not be read when the read failed, with Try again, and never "Nothing to e
+   → Unable to find an element with the text: Couldn’t load documents. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx > DocumentAuthoring — the canvas with no document open follows the document read > with a stage filter on, says nothing is at that stage and offers the rest, not a first docume
+   → Unable to find an element with the text: Nothing at this stage. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)

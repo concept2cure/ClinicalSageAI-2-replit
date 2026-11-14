@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-11-14T03:29:03.198916+00:00",
+  "elapsedSeconds": 4.446,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx",
+    "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "assignment-merge-publication-inputs.json",
+  "inputCount": 36,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "assignment-merge-focused.txt.gz",
+  "outputSha256": "342a3e38d070ac810a05eaa3a3e0812c0a9779a4822fa82b720edda585e6e921",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

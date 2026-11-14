@@ -1,0 +1,18 @@
+{
+  "startedAt": "2026-11-13T22:27:59.558555+00:00",
+  "elapsedSeconds": 33.678,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/reviewer-current-walk.cjs",
+    "http://127.0.0.1:5000"
+  ],
+  "exitCode": 1,
+  "sourceDrift": [],
+  "inputs": "inputs.json",
+  "inputCount": 12720,
+  "harnessSha256": "e5197958fb175f1e791de20ba3656ef42e494390fa11317f80a7a55d8c2f45d1",
+  "output": "reviewer-browser.txt.gz",
+  "outputSha256": "9da8f340ac1a9caf848d93bac5b4f58a13a2c937de6dc445e03d48845338ef44",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

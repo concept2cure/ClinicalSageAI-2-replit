@@ -67,6 +67,11 @@ export interface CoordinationScope { runId: string; organizationId: number; user
 export interface CoordinationSource { recheck(): Promise<void>; tiers: readonly DataSensitivityTier[] }
 export interface CoordinationModel { provider: string | null; model: string | null; requestId?: string | null; approvedModelId?: string | null; pqStatus?: string | null; approvedForHighRisk?: boolean }
 export interface CoordinationReceipt { eventId: string; eventHash: string; sequence: number; at: string }
+export interface CoordinationReportReference {
+  worker: string;
+  receipt: CoordinationReceipt;
+  reportSha256: string;
+}
 export interface CoordinationProjection { receipt: CoordinationReceipt; snapshot: WorkerSnapshot }
 export interface WorkerCoordinationHandle { readonly worker: string }
 export interface CoordinationBasis { kind: 'run' | 'source' | 'finding' | 'rule' | 'report' | 'event'; ref: string; sha256?: string }
@@ -77,12 +82,12 @@ export interface CoordinationHostOptions { source?: CoordinationSource; monitor?
   onPrivateRequired?:()=>void;onPrivateActivated?:(receipt:import('./run-control').RunOwnerPrivacyReceipt)=>Promise<void>|void }
 export interface RunCoordinationHost {
   assign(input: CoordinationAction & { worker?: string; role: 'research' | 'verify'; task: string | null; parentStep: string; source?: CoordinationSource }): Promise<CoordinationProjection & { handle: WorkerCoordinationHandle }>;
-  progress(handle: WorkerCoordinationHandle, phase: WorkerSnapshot['phase'], input: CoordinationAction & { completed: number | null; total: number | null; outcome?: WorkerSnapshot['outcome']; basisKind?: WorkerSnapshot['basis'] }): Promise<CoordinationProjection>;
+  progress(handle: WorkerCoordinationHandle, phase: WorkerSnapshot['phase'], input: CoordinationAction & { completed: number | null; total: number | null; outcome?: WorkerSnapshot['outcome']; basisKind?: WorkerSnapshot['basis']; estimate?: WorkerSnapshot['estimate'] }): Promise<CoordinationProjection>;
   report(handle: WorkerCoordinationHandle, input: CoordinationAction & { reportSha256: string; source?: CoordinationSource; outcome?: WorkerSnapshot['outcome']; completed?: number | null; total?: number | null; basisKind?: WorkerSnapshot['basis'] }): Promise<CoordinationProjection>;
   message(handle: WorkerCoordinationHandle | null, input: CoordinationAction & { recipient: string; text?: string; messageKind?: 'review' | 'help' | 'source' | 'report' }): Promise<CoordinationProjection>;
   revise(handle: WorkerCoordinationHandle, input: CoordinationAction & { reportSha256: string; source?: CoordinationSource }): Promise<CoordinationProjection>;
   assess(input: CoordinationAction & { worker: string; reportEventId: string; reportSha256: string; decision: 'accepted_as_proposal' | 'rework' | 'rejected'; reason: string }): Promise<CoordinationProjection>;
-  snapshot(handle?: WorkerCoordinationHandle): Promise<{ workers: WorkerSnapshot[]; messages: Array<{ sender: string; recipient: string; kind: string; receipt: CoordinationReceipt; text?: string; held?: true }> }>;
+  snapshot(handle?: WorkerCoordinationHandle): Promise<{ workers: WorkerSnapshot[]; reports: CoordinationReportReference[]; messages: Array<{ sender: string; recipient: string; kind: string; receipt: CoordinationReceipt; text?: string; held?: true }> }>;
   modelContexts(handle?:WorkerCoordinationHandle):Promise<import('../ai-gateway/model-call-scope').OwnerPrivateModelContextCapsule[]>;
   refuse(handle:WorkerCoordinationHandle|null,input:CoordinationAction&{toolName:string;argsSha256:string;code:string}):Promise<CoordinationReceipt>;
 }
@@ -112,6 +117,7 @@ export function assertCoordinationProjection(value: unknown): CoordinationProjec
 export function coordinationSnapshot(event: Pick<CoordinationEvent, 'snapshot' | 'eventId' | 'eventHash'>): WorkerSnapshot {
   const snapshot = readWorkerSnapshot({ ...(event.snapshot as object), receipt: { eventId: event.eventId, eventHash: event.eventHash } });
   if (!snapshot) return coordinationRefused();
+  if (snapshot.estimate) Object.freeze(snapshot.estimate);
   return snapshot;
 }
 export function assignmentProjection(projection: CoordinationProjection, handle: WorkerCoordinationHandle) {
@@ -151,14 +157,33 @@ export async function readCoordinationEvents(q: Pick<CoordinationPool, 'query'>,
 export async function readRunCoordination(pool: Pick<CoordinationPool, 'query'>, scope: CoordinationScope) {
   const admitted = await admitRunCoordination(pool, scope);
   const events = await readCoordinationEvents(pool, scope), workers = new Map<string, WorkerSnapshot>();
+  const reports = new Map<string, CoordinationReportReference>();
   for (const event of events) {
     if (event.projectId !== admitted.projectId || event.ownerId !== admitted.ownerId) return coordinationRefused();
     if (event.operation === 'refused') continue;
     const worker = coordinationSnapshot(event), before = workers.get(worker.worker);
     if (worker.parent !== coordinationParentAlias(scope.runId) || worker.revision !== (before?.revision ?? 0) + 1) return coordinationRefused();
+    if (event.operation === 'report' || event.operation === 'revision') {
+      reports.set(worker.worker, reportReferenceOf(event, worker, before));
+    } else if (reports.has(worker.worker) && !['reported', 'stopped'].includes(worker.phase)) {
+      return coordinationRefused();
+    }
     workers.set(worker.worker, worker);
   }
-  return { workers: [...workers.values()], receipts: events.map(({eventId,eventHash,sequence,at}) => ({eventId,eventHash,sequence,at})) };
+  if (reports.size > 6) return coordinationRefused('COORDINATION_LIMIT');
+  return { workers: [...workers.values()], reports: [...reports.values()],
+    receipts: events.map(({ eventId, eventHash, sequence, at }) => ({ eventId, eventHash, sequence, at })) };
+}
+/** References and workers come from one admitted, verified ledger prefix.
+ * A later disposition is never substituted for the report it assessed. */
+function reportReferenceOf(event: CoordinationEvent, worker: WorkerSnapshot, before: WorkerSnapshot | undefined): CoordinationReportReference {
+  if (!before || !event.reportSha256 || event.worker !== worker.worker || !/^w[1-6]$/.test(event.worker) ||
+      !['reported', 'stopped'].includes(worker.phase)) return coordinationRefused();
+  return Object.freeze({
+    worker: event.worker,
+    reportSha256: event.reportSha256,
+    receipt: Object.freeze({ eventId: event.eventId, eventHash: event.eventHash, sequence: event.sequence, at: event.at }),
+  });
 }
 export async function openRunCoordination(input: CoordinationScope & CoordinationHostOptions & { pool: CoordinationPool }): Promise<RunCoordinationHost> {
   const scope = { ...input, ownerInstance: input.ownerInstance ?? runOwnerInstance() };

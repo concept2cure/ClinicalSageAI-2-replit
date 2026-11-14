@@ -1,0 +1,19 @@
+{
+  "head": "3692f44adc02ba891ae7e6876a990ad5f8d31740",
+  "pins": {
+    "server/services/vault/__tests__/ivd-retained-binder.test.ts": "fe0c0e313fe5efe7aee44431f4464668c6ab0f8854a068557ca0fa8794e15594",
+    "server/services/vault/vault-binder-outline.ts": "5848fdeb24ff3ab3c99b3411f83e150644c5316f08c9fcd9903cc0c2178c4553",
+    "server/services/vault/vault-folders.ts": "93228a90228af2331ad3be034d4616b23e6f57d1396c6a26546e0d8d500fc07f",
+    "server/services/c2c/rule-pack-lookup.ts": "733ef7a1ed99f6dce10d75133ce9920a6f5d203a1e3f522d8156def17d6f8f5c",
+    "server/services/c2c/scaffold-project-documents.ts": "0ee1d8fe41c65d1375aa20c6181a0c2c6d54cda3f376170e6bc7593dbd5d9743",
+    "server/routes/c2c/projects.ts": "5599dacf88c0af9013cd392b1d96a8d4e68026426240bc1da27dff1cd0090cdc",
+    "shared/regulatory/device-authoring-sections.ts": "a063a982ac045fde72374a8da5c0d3664fcddbbd3ba766130901d45591a092cc",
+    "shared/regulatory/project-bootstrap.ts": "e159ad6d5258ee18cee36b73a2adece672c1a142ad33659fc6efc6ece320d1d4",
+    "migrations/20261005c_k510_denovo_estar_outline_v1_1.sql": "856d61ae3f294c29744a7e5e9f80daff2e9689b40923c26d786bf867b6fffa91",
+    "migrations/20261114_k510_ivd_estar_outline_v1_0.sql": "b12489218b7b67c27f6835da8a0b66b48a3fc2d51c2d28ce2749585b808294c1",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "tests/setup.ts": "8822326d0bcbfbaed01fb22d75ef9a99bc7e3205be5786f7b67eaffc86760033",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "red": {
+    "failed": 12,
+    "passedControls": 14,
+    "tests": 26
+  },
+  "green": {
+    "passed": 26,
+    "failed": 0,
+    "files": 3
+  },
+  "lint": {
+    "errors": 0,
+    "sourceWarningsBefore": 3,
+    "sourceWarningsAfter": 2,
+    "newTestWarnings": 0,
+    "existingTestWarningsUnchanged": 4
+  },
+  "proof": {
+    "redSource": "/tmp/c2c-collab-context-red-source.tsx",
+    "redTest": "/tmp/c2c-collab-context-red-test.tsx",
+    "redLog": "/tmp/c2c-collab-context-red.txt",
+    "greenLog": "/tmp/c2c-collab-context-green.txt",
+    "baselineLint": "/tmp/c2c-collab-context-lint-baseline.json",
+    "greenLint": "/tmp/c2c-collab-context-lint-green.json"
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/surfaces/AuthoringCollab.tsx": "aecbcbf8c1c20edd9352d1f578fd3293d94d6cf936175d277165291a24461075",
+    "client/src/concept2cure/v2/__tests__/authoringCollabContext.test.tsx": "cd15fc47629ce1255840df46a1438c3a902c56edb559ed0655905ff137a05100",
+    "client/src/concept2cure/v2/__tests__/authoringCollab.test.tsx": "3c9005f1bac0671f0a5857ff2560dfbd48c479462835405752dee0ce393c894a",
+    "client/src/concept2cure/v2/__tests__/authoringCollabRoomUnknown.test.tsx": "9805c608f0257ca63d9a145947764c7fc52428904cfc5700eca1fbf8c47f91e6"
+  },
+  "limits": [
+    "Component protocol fixtures only; no real auth/message/lock/API/DB/provider calls",
+    "Root owns actual browser use, full compiler and canonical Git integration",
+    "The new focused RED snapshot used one describe group; assertions were later split into two groups only to retain zero lint warnings"
+  ]
+}

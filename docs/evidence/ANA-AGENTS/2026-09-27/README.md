@@ -1,5 +1,391 @@
 # AnA runs multiple agents; Manual/Auto is a real run policy (row 74)
 
+## 2026-11-14 continued F1 — report-reference reachability and Railway assessment
+
+**Founder clarification, 2026-11-14:** the initial Railway beta will use **confidential sponsor documents without
+patient identifiers**. This replaces the assessment's earlier synthetic/de-identified assumption. The existing
+deployment guide now makes that boundary explicit and names the applicable confidentiality/processor terms,
+residency, operator/application MFA, tenant separation, provider data handling, log redaction and retention
+proofs. Pro remains the proposed compute baseline; no Enterprise/BAA requirement is inferred merely from
+confidentiality. Actual PHI would require its own scope/contract review. No hosting, data transfer, source code,
+model qualification, cost arithmetic or existing artifact/audit gates change with this documentation correction.
+
+Starting canonical revision `3692f44ad`. The founder reports that their Codespace completed drafting with their
+OpenAI key. This is **user-attested functional success**, with no key collected and no independent provider run,
+formal model qualification or hosted acceptance inferred. Continue the existing F1/W1/D2 coordination repair;
+the separately scoped F1/W2/D1 lane assesses Railway as an interim beta host without deploying infrastructure.
+
+### What already exists
+
+`server/services/ana/run-events.ts` admits and verifies audit events, including worker report hashes, before
+projecting workers/messages. `turn-plan.ts` supplies the host snapshot; `sub-agent-shape.ts` strips private text
+for parent context; `agentic-workflow-tools.ts` exposes the team action. The existing parent assessment requires
+an exact report event ID/hash that this normal context currently omits. Extend the same verified event pass with
+at most six latest content-free report references: worker, report receipt and SHA256. Never derive the reference
+from a later progress/disposition receipt or expose report text. Existing real-worker stream/PGlite fixtures
+will obtain references only through normal parent context and exercise the actual assessment tool. Retain audit,
+source-admission, privacy, qualified-model and budget gates. Terminal-worker restart is outside this repair.
+Searches covered report/revision/rework/team/receipt and deleted agent-swarm/monitor/control-registry homes;
+no alternate current projection supplies the missing references. Exact files/ownership are in the existing
+`.design/claude-convergence/COORDINATION.md` continuation inventory, recorded before implementation.
+
+`server/startup/env.ts` already refuses ECS-hosted production owner credentials and operator policy overrides.
+Railway automatic project/environment markers currently escape that hosted predicate. Extend the existing
+predicate to either nonblank Railway marker; preserve the existing owner-alias set, production condition and
+marker-free self-hosted behavior. The two existing hosted-owner/production-override test homes will demonstrate
+RED before the predicate repair and GREEN afterward.
+
+`Dockerfile.optimized`, `docker-compose.beta.yml`, `scripts/db/{provision,deploy-migrate}.mjs`, `/readyz`, PostgreSQL
+sessions, shutdown draining and AWS S3/KMS evidence custody already provide the deployment substrate. No Railway
+configuration/current or deleted implementation was found. Existing deployment guides contain retired Vercel
+instructions and a deleted `deploy.sh` reference; update those existing documents to a concrete Railway
+assessment/operator sequence. Official Railway prices and storage/compliance restrictions will be dated and
+linked. Do not replace AWS versioning/Object Lock/KMS with incompatible object storage, weaken verified TLS,
+put owner credentials on the web service, or claim unexecuted Railway acceptance. No new production file,
+dependency, provider, model, screen, route, table or deployment is authorized by this assessment.
+
+### Executed hosted-policy and assessment results
+
+- Real Railway-policy RED against unchanged `env.ts`: **30 failed /45 passed**, then **75/75 GREEN** in the two
+  existing environment suites. Each automatic Railway marker independently exercises all six existing owner
+  aliases, operator acceptance shapes and disabled audit enforcement. Blank markers, empty aliases, false
+  overrides, nonproduction and marker-free self-hosted controls remain valid. No credential values are logged.
+  Scratch receipts: `/workspace/scratch/railway-hosted-parity-{red,green}.log`. Scoped lint has zero errors and
+  no warning growth; independent source/test review found no correctness blocker.
+- Existing `docs/deployment/DEPLOYMENT.md` now carries a concrete, dated Railway assessment and operator
+  sequence. Cost arithmetic independently reviewed: all-service average scenarios produce **$78.50/$147/
+  $256.50 monthly Railway usage**, not measured utilization or a quote. Model tokens, AWS custody, SMTP,
+  backups/add-ons, staging, taxes and any BAA commitment are excluded. Official SMTP restrictions justify Pro
+  as the practical minimum; its $20 minimum is credited toward usage, not the complete stack bill.
+- Official-source review confirms current Railway buckets lack required versioning/Object Lock, its HTTP
+  duration ceiling is15minutes and default termination grace is zero. The guide retains AWS S3/KMS, names
+  existing reconnect/polling and honest shutdown behavior, and requires actual edge-cutoff/drain rehearsals.
+  It identifies template CA distribution/renewal, pgaudit recording/external retention, separate privileged
+  provisioning, private dependencies, ECR token renewal and first real SMTP login as pending operator proofs.
+  No Railway deploy, paid provision, DNS/IAM change, provider call, new release workflow or qualification claim.
+
+### Executed report-reference results
+
+The actual registered worker now reaches its parent through the existing recorded team context, carrying
+only its verified report event receipt and SHA256. The parent uses that received reference in the real
+registered `update_plan.worker_dispositions` handler to record **rework** against the exact immutable report.
+The regression never computes a report hash outside the model context to feed the parent. Provider transport
+is scripted; coordination, source SQL, worker execution, assessment and audit use the actual implementation.
+This proves assessment reachability, not provider qualification or automatic terminal-worker restart.
+
+- Pre-edit actual-parent RED: **1 intended failure /7 skipped**, missing report references in the received
+  context. Corrected exact-baseline replay against explicit `3692f44ad`'s four production modules: **2 intended
+  failures /71 skipped**, covering both normal parent flow and coordinator report projection. Logs:
+  `/workspace/scratch/anna-report-reference-red.log` and `anna-report-reference-exact-original-red.log`.
+  Nine earlier controls also failed before the projection. The first GREEN attempt exposed a test-only reused
+  assignment/report intent; giving the report its own intent fixed that premise. That collision is not counted
+  as evidence of the production defect.
+- Final **90/90 across three existing suites**, receipt `/workspace/scratch/anna-report-reference-green.log`:
+  latest report/revision rather than later disposition, completed/incomplete/cancelled outcomes, stale report
+  refusal, malformed/mismatched/hash-tampered metadata, durable replay/current-source admission and private
+  metadata stripping. No raw report/brief/source/reason is added to parent context; existing model/source,
+  privacy, human-governance, lifecycle and quota gates remain intact.
+- Scoped lint: **zero errors, no warning growth** (four pre-existing registration/complexity warnings in the
+  existing workflow module). Independent read-only review found no material source, privacy, assessment,
+  interface or import-cycle regression. Frozen seven-file hashes are retained at
+  `/workspace/scratch/anna-report-reference-frozen.sha256`; all worker processes are closed.
+
+Normal canonical merge retains separately published project source-selection/read-currentness and collaboration
+receipt repairs from `08044016b`; independent review found no source-scope conflict. UI selection is a preliminary
+handoff; existing server admission remains authoritative. Incoming browser receipts remain controlled client
+evidence, not actual backend delivery. Root owns adjacent integration, normal publication/full compiler and
+final exact-version Codespace verification; only executed receipts will establish those results.
+
+Adjacent integration is **261/261 across seven existing suites** on the normally merged source, receipt
+`/workspace/scratch/nov14-report-railway-adjacent-green.log`: turn-plan/private context, sub-agent/toolset,
+stream hosting, real project-scope admission, exact project-source reads and current native catalog records.
+All test processes exited; the seven frozen implementation hashes still match. The initial CLI invocation
+rejected an unsupported `--minWorkers` option before tests started; the actual run uses the existing Vitest4
+single-worker configuration. Source/test bytes remain frozen for normal pre-push gates and the sole full
+TypeScript compiler. No test or compiler bypass is used.
+
+## 2026-11-13 continued F1 — peer lifecycle and gateway account-use custody
+
+The founder asked to continue after canonical `917486637`; this continuation starts from current canonical
+`841c41466`, including the separately published collaboration and native Quality currentness repairs.
+It moves **F1 / W1 / D2** in the existing P-104 runtime/trust paths. No source file, screen, route, mount,
+table, dependency, provider, model or qualification evidence is added or declared approved.
+
+### What already exists
+
+`server/services/ana/turn-plan.ts` owns `RunCoordinator.message`, the existing active-worker predicate, locked
+event validation and idempotent audit intent. Text-bearing peer messages check recipient lifecycle during private
+capture preparation, while metadata-only messages lack that check. The final locked append also needs to admit
+the current recipient after asynchronous preparation. A finished or stopped worker must not receive a new
+successful help/review message. Extend the same locked callback with its existing predicate; preserve active
+waiting/held workers, sender/source/private-capture checks, message limits and historical successful retries.
+Independent review also finds that the host retains a caller-owned message object across awaits. Snapshot its
+primitive fields, basis rows and model metadata at entry so the intent hash, private capture and locked event all
+describe the same original request. Production's current parsed caller supplies a fresh object; this repairs the
+host contract rather than claiming a demonstrated external exploit. Keep the same source/private-capture policy.
+The existing `run-coordination-dispositions.test.ts` is the actual PGlite regression home. Searches included peer,
+recipient, message, stopped/reported state and deleted run-control/agent-monitor homes; none supplies another
+current recipient-admission seam. The existing `turn-plan-and-context.test.ts` private-capture fixture may cover
+the prepared-text/append lifecycle and input-snapshot controls; it is named before any test edit.
+
+`server/services/submission-gateways/gateway-accounts.ts` owns encrypted account capture and the private WeakMap
+account fingerprint. `index.ts` rechecks that account after `archiveSentPackage` before handing it to the adapter,
+but writes no per-use credential event and does not recheck the initiating human's current standing there.
+The roadmap explicitly leaves this audit handoff open. `part11/signing-authority-gate.ts` already supplies the
+canonical active organization/member/user signing-policy check; `audit/audit-write-outcome.ts` supplies the
+persisted/chained audit outcome. Extend these existing call sites rather than duplicate their policy or ledger.
+The existing account row has actual `id`, `updated_at` and `updated_by`, **not** a credential grant/revision or
+expiry. Audit its actual account/last-change and retained-package references without inventing a grant or exposing
+the private ciphertext-derived fingerprint. No historical row means null account references, not a fabricated one.
+
+The existing transmit authorization is a server-generated typed structure whose upstream caller verifies the
+human; it is **not** an opaque signature capability at this layer. Snapshot that actor and request identity before
+awaits, require a positive safe matching request actor, and retain the upstream verification boundary. Ignore
+metadata actors and free-text reasons in the credential-use event. Require current signing standing and exact
+account identity before and after a successful chained audit; failure refuses before the adapter. Use the actual
+archive receipt for the retained package. Preserve explicit historical platform/client choices and record-only
+authority refusal. The existing `gateway-accounts.test.ts` provides the PGlite/adapter regression home; affected
+existing compatibility fixtures are named before edits. Searches covered gateway use, account/credential audit,
+archive/transmit, current membership and deleted gateway-account implementations.
+
+This is a **pre-adapter** custody checkpoint. RIM's held FDA adapter still has later asynchronous preparation;
+this slice does not claim final-wire authority freshness, new private signature issuance, immutable credential
+grant migration, real agency acceptance, live-provider qualification or complete v0.5 acceptance. RIM's account,
+filing/signature ceremony and comment-only index scopes stay intact. Only executed red/green, compiler, lint,
+publication and runtime results will be recorded as passing.
+
+### Executed continued-control results
+
+- Peer lifecycle: **eight** actual PGlite cases fail before the locked recipient check; completed, incomplete,
+  cancelled and failed recipients refuse for both parent and child senders. Active assigned/started/checking/
+  waiting/held recipients and historical successful retries remain valid. Three separate caller-mutation cases
+  fail before the entry snapshot. A real private-preparation pause/recipient-stop case also fails when a private
+  exact-source test override removes only the lifecycle predicate. Final normal execution passes **98/98 across
+  three existing suites**, including actual owner decryption, original intent replay, a real refusal receipt and
+  no successful message/worker/projection advance. The related lost-COMMIT case moves unchanged between the two
+  existing test homes; its assertions and both file ceilings are retained.
+- Gateway custody: **four** original behavioral regressions fail with the real PGlite account/member/audit
+  stores, actual archive and only the FDA adapter stubbed. Final integration passes **205/205 across 19 existing
+  suites**. The primary39 cases exercise actual chained audit, canonical signing standing, archive/audit-time
+  revocation and rotation, failed audit, safe matching actors, detached request/bundle/receipt facts and exact
+  content-free attribution. A historical platform default records null account references; an unknown direct-use
+  authorization kind records no use. No grant or immutable credential revision is invented.
+- The stricter admission exposes older positive test premises. Nine existing compatibility fixture files gain
+  explicit valid actors/current signing-role and durable-audit outcomes while retaining their original refusal,
+  signature, qualification, package and account-freshness assertions. One existing staging round-trip fixture
+  needs its already-supported `skipPdfaConversion` option: installed Ghostscript otherwise adds source-only MD5
+  provenance that the ZIP reader correctly cannot recover. A private overlay of the original gateway, index and
+  original fixture reproduces that same baseline failure. Exact JSON/key-order equality and all unrecoverable
+  source-proof controls remain. This is a deterministic test premise, not a production PDF/A policy change.
+
+Earlier component counts overlap these totals and are not added. Changed peer/source/test lint reports zero
+errors and no warning growth; the untouched pre-transmit test retains its existing single warning. Independent
+source review closes every raised finding. The gateway actor/bundle/metadata and actual retained receipt are
+detached before the relevant awaits; credential-use admission requires the actual persisted chained audit and a
+fresh current-person/account check afterward. Audit fields name actual account/last-change/package references,
+never a secret, operator free-text reason or private account fingerprint.
+
+All source is committed and frozen before integration/publication. Every normal push gate, including full
+TypeScript against baseline zero, remains required. Holds release with canonical publication of this entry.
+The final ordinary cached Codespace-image start must serve the published SHA and preserve the existing seven
+demo cache files. This component evidence does not qualify a provider, final agency wire, credential-grant
+migration, private human-signature issuer or the full v0.5 architecture.
+
+**Final canonical integration:** normal merges preserve the later Codespaces evidence and `5a552f142`'s
+disjoint native AnA catalogue projection/deletion-fixture repair. The earlier coordination append conflict keeps
+both owners' records. Independent review finds no integration issue; the existing catalogue suite passes
+**27/27** on Node22 after merge, with its worker closed before the normal full compiler. No branch, force push,
+hook bypass or baseline adjustment is used.
+
+**2026-11-14 publication retry:** the first normal push at `b5abbc0f8` passes all89 CI lint gates and the full
+compiler with zero errors against baseline zero, then Git refuses the ref update because canonical advanced.
+That failed publication attempt is retained. Incoming `0e6b15b10`'s disjoint collaboration-intake repair is merged
+normally; its two focused suites pass **30/30**, with no material independent-review finding and all workers
+closed. The retry keeps every hook and compiler gate; the peer/gateway production source is unchanged.
+
+## 2026-11-13 F1 continuation — current activity and unreadable credential custody
+
+The founder asked to continue the whole existing implementation after the Codespace demo publication. This
+bounded repair moves **W1 / D2** under **F1** and starts from canonical `2a667bf51`. It adds no screen, source
+file, route, table, provider, model or dependency and does not declare real model PQ or the Anna epic complete.
+
+### What already exists
+
+`client/src/concept2cure/v2/useAgentActivity.ts` reads the background investigation queue for the conversation,
+eCTD co-author and RBM progress panels. The same file's project-team reader already uses the current
+`authoringCurrentRead.ts` session guard and captured actor headers. The older background reader does not: a late
+response or retained result can outlive an account change, and missing counters/items are coerced into an empty
+success. Extend this reader with the existing ownership guard, strict canonical summary validation and serialized
+polls. Preserve the default-off project-team presentation and its durable monitoring.
+
+`server/services/connectors/connector-registry.ts` already encrypts all fourteen administration credential cards,
+checks management authority and commits each change with its chained audit. Its prior-state decoder currently
+maps both an absent card and unreadable ciphertext to no known old values. Rotation or revocation can then save
+free text containing an old secret that could not be redacted. The existing gateway-account writer already
+distinguishes unreadable prior state and withholds that free-text reason. Extend the connector writer in the same
+way; keep key bytes, grant tombstones, current authority and audit atomicity intact. The existing connector
+PGlite and conversation tests are the regression homes. Current aliases, hosts, contracts and full deletion
+history were searched before edits; no deleted replacement was found.
+
+Only executed regression, integration, compiler and publication results will be recorded as passing below.
+
+**Credential repair verified:** six corrupt/wrong-tenant/wrong-provider rotation/revocation canary cases fail
+against the original source. Independent review then found a decrypted malformed-shape edge; four actual AES
+legacy/envelope cases fail against the first repair. The final three existing suites pass **90/90** (the owned
+PGlite suite is **61/61**, included in that total), with zero changed-file lint errors or warnings. Recovery keeps
+exact replacement bytes, valid grant identity, revoked tombstones, readable reasons and atomic rollback on audit
+failure. Unsupported prior nested/nonstring shapes withhold the free-text reason without changing SDK decoding
+or authority. Independent review reports no remaining in-scope finding. These fixtures use synthetic credentials;
+no live customer/provider credential or external qualification is claimed.
+
+**Activity repair verified:** the old background reader fails **23** new regression cases before the fix; the
+complete existing conversation suite then passes **41/41**, with zero changed-file lint errors or warnings and no
+material independent-review finding. The reader now masks data immediately across actor/access/session changes,
+guards delayed JSON and dispatched actor headers, serializes/coalesces polls, stops hidden polling, and preserves
+ordinary bearer refresh. Invalid summaries or failed reads clear prior data rather than fabricate empty success.
+An initial adjacent run passes 63/65 checks; the two Reporting same-reader refresh-notice failures are reproduced
+against the pre-change baseline and resolved as documented below. These counts overlap and are not summed.
+
+**Adjacent current-session fixture repair.** The two Reporting notice failures also occur against pre-activity
+commit `fc9fe8cf7`; the activity module is absent from their import graph. `Insights.tsx` already uses the shared
+stable-session reader, so re-reading unchanged access retains the report rather than resetting it. Reconcile only
+those two existing tests to require the current report/export DOM and request counts remain unchanged; preserve
+the actual account-switch notice and every different-actor/permission/session/late-read negative control.
+
+**Connector-use continuation.** The existing registry can recheck current user standing and audit a versioned
+credential use, but its search wrappers drop the initiating actor. The knowledge-base route has authenticated
+`authedUserId(req)`, AnA has `ctx.userId`, and asynchronous deep research retains its initiating `request.userId`.
+Carry that trusted positive identity through the existing repository-search orchestration and both pre-auth and
+post-auth credential checks. Missing/invalid foreground identity refuses; explicit server background identity is
+distinct and never inferred from missing user context. Extend the existing standing check to legacy credential
+uses too, without inventing a legacy grant or revision audit. Current upload already retains its requesting actor.
+The actual scoped credential/audit boundary remains the authority, with no ambient global or request-body actor.
+
+### Executed continuation results
+
+- Credential actor propagation: **198/198** across ten existing suites. Eleven original failures demonstrate
+  missing actor attribution, revocation during the real use audit reaching transport, and legacy standing gaps.
+  Final PGlite/Drive fixtures prove zero OAuth/search sends after audit-time revocation, no search after
+  authentication-time revocation, current standing for legacy credentials, and explicit active-organization
+  background use. Trusted route/tool/queued-job actors survive awaits; spoofed or missing foreground actors fail.
+- Measured estimate producer: **189/189** across five existing suites. Original producer and durable-ledger tests
+  fail before implementation. The real child runner and RunCoordinator/PGlite fixture record three observations,
+  both optional aggregate groups, immutable idempotent replay and audit-before-projection. Controlled durations
+  explicitly distinguish lazy imports, ledger and advisory time from actual check samples. These substituted
+  transport/timing fixtures are not provider latency or real model qualification evidence.
+- Current-activity/estimate/Reporting/Summary UI: **134/134** across four existing suites. Six old-format cases and
+  the historical Summary case fail before their respective repairs. The live estimate counts down inside its
+  measured window, uses seconds without an invented minute floor and withdraws when overdue; Summary preserves
+  an explicit as-recorded value/timestamp across elapsed time and reload. The two unrelated Reporting failures
+  were reproduced against the pre-activity module, then reconciled without weakening account-change controls.
+
+These runs overlap earlier component counts and are not summed. Independent reviews found no remaining
+in-scope issue in the credential reason, actor propagation, activity ownership or estimate producer paths.
+All changed paths have no lint errors and no warning-count growth; the existing knowledge-base/executor warning
+counts remain 46/93. No baseline, model admission, privacy, approval, signing or filing gate is loosened.
+The full compiler and actual demo-runtime results follow. Normal publication retains every existing push gate.
+
+### Merged build and actual Codespace-image runtime
+
+- Full TypeScript passes with **zero errors against baseline zero** at `15b41dda4`. The first run exposed four
+  fixture typing errors; tuple-table and PGlite result-row annotations fix them without changing runtime behavior,
+  assertions or baseline. The two affected suites then pass **121/121**, with zero lint errors or warnings, before
+  the successful full compiler. These counts overlap the earlier suite totals.
+- The merged canonical doctor and AnA-verifier checks pass **126/126** and **47/47** on Node 22, respectively,
+  without provider requests. Canonical `50019d14e` is then merged normally; this later delta contains operator
+  instructions and evidence only, with no application or startup-script change. Independent instruction review
+  finds no integration blocker.
+- The ordinary default post-start command in the existing declared Node 22 Codespace image exits **0** and serves
+  exact application revision `15b41dda4517e9cd93959d6dcaf77474e05b6e69`. All seven existing seed stamp/log files retain
+  their SHA-256 and modification time; the current demo tree is `e3c8ebd2de9ebc3780052b5afc93ce61af9a6e2e`.
+  There is no seed replay or installer event. Database, schema and storage are healthy; the three application
+  processes use `app_service`, with no owner credentials, superuser or RLS-bypass privilege. Forwarded Codespace
+  origin login returns 200 and foreign origin returns 403. The private verified DOCX interpreter imports
+  python-docx 1.2.0 and lxml 6.1.1 successfully.
+- **Six actual browser checks pass** against that serving revision: real synthetic Lumen Lead login; current
+  project conversation with Show team initially off; current scoped project-team read; keyboard toggle/off and
+  reload; current-account background activity read; and all **14** existing administration credential cards.
+  PRS/FDA cards retain their explicit storage-only wording. The real project goal is recorded, but there are zero
+  running workers and no available overall ETA; neither worker activity nor a time estimate is manufactured.
+  There are zero page errors, credential writes or provider-turn requests.
+
+This is actual local declared-image startup/browser evidence, not hosted Codespaces acceptance or a live-model
+run. `/readyz` reports HTTP 503 specifically for `ana/no_provider`; database/schema/storage remain healthy.
+Real model PQ, provider latency, customer KMS and regulatory release acceptance remain pending. No model, signing,
+review or filing gate is bypassed. Source holds release with canonical publication of this entry; the final
+ordinary cached restart must compare the served version with that published SHA and preserve the same caches.
+
+**Canonical integration during publication:** the first normal push passes all existing hooks, including all
+89 CI lint gates (zero red), warning-count comparison and full TypeScript (zero errors), then Git refuses the
+ref update because another contributor published `1cddec661`. That disjoint self-service checkout repair is
+inspected and merged normally; its existing billing-control suite passes **13/13** at merged `73e798338`.
+Review finds no integration issue. The first refused update is retained as a failed publication attempt, not a
+successful push. Publication retries all normal hooks; no force push, hook bypass or baseline change is used.
+
+**Publication receipt:** the retry exits0 and publishes `277a47e767c5fed14023109b2c29c4ee0b84f5bb` on canonical
+`concept2cure-v2`, confirmed independently by `git ls-remote` and the connected GitHub branch resource. All89
+CI lint gates pass with zero red, full TypeScript passes0/baseline0 and the working tree is clean. The activity,
+credential and measured-estimate source/evidence holds are released.
+
+### Publication follow-up — ownership of delayed billing action responses
+
+The incoming checkout review identifies a bounded UI attribution gap: a free activation begun by account A can
+finish after the same mounted Licensing surface switches to account B, then show A's activation success and
+trigger a status read under B. Paid checkout and portal callbacks already lack the same response guard. The
+server still authenticates the initiating request and enforces organization/administrator authority; the gap
+does not grant B an entitlement or access to A's server data.
+
+**What already exists:** `surfaces/LicensingSurface.tsx` owns both callbacks and its real free-activation readback;
+`editor/authoringCurrentRead.ts` exports `captureAuthoringSession()`, which compares the real person, organization,
+roles, permissions and session revision while preserving ordinary bearer/account refresh. Extend only those
+existing callbacks to capture that guard at dispatch and check it before both dispatch and response effects,
+including delayed JSON and failures. The existing `licensingBillingControls.test.tsx` is the regression home:
+exercise the actual auth service/guard for account, organization, access, sign-out and session changes, plus
+normal refresh controls. Preserve the13 existing contract/authority cases and adjacent invoice/enterprise flows.
+No new helper file, shared-helper behavior, screen, billing route, price or server authority is introduced.
+Do not broaden this repair into status/invoice reader ownership or financial fulfillment.
+
+**Follow-up verified:** the corrected regression harness loads the exact original Licensing source from
+`58fb46028` through a private test-only Vite override: **14** negatives fail at their actual response/dispatch
+assertions and **five** real refresh controls pass. Initial test setup races are corrected by waiting for the
+actual target control, preserving the earlier logs. The final existing suite passes **32/32**; the same source
+passes **50/50** with the existing invoice and enterprise-action suites (overlapping counts). These exercise
+the real auth service and unchanged session guard with simulated billing HTTP responses, not Stripe settlement.
+Changed-file lint has zero errors, the same three existing source warnings and zero test warnings. The existing
+source remains499 code lines without a new file or unrelated compaction; independent review closes with no
+in-scope finding. Free/paid mismatches, ordinary bearer refresh and same-account rereads remain covered.
+Normal publication retains the full compiler and every push gate. The follow-up's source/evidence holds release
+with that publication; the final runtime check remains the ordinary cached start at the published SHA.
+
+Reproduce the final callback and adjacent checks with Node22 and the locked dependencies:
+
+```bash
+npx vitest run --config vitest.config.ts \
+  client/src/concept2cure/v2/__tests__/licensingBillingControls.test.tsx \
+  client/src/concept2cure/v2/__tests__/licensingInvoices.test.tsx \
+  client/src/concept2cure/v2/__tests__/licensingEnterpriseAction.test.tsx
+```
+
+**Measured-time continuation.** The existing `WorkerEstimate` contract and team UI can display recorded estimates,
+but no production writer populates them. `sub-agent.ts` already declares three aggregate deterministic checks,
+plus optional source-span and stored-source-claim groups; `sub-agent-stream.ts`, `run-events.ts` and `turn-plan.ts`
+already carry their measured counters into immutable progress receipts. Extend those same paths with monotonic
+elapsed observations of each whole deterministic check, including its scoped deterministic reads, with one
+consistent timing boundary. Exclude import, parent hold, ledger and subsequent model/advisory time. Three usable
+assessed observations and a known positive remaining count are required; errors, unavailable checks, invalid
+timing and lifecycle transitions clear the estimate. The range is an explicitly approximate observation-based
+estimate of remaining checks, never calibrated provider p95, worker completion or project/filing readiness.
+Persist the estimate in the idempotent audited snapshot before projection; preserve the existing aggregate-count
+granularity and replay. The existing sub-agent and coordination tests are its regression homes. No retired
+fixture progress bar or constant ETA is restored. The released formatter must avoid rounding a sub-minute
+estimate into an invented one-minute lower bound, count down only within the actual observation window and
+withdraw expired/future or inconsistent measurements. The existing `TurnSummary.tsx` forensic rows need an
+explicit as-recorded estimate and timestamp, preserving immutable numeric history without a live countdown claim.
+Its existing `turnSummary.test.tsx` is the additional regression home; the live team panel shares `useNow` and
+stops its clock when that measured window ends or the panel is hidden.
+
+## Original delivery record — 2026-09-27
+
 Founder-directed on 2026-09-27. This lane moves no D-row, and it is recorded
 on the work-order board as the founder's explicit exception to RULE 2.
 

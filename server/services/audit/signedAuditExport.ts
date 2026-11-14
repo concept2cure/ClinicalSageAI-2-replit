@@ -22,6 +22,13 @@ import { Pool } from 'pg';
 import type { ChainBreak } from './chain.js';
 import type { TenantChainHead, TenantChainVerifier } from './tenant-chain-verdict.js';
 import { exportChangeWords } from './audit-change-words.js';
+import {
+  AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL,
+  auditEventChainGapReason,
+  auditEventChainVerdict,
+  walkAuditEventChain,
+  type AuditEventChainRow,
+} from './audit-event-chain.js';
 
 import { stableStringify } from '../../../shared/canonical-json.js';
 import {
@@ -113,8 +120,15 @@ export interface ExportManifest {
   chainIntegrity: {
     status: 'intact' | 'broken' | 'unverified' | 'unavailable';
     totalEntries: number;
-    /** Rows carrying a record_hash — the only rows a link can be checked on. */
+    /** Rows carrying a record_hash — the only rows anything can be checked on. */
     hashedEntries?: number;
+    /**
+     * Rows whose hash RE-DERIVED from the fields the chain covers. Absent on
+     * exports sealed before this check moved onto the one walk of the chain
+     * (audit-event-chain.ts), when it compared stored pointers and re-derived
+     * nothing (HS-1008-7).
+     */
+    verifiedEntries?: number;
     /** Rows carrying no record_hash. Absent on exports sealed before WO-16B. */
     unhashedEntries?: number;
     /**
@@ -125,7 +139,17 @@ export interface ExportManifest {
      * a link that could not be verified. Absent on exports sealed before this.
      */
     unlinkedEntries?: number;
+    /**
+     * EVERY break found, of either kind. The name is the one exports sealed
+     * before the walk carry, when it counted pointer mismatches only; it now
+     * includes entries whose hash does not re-derive. `pointerBreaks` and
+     * `contentBreaks` say which, and are absent on those older exports.
+     */
     brokenLinks: number;
+    /** Entries whose predecessor hash is not the hash of the entry before. */
+    pointerBreaks?: number;
+    /** Entries whose covered fields do not re-derive to their stored hash. */
+    contentBreaks?: number;
     verifiedAt: string;
     /** Why the status is not a verdict, when it is not one. */
     reason?: string;
@@ -273,17 +297,7 @@ export async function snapshotChainIntegrity(
   try {
     // One organisation's chain, always: both callers pass one, and an absent
     // filter read every tenant's events (reporting review 2026-10-01, SECURITY-9).
-    const orgFilter = 'WHERE organization_id = $1';
-    const params = [organizationId];
-
-    const { rows } = await pool.query(
-      `SELECT id, organization_id, sequence_number, event_type, entity_type,
-              entity_id, user_id, user_name, timestamp, reason,
-              record_hash, previous_hash
-       FROM audit_events ${orgFilter}
-       ORDER BY organization_id, sequence_number ASC`,
-      params
-    );
+    const { rows } = await pool.query(AUDIT_EVENT_CHAIN_FOR_ORGANIZATION_SQL, [organizationId]);
 
     const verifiedAt = new Date().toISOString();
     if (rows.length === 0) {
@@ -292,71 +306,42 @@ export async function snapshotChainIntegrity(
         status: 'unverified',
         totalEntries: 0,
         hashedEntries: 0,
+        verifiedEntries: 0,
         unhashedEntries: 0,
+        unlinkedEntries: 0,
         brokenLinks: 0,
+        pointerBreaks: 0,
+        contentBreaks: 0,
         verifiedAt,
         reason: 'no entries: there is no chain to verify',
       };
     }
 
-    let brokenLinks = 0;
-    let hashedEntries = 0;
-    let unhashedEntries = 0;
-    let unlinkedEntries = 0;
-    const prevHashByOrg: Record<number, string | null> = {};
-
-    for (const row of rows) {
-      const oid = row.organization_id;
-      const prevHash = prevHashByOrg[oid] ?? null;
-
-      if (!row.record_hash) {
-        // A row that was never hashed cannot be a link in the chain. The
-        // hash-chain trigger (db/migrations/20260222_audit_events_hash_chain.sql)
-        // is not in C2C_MIGRATION_FILES, so on a canonically-provisioned
-        // database every row is like this — and this loop used to skip them
-        // all and report 'intact' over a chain in which nothing was checked.
-        unhashedEntries++;
-        prevHashByOrg[oid] = null;
-        continue;
-      }
-      hashedEntries++;
-      if (prevHash !== null && row.previous_hash === null) {
-        /* The predecessor was hashed, so this row is not the chain's genesis —
-           it claims no predecessor while one exists. The old condition required
-           `row.previous_hash !== null` before comparing, so this row passed as
-           a verified link and the chain read 'intact' over it (HS-1008-7). It
-           is not proof of tampering, so it is not counted a break: it is a link
-           that could not be checked, which this module already has a verdict
-           for. */
-        unlinkedEntries++;
-      } else if (row.previous_hash !== prevHash && prevHash !== null) {
-        brokenLinks++;
-      }
-      prevHashByOrg[oid] = row.record_hash;
+    /* THE WALK IS NO LONGER THIS MODULE'S OWN. It compared stored pointers and
+       re-derived nothing, so an entry whose fields were altered with its hashes
+       left alone passed it — and the compliance report's regulator-facing
+       attestation was built on it (HS-1008-7). The audit trail's banner, over
+       the same rows, re-derived. One walk now (audit-event-chain.ts): pointer
+       and content, for every reader of this chain. */
+    const walk = walkAuditEventChain(rows as AuditEventChainRow[]);
+    const verdict = auditEventChainVerdict(walk);
+    const counts = {
+      totalEntries: walk.rowsSeen,
+      hashedEntries: walk.hashedRows,
+      verifiedEntries: walk.verifiedRows,
+      unhashedEntries: walk.unhashedRows,
+      unlinkedEntries: walk.unlinkedRows,
+      brokenLinks: walk.breaks.length,
+      pointerBreaks: walk.breaks.filter((b) => b.kind === 'pointer').length,
+      contentBreaks: walk.breaks.filter((b) => b.kind === 'content').length,
+      verifiedAt,
+    };
+    if (verdict === 'broken') return { status: 'broken', ...counts };
+    // A gap in what could be checked is not a finding: `unverified`, with the
+    // reason in the manifest's established wording.
+    if (verdict === 'unverified') {
+      return { status: 'unverified', ...counts, reason: auditEventChainGapReason(walk) ?? undefined };
     }
-
-    if (brokenLinks > 0) {
-      return { status: 'broken', totalEntries: rows.length, hashedEntries, unhashedEntries, unlinkedEntries, brokenLinks, verifiedAt };
-    }
-    if (hashedEntries === 0) {
-      return {
-        status: 'unverified',
-        totalEntries: rows.length,
-        hashedEntries,
-        unhashedEntries,
-        brokenLinks: 0,
-        verifiedAt,
-        reason: 'no row carries a record_hash: the chain has never been hashed, so no link could be checked',
-      };
-    }
-    const unchecked =
-      unhashedEntries > 0
-        ? `${unhashedEntries} of ${rows.length} rows carry no record_hash; the links through them could not be checked`
-        : unlinkedEntries > 0
-          ? `${unlinkedEntries} of ${rows.length} rows carry no previous_hash although their predecessor was hashed; those links could not be checked`
-          : null;
-    const counts = { totalEntries: rows.length, hashedEntries, unhashedEntries, unlinkedEntries, brokenLinks: 0, verifiedAt };
-    if (unchecked) return { status: 'unverified', ...counts, reason: unchecked };
     return { status: 'intact', ...counts };
   } catch (err) {
     // The honest branch, unchanged in meaning: the query did not run.

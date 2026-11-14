@@ -1,0 +1,42 @@
+[
+  {
+    "path": "server/services/authoring/__tests__/authoring-template-guidance-tenant.pglite.test.ts",
+    "sha256": "1d097387f7935d4da44702f5c7b0aa6569011da6bcc2a54b4a1d0202e734aede",
+    "bytes": 10927
+  },
+  {
+    "path": "server/services/authoring/authoring-template-guidance.ts",
+    "sha256": "aa6344e50e0d2cfcf472770a8830b82f2a0a631cf9d42b37582c1a23a9a8095b",
+    "bytes": 7435
+  },
+  {
+    "path": "server/services/authoring/builtin-authoring-templates.ts",
+    "sha256": "1529078944a8ce787a8ce5d188f075612c5fdf6129497d36579398f73f6a2196",
+    "bytes": 11642
+  },
+  {
+    "path": "server/services/authoring/authoring-template-sections.ts",
+    "sha256": "38077467589bc226d55bd9c515ca3d6af2f2cced2d3144478a8ffaa0e3b31b7c",
+    "bytes": 7754
+  },
+  {
+    "path": "server/services/authoring/revision-ledger.ts",
+    "sha256": "273fab4bf21344dc65c6017233a7b34db52a0d6287213ee006283cefab629c8d",
+    "bytes": 15369
+  },
+  {
+    "path": "server/services/market-specs/document-template-library.ts",
+    "sha256": "c0c7d29f03370831b4ffd7c52f55e15d307ff3e5856b9b725515ce0f88c6639a",
+    "bytes": 38633
+  },
+  {
+    "path": "shared/regulatory/device-authoring-sections.ts",
+    "sha256": "e936ba52bdff08c9859b8f4a57f0fa2538a626762af865a74774466f44403262",
+    "bytes": 24952
+  },
+  {
+    "path": "shared/regulatory/project-bootstrap.ts",
+    "sha256": "dfb019c95288ffd30d7aefd6c69df4ff5f98474f0ccd6e4a19a0f4c2fe0e44ef",
+    "bytes": 125023
+  }
+]

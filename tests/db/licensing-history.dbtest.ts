@@ -789,3 +789,35 @@ describe('a failed read', () => {
     expect(res.body.entries).toBeUndefined();
   });
 });
+
+// ─── 6. An owner's answer to an access request ──────────────────────────────
+
+// What server/routes/module-access-requests.ts records when the owner answers
+// (6fd195ef88). The row must name the requester by e-mail through the real join,
+// and not repeat what it already says as raw tokens and ids (2026-11-12 review).
+describe("an owner's answer to an access request", () => {
+  it('is listed with the requester by e-mail and without the fields its row already says', async () => {
+    const MOD_AR = `dbte_${RUN}_ar`;
+    await seed('AR1', {
+      tenantId: ORG_A,
+      userId: ADMIN_USER_ID,
+      action: 'data_modify',
+      resourceType: 'module_access_request',
+      resourceId: '1',
+      details: {
+        masterAdminAction: 'access_request.approved',
+        accessRequestAction: 'request.approved',
+        moduleId: MOD_AR,
+        organizationId: ORG_A,
+        requestedBy: ADMIN_USER_ID,
+        granted: true,
+        decidedByMasterAdmin: true,
+      },
+    });
+    const res = await history({ moduleId: MOD_AR });
+    expect(res.status).toBe(200);
+    const e = res.body.entries.find((x: any) => x.id === ids.AR1);
+    expect(e).toMatchObject({ action: 'access_request.approved', organizationId: ORG_A, reason: reason('AR1') });
+    expect(e.changed).toEqual({ moduleId: MOD_AR, requesterEmail: ADMIN_EMAIL });
+  });
+});

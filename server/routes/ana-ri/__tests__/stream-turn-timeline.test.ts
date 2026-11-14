@@ -57,7 +57,7 @@ import { mountStreamRoute } from '../stream.js';
 import { handleUpdatePlan } from '../../../services/ana/turn-plan.js';
 import { INTERRUPTED_WORK_TEXT } from '../../../services/ai-gateway/progress-updates.js';
 import { resolveTimeline, type TimelineEvent } from '@shared/ana/turn-timeline';
-import { harness as h, resetHarness, streamApp, turn as streamTurn, type SseEvent, type ToolUse } from './support/stream-route-harness.js';
+import { harness as h, resetHarness, streamApp, turn as streamTurn, APPROVED_DRAFTING_MODEL, type SseEvent, type ToolUse } from './support/stream-route-harness.js';
 
 const app = streamApp(mountStreamRoute);
 const turn = (body: Record<string, unknown> = {}): Promise<SseEvent[]> =>
@@ -88,6 +88,8 @@ afterAll(() => {
 
 beforeEach(() => {
   resetHarness();
+  // Their subject is the approval of a governed write, so the turn is served by a model that may draft.
+  h.state.servedBy = { ...APPROVED_DRAFTING_MODEL };
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);
   h.handlers.search_project_documents = async () => JSON.stringify({ ok: true, totalMatches: 3, results: [{}, {}, {}] });
@@ -224,6 +226,28 @@ describe('7. held and failed rows carry heldBack and the stepMessage sentence', 
     expect(done).toMatchObject({ status: 'error', heldBack, message: sentence });
     const step = sealed().body.steps.find((s: { tool: string }) => s.tool === 'save_document_to_vault');
     expect(step).toMatchObject({ heldBack, message: sentence });
+  });
+});
+
+describe('7b. a governed write by a model that may not draft is refused before anyone is asked', () => {
+  // Walked 2026-11-09: on the Balanced model the person confirmed the draft, and was then refused. A yes cannot make
+  // the turn's model an approved one, so the question is not put (governed-write-tools.ts governedWriteModelRefusal).
+  it('asks nobody, runs nothing, and says why in the step and to the model', async () => {
+    h.state.servedBy = { model: 'claude-sonnet-5', provider: 'anthropic' };
+    h.state.approvalOpens = true;
+    h.state.approvalDecision = { decided: 'approved' };
+    h.state.script = [[save], 'Understood.'];
+    const live = timelineOf(await turn());
+    expect(live.find(e => e.kind === 'step' && e.phase === 'awaiting_approval')).toBeUndefined();
+    expect(h.state.handlerCalls.save_document_to_vault).toBeUndefined();
+    const sentence = 'Saving an AnA draft in the editor did not run: the model that answered this turn is not approved for regulatory drafting. Ask again with Thorough effort.';
+    expect(finishedOf(live, /an AnA draft in the editor/)).toMatchObject({ status: 'error', heldBack: true, message: sentence });
+    const step = sealed().body.steps.find((s: { tool: string }) => s.tool === 'save_document_to_vault');
+    expect(step).toMatchObject({ heldBack: true, message: sentence });
+    // The next round reads the gate's own refusal, naming the model that was served.
+    const told = JSON.stringify(h.state.requests.at(-1)?.messages ?? []);
+    expect(told).toContain('MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE');
+    expect(told).toContain('claude-sonnet-5');
   });
 });
 

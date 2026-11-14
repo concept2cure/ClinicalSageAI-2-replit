@@ -1,0 +1,18 @@
+{
+  "head": "2b545d84c21720a1c75c814a23c92b8306270720",
+  "scope": "Frozen integrated exact service/route with both canonical raw-admission and public-marker/after-grade fences; named backend/config only.",
+  "files": {
+    ".typecheck-baseline.json": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": "803ad429027d62697009330f1aa0254ab795e6b1c81752279d0ff16524832924",
+    "server/routes/c2c/projects.ts": "291e1be31376c7e237c4f366d5e812c99033ebfa386b084db4ebe926c7d9e3df",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "5e83bd692ec5f58e45623c132dc64852ad2c1124b5721c07aaca2f8486d385e6",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "55ef47f84a2503f814970166d56f9f64e8d3dd7f4c87641fe42d4bfaa266d09f",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "4846a43b8ec0c2b7abcc0a9c65d0ac3be510c091f9e9a61e5dbf8a22949df5c7",
+    "shared/data-room-processing-status.ts": "86396fc9a0bccac5f589586c67775f0008b896ca4b0a1eb7a56c5148d5f0aacf",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430"
+  }
+}

@@ -64,7 +64,7 @@ const asked = (type: string, market: string) => apiRequest.mock.calls.some((c) =
 });
 
 const typeOf = (e: { id: string; pathwayKey?: string | null }) =>
-  programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, 'biotech');
+  programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey ?? '' }, 'biotech'); // as Projects.tsx sends it
 
 function renderPicker(onChange = vi.fn(), value = '', onAsk?: (text: string) => void) {
   return render(<RegistryPicker value={value} onChange={onChange} onAsk={onAsk} applicationTypeOf={typeOf} initialSegment="pharma_biotech" />);
@@ -173,6 +173,31 @@ describe('RegistryPicker description search', () => {
     expect(section.textContent).toContain(own ?? offer.reason);
   });
 
+  it('a filing the catalog states no type for is not offered, in its own name, and no application is asked about for it', async () => {
+    /* Until 2026-11-13 the wizard gave such a filing the pathway 'ctd': a Device Master Record was asked about as
+       an NDA at FDA, listed as offered ("opens a project whose application type is NDA") and created as one. */
+    expect(typeOf({ id: 'qms_dmr' })).toBe('');
+    renderPicker();
+    await screen.findByRole('textbox', { name: 'Search filing types' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: 'Device Master Record' } });
+    expect(tiles().map((t) => t.name)).not.toContain('Device Master Record (DMR)');
+    const section = screen.getByTestId('rpk-not-offered');
+    expect(section.textContent).toContain('Not offered: Device Master Record (DMR) is a quality system record, not a filing, so no project is created from it.');
+    expect(section.textContent).not.toMatch(/\bNDA\b/);
+    /* Every read names real types only: an empty type would be refused by the server and fail the whole list. */
+    const types = apiRequest.mock.calls.flatMap((c) => (new URL(String(c[1]), 'http://x').searchParams.get('applicationType') ?? '').split(','));
+    expect(types.length).toBeGreaterThan(0);
+    expect(types.every((t) => t.trim().length > 0)).toBe(true);
+  });
+
+  it('a module of a dossier is not offered as its own project, and says where it is written', async () => {
+    renderPicker();
+    await screen.findByRole('textbox', { name: 'Search filing types' });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search filing types' }), { target: { value: 'us_ctd_m1_regional' } });
+    expect(screen.getByTestId('rpk-not-offered').textContent).toContain(
+      "Not offered as its own project: CTD Module 1 — US Regional is a module of an application's dossier, so it is written in that application's project.");
+  });
+
   it('a refused filing with a reason of its own shows that reason, not the market\'s general one', async () => {
     renderPicker();
     await screen.findByRole('textbox', { name: 'Search filing types' });
@@ -216,8 +241,12 @@ describe('RegistryPicker offers what the market verdict offers', () => {
     renderPicker();
     await waitFor(() => expect(document.querySelectorAll('button.rpk-type').length).toBeGreaterThan(0));
     fireEvent.change(screen.getByRole('textbox', { name: /search filing types/i }), { target: { value: 'Health Canada' } });
-    await waitFor(() => expect(tiles().filter(t => /Health Canada/.test(t.agency))).toHaveLength(2));
+    // Three since 2026-11-13: the two device authoring classes, and the Canadian master file, which states that
+    // it is Module 3 content as the US DMF is (filing-catalog.ts PATHWAY_BY_ID ca_mf → 'dmf'). It was refused
+    // as "an NDA" while it stated nothing. The medicinal applications (NDS, ANDS, CTA) keep their refusal.
+    await waitFor(() => expect(tiles().filter(t => /Health Canada/.test(t.agency))).toHaveLength(3));
     expect(tiles().filter(t => /Health Canada/.test(t.agency)).every(t => t.authorOnly)).toBe(true);
+    expect(tiles().filter(t => /Health Canada/.test(t.agency)).map(t => t.name)).toContain('Master File (Canada)');
     const section = screen.getByTestId('rpk-not-offered');
     expect(within(section).getAllByText(/Health Canada has no governed [A-Z]+ outline here, so a project would have nothing to author/).length).toBeGreaterThan(0);
     expect(screen.getByText(/not offered, listed below with the reason/)).toBeTruthy();

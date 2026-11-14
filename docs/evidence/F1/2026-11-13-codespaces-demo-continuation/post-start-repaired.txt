@@ -1,0 +1,54 @@
+C2C Codespace post-start. Branch: concept2cure-v2
+No database or AI secret is printed.
+[c2c-codespace] Provisioning the database (npm run db:provision; first run takes several minutes).
+[c2c-codespace] Database provisioned and verified as the app_service role.
+(node:10744) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10759) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[c2c-codespace] The running app serves an older or unverified code revision; restarting it with the current checkout.
+[c2c-codespace] Starting the app (npm run dev) on port 5000; log: /tmp/concept2cure-app.log
+[c2c-codespace] Waiting for /readyz (the first start compiles the client; a few minutes).
+(node:10783) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10885) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10896) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10910) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10928) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10941) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10967) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10978) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:10993) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[c2c-codespace] The app is serving. /readyz: serving; not ready: ana (AnA: no_provider)
+[c2c-codespace] Preparing the CSR study in the app (Vault uploads, approvals, CSR document, frozen study data).
+[c2c-codespace] CSR study ready: project "Xanomeline TTS Phase 2 (CDISCPILOT01)", document "CDISCPILOT01 Clinical Study Report".
+[c2c-codespace] No ANTHROPIC_API_KEY secret: AnA cannot draft regulatory documents (OPENAI_API_KEY alone answers chat only).
+[c2c-codespace] Add it as a Codespaces secret for this repository, then rebuild or restart the Codespace.
+[c2c-codespace] No OPENAI_API_KEY secret: search (Vault, knowledge base, AnA's project memory) uses OpenAI embeddings and will fail.
+(node:11575) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11586) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[c2c-codespace] AnA in the running app: no_provider. No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve.
+[c2c-codespace] This start has no ANTHROPIC_API_KEY. A Codespaces secret reaches a Codespace when it starts:
+[c2c-codespace] after adding one, stop and start the Codespace (Codespaces menu: Stop Current Codespace), not just reload the page.
+
+============================================================================
+ Concept2Cure is running: https://local-rehearsal-5000.app.github.dev
+ Sign in: press "Demo access" on the sign-in page; choose who under "Sign in as" (default lumen.lead@lumen-demo.example).
+ Lumen account: Lumen Bioscience (demo), with Lumen Lead <lumen.lead@lumen-demo.example>, Lumen Reviewer <lumen.reviewer@lumen-demo.example>, Lumen Approver <lumen.approver@lumen-demo.example>.
+ Development organisation: ana.author@concept2cure.pro (password sign-in), with the CDISC CSR study.
+ Password sign-in for the three demo people: see /root/.concept2cure-codespace/app.env
+   (DEMO_SIGNER_PASSWORD). App log: /tmp/concept2cure-app.log
+ Restart the app: bash .devcontainer/post-start.sh (restarts it when a supplied key is
+   missing or changed). A secret added after the Codespace started is not in an open terminal:
+   stop and start the Codespace instead.
+============================================================================

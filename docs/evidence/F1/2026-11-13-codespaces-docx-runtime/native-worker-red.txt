@@ -1,0 +1,5 @@
+Error: docx-python worker failed (1): Traceback (most recent call last):
+  File "/workspace/ClinicalSageAI-2-replit/workers/artifact-compute/docx-python-runtime.py", line 23, in <module>
+    from docx import Document
+ModuleNotFoundError: No module named 'docx'
+

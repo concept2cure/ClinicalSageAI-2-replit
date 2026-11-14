@@ -1,0 +1,16 @@
+{
+  "runtimeFile": "server/services/c2c/rule-pack-lookup.ts",
+  "beforeSha256": "733ef7a1ed99f6dce10d75133ce9920a6f5d203a1e3f522d8156def17d6f8f5c",
+  "afterSha256": "d93cac6188b75ab175b98c0513241a8913043d364ae30fe709666258f2fa3312",
+  "sourceDiff": "diff --git a/server/services/c2c/rule-pack-lookup.ts b/server/services/c2c/rule-pack-lookup.ts\nindex 04508e873..ca6ab36c6 100644\n--- a/server/services/c2c/rule-pack-lookup.ts\n+++ b/server/services/c2c/rule-pack-lookup.ts\n@@ -40,16 +40,15 @@ export async function findActiveRulePack(\n   // An IVD FDA outline cannot borrow an unrelated harmonised pack when its\n   // approved variant is absent. The caller must report the missing outline.\n   if (ivd510k && agency !== 'fda') return null;\n-  const variant = docType === 'k510' && agency === 'fda'\n-    ? `AND version ${ivd510k ? '=' : '<>'} $3` : '';\n   const { rows } = await client.query(\n     `SELECT version, label, required_sections\n        FROM c2c_rule_packs\n       WHERE doc_type = $1 AND agency = $2 AND ${ACTIVE}\n-        ${variant}\n+        AND (doc_type <> 'k510' OR agency <> 'fda'\n+             OR (version = $3) = $4::boolean)\n       ORDER BY effective_from DESC\n       LIMIT 1`,\n-    variant ? [docType, agency, IVD_510K_RULE_PACK_VERSION] : [docType, agency],\n+    [docType, agency, IVD_510K_RULE_PACK_VERSION, ivd510k],\n   );\n   return (rows[0] as ActiveRulePack | undefined) ?? null;\n }\n",
+  "testsPassed": 159,
+  "distinctFiles": 7,
+  "failed": 0,
+  "pending": 0,
+  "sqlGate": "passed",
+  "sqlGateSelftestPassed": 35,
+  "sqlGateKnownGapsNotCounted": 2,
+  "lintErrors": 0,
+  "lintWarnings": 0,
+  "gateAndBaselinesChanged": false
+}

@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "mode": "actual per-file warning counts; exact message equality not claimed",
+  "files": [
+    {
+      "path": "shared/regulatory/device-authoring-sections.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 0,
+      "currentWarnings": 0
+    },
+    {
+      "path": "shared/regulatory/project-bootstrap.ts",
+      "baselineErrors": 0,
+      "currentErrors": 0,
+      "baselineWarnings": 2,
+      "currentWarnings": 2
+    }
+  ],
+  "newContractWarnings": 0,
+  "retainedFixtureWarnings": 0
+}

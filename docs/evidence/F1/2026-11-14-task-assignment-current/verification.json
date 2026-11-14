@@ -1,0 +1,62 @@
+{
+  "controls": {
+    "tests": 26,
+    "passed": 26,
+    "failed": 0,
+    "originalRed": {
+      "failed": 4,
+      "passed": 19
+    },
+    "extendedRed": {
+      "failed": 7,
+      "passed": 19
+    },
+    "sha256": {
+      "client/src/concept2cure/v2/surfaces/TaskAssignmentControls.tsx": "bf4f110dcd10249cb0ac8f773e9e717278a4ea1063f7aff17f3a295602217963",
+      "client/src/concept2cure/v2/__tests__/TaskAssignmentControls.test.tsx": "8006839cdbdac0ba55f182ba36241cb185352df557213cf62bf4826123ea7b34"
+    },
+    "lint": {
+      "errors": 0,
+      "warningsBefore": 0,
+      "warningsAfter": 0
+    },
+    "scope": "Only existing control and its existing test; synthetic API responses; no Git/runtime/fullcompiler/provider or real mutation."
+  },
+  "transport": {
+    "tests": 31,
+    "passed": 31,
+    "failed": 0,
+    "baselineRed": {
+      "failed": 8,
+      "passedControls": 23
+    },
+    "sha256": {
+      "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts": "3d4b499c2e5f5d164de6579f9ca87677e559b582985edb81a8d8a83ef02807b9",
+      "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts": "30034932b43e46686075d91151f4636bbde29ed409d875eab375453c9b1ceaef"
+    },
+    "lint": [
+      {
+        "path": "client/src/concept2cure/v2/__tests__/taskAssignmentRequest.test.ts",
+        "errors": 0,
+        "warnings": 0
+      },
+      {
+        "path": "client/src/concept2cure/v2/surfaces/taskAssignmentRequest.ts",
+        "errors": 0,
+        "warnings": 0
+      }
+    ],
+    "scope": "Existing failure classifier only; synthetic responses; no live writes, provider, runtime, Git or whole compiler."
+  },
+  "combined": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "suites": [
+      "TaskAssignmentControls.test.tsx",
+      "taskAssignmentRequest.test.ts",
+      "newProjectWizardWorkspace.test.tsx",
+      "shared/task-assignment.test.ts"
+    ]
+  }
+}

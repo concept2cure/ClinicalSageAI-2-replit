@@ -1,0 +1,92 @@
+{
+  "outcome": "pass",
+  "revision": "8ee56a20fae52a1b82dce8233a8fd4f2fc99c333",
+  "projectId": "d91a5a21-1ed5-4c1d-8f06-e881483774be",
+  "protocolId": 1,
+  "studyId": "sd_75ad27f0add14a04a478139e78ee4c22",
+  "protocolStatus": "draft",
+  "protocolKind": "clinical",
+  "designStatus": "draft",
+  "automaticStudyDesignTab": true,
+  "resolvedBinding": true,
+  "scientificFindings": {
+    "critical": 1,
+    "major": 4,
+    "minor": 1,
+    "info": 0
+  },
+  "risk": "critical",
+  "readbackStatuses": {
+    "protocol": 200,
+    "design": 200,
+    "designList": 200
+  },
+  "nativeWrites": [
+    {
+      "method": "POST",
+      "path": "/api/protocol-development/documents"
+    },
+    {
+      "method": "POST",
+      "path": "/api/study-design/persist"
+    },
+    {
+      "method": "POST",
+      "path": "/api/protocol-development/documents/1/study-design"
+    }
+  ],
+  "pageErrors": [],
+  "mobileOverflow": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "actorScope": "Existing Ana Author organization-admin demo account; app_service runtime with RLS, not narrow-role acceptance",
+  "observerCorrections": [
+    "Required label exact matching corrected before any protocol POST",
+    "Bind HTTP201 is success; resumed read-only with same native IDs, no create/bind replay",
+    "Initial resized desktop-to-mobile captures left the existing sidebar drawer open. Those images are observer corrections; final mobile acceptance closes it with the existing Collapse control and measures actual pane/actions."
+  ],
+  "noProviderSigningApprovalReleaseOrFiling": true,
+  "backendPausedForRootCompiler": true,
+  "mobileAcceptance": {
+    "outcome": "pass",
+    "revision": "8ee56a20fae52a1b82dce8233a8fd4f2fc99c333",
+    "drawerAction": "Sidebar already closed",
+    "sidebarDisplay": "none",
+    "layout": {
+      "pane": {
+        "x": 16,
+        "y": 1405.28125,
+        "width": 358,
+        "height": 3576.640625,
+        "right": 374,
+        "bottom": 4981.921875
+      },
+      "viewportWidth": 390,
+      "documentScrollWidth": 390
+    },
+    "actionsMeasured": 26,
+    "allActionHorizontalBoundsWithin390": true,
+    "emptyScope": {
+      "name": "Unfiled protocols",
+      "value": "unfiled",
+      "nativeStatus": 200,
+      "nativeRows": 0,
+      "reason": "The sole synthetic protocol remains filed in the existing project; no record deleted or mocked"
+    },
+    "mutations": [],
+    "pageErrors": [],
+    "receipt": "trial-mobile-readonly.json",
+    "screenshots": [
+      "trial-green-bound-design-mobile-closed.png",
+      "trial-green-design-pane-mobile.png",
+      "trial-green-empty-entry-mobile-closed.png"
+    ]
+  },
+  "observerOnlyScreenshots": [
+    "observer-mobile-drawer-open.png",
+    "trial-green-empty-entry-mobile.png",
+    "observer-bind-status.png",
+    "full-green-label-failure.png"
+  ]
+}

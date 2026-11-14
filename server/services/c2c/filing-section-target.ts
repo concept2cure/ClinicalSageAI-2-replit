@@ -75,7 +75,7 @@ export async function filingSectionText(
 export function filingResponse(r: CommitSectionResult) {
   return r.committed
     ? { committed: true as const, documentId: r.documentId, sectionKey: r.sectionKey, ...(r.partOf ? { partOf: r.partOf } : {}) }
-    : { committed: false as const, reason: r.reason };
+    : { committed: false as const, reason: r.reason, ...(r.outsideFiling ? { outsideFiling: r.outsideFiling } : {}) };
 }
 
 /**

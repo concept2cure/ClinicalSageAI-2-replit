@@ -1,0 +1,18 @@
+{
+  "scope": "Running app client-session transition with synthetic account-B /session and directory responses; real local account A initial authentication. No message or task POST forwarded.",
+  "cases": [
+    {
+      "stage": "account-A-directory",
+      "passed": true
+    },
+    {
+      "stage": "account-B-directory",
+      "passed": true,
+      "oldRecipientVisible": false,
+      "previousDraftVisible": false
+    }
+  ],
+  "pageErrors": [],
+  "writes": [],
+  "status": "passed"
+}

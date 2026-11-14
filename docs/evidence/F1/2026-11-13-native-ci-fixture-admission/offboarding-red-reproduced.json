@@ -1,0 +1,23 @@
+{
+  "source": "5a552f1428e5ee8d474353ac6095242b1bab97c2",
+  "timeUTC": "2026-11-13T23:58:10Z",
+  "testFile": "tests/db/tenant-purge-blocking-keys.dbtest.ts",
+  "nativePostgreSQL": 16,
+  "database": "isolated synthetic UTF8 fixture database; not the demonstration database",
+  "role": "app_service",
+  "superuser": false,
+  "bypassRls": false,
+  "RLS_ENFORCE": "on",
+  "tests": {
+    "passed": 3,
+    "failed": 3,
+    "skipped": 0
+  },
+  "failureChain": [
+    "organization export omits owner-private ana_relational_profiles",
+    "project deletion fails ana_relational_profiles_project_id_fkey (23503)",
+    "purge rollback retains tenant A rows; tenant B rows remain"
+  ],
+  "logSha256": "5ee6c2c7c3ad64ab0b4df452a68a88cdb9b1812045c40fd03dcee5ee38a2d6c7",
+  "policyStatus": "Founder export/disposal choice requested; only synthetic fixture rows exercised, no customer data accessed and no disclosure or erasure policy changed."
+}

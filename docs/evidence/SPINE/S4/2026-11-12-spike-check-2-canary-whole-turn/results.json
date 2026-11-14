@@ -1,0 +1,56 @@
+{
+ "canary": {
+  "chars": 59,
+  "sha256": "ac33dbdb14923cdfc8165494c0287cdbe17c8aca6dfdf934158a927d3298c317"
+ },
+ "control": {
+  "chars": 28,
+  "sha256": "19e368b4596d3b9eb2d755f37e166bb2e78f338b3d0d38a249126cfcb9d7b3a0"
+ },
+ "providerRequests": 13,
+ "requestsCarryingAToolResult": 6,
+ "modelsAsked": [
+  "claude-sonnet-5",
+  "claude-opus-5-5"
+ ],
+ "keyHeaderHashes": [
+  "ac33dbdb14923cdfc8165494c0287cdbe17c8aca6dfdf934158a927d3298c317"
+ ],
+ "keyHeaderIsTheCanary": true,
+ "requestsWithTheKeyHeader": 13,
+ "canaryFound": {
+  "provider request bodies": 0,
+  "browser traffic (HAR)": 0,
+  "server log": 0,
+  "database dump": 0,
+  "walk log": 0
+ },
+ "controlFound": {
+  "provider request bodies": 4,
+  "browser traffic (HAR)": 2,
+  "server log": 0,
+  "database dump": 3,
+  "walk log": 0
+ },
+ "canaryRandomPartFound": {
+  "provider request bodies": 0,
+  "browser traffic (HAR)": 0,
+  "server log": 0,
+  "database dump": 0,
+  "walk log": 0
+ },
+ "canaryBase64Found": {
+  "provider request bodies": 0,
+  "browser traffic (HAR)": 0,
+  "server log": 0,
+  "database dump": 0,
+  "walk log": 0
+ },
+ "serverLogLines": 40899,
+ "serverLogStartLine": 1,
+ "tablesHoldingTheControl": [
+  "public.ana_record_blobs",
+  "public.chat_messages"
+ ],
+ "dumpBytes": 11017911
+}

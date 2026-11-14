@@ -84,6 +84,19 @@ describe('filing identity review', () => {
       profileHash: 'a'.repeat(64), filingHash: 'b'.repeat(64), companyRole: 'parent_brand', reason: 'Parent brand represents the subsidiary' });
   });
 
+  /* Demo walk 3.u12 (2026-11-12): the table drew with no layout, its cells running together ("nameConcept2Cure
+     Therapeutics…"), and its row headers were the stored keys "name" and "address". */
+  it('labels each difference in words and draws the table as the other company comparison does', async () => {
+    apiRequest.mockResolvedValue(json({ ...identity, differences: [
+      { field: 'name', companyValue: 'Parent company brand', filingValue: 'Recorded applicant', missing: false },
+      { field: 'address', companyValue: '2 Demo Way', filingValue: null, missing: true }] }));
+    render(<CompanyFilingIdentityReview sequenceId={9} profileRevision={4} canReview />);
+    expect(await screen.findByText('Parent company brand')).toBeTruthy();
+    const rows = screen.getAllByRole('rowheader').map(cell => cell.textContent);
+    expect(rows).toEqual(['Name', 'Address']);
+    expect(screen.getByRole('table').closest('.company-revision-comparison')).toBeTruthy();
+  });
+
   it('does not offer an acknowledgment for missing identity facts', async () => {
     apiRequest.mockResolvedValue(json({ ...identity, status: 'unresolved', filing: { ...identity.filing, applicantName: null }, differences: [{ field: 'name', companyValue: 'Brand', filingValue: null, missing: true }] }));
     render(<CompanyFilingIdentityReview sequenceId={9} profileRevision={4} canReview />);

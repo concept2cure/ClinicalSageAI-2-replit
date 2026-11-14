@@ -376,7 +376,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
   const segLabel = SEG_LABELS[uiSeg] || getSegment(uiSeg)?.label || uiSeg;
   const ctx = useMemo(() => tpl ? getSubmissionTypeContext(tpl) : null, [tpl]);
   const selTpl = useMemo<SelTpl | null>(() => ctx
-    ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
+    ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey ?? '' }
     : null, [ctx]);
   const programType = programTypeFor(selTpl, uiSeg);
   const screenContext = useMemo(() => wizardScreenContext(step, selTpl, programType, retired, filingBrowser ?? { segment: regSeg ?? null, searchTerm: '', inspectedReference: null }), [step, selTpl, programType, retired, filingBrowser, regSeg]);
@@ -628,7 +628,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ex
                 onChange={(id) => setTpl(id)}
                 /* The type creation will send for each filing, so the picker
                    asks the market verdict about exactly what it would create. */
-                applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey || 'ctd' }, uiSeg)}
+                applicationTypeOf={(e) => programTypeFor({ id: e.id, label: e.id, pathway: e.pathwayKey ?? '' }, uiSeg)}
                 initialSegment={regSeg || undefined}
                 onSegmentChange={(next) => setTabSeg(REG2SEG[next] ?? arrivedSeg)}
                 onAsk={onAsk}
@@ -1299,7 +1299,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       };
     }
     if (archivedView) {
-      return { summary: 'The archived projects are shown, each with Restore; the active portfolio is not listed.', availableActions: ['Restore an archived project, with a reason', 'Go back to the active projects'] };
+      return { summary: 'The archived projects are shown, each with Open and Restore; opening retains archived status. The active portfolio is not listed.', availableActions: ['Open an archived project without restoring it', 'Restore an archived project, with a reason', 'Go back to the active projects'] };
     }
     if (live.loading) {
       return { summary: 'The project portfolio is still loading; nothing on screen is final yet.' };
@@ -1372,7 +1372,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (
-    pr: Pick<ProjPortfolioEntry, 'id' | 'title' | 'code'> & Partial<Pick<ProjPortfolioEntry, 'ws' | 'status'>>,
+    pr: Pick<ProjPortfolioEntry, 'id' | 'title'> & Partial<Pick<ProjPortfolioEntry, 'code' | 'ws' | 'status'>>,
   ) => openProjectHome({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status }, onNav);
 
   /* AnA's hands on this screen — the surface-action bus (shared registry:
@@ -1520,7 +1520,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       </div>
 
       <PortfolioFigures settled={settled} counts={counts} />
-      <ProjectsAtRisk open={riskOpen} onClose={() => setRiskOpen(false)} />
+      <ProjectsAtRisk open={riskOpen} onClose={() => setRiskOpen(false)} onOpenProject={openProj} />
       {/* One quiet toolbar row: search, the filters as selects, the view. */}
       <div className="pj-toolbar">
         <div className="pj-search">
@@ -1553,7 +1553,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       <ClientChoicesNote hasMore={clientContext.hasMore} />
 
       {archivedView ? (
-        <ArchivedProjects portfolioUrl={portfolioUrl} needle={needle} onBack={() => setArchivedView(false)}
+        <ArchivedProjects portfolioUrl={portfolioUrl} needle={needle} onBack={() => setArchivedView(false)} onOpenProject={openProj}
           onRestored={() => setReloadNonce(n => n + 1)} />
       ) : live.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading projects…</div>

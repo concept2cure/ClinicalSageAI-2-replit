@@ -177,3 +177,114 @@ describe('assignment outcome and scope protection', () => {
     expect(screen.queryByRole('button')).toBeNull(); expect(request).not.toHaveBeenCalled();
   });
 });
+
+const deferred = () => {
+  let resolve!: (response: Response) => void;
+  const promise = new Promise<Response>(finish => { resolve = finish; });
+  return { promise, resolve };
+};
+const automaticReceipt = () => reply({ success: true, count: 1,
+  data: [{ taskId: 'TASK-1', assigneeId: 9, assignedTo: 'Alex' }] });
+const writes = () => request.mock.calls.filter(([method]) => method !== 'GET');
+const finishAssignment = () => { current.meta.assigneeId = 9; current.meta.assignmentVersion = 'b'.repeat(64); };
+
+describe('current admission during a pending saved-task handoff', () => {
+
+  it.each(['disabled', 'retired callback'])('does not start an automatic write after its roster read becomes %s', async change => {
+    const read = deferred(); let reads = 0;
+    request.mockImplementation(async (method: string) => {
+      if (method === 'GET') return ++reads === 1 ? read.promise : reply(current);
+      finishAssignment(); return automaticReceipt();
+    });
+    const view = render(<TaskAssignmentControls {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    await waitFor(() => expect(request).toHaveBeenCalledOnce());
+    view.rerender(<TaskAssignmentControls {...props()} disabled={change === 'disabled'} isCurrent={() => change !== 'retired callback'} />);
+    await act(async () => { read.resolve(reply(current)); });
+    expect(writes()).toHaveLength(0); expect(changed).not.toHaveBeenCalled();
+  });
+
+  it.each(['named', 'automatic'])('retires a pending %s receipt when the current callback changes', async mode => {
+    const write = deferred();
+    request.mockImplementation(async (method: string) => method === 'GET' ? reply(current) : write.promise);
+    const view = render(<TaskAssignmentControls {...props()} />);
+    if (mode === 'named') await submitManual();
+    else fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    view.rerender(<TaskAssignmentControls {...props()} isCurrent={() => false} />);
+    finishAssignment();
+    await act(async () => { write.resolve(mode === 'named' ? reply({ success: true, data: saved() }) : automaticReceipt()); });
+    expect(changed).not.toHaveBeenCalled();
+    expect(screen.queryByText('Assignment saved.')).toBeNull();
+    expect(screen.queryByText('Assignment recorded. Rereading the saved assignee.')).toBeNull();
+    expect(request.mock.calls.filter(([method]) => method === 'GET')).toHaveLength(1);
+  });
+
+  it('keeps a requested automatic handoff after an ordinary current rerender', async () => {
+    const read = deferred(); let reads = 0;
+    request.mockImplementation(async (method: string) => {
+      if (method === 'GET') return ++reads === 1 ? read.promise : reply(current);
+      finishAssignment(); return automaticReceipt();
+    });
+    const view = render(<TaskAssignmentControls {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    view.rerender(<TaskAssignmentControls {...props()} />);
+    await act(async () => { read.resolve(reply(current)); });
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(writes()).toHaveLength(1);
+  });
+
+  it.each(['named', 'automatic'])('still publishes a confirmed %s write submitted before a later disable', async mode => {
+    const write = deferred();
+    request.mockImplementation(async (method: string) => method === 'GET' ? reply(current) : write.promise);
+    const view = render(<TaskAssignmentControls {...props()} />);
+    if (mode === 'named') await submitManual();
+    else fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    view.rerender(<TaskAssignmentControls {...props()} disabled />);
+    finishAssignment();
+    await act(async () => { write.resolve(mode === 'named' ? reply({ success: true, data: saved() }) : automaticReceipt()); });
+    await waitFor(() => expect(changed).toHaveBeenCalledOnce());
+    expect(writes()).toHaveLength(1);
+  });
+
+  it.each(['task', 'account'])('retires an automatic roster read after its %s changes', async change => {
+    const read = deferred(); request.mockReturnValue(read.promise);
+    const view = render(<TaskAssignmentControls {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    await waitFor(() => expect(request).toHaveBeenCalledOnce());
+    if (change === 'account') setAuthToken(token(10));
+    view.rerender(<TaskAssignmentControls {...props()} taskId={change === 'task' ? 'TASK-2' : 'TASK-1'}
+      actorScope={{ userId: change === 'account' ? '10' : '7', organizationId: '4' }} />);
+    await act(async () => { read.resolve(reply(current)); });
+    expect(writes()).toHaveLength(0); expect(changed).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText('Reason for assignment')).toBeNull();
+  });
+
+  it('uses the current automatic callback after a delayed roster read', async () => {
+    const read = deferred(); let reads = 0;
+    request.mockImplementation(async () => ++reads === 1 ? read.promise : reply(current));
+    const oldAutomatic = vi.fn(async () => { finishAssignment(); return { kind: 'confirmed' as const, assigneeId: 9 }; });
+    const currentAutomatic = vi.fn(async () => { finishAssignment(); return { kind: 'confirmed' as const, assigneeId: 9 }; });
+    const view = render(<TaskAssignmentControls {...props()} onAutomatic={oldAutomatic} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    view.rerender(<TaskAssignmentControls {...props()} onAutomatic={currentAutomatic} />);
+    await act(async () => { read.resolve(reply(current)); });
+    expect(oldAutomatic).not.toHaveBeenCalled(); expect(currentAutomatic).toHaveBeenCalledOnce();
+    expect(changed).toHaveBeenCalledOnce();
+  });
+
+  it.each(['named', 'automatic'])('uses the current saved callback for a same-scope %s receipt', async mode => {
+    const write = deferred(); const currentSaved = vi.fn();
+    request.mockImplementation(async (method: string) => method === 'GET' ? reply(current) : write.promise);
+    const view = render(<TaskAssignmentControls {...props()} />);
+    if (mode === 'named') await submitManual();
+    else fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    await waitFor(() => expect(writes()).toHaveLength(1));
+    view.rerender(<TaskAssignmentControls {...props()} onSaved={currentSaved} />);
+    finishAssignment();
+    await act(async () => { write.resolve(mode === 'named' ? reply({ success: true, data: saved() }) : automaticReceipt()); });
+    expect(changed).not.toHaveBeenCalled(); expect(currentSaved).toHaveBeenCalledOnce();
+    expect(writes()).toHaveLength(1);
+  });
+});

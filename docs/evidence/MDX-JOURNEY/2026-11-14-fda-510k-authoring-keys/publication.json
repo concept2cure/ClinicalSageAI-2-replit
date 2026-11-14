@@ -1,0 +1,14 @@
+{
+  "branch": "concept2cure-v2",
+  "sourcePublished": true,
+  "head": "36dafdf56b14dd91961498c5dc5514280656800d",
+  "normalGitPush": true,
+  "hooksBypassed": false,
+  "forcePush": false,
+  "receipt": "root/push-3.json",
+  "implementationAndCorrectionAncestors": true,
+  "selectedTests": 173,
+  "distinctFiles": 11,
+  "humanAcceptance": "pending",
+  "agencyAcceptance": "not established"
+}

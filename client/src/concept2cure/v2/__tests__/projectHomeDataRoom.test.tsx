@@ -23,12 +23,14 @@ const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
 
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { authService } from '@/services/portal/authService';
 import { CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 
 const PID = '11111111-1111-4111-8111-111111111111';
@@ -41,7 +43,7 @@ function source(over: Record<string, unknown> = {}) {
   return {
     id: 1,
     title: 'protocol-v2.pdf',
-    checksum: 'sha-1',
+    checksum: 'a'.repeat(64),
     ingestionStatus: 'ingested',
     extractionStatus: 'extracted',
     textAvailable: (over.extractionStatus ?? 'extracted') === 'extracted',
@@ -78,7 +80,14 @@ function mockApi(sourcesResponse: (url: string) => Response) {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_m: string, url: string) => {
     // The Data Room read carries its search and page as query parameters (S2).
-    if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) return sourcesResponse(url);
+    if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) {
+      const response = sourcesResponse(url);
+      const ids = new URL(url, 'https://fixture.test').searchParams.get('sourceIds');
+      if (!ids || !response.ok) return response;
+      const body = await response.json(); const selected = ids.split(',').map(Number);
+      return ok({ ...body, projectId: PID, selection: { scope: 'verified-accessible-sources', sourceIds: selected }, sources: body.sources.filter((row: { id: number }) => selected.includes(row.id))
+        .map((row: object) => ({ ...row, projectId: PID })) });
+    }
     if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-301', code: 'BX301' });
     return ok({});
   });
@@ -86,9 +95,13 @@ function mockApi(sourcesResponse: (url: string) => Response) {
 
 afterEach(() => {
   cleanup();
+  authService.endSession(null);
   delete (window as any).C2C_PROJECT;
 });
 beforeEach(() => {
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.synthetic`, {
+    id: '7', organizationId: '4', roles: ['author'], permissions: [],
+  });
   (window as any).C2C_PROJECT = { id: PID, title: 'BX-301' };
 });
 
@@ -328,7 +341,7 @@ describe('ProjectHome — pinning sources as context', () => {
     const draft = await screen.findByText(/Draft with 2 pinned sources/);
     fireEvent.click(draft);
 
-    expect((window as any).C2C_SOURCE_PINS).toEqual(['11', '22']);
+    await waitFor(() => expect((window as any).C2C_SOURCE_PINS).toEqual(['11', '22']));
     expect(p.onAsk).toHaveBeenCalledTimes(1);
   });
 

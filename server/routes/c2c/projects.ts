@@ -49,7 +49,7 @@ import { createScopedLogger } from '../../utils/logger.js';
 import { isIvdFamily } from '../../../shared/constants/domain/product-types.js';
 import { resolveFilingCatalogEntry, deviceClassScopeForFiling, regionalDeviceApplicationClassOf, type FilingCatalogEntry } from '../../../shared/regulatory/filing-catalog.js';
 import { filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes.js';
-import { programTypeFor } from '../../../shared/constants/domain/filing-application-type.js';
+import { NO_APPLICATION_TYPE, noProjectReason, programTypeFor } from '../../../shared/constants/domain/filing-application-type.js';
 import { readExtractionCoverage } from '../../../shared/data-room-processing-status.js';
 import { registryContextForProgram } from '../../services/c2c/program-registry-context.js';
 /* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
@@ -144,7 +144,9 @@ function sendFilingNotOffered(res: Response, offer: FilingOffer, submissionTypeI
  * outline, its reason is said too, and its offer returned.
  */
 function sendFilingTypeMismatch(res: Response, entry: FilingCatalogEntry, programType: string, marketInput: MarketInput) {
-  const filingType = programTypeFor({ id: entry.id, label: entry.id, pathway: entry.pathwayKey || 'ctd' }, 'biotech');
+  const filingType = programTypeFor({ id: entry.id, label: entry.id, pathway: entry.pathwayKey ?? '' }, 'biotech');
+  // A filing the catalog states no type for creates no project, whatever type it is sent as (S12 sweep items 3, 4).
+  if (filingType === NO_APPLICATION_TYPE) return res.status(422).json({ error: 'FILING_NOT_OFFERED', message: noProjectReason(entry) });
   if (filingType === programType) return null;
   const ownOffer = marketOfferGivenOutline({ ...marketInput, applicationType: filingType }, true);
   const refused = ownOffer.tier === 'not_offered';
@@ -1127,6 +1129,7 @@ router.post('/', async (req: Request, res: Response) => {
       scaffold = await scaffoldProjectDocuments({
         client, orgId, userId, projectId: newId,
         programType, primaryAgency: documentAgencyFor(marketInput) ?? primaryAgency, productName,
+        productType,
       });
       // No outline for this class (no pack, or no document class for the
       // program type): nothing to author, so the filing is not offered. Until
@@ -2180,7 +2183,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
     );
-    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError, catalogProgramIds } = await import(
+    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError, catalogProgramIds, requireExactDataRoomSelection } = await import(
       '../../services/clinical-regulatory-evidence/data-room-search.js'
     );
     const { gradeSources } = await import('../../services/clinical-regulatory-evidence/data-room-grade.js');
@@ -2202,7 +2205,8 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     if (catalog && !(await scopeToCatalog(query, { organizationId: orgId, userId: userId }, programId, catalogProgramIds))) {
       return send404(res);
     }
-    const { total, currentTotal, sources, facets: captureFacets } = await searchDataRoom(orgId, query, { userId: userId });
+    const sourcePage = await searchDataRoom(orgId, query, { userId: userId });
+    const { total, currentTotal, sources, facets: captureFacets } = sourcePage;
     // The catalog also lists the Vault's current documents of the same projects, paged with the captures (S2, 2026-11-11/12).
     const vault = await vaultForCatalog(catalog, orgId, query, programId);
     const facets = await catalogFacetsWithVault(captureFacets, vault);
@@ -2233,8 +2237,16 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const grades = await gradeOrUnavailable(gradeSources, [...sources, ...unscoped], programId);
     const shape = (s: ShapeableSource) => ({ ...shapeSource(s, usage), grade: gradeOf(grades, s.id) });
 
+    const selection = requireExactDataRoomSelection(query, sourcePage);
+    if (selection) {
+      const { requireSourceReadScopeStillCurrent } = await import('../../services/clinical-regulatory-evidence/source-read-access');
+      await requireSourceReadScopeStillCurrent(pool, { organizationId: orgId, userId, programId, sourceIds: selection.sourceIds },
+        { ...selection, unverified: [] });
+    }
+
     return res.json({
       projectId: programId,
+      ...(selection ? { selection } : {}),
       sources: sources.map(shape),
       unscoped: unscoped.map(shape),
       total,

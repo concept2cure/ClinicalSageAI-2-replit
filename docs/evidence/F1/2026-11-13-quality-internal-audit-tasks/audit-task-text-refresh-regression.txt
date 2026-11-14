@@ -1,0 +1,1741 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts
+{
+  "timestamp": "2026-11-14T00:20:23.184Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > schedules the native lead in organization scope with a locked current writer and an atomic audit row 23ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > keeps an unchanged task identity, progress and manual assignee without audit churn 13ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > uses the acting editor only when the current native audit has no lead 15ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > compares canonical payloads independently of key insertion order and Date serialization 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is in_progress 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is closed 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is cancelled 11ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became in_progress
+{
+  "timestamp": "2026-11-14T00:20:27.492Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became closed
+{
+  "timestamp": "2026-11-14T00:20:27.503Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became cancelled
+{
+  "timestamp": "2026-11-14T00:20:27.514Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old in_progress close arrives last
+{
+  "timestamp": "2026-11-14T00:20:27.526Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old cancelled close arrives last
+{
+  "timestamp": "2026-11-14T00:20:27.535Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row date claim before closing any task
+{
+  "timestamp": "2026-11-14T00:20:27.545Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row number claim before closing any task
+{
+  "timestamp": "2026-11-14T00:20:27.554Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row scope claim before closing any task
+{
+  "timestamp": "2026-11-14T00:20:27.567Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row lead claim before closing any task
+{
+  "timestamp": "2026-11-14T00:20:27.577Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > withdraws the task when the current planned audit has no date 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became in_progress 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became closed 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became cancelled 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old in_progress close arrives last 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old cancelled close arrives last 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row date claim before closing any task 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row number claim before closing any task 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row scope claim before closing any task 12ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses stale dates even when there is no existing task to protect
+{
+  "timestamp": "2026-11-14T00:20:27.585Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses a false completed outcome for the current cancelled audit
+{
+  "timestamp": "2026-11-14T00:20:27.594Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:04
+{
+  "timestamp": "2026-11-14T00:20:27.634Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:04"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:0
+{
+  "timestamp": "2026-11-14T00:20:27.641Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:0"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:-4
+{
+  "timestamp": "2026-11-14T00:20:27.648Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:-4"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:2147483648
+{
+  "timestamp": "2026-11-14T00:20:27.656Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:2147483648"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:4:extra
+{
+  "timestamp": "2026-11-14T00:20:27.662Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4:extra"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key audit:4
+{
+  "timestamp": "2026-11-14T00:20:27.669Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "audit:4"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses prefix reconciliation instead of treating it as an audited native key
+{
+  "timestamp": "2026-11-14T00:20:27.675Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "prefix": "qms-internal-audit:"
+    },
+    "err": "Invalid internal-audit task source"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row lead claim before closing any task 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses stale dates even when there is no existing task to protect 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses a false completed outcome for the current cancelled audit 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refreshes same-date task text in place after a confirmed number change 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refreshes same-date task text in place after a confirmed scope change 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > uses the canonical date comparison even if a delayed caller asks to keep everything 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:04 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:0 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:-4 6ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:2147483648 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:4:extra 6ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key audit:4 6ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses prefix reconciliation instead of treating it as an audited native key 6ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired project payload
+{
+  "timestamp": "2026-11-14T00:20:27.685Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired metadata payload
+{
+  "timestamp": "2026-11-14T00:20:27.695Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired description payload
+{
+  "timestamp": "2026-11-14T00:20:27.720Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired due time payload
+{
+  "timestamp": "2026-11-14T00:20:27.728Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The task plan no longer matches the current internal audit; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a title race or failure
+{
+  "timestamp": "2026-11-14T00:20:27.780Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The source task changed before its text could be reconciled"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired project payload 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired metadata payload 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired description payload 26ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired due time payload 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > preserves manual assignee, progress and identity on same-date number edits 15ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > preserves manual assignee, progress and identity on same-date scope edits 16ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > refreshes a nullable old description with the same task and business state 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a title race or failure 11ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a description race or failure
+{
+  "timestamp": "2026-11-14T00:20:27.791Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The source task changed before its text could be reconciled"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a status race or failure
+{
+  "timestamp": "2026-11-14T00:20:27.802Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The source task changed before its text could be reconciled"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a audit race or failure
+{
+  "timestamp": "2026-11-14T00:20:27.814Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task audit unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 5
+{
+  "timestamp": "2026-11-14T00:20:27.822Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:5"
+    },
+    "err": "The current native internal audit could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 99
+{
+  "timestamp": "2026-11-14T00:20:27.829Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:99"
+    },
+    "err": "The current native internal audit could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive actor
+{
+  "timestamp": "2026-11-14T00:20:27.837Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive organization
+{
+  "timestamp": "2026-11-14T00:20:27.846Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on removed membership
+{
+  "timestamp": "2026-11-14T00:20:27.855Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on viewer actor
+{
+  "timestamp": "2026-11-14T00:20:27.864Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Current Quality write authority is required"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on ambiguous membership
+{
+  "timestamp": "2026-11-14T00:20:27.872Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on unknown native state
+{
+  "timestamp": "2026-11-14T00:20:27.880Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The current native internal audit could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > checks the current actor even for a close-only request with no open task
+{
+  "timestamp": "2026-11-14T00:20:27.888Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The actor is not a current active member of this organization."
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a description race or failure 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a status race or failure 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > audit text refresh preserves a person’s task work > rolls text and ledger back after a audit race or failure 12ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 5 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 99 7ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive actor 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive organization 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on removed membership 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on viewer actor 9ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on ambiguous membership 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on unknown native state 8ms
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create failure
+{
+  "timestamp": "2026-11-14T00:20:27.899Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task writer unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after transition audit failure
+{
+  "timestamp": "2026-11-14T00:20:27.910Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task audit unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create audit failure
+{
+  "timestamp": "2026-11-14T00:20:27.925Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task audit unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after status CAS failure
+{
+  "timestamp": "2026-11-14T00:20:27.937Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "The source task changed before its status could be reconciled"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > checks the current actor even for a close-only request with no open task 8ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create failure 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after transition audit failure 11ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create audit failure 15ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after status CAS failure 11ms
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts
+{
+  "timestamp": "2026-11-14T00:20:28.805Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses another tenant’s document
+{
+  "timestamp": "2026-11-14T00:20:31.223Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:13"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses an authored pointer crossing tenants
+{
+  "timestamp": "2026-11-14T00:20:31.234Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:14"
+    },
+    "err": "The controlled document project could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses a deleted controlled document
+{
+  "timestamp": "2026-11-14T00:20:31.241Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:16"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses another tenant’s CAPA
+{
+  "timestamp": "2026-11-14T00:20:31.249Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:66666666-6666-4666-8666-666666666666"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses a bound document whose recorded program is deleted despite a valid tracking anchor
+{
+  "timestamp": "2026-11-14T00:20:31.258Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:17"
+    },
+    "err": "The controlled document project could not be verified"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > the real native owner query reaches the canonical project anchor > uses the controlled document’s bound Authoring tenant/program, ignoring stale metadata 20ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > the real native owner query reaches the canonical project anchor > keeps an unbound legacy document organization-wide even when its metadata names a project 8ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > the real native owner query reaches the canonical project anchor > places capa_record using the CAPA parent’s recorded program 12ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > the real native owner query reaches the canonical project anchor > places capa_action using the CAPA parent’s recorded program 12ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses another tenant’s document 10ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses an authored pointer crossing tenants 10ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses a deleted controlled document 8ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses another tenant’s CAPA 7ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > refuses a bound document whose recorded program is deleted despite a valid tracking anchor 9ms
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > does not hide an ambiguous anchor by choosing one tracking project
+{
+  "timestamp": "2026-11-14T00:20:31.266Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "quality-source-task",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      41,
+      42
+    ]
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > does not hide an ambiguous anchor by choosing one tracking project
+{
+  "timestamp": "2026-11-14T00:20:31.267Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task needs one verified project anchor"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > preserves the actor admission refusal after the real owner and anchor resolve
+{
+  "timestamp": "2026-11-14T00:20:31.275Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "Project is private to another team"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > does not hide an ambiguous anchor by choosing one tracking project 9ms
+ ✓ server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts > native SQL refuses unavailable or foreign ownership before any task write > preserves the actor admission refusal after the real owner and anchor resolve 8ms
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts
+{
+  "timestamp": "2026-11-14T00:20:32.176Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > preserves a reopened CAPA task when a committed older close snapshot arrives last
+{
+  "timestamp": "2026-11-14T00:20:34.360Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > preserves a dated CAPA task when an older no-date cancellation arrives last
+{
+  "timestamp": "2026-11-14T00:20:34.372Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_record plan with either the same assignee or no open task
+{
+  "timestamp": "2026-11-14T00:20:34.384Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_record plan with either the same assignee or no open task
+{
+  "timestamp": "2026-11-14T00:20:34.388Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_action plan with either the same assignee or no open task
+{
+  "timestamp": "2026-11-14T00:20:34.401Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_action plan with either the same assignee or no open task
+{
+  "timestamp": "2026-11-14T00:20:34.403Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses stale capa_record dates even when the task assignee already matches
+{
+  "timestamp": "2026-11-14T00:20:34.413Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses stale capa_action dates even when the task assignee already matches
+{
+  "timestamp": "2026-11-14T00:20:34.421Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA named owner' with unchanged-assignee task=true
+{
+  "timestamp": "2026-11-14T00:20:34.429Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA named owner' with unchanged-assignee task=false
+{
+  "timestamp": "2026-11-14T00:20:34.436Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA creator fallback' with unchanged-assignee task=true
+{
+  "timestamp": "2026-11-14T00:20:34.444Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > preserves a reopened CAPA task when a committed older close snapshot arrives last 21ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > preserves a dated CAPA task when an older no-date cancellation arrives last 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_record plan with either the same assignee or no open task 16ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses a stale active capa_action plan with either the same assignee or no open task 15ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses stale capa_record dates even when the task assignee already matches 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses stale capa_action dates even when the task assignee already matches 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA named owner' with unchanged-assignee task=true 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA named owner' with unchanged-assignee task=false 7ms
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA creator fallback' with unchanged-assignee task=false
+{
+  "timestamp": "2026-11-14T00:20:34.451Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'action owner' with unchanged-assignee task=true
+{
+  "timestamp": "2026-11-14T00:20:34.460Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'action owner' with unchanged-assignee task=false
+{
+  "timestamp": "2026-11-14T00:20:34.467Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA creator fallback' with unchanged-assignee task=true 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'CAPA creator fallback' with unchanged-assignee task=false 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'action owner' with unchanged-assignee task=true 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > refuses delayed 'action owner' with unchanged-assignee task=false 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > retains the existing initial capa_record assignment policy when its numeric owner is current 10ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > retains the existing initial capa_action assignment policy when its numeric owner is current 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > every CAPA task plan follows the current native lifecycle and date > retains initial free-text action owner fallback without inventing a canonical numeric owner 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_record only with its current canonical UPDATE capa_records SET state='closed_effective' outcome 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_record only with its current canonical UPDATE capa_records SET state='closed_not_effective' outcome 13ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_record only with its current canonical UPDATE capa_records SET target_close_date=NULL outcome 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_action only with its current canonical UPDATE capa_actions SET state='done' outcome 9ms
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_record completion or cancellation reason
+{
+  "timestamp": "2026-11-14T00:20:34.569Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_record completion or cancellation reason
+{
+  "timestamp": "2026-11-14T00:20:34.577Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason
+{
+  "timestamp": "2026-11-14T00:20:34.585Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason
+{
+  "timestamp": "2026-11-14T00:20:34.592Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason
+{
+  "timestamp": "2026-11-14T00:20:34.600Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on missing record
+{
+  "timestamp": "2026-11-14T00:20:34.611Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on foreign program
+{
+  "timestamp": "2026-11-14T00:20:34.623Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on deleted program
+{
+  "timestamp": "2026-11-14T00:20:34.633Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on ambiguous anchor
+{
+  "timestamp": "2026-11-14T00:20:34.642Z",
+  "level": "warn",
+  "message": "[program-project-anchor] Program has more than one anchor row; unique anchor required",
+  "context": {
+    "context": "quality-source-task",
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "projectIds": [
+      41,
+      42
+    ]
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on ambiguous anchor
+{
+  "timestamp": "2026-11-14T00:20:34.642Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task needs one verified project anchor"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on actor revoked
+{
+  "timestamp": "2026-11-14T00:20:34.651Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "actor revoked"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_action only with its current canonical UPDATE capa_actions SET state='cancelled' outcome 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > closes capa_action only with its current canonical UPDATE capa_actions SET due_date=NULL outcome 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_record completion or cancellation reason 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_record completion or cancellation reason 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > refuses an incorrect capa_action completion or cancellation reason 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on missing record 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on foreign program 12ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on deleted program 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on ambiguous anchor 9ms
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on private project
+{
+  "timestamp": "2026-11-14T00:20:34.660Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "private project"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > checks current closure and admission even when no open task remains
+{
+  "timestamp": "2026-11-14T00:20:34.672Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "Actor no longer admitted"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > rolls the native close task transition back if its audit fails
+{
+  "timestamp": "2026-11-14T00:20:34.681Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "Audit unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_record producer after the native owner changed again
+{
+  "timestamp": "2026-11-14T00:20:34.727Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_action producer after the native owner changed again
+{
+  "timestamp": "2026-11-14T00:20:34.733Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA assignee; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-14T00:20:34.741Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-14T00:20:34.748Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on actor revoked 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves a close-only task on private project 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > checks current closure and admission even when no open task remains 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > rolls the native close task transition back if its audit fails 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > current CAPA closure outcomes and admission > preserves the existing free-text action owner policy for active and terminal records 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > replaces capa_record atomically for its current canonical numeric assignee 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > replaces capa_action atomically for its current canonical numeric assignee 11ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > keeps a task when the date and assignee both already match 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_record producer after the native owner changed again 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses a stale capa_action producer after the native owner changed again 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_record changed date or ended before the assignment reconciliation 7ms
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-14T00:20:34.755Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation
+{
+  "timestamp": "2026-11-14T00:20:34.762Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The task plan no longer matches the current native CAPA lifecycle or date; the previous task was preserved"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on inactive member
+{
+  "timestamp": "2026-11-14T00:20:34.770Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "Membership revoked"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on reader role
+{
+  "timestamp": "2026-11-14T00:20:34.778Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The CAPA assignee is not eligible for this task"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on private project
+{
+  "timestamp": "2026-11-14T00:20:34.786Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The CAPA assignee cannot access this project"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on create audit failure
+{
+  "timestamp": "2026-11-14T00:20:34.795Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "Audit ledger unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses to invent an action assignee from a free-text owner and the latest caller
+{
+  "timestamp": "2026-11-14T00:20:34.814Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_action",
+    "match": {
+      "exact": "capa-action:33333333-3333-4333-8333-333333333333"
+    },
+    "err": "The current native CAPA assignment could not be verified; the previous task was preserved"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task when capa_action changed date or ended before the assignment reconciliation 7ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on inactive member 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on reader role 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on private project 8ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > preserves the old task on create audit failure 9ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > uses the CAPA creator fallback only when the native record names no numeric assignee 10ms
+ ✓ server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts > same-date native CAPA task reassignment > refuses to invent an action assignee from a free-text owner and the latest caller 9ms
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses unrelated assignee and rolls back
+{
+  "timestamp": "2026-11-14T00:20:35.697Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The training task does not name its assigned reader"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses revoked assignment and rolls back
+{
+  "timestamp": "2026-11-14T00:20:35.700Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The training assignment is no longer current"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses revoked actor and rolls back
+{
+  "timestamp": "2026-11-14T00:20:35.701Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "inactive"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses ambiguous anchor and rolls back
+{
+  "timestamp": "2026-11-14T00:20:35.702Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The training document needs one verified project anchor"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses changed version and rolls back
+{
+  "timestamp": "2026-11-14T00:20:35.702Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The task does not name the current verified training release"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses unverified release and rolls back
+{
+  "timestamp": "2026-11-14T00:20:35.703Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_training",
+    "match": {
+      "exact": "qms-document:12:user:9"
+    },
+    "err": "The task does not name the current verified training release"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > classifies a legitimate task from active actor 9 and verifies the intended assignee 6ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > classifies a legitimate task from active actor 12 and verifies the intended assignee 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > keeps a verified legacy unbound release organization-wide 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > repairs an existing matching training task without completing or replacing it 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > uses the version in force while a later working revision is unsigned 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > retains training on the approved version waiting to take effect 0ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > classifies only the reader key this reconciliation owns 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > assigned training tasks keep native project placement without requiring a project writer > serializes document-wide and personal reconciliation under the same document lock 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses unrelated assignee and rolls back 3ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses revoked assignment and rolls back 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses revoked actor and rolls back 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses ambiguous anchor and rolls back 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses changed version and rolls back 1ms
+ ✓ server/services/tasking/__tests__/source-task-training-project.test.ts > unverified training classification leaves existing delivery untouched > refuses unverified release and rolls back 1ms
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts
+{
+  "timestamp": "2026-11-14T00:20:36.516Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on missing owner
+{
+  "timestamp": "2026-11-14T00:20:36.650Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task owner could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on no unique anchor
+{
+  "timestamp": "2026-11-14T00:20:36.650Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The native Quality task needs one verified project anchor"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on project access denied
+{
+  "timestamp": "2026-11-14T00:20:36.651Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "denied"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on placement audit failed
+{
+  "timestamp": "2026-11-14T00:20:36.652Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "ledger unavailable"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > does not silently unfile a bound document whose authoring program cannot be read
+{
+  "timestamp": "2026-11-14T00:20:36.653Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_periodic_review",
+    "match": {
+      "exact": "qms-document:12"
+    },
+    "err": "The controlled document project could not be verified"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > rolls back a status race instead of creating a second open source task
+{
+  "timestamp": "2026-11-14T00:20:36.653Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "capa_record",
+    "match": {
+      "exact": "capa:22222222-2222-4222-8222-222222222222"
+    },
+    "err": "The source task changed before its status could be reconciled"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > native Quality source tasks retain their canonical project > places capa_record from the recorded owner, ignoring a claimed numeric project 6ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > native Quality source tasks retain their canonical project > places capa_action from the recorded owner, ignoring a claimed numeric project 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > native Quality source tasks retain their canonical project > places qms_periodic_review from the recorded owner, ignoring a claimed numeric project 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > native Quality source tasks retain their canonical project > keeps a legacy unbound controlled document organization-wide rather than borrowing the caller project 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > native Quality source tasks retain their canonical project > preserves a delegated document approver’s reminder without demanding project edit permission 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > native Quality source tasks retain their canonical project > repairs an existing matching task in place, preserving its id and status and auditing the placement 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > native Quality source tasks retain their canonical project > keeps the same task without another write once placement already matches 0ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on missing owner 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on no unique anchor 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on project access denied 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > fails closed on placement audit failed 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > does not silently unfile a bound document whose authoring program cannot be read 0ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > rolls back a status race instead of creating a second open source task 1ms
+ ✓ server/services/tasking/__tests__/source-task-quality-project.test.ts > unverified Quality ownership leaves the previous task untouched > preserves the existing generic path for non-audit Quality sources 0ms
+stdout | server/services/tasking/__tests__/source-task.test.ts
+{
+  "timestamp": "2026-11-14T00:20:37.655Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-14T00:20:37.656Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts
+{
+  "timestamp": "2026-11-14T00:20:37.656Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts
+{
+  "timestamp": "2026-11-14T00:20:37.844Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../../db\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > reports a failure and never throws into the act it follows
+{
+  "timestamp": "2026-11-14T00:20:38.000Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 3,
+    "sourceEntityType": "custom_source",
+    "match": {
+      "exact": "source:x"
+    },
+    "err": "db down"
+  }
+}
+
+stderr | server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > reports a failure part way and never throws
+{
+  "timestamp": "2026-11-14T00:20:38.003Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 3,
+    "sourceEntityType": "custom_source",
+    "match": {
+      "exact": "qms-document:1:user:5"
+    },
+    "err": "db down"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > leaves the open task when it already records the same thing 2ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > closes the open task, then writes the next under the organisation, the source and the actor 3ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > closes the open task as the act says and writes none when nothing is owed 1ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > reports a failure and never throws into the act it follows 1ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > keeps what is wanted, closes the rest as the act says, and writes what is missing 1ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > never treats document 10 as under the prefix of document 1 0ms
+ ✓ server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > reports a failure part way and never throws 1ms
+ ✓ server/services/capa-mdr/__tests__/capa-tasks.test.ts > CAPA tasks > owes an open CAPA by its target close date, to the person who raised it, with 14 days notice 2ms
+ ✓ server/services/capa-mdr/__tests__/capa-tasks.test.ts > CAPA tasks > completes the task when the CAPA closes, and owes nothing without a target date 1ms
+ ✓ server/services/capa-mdr/__tests__/capa-tasks.test.ts > CAPA tasks > owes an action by its due date, names an owner who is not a user, and ends with the action 1ms
+ ✓ server/services/capa-mdr/__tests__/capa-tasks.test.ts > CAPA tasks > writes through the one task store, under the organisation and the actor 2ms
+ ✓ server/services/qms/__tests__/qms-record-tasks.test.ts > Quality record tasks > owes a supplier's next audit and re-approval, with 30 days notice 2ms
+ ✓ server/services/qms/__tests__/qms-record-tasks.test.ts > Quality record tasks > completes the audit task when an update records the audit, even with the next date unmoved 1ms
+ ✓ server/services/qms/__tests__/qms-record-tasks.test.ts > Quality record tasks > owes nothing for a revoked supplier 1ms
+ ✓ server/services/qms/__tests__/qms-record-tasks.test.ts > Quality record tasks > owes a planned audit's start to its lead auditor, and ends the task once it starts or is cancelled 1ms
+
+ Test Files  8 passed (8)
+      Tests  157 passed (157)
+   Start at  00:20:20
+   Duration  17.67s (transform 1.84s, setup 465ms, import 7.12s, tests 9.08s, environment 1ms)
+

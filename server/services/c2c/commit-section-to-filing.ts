@@ -118,8 +118,13 @@ export type CommitSectionResult =
    *  text is not the text that was signed, so it no longer reads approved
    *  (spine F1). */
   | { committed: true; documentId: string; sectionKey: string; partOf?: string; approvalWithdrawn?: true }
-  /** Not written, and why — never a silent no-op. */
-  | { committed: false; reason: string };
+  /** Not written, and why — never a silent no-op. `outsideFiling` is present when
+   *  there was no filing for the text to reach, which is a state of the document
+   *  and not a failed commit: a Quality controlled document is never part of a
+   *  filing, and a working copy bound to none (every template copy starts so) is
+   *  not in one yet. A reader then has no half-failure to report. Absent, the
+   *  document is bound and its text did not reach its filing. */
+  | { committed: false; reason: string; outsideFiling?: 'controlled-document' | 'unbound-working-copy' };
 
 /**
  * The one statement that writes an authored section's text into the filing.
@@ -187,6 +192,30 @@ async function marketScopeRefusal(
 }
 
 /**
+ * Whether a Quality register entry names this authored document (qms_documents.authoring_document_id,
+ * db/migrations/20261014_qms_controlled_authoring_content.sql). Such a document is approved and released in
+ * Quality and is never part of a filing. This runs inside the caller's open transaction, so the store's
+ * presence is probed first with a statement that cannot fail, as the filing store's is below: a missing
+ * table would abort the save.
+ */
+async function isControlledDocument(client: PoolClient, docId: string, tenantId: number): Promise<boolean> {
+  const capable = await client.query<{ ok: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM information_schema.columns
+                     WHERE table_schema = 'public'
+                       AND table_name = 'qms_documents'
+                       AND column_name = 'authoring_document_id') AS ok`,
+  );
+  if (!capable.rows[0]?.ok) return false;
+  const bound = await client.query(
+    `SELECT 1 AS controlled FROM qms_documents
+      WHERE organization_id = $2 AND authoring_document_id = $1::uuid
+      LIMIT 1`,
+    [docId, tenantId],
+  );
+  return bound.rows.length > 0;
+}
+
+/**
  * Write `content` through to the governed section, if there is one.
  *
  * Throws on a real database fault, and on a locked or submitted filing
@@ -234,8 +263,8 @@ export async function commitSectionToFiling(
   // The authored section, its code, and the governed document its parent is
   // bound to — one query, tenant-scoped on the section AND the document so a
   // cross-tenant id cannot reach the join.
-  const link = await client.query<{ code: string | null; c2c_document_id: string | null }>(
-    `SELECT s.code, d.c2c_document_id
+  const link = await client.query<{ code: string | null; c2c_document_id: string | null; doc_id: string }>(
+    `SELECT s.code, d.c2c_document_id, d.id AS doc_id
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
       WHERE s.id = $1 AND s.tenant_id = $2
@@ -248,8 +277,16 @@ export async function commitSectionToFiling(
 
   const { code, c2c_document_id: documentId } = link.rows[0];
   if (!documentId) {
+    if (await isControlledDocument(client, link.rows[0].doc_id, tenantId)) {
+      return {
+        committed: false,
+        outsideFiling: 'controlled-document',
+        reason: 'This is a controlled document in the Quality register. It is approved and released there, and is not part of a filing.',
+      };
+    }
     return {
       committed: false,
+      outsideFiling: 'unbound-working-copy',
       reason: 'This document is not bound to a filing, so there is no governed section to update.',
     };
   }

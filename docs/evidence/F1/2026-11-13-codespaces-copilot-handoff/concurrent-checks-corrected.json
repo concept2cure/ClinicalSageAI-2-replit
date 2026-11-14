@@ -1,0 +1,43 @@
+{
+  "startedAt": "2026-11-13T23:05:59.582089+00:00",
+  "elapsedSeconds": 120.926,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/anaWorkPanel.test.tsx",
+    "client/src/concept2cure/v2/__tests__/conversationRemembers.test.tsx",
+    "client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx",
+    "client/src/concept2cure/v2/__tests__/turnSummary.test.tsx",
+    "server/routes/__tests__/knowledge-base-5xx-containment.test.ts",
+    "server/services/__tests__/deep-research-synthesis-names-the-sources-that-failed.test.ts",
+    "server/services/ana/__tests__/addons-tools.test.ts",
+    "server/services/ana/__tests__/run-coordination-dispositions.test.ts",
+    "server/services/ana/__tests__/search-connected-repositories-tool.test.ts",
+    "server/services/ana/__tests__/sub-agent.test.ts",
+    "server/services/ana/__tests__/turn-plan-and-context.test.ts",
+    "server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts",
+    "server/services/connectors/__tests__/connector-tenant-isolation.test.ts",
+    "server/services/connectors/__tests__/eu-connectors-failed-search-is-an-error-not-no-matches.test.ts",
+    "server/services/connectors/__tests__/pmda-nmpa-honest.test.ts",
+    "server/services/integrations/__tests__/connected-repository-search-orders-by-source-rank.test.ts",
+    "server/services/integrations/__tests__/connector-search.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "concurrent-inputs.json",
+  "inputCount": 58,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "concurrent-checks-corrected.txt.gz",
+  "outputSha256": "ef11a3f0e48e639857877c64fd255c2e9d531a4afaa00f4aabe0e0722dcbf606",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": true
+}

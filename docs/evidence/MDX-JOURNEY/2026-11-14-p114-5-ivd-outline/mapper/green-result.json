@@ -1,0 +1,15 @@
+{
+  "command": [
+    "node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+    "--maxWorkers=1",
+    "--no-file-parallelism",
+    "--reporter=json",
+    "--outputFile=/workspace/ClinicalSageAI-2-replit/docs/evidence/MDX-JOURNEY/2026-11-14-p114-5-ivd-outline/mapper/green-tests.json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 1.118,
+  "sourceStable": true
+}

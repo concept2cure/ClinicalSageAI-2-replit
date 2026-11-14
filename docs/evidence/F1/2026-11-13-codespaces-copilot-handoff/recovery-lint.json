@@ -1,0 +1,26 @@
+{
+  "startedAt": "2026-11-13T22:47:43.275535+00:00",
+  "elapsedSeconds": 3.022,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/managed-proxy.cjs",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/managed-network-probe.cjs"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "merged-inputs.json",
+  "inputCount": 12722,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/managed-proxy.cjs": "42673e1f20663d23fdf817dd0bc5dbd2820a2525e792495e80dfacaba18ac3b2",
+    "docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/managed-network-probe.cjs": "ac9495d1f717de6299cc47c2198d3dab12ddbc7095afaa2a59557a11743be7bd"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "recovery-lint.txt.gz",
+  "outputSha256": "f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

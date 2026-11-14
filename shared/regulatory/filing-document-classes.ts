@@ -84,6 +84,14 @@ export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   { docType: 'fast_track', packAgency: 'fda', label: 'fast track designation request', registryIds: ['US_FAST_TRACK'] },
   { docType: 'rmat', packAgency: 'fda', label: 'RMAT designation request', registryIds: ['US_RMAT'] },
   { docType: 'psp', packAgency: 'fda', label: 'pediatric study plan', registryIds: ['US_PSP'] },
+  // 2026-11-13 (S12 sweep item 3): three FDA filings that are one document each and
+  // were created as a full NDA, because nothing said what they were. A priority
+  // review request is asked for with the application it concerns; the environmental
+  // assessment is its Module 1.12.14 document (21 CFR part 25); a 15-day alert report
+  // is an E2B(R3) case report (21 CFR 314.80(c)(1)), not eCTD content.
+  { docType: 'priority_review', packAgency: 'fda', label: 'priority review designation request', registryIds: ['US_PRIORITY_REVIEW'] },
+  { docType: 'environmental_assessment', packAgency: 'fda', label: 'environmental assessment', registryIds: ['US_EA'] },
+  { docType: 'icsr_15day', packAgency: 'fda', label: '15-day alert report', registryIds: ['US_ICSR_15DAY'] },
   // ── US biotech filing completion (2026-10-29) ──
   // docs/design/US_BIOTECH_FILING_COMPLETION_2026-10-27.md. One class per exact
   // identity, so each scaffolds its own lifecycle record's parts and never the
@@ -108,7 +116,12 @@ export const FILING_DOCUMENT_CLASSES: readonly FilingDocumentClass[] = [
   { docType: 'eua_request', packAgency: 'fda', label: 'emergency use authorization request (drug or biologic)', registryIds: ['US_EUA_THERAPEUTIC'] },
   // ── Harmonised clinical and safety documents (ICH) ──
   { docType: 'csr', packAgency: 'ich', label: 'clinical study report', registryIds: ['ICH_CSR'] },
-  { docType: 'protocol', packAgency: 'ich', label: 'clinical trial protocol', registryIds: ['ICH_PROTOCOL'] },
+  // US_PMR (2026-11-12, S12 sweep item 3): a post-marketing requirement or commitment
+  // is authored as its study's protocol. Its registry outline is the protocol's
+  // (blueprint "Post-Marketing Requirement / Commitment Study"), and it was created
+  // as a full NDA only because nothing said what it was. Its status travels in the
+  // annual report and its completed study files as a Module 5 report.
+  { docType: 'protocol', packAgency: 'ich', label: 'clinical trial protocol', registryIds: ['ICH_PROTOCOL', 'US_PMR'] },
   { docType: 'ib', packAgency: 'ich', label: "investigator's brochure", registryIds: ['ICH_IB'] },
   { docType: 'sap', packAgency: 'ich', label: 'statistical analysis plan', registryIds: ['ICH_SAP'] },
   { docType: 'icf', packAgency: 'ich', label: 'informed consent form', registryIds: ['ICH_ICF'] },

@@ -1,0 +1,1 @@
+{"worker":"runIsolatedCompute → real isolated Python worker","outputType":"docx","bytes":37991,"outputPath":"/workspace/scratch/c2c-docx-green/document-runtime-check.docx","reopened":{"zipValid":true,"paragraphPreserved":true,"tablePreserved":true},"providerCalls":0}

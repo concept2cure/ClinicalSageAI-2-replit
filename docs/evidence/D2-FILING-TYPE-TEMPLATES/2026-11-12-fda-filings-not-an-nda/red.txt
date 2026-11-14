@@ -1,0 +1,10 @@
+red: tests/regulatory/fda-filings-not-created-as-an-nda.test.ts on trunk 1e74fd32d (the parent of this change), 2026-11-12
+ × us_accel_approval states that it is the application dossier
+ × us_rolling states that it is the application dossier
+ × a Post-Marketing Requirement is its study protocol: the protocol document class, never an application
+ ✓ the filings already classed keep their class (controls)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+      1 AssertionError: expected [ 'ICH_PROTOCOL' ] to deeply equal [ 'ICH_PROTOCOL', 'US_PMR' ]
+      1 AssertionError: expected null to be 'ctd' // Object.is equality

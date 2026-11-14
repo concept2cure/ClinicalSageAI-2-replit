@@ -1,0 +1,168 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/submission-ops-at-risk-root-project.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/submission-ops-at-risk-root-project.test.ts
+{
+  "timestamp": "2026-11-12T23:48:39.177Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a blocker on a work project names the work project and its filing project, with the program a card opens 37ms
+   → expected undefined to deeply equal { id: 20, name: 'CMC', …(1) }
+ × tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a blocker on a filing project names it as its own root; an ordinary project has no program 8ms
+   → expected undefined to deeply equal { id: 10, name: 'C2C-101 IND', …(1) }
+ × tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a reader who can open the work project and not its filing project is not told the filing project 6ms
+   → expected undefined to deeply equal { id: 20, name: 'CMC', root: null }
+ × tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > the walk never leaves the organization: a parent in another organization is not a root 6ms
+   → expected undefined to deeply equal { id: 60, name: 'Misparented', …(1) }
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > keeps every field the row had, and its order 7ms
+ × tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/due-soon: each task names its project and the project a card carries > a task due on a work project names its filing project 6ms
+   → expected { work_item_id: 'wi_work', …(3) } to match object { work_item_id: 'wi_work', …(3) }
+(1 matching property omitted from actual)
+ ✓ tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/due-soon: each task names its project and the project a card carries > nothing due: no project read, an empty list 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a blocker on a work project names the work project and its filing project, with the program a card opens
+AssertionError: expected undefined to deeply equal { id: 20, name: 'CMC', …(1) }
+
+- Expected:
+{
+  "id": 20,
+  "name": "CMC",
+  "root": {
+    "id": 10,
+    "name": "C2C-101 IND",
+    "programId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/submission-ops-at-risk-root-project.test.ts:105:43
+    103|   it('a blocker on a work project names the work project and its filin…
+    104|     const rows = await blockers();
+    105|     expect(of(rows, 'blk_work')?.project).toEqual({ id: WORK, name: 'C…
+       |                                           ^
+    106|     expect(of(rows, 'blk_nested')?.project).toEqual({ id: NESTED, name…
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a blocker on a filing project names it as its own root; an ordinary project has no program
+AssertionError: expected undefined to deeply equal { id: 10, name: 'C2C-101 IND', …(1) }
+
+- Expected:
+{
+  "id": 10,
+  "name": "C2C-101 IND",
+  "root": {
+    "id": 10,
+    "name": "C2C-101 IND",
+    "programId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+  },
+}
+
++ Received:
+undefined
+
+ ❯ tests/submission-ops-at-risk-root-project.test.ts:111:45
+    109|   it('a blocker on a filing project names it as its own root; an ordin…
+    110|     const rows = await blockers();
+    111|     expect(of(rows, 'blk_filing')?.project).toEqual({ id: FILING, name…
+       |                                             ^
+    112|     expect(of(rows, 'blk_plain')?.project).toEqual({ id: PLAIN, name: …
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > a reader who can open the work project and not its filing project is not told the filing project
+AssertionError: expected undefined to deeply equal { id: 20, name: 'CMC', root: null }
+
+- Expected:
+{
+  "id": 20,
+  "name": "CMC",
+  "root": null,
+}
+
++ Received:
+undefined
+
+ ❯ tests/submission-ops-at-risk-root-project.test.ts:119:29
+    117|     const rows = await blockers();
+    118|     expect(rows.map((r) => r.blockerId)).toEqual(['blk_work']);
+    119|     expect(rows[0].project).toEqual({ id: WORK, name: 'CMC', root: nul…
+       |                             ^
+    120|   });
+    121|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/blockers: each row names its project and the project a card carries > the walk never leaves the organization: a parent in another organization is not a root
+AssertionError: expected undefined to deeply equal { id: 60, name: 'Misparented', …(1) }
+
+- Expected:
+{
+  "id": 60,
+  "name": "Misparented",
+  "root": null,
+}
+
++ Received:
+undefined
+
+ ❯ tests/submission-ops-at-risk-root-project.test.ts:123:57
+    121|
+    122|   it('the walk never leaves the organization: a parent in another orga…
+    123|     expect(of(await blockers(), 'blk_orphan')?.project).toEqual({ id: …
+       |                                                         ^
+    124|   });
+    125|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/submission-ops-at-risk-root-project.test.ts > GET /api/submission-ops/due-soon: each task names its project and the project a card carries > a task due on a work project names its filing project
+AssertionError: expected { work_item_id: 'wi_work', …(3) } to match object { work_item_id: 'wi_work', …(3) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "project": {
+-     "id": 20,
+-     "name": "CMC",
+-     "root": {
+-       "id": 10,
+-       "name": "C2C-101 IND",
+-       "programId": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+-     },
+-   },
+    "project_id": 20,
+    "title": "Due on a work project",
+    "work_item_id": "wi_work",
+  }
+
+ ❯ tests/submission-ops-at-risk-root-project.test.ts:137:33
+    135|   it('a task due on a work project names its filing project', async ()…
+    136|     const rows = await dueSoon();
+    137|     expect(of(rows, 'wi_work')).toMatchObject({ work_item_id: 'wi_work…
+       |                                 ^
+    138|       project: { id: WORK, name: 'CMC', root: { id: FILING, name: 'C2C…
+    139|     expect(of(rows, 'wi_filing')?.project).toEqual({ id: FILING, name:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  23:48:36
+   Duration  6.96s (transform 2.30s, setup 122ms, import 4.36s, tests 2.23s, environment 0ms)
+

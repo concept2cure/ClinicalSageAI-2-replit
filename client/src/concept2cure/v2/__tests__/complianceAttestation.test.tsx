@@ -227,6 +227,23 @@ describe('the verdict', () => {
     expect(result.textContent ?? '').toMatch(/the hash chain was never applied/);
   });
 
+  /* 2026-11-12: the service also reaches UNVERIFIABLE when every entry is
+     hashed and one names no entry before it. The verdict's fixed meaning said
+     "some or all carry no hash", directly above "All 4,821 entries are hashed". */
+  it('UNVERIFIABLE over a fully hashed trail does not say entries carry no hash', async () => {
+    const reason = '1 of 4821 audit entries names no entry before it although one was recorded, so that link could not be checked.';
+    serve({ attestation: 'UNVERIFIABLE', unverifiableReason: reason });
+    await runIt();
+    const result = await screen.findByTestId('attestation-result');
+    expect(result.getAttribute('data-verdict')).toBe('UNVERIFIABLE');
+    const text = result.textContent ?? '';
+    expect(text).toMatch(/All 4,821 entries are hashed/);
+    expect(text, 'the verdict contradicts the coverage sentence beside it').not.toMatch(/some or all carry no hash/);
+    expect(text).toMatch(/some could not be checked: an entry carries no hash, or names no entry before it/);
+    expect(text).toContain(reason);
+    expect(text).toMatch(/not a statement that the trail is intact/);
+  });
+
   it('EMPTY is not a pass either', async () => {
     serve({ attestation: 'EMPTY', totalEntries: 0, hashedEntries: 0, unhashedEntries: 0 });
     await runIt();

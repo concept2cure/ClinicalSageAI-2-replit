@@ -129,6 +129,38 @@ afterEach(() => {
   delete window.C2C_CONVO; delete window.C2C_SOURCE_PINS;
 });
 
+it.each(['account', 'session', 'project', 'unmount'] as const)('retires pending exact source admission after %s replacement, including a return to the first owner', async change => {
+  const token = (id: string, visit: string) => `fixture.${btoa(JSON.stringify({ userId: Number(id), organizationId: 4, visit }))}.synthetic`;
+  authService.setToken(token('7', 'original'), AUTHOR, 'synthetic-refresh');
+  const source = { id: 31, title: 'Owned study evidence', checksum: 'a'.repeat(64), projectId: A,
+    textAvailable: true, extractionStatus: 'extracted', isCurrent: true, dataEligible: true };
+  const exact = pendingRead();
+  override = (_method, path) => path.includes('?sourceIds=') ? exact.promise
+    : path === `/api/c2c/projects/${A}/sources` ? ok({ projectId: A, sources: [source] }) : undefined;
+  const page = mountPage();
+  fireEvent.click(stage('Evidence'));
+  fireEvent.click(await screen.findByLabelText('Use Owned study evidence as context'));
+  fireEvent.click(screen.getByRole('button', { name: 'Draft with 1 pinned source' }));
+  await waitFor(() => expect(request.mock.calls.some(([, path]) => String(path).includes('?sourceIds='))).toBe(true));
+  expect(props.onAsk).not.toHaveBeenCalled();
+  const call = request.mock.calls.find(([, path]) => String(path).includes('?sourceIds='))!;
+  expect(call[3]).toMatchObject({ Authorization: `Bearer ${token('7', 'original')}`, 'x-organization-id': '4' });
+  if (change === 'unmount') page.view.unmount();
+  else if (change === 'project') {
+    act(() => { selectProject(B); page.rerender(); });
+    act(() => { selectProject(A); page.rerender(); });
+  } else {
+    act(() => { authService.setToken(token(change === 'account' ? '8' : '7', 'replacement'),
+      { ...AUTHOR, id: change === 'account' ? '8' : '7' }, 'replacement-refresh'); page.rerender(); });
+    act(() => { authService.setToken(token('7', 'original'), AUTHOR, 'return-refresh'); page.rerender(); });
+  }
+  expect((call[4] as AbortSignal).aborted).toBe(true);
+  await act(async () => exact.resolve(ok({ projectId: A, selection: { scope: 'verified-accessible-sources', sourceIds: [source.id] }, sources: [source] })));
+  expect(props.onAsk).not.toHaveBeenCalled();
+  expect(window.C2C_SOURCE_PINS ?? []).toEqual([]);
+  expect(screen.queryByTestId('source-assembly-dialog')).toBeNull();
+});
+
 it('does not send project A’s unsent question from the same-mounted project B composer', async () => {
   const page = mountPage(); await ready();
   const original = composer(); fireEvent.change(original, { target: { value: 'Question only for project A' } });

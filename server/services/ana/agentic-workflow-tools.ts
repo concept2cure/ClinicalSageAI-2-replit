@@ -25,6 +25,7 @@ import type { RunCoordinationHost, WorkerCoordinationHandle, CoordinationModel }
 import { z } from 'zod';
 import { stableStringify } from '../../../shared/canonical-json';
 import { coordinationSha256 } from './run-events';
+import { recordedTeamContext } from './sub-agent-shape';
 import {
   AGENT_INSTRUCTIONS_MAX,
   AGENT_OBJECTIVE_MAX,
@@ -149,7 +150,7 @@ export const RUN_AGENT: AnaTool = {
     'compare only those spans, not semantic support or source authenticity. For other citations, the agent can only find and ' +
     'quote source passages, and its report is advisory. Optionally pass source_document_ids (existing Vault version UUIDs) ' +
     'for an independent server read and deterministic clinical figure comparison. Recognized complete numeric/arm/explicit-zero frames can be contradicted or unsupported by those sources. ' +
-    'General prose, ambiguous frames and unrecognized comparisons or negations remain unverified. All child model calls treat the unassessed brief as T3/local-only. The verdict comes only from the checks.',
+    'General prose, ambiguous frames and unrecognized comparisons or negations remain unverified. A child model call carries the conversation’s data tier, raised by every source the run has read, and is refused on a provider that tier may not reach. The verdict comes only from the checks.',
   input_schema: {
     type: 'object',
     properties: {
@@ -249,7 +250,7 @@ async function handleCoordinationAction(input: Record<string, unknown>, ctx: Too
   if (input.action === 'team') {
     if (Object.keys(input).some(key => key !== 'action')) return JSON.stringify({ error: 'COORDINATION_INPUT_INVALID' });
     const board = await binding.host.snapshot(binding.handle);
-    return JSON.stringify({ workers: board.workers, messages: board.messages.map(({ text: _text, ...message }) => message) });
+    return recordedTeamContext(board);
   }
   if (input.action === 'message') {
     const parsed = z.object({ action: z.literal('message'), intent_id: z.string().min(1).max(200), recipient: z.string().regex(/^(anna|w[1-6])$/), message_kind: z.enum(['review','help','source','report']),text:z.string().min(1).max(2000).optional() }).strict().parse(input);

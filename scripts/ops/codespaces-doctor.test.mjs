@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import './codespaces-doctor-receipt-cases.mjs';
 import { sslFor, verifiedPgConnectionString } from '../db/connection.mjs';
 import {
   checkDatabaseConfiguration, classifyDbError, classifyOpenAIResponse,
@@ -14,6 +15,13 @@ const env = { DATABASE_URL: owner, APP_DATABASE_URL: runtime,
   OPENAI_API_KEY: 'sk-not-a-real-secret', C2C_DB_MODE: 'neon',
   RLS_ENFORCE: 'on',
   JWT_SECRET: 'test_only_dev_key_not_for_use_in_real_account_123456' };
+
+const openAIReply = (model = 'gpt-4o-mini') => ({ id: 'resp_synthetic', object: 'response',
+  model, status: 'completed', error: null, incomplete_details: null,
+  output: [{ id: 'msg_synthetic', type: 'message', role: 'assistant', status: 'completed',
+    content: [{ type: 'output_text', text: 'OK.', annotations: [] }] }] });
+const anthropicReply = (model = 'claude-opus-5-5') => ({ id: 'msg_synthetic', type: 'message',
+  model, role: 'assistant', stop_reason: 'end_turn', content: [{ type: 'text', text: 'OK.' }] });
 
 test('Neon owner + pooler runtime on the same database are eligible for a read-only check', () => {
   const c = checkDatabaseConfiguration(env);
@@ -142,7 +150,7 @@ test('OpenAI auth probe is no-charge GET; billable POST requires explicit reques
   let paths = [];
   const fetcher = async (path, opts) => {
     paths.push({ path, method: opts.method });
-    return { status: 200, ok: true, json: async () => ({ data: [] }) };
+    return { status: 200, ok: true, json: async () => opts.method === 'GET' ? { data: [] } : openAIReply() };
   };
   const auth = await checkOpenAI({ env, fetcher });
   assert.equal(auth.authenticationVerified, true);
@@ -344,7 +352,7 @@ test('the drafting-call probe sends one small request the current API accepts, t
   const sent = [];
   const fetcher = async (url, opts) => {
     sent.push({ url, opts });
-    return { ok: true, status: 200, json: async () => ({ type: 'message', model: 'claude-opus-5-5', stop_reason: 'end_turn', content: [] }) };
+    return { ok: true, status: 200, json: async () => anthropicReply() };
   };
   const result = await checkAnthropicDrafting({ ...draftingCall, fetcher });
   assert.equal(sent.length, 1);
@@ -378,7 +386,7 @@ test('a model the account cannot use is tried no further than the approved list,
     const { model } = JSON.parse(opts.body);
     asked.push(model);
     return model === 'claude-opus-5-5' ? apiError(404, 'not_found_error', 'model: claude-opus-5-5')
-      : { ok: true, status: 200, json: async () => ({ type: 'message', model, stop_reason: 'max_tokens', content: [] }) };
+      : { ok: true, status: 200, json: async () => anthropicReply(model) };
   };
   const result = await checkAnthropicDrafting({ ...draftingCall, fetcher });
   assert.deepEqual(asked, ['claude-opus-5-5', 'claude-opus-5']);

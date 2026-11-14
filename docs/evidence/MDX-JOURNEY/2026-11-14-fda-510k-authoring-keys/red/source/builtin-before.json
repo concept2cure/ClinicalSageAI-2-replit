@@ -1,0 +1,626 @@
+[
+  {
+    "registryId": "US_510K",
+    "template": {
+      "id": "519dfd9a-dc91-57ea-a6b5-d45259d8b6c1",
+      "entryId": "registry:US_510K",
+      "name": "US · 510(k) Premarket Notification — preparation worksheet",
+      "module": null,
+      "kind": "preparation",
+      "aiDraftable": false,
+      "authoringMode": "manual",
+      "originalFormat": "eSTAR",
+      "description": "510(k) Premarket Notification. US FDA working outline.",
+      "limitations": [
+        "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+        "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+        "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+        "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+        "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+        "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+        "Registry applicability metadata: medical_device, ivd. This does not establish this sponsor's product class or filing eligibility."
+      ],
+      "version": 1,
+      "sections": [
+        {
+          "code": "1",
+          "title": "Cover Letter",
+          "content": "",
+          "ordering": 0,
+          "guidance": {
+            "guidance_text": "Populate Cover Letter from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "2",
+          "title": "Indications for Use",
+          "content": "",
+          "ordering": 1,
+          "guidance": {
+            "guidance_text": "Populate Indications for Use from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "3",
+          "title": "Device Description",
+          "content": "",
+          "ordering": 2,
+          "guidance": {
+            "guidance_text": "Populate Device Description from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "4",
+          "title": "Substantial Equivalence",
+          "content": "",
+          "ordering": 3,
+          "guidance": {
+            "guidance_text": "Populate Substantial Equivalence from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "5",
+          "title": "Performance Testing",
+          "content": "",
+          "ordering": 4,
+          "guidance": {
+            "guidance_text": "Populate Performance Testing from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "6",
+          "title": "Biocompatibility",
+          "content": "",
+          "ordering": 5,
+          "guidance": {
+            "guidance_text": "Populate Biocompatibility from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "7",
+          "title": "Software Documentation",
+          "content": "",
+          "ordering": 6,
+          "guidance": {
+            "guidance_text": "Populate Software Documentation from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "8",
+          "title": "Labeling",
+          "content": "",
+          "ordering": 7,
+          "guidance": {
+            "guidance_text": "Populate Labeling from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "9",
+          "title": "Clinical Data",
+          "content": "",
+          "ordering": 8,
+          "guidance": {
+            "guidance_text": "Populate Clinical Data from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        },
+        {
+          "code": "10",
+          "title": "Summary",
+          "content": "",
+          "ordering": 9,
+          "guidance": {
+            "guidance_text": "Populate Summary from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K:us_510k_sections"
+          }
+        }
+      ],
+      "filingContext": {
+        "registryId": "US_510K",
+        "region": "US",
+        "agency": "FDA"
+      },
+      "families": [
+        "estar"
+      ]
+    },
+    "source": {
+      "id": "519dfd9a-dc91-57ea-a6b5-d45259d8b6c1",
+      "entryId": "registry:US_510K",
+      "version": 1,
+      "sha256": "14f3dc252c4f830045b994b94a926329e9abe0d86b64179db948ac1108ef17b4",
+      "kind": "preparation",
+      "aiDraftable": false,
+      "authoringMode": "manual",
+      "originalFormat": "eSTAR",
+      "limitations": [
+        "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+        "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+        "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+        "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+        "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+        "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+        "Registry applicability metadata: medical_device, ivd. This does not establish this sponsor's product class or filing eligibility."
+      ],
+      "filingContext": {
+        "registryId": "US_510K",
+        "region": "US",
+        "agency": "FDA"
+      }
+    }
+  },
+  {
+    "registryId": "US_510K_MOD",
+    "template": {
+      "id": "0bcadb22-d9d9-5175-94da-19fc7d34fb0a",
+      "entryId": "registry:US_510K_MOD",
+      "name": "US · 510(k) for Modified Device — preparation worksheet",
+      "module": null,
+      "kind": "preparation",
+      "aiDraftable": false,
+      "authoringMode": "manual",
+      "originalFormat": "eSTAR",
+      "description": "510(k) for Modified Device. US FDA working outline.",
+      "limitations": [
+        "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+        "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+        "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+        "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+        "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+        "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+        "Registry applicability metadata: medical_device. This does not establish this sponsor's product class or filing eligibility."
+      ],
+      "version": 1,
+      "sections": [
+        {
+          "code": "1",
+          "title": "Cover Letter",
+          "content": "",
+          "ordering": 0,
+          "guidance": {
+            "guidance_text": "Populate Cover Letter from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "2",
+          "title": "Indications for Use",
+          "content": "",
+          "ordering": 1,
+          "guidance": {
+            "guidance_text": "Populate Indications for Use from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "3",
+          "title": "Device Description",
+          "content": "",
+          "ordering": 2,
+          "guidance": {
+            "guidance_text": "Populate Device Description from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "4",
+          "title": "Substantial Equivalence",
+          "content": "",
+          "ordering": 3,
+          "guidance": {
+            "guidance_text": "Populate Substantial Equivalence from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "5",
+          "title": "Performance Testing",
+          "content": "",
+          "ordering": 4,
+          "guidance": {
+            "guidance_text": "Populate Performance Testing from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "6",
+          "title": "Biocompatibility",
+          "content": "",
+          "ordering": 5,
+          "guidance": {
+            "guidance_text": "Populate Biocompatibility from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "7",
+          "title": "Software Documentation",
+          "content": "",
+          "ordering": 6,
+          "guidance": {
+            "guidance_text": "Populate Software Documentation from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "8",
+          "title": "Labeling",
+          "content": "",
+          "ordering": 7,
+          "guidance": {
+            "guidance_text": "Populate Labeling from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "9",
+          "title": "Clinical Data",
+          "content": "",
+          "ordering": 8,
+          "guidance": {
+            "guidance_text": "Populate Clinical Data from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        },
+        {
+          "code": "10",
+          "title": "Summary",
+          "content": "",
+          "ordering": 9,
+          "guidance": {
+            "guidance_text": "Populate Summary from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_510k_mod_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_510K_MOD:us_510k_mod_sections"
+          }
+        }
+      ],
+      "filingContext": {
+        "registryId": "US_510K_MOD",
+        "region": "US",
+        "agency": "FDA"
+      },
+      "families": [
+        "estar"
+      ]
+    },
+    "source": {
+      "id": "0bcadb22-d9d9-5175-94da-19fc7d34fb0a",
+      "entryId": "registry:US_510K_MOD",
+      "version": 1,
+      "sha256": "ffc76b3e9b961fca4a62ddcad11b534ad17700c0c382ae801d3402ae8f287d17",
+      "kind": "preparation",
+      "aiDraftable": false,
+      "authoringMode": "manual",
+      "originalFormat": "eSTAR",
+      "limitations": [
+        "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+        "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+        "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+        "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+        "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+        "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+        "Registry applicability metadata: medical_device. This does not establish this sponsor's product class or filing eligibility."
+      ],
+      "filingContext": {
+        "registryId": "US_510K_MOD",
+        "region": "US",
+        "agency": "FDA"
+      }
+    }
+  },
+  {
+    "registryId": "US_CDX_510K",
+    "template": {
+      "id": "50953bfa-0352-5463-baae-3a6e98490254",
+      "entryId": "registry:US_CDX_510K",
+      "name": "US · CDx 510(k) (Expanded Use) — preparation worksheet",
+      "module": null,
+      "kind": "preparation",
+      "aiDraftable": false,
+      "authoringMode": "manual",
+      "originalFormat": "eSTAR",
+      "description": "CDx 510(k) (Expanded Use). US FDA working outline.",
+      "limitations": [
+        "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+        "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+        "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+        "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+        "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+        "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+        "Registry applicability metadata: ivd. This does not establish this sponsor's product class or filing eligibility."
+      ],
+      "version": 1,
+      "sections": [
+        {
+          "code": "1",
+          "title": "Cover Letter",
+          "content": "",
+          "ordering": 0,
+          "guidance": {
+            "guidance_text": "Populate Cover Letter from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "2",
+          "title": "Indications for Use",
+          "content": "",
+          "ordering": 1,
+          "guidance": {
+            "guidance_text": "Populate Indications for Use from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "3",
+          "title": "Device Description",
+          "content": "",
+          "ordering": 2,
+          "guidance": {
+            "guidance_text": "Populate Device Description from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "4",
+          "title": "Substantial Equivalence",
+          "content": "",
+          "ordering": 3,
+          "guidance": {
+            "guidance_text": "Populate Substantial Equivalence from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "5",
+          "title": "Performance Testing",
+          "content": "",
+          "ordering": 4,
+          "guidance": {
+            "guidance_text": "Populate Performance Testing from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "6",
+          "title": "Biocompatibility",
+          "content": "",
+          "ordering": 5,
+          "guidance": {
+            "guidance_text": "Populate Biocompatibility from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "7",
+          "title": "Software Documentation",
+          "content": "",
+          "ordering": 6,
+          "guidance": {
+            "guidance_text": "Populate Software Documentation from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "8",
+          "title": "Labeling",
+          "content": "",
+          "ordering": 7,
+          "guidance": {
+            "guidance_text": "Populate Labeling from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "9",
+          "title": "Clinical Data",
+          "content": "",
+          "ordering": 8,
+          "guidance": {
+            "guidance_text": "Populate Clinical Data from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: not marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        },
+        {
+          "code": "10",
+          "title": "Summary",
+          "content": "",
+          "ordering": 9,
+          "guidance": {
+            "guidance_text": "Populate Summary from sponsor source records. The existing scaffold supplies this heading, not a verified agency content specification.\n\nExisting scaffold expectation: marked required. This flag does not determine legal applicability or waive applicable content.",
+            "regulatory_references": [
+              "Concept2Cure existing project blueprint us_cdx_510k_sections (platform convention — not a regulatory requirement)"
+            ],
+            "compliance_checklist": [],
+            "common_pitfalls": [],
+            "source_reference": "project-blueprint:US_CDX_510K:us_cdx_510k_sections"
+          }
+        }
+      ],
+      "filingContext": {
+        "registryId": "US_CDX_510K",
+        "region": "US",
+        "agency": "FDA"
+      },
+      "families": [
+        "estar"
+      ]
+    },
+    "source": {
+      "id": "50953bfa-0352-5463-baae-3a6e98490254",
+      "entryId": "registry:US_CDX_510K",
+      "version": 1,
+      "sha256": "225db0027be741397c49aeed19b97a708f986a2eeaabca5a8c887631f02d236f",
+      "kind": "preparation",
+      "aiDraftable": false,
+      "authoringMode": "manual",
+      "originalFormat": "eSTAR",
+      "limitations": [
+        "Working scaffold, not an approval, verified evidence or a filing-readiness decision.",
+        "Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.",
+        "Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.",
+        "Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.",
+        "The required flags describe the existing platform scaffold; they do not establish mandatory agency content.",
+        "This is a project authoring scaffold, not the current regional filing schema or a completeness verdict. Confirm the applicable agency and client template before filing.",
+        "Registry applicability metadata: ivd. This does not establish this sponsor's product class or filing eligibility."
+      ],
+      "filingContext": {
+        "registryId": "US_CDX_510K",
+        "region": "US",
+        "agency": "FDA"
+      }
+    }
+  }
+]

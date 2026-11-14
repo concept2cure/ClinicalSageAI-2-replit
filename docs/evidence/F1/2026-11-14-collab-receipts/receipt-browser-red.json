@@ -1,0 +1,24 @@
+{
+  "mode": "red",
+  "scope": "Actual local app and fictional account; intercepted message/task receipts; no real outbound message or task mutation.",
+  "cases": [
+    {
+      "scenario": "message-receipt",
+      "messages": 1,
+      "tasks": 1,
+      "retryBlocked": false,
+      "taskRows": 1,
+      "warning": ""
+    },
+    {
+      "scenario": "task-receipt",
+      "messages": 1,
+      "tasks": 1,
+      "retryBlocked": false,
+      "taskRows": 1,
+      "warning": ""
+    }
+  ],
+  "pageErrors": [],
+  "status": "passed"
+}

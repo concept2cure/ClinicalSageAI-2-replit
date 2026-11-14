@@ -15,6 +15,7 @@
  * tests/db/scheduled-once-window.dbtest.ts).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { soundChain } from './_audit-event-chain-fixtures';
 
 const shared = vi.hoisted(() => ({
   claims: new Map<string, { result: unknown; finishedAt: string }>(),
@@ -57,8 +58,8 @@ function fakePool() {
       if (/FROM audit_events/i.test(sql)) {
         scans.n += 1;
         return { rows: [
-          { id: 1, organization_id: 1, sequence_number: 1, record_hash: 'h1', previous_hash: null },
-          { id: 2, organization_id: 1, sequence_number: 2, record_hash: 'h2', previous_hash: 'h1' },
+          // Hashed as the trigger hashes them: the walk re-computes each row.
+          ...soundChain(1, 2, 1),
         ] };
       }
       return { rows: [] };

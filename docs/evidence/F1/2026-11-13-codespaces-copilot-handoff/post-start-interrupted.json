@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-11-13T22:25:20.824878+00:00",
+  "session": 76057,
+  "exitCode": null,
+  "successfulCompletionClaimed": false,
+  "observation": "Session became unknown and the Python receipt supervisor was absent. The original Docker exec, post-start bash, app and Lumen seed remained running, observed by process names/elapsed time only. No native exit or complete supervisor output was retained. Cause is not established. The next normal start will be measured separately.",
+  "sourceHead": "2a667bf51ec9d5ff5445728e7026816af7ac393b",
+  "observedServingCommit": "2a667bf51ec9d5ff5445728e7026816af7ac393b"
+}

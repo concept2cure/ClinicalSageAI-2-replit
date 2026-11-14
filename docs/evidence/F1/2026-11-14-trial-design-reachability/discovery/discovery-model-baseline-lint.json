@@ -1,0 +1,19 @@
+[
+  {
+    "filePath": "client/src/concept2cure/v2/__tests__/registryModel.test.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Arrow function has too many lines (168). Maximum allowed is 100.",
+        "line": 33,
+        "column": 62,
+        "messageId": "exceed",
+        "endLine": 33,
+        "endColumn": 64
+      }
+    ]
+  }
+]

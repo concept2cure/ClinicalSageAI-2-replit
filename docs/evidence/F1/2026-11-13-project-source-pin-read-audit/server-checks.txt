@@ -1,0 +1,10 @@
+Server exact selected-source read acceptance (F1)
+Final: 128/128 tests in4 existing suites,0skipped;22.40s.
+Route/parsing64; native/currentness48; existing processing3; existing native admission13.
+ESLint --max-warnings0: exit0,0errors,0warnings,empty output.
+Initial route red:41failed14passed; native red:14failed30passed.
+Additional admitted-set red:4failed;44outside namefilter.
+Literal array/nested-key red:9failed;55outside namefilter.
+All failures are behavioral assertions, not setup/import failures.
+Final full selected4suite execution includes every above case with no skips.
+Commands, source hashes, boundaries and compressed native logs: server-verification.json.

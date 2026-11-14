@@ -1,0 +1,44 @@
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > refuses edits of a linked controlled QMS record: in_review 4ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > refuses edits of a linked controlled QMS record: effective 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > refuses edits of a linked controlled QMS record: signed-version 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > refuses edits of a linked controlled QMS record: retained-version 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows editing a linked QMS draft, but directs its signing to Quality 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > refuses the controlled export and Vault filing of a QMS-bound document, and keeps its working copy 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > ignores non-authoring API mutations at the shared /api mount 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows document creation so the database trigger can seed OWNER and AUTHOR 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows a document author to edit the section 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12) 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER apply the review signature, and nothing more 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/export 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/file-to-vault 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/send-to-packager 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/working-copy 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/working-copy 1ms
+ × server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the editor Check a section of a FROZEN document 5ms
+   → OWNER refused Check on a FROZEN document (409): expected "vi.fn()" to be called once, but got 0 times
+ × server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the editor Check a section of a APPROVED document 1ms
+   → OWNER refused Check on a APPROVED document (409): expected "vi.fn()" to be called once, but got 0 times
+ × server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still refuses Check to a same-tenant member with no grant on the document 3ms
+   → expected 409 to be 403 // Object.is equality
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > blocks content mutation after the document becomes immutable 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > rejects a mutation when verified principal or tenant context is missing 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > does not impose mutation permission checks on safe reads 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > still allows the document author — an AUTHOR grant is enough to record a decision 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > refuses a FROZEN document with 409, not a silent pass-through 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > does not impose review policy on an unrelated /documents/ route 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > requires full-document view for native saved review reads (/authoring/documents/) 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > requires full-document view for native saved review reads (/Authoring/Documents/) 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > native bound human review object authorization > classifies native verdicts as review and refuses a viewer 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 35 passed (38)

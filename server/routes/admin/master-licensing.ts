@@ -85,6 +85,8 @@ import { createScopedLogger } from '../../utils/logger';
  * through that module, so it is no longer imported here directly.
  */
 import { recordAuditRow } from '../../services/audit/audit-write-outcome';
+import { launchScopeEnforced } from '../../services/entitlements/launch-scope';
+import { LAUNCH_SCOPE_SOURCE, isLaunchSurface } from '../../../shared/constants/launch-scope';
 import {
   clearObservations,
   enforcementReport,
@@ -311,8 +313,17 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
        P-61 item 4). The rail reads that from the licence resolver, so the
        console reads the same answer rather than a second copy of the mapping. */
     const heldThroughFolds = (await readLicenseInfo(id))?.heldThroughFolds ?? {};
+    /* The release boundary, as the rail applies it (navigation-entitlements
+       resolveNavEntitlements → applyLaunchScope): while it is enforced, a
+       module outside the launch scope is locked for the customer whatever the
+       licence says. Without this the console read "Included in their plan"
+       with a Turn off button for seven modules the customer could not open,
+       and "Above their plan" with a Grant button that changed nothing for ~35
+       more (running app, 2026-11-12). */
+    const enforced = launchScopeEnforced();
 
     return res.json({
+      launchScope: { enforced },
       organization: {
         id: org.id,
         name: org.name,
@@ -346,6 +357,7 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
           industries,
           orgIndustry: verdictIndustry,
         });
+        const outsideRelease = enforced && !isLaunchSurface(String(m.module_id));
         return {
           moduleId: m.module_id,
           name: m.name,
@@ -353,7 +365,7 @@ router.get('/licensing/tenants/:id', async (req: Request, res: Response) => {
           minTier,
           subscriptionState,
           ...(heldThrough !== undefined ? { heldThrough } : {}),
-          ...verdict,
+          ...(outsideRelease ? { effective: false, source: LAUNCH_SCOPE_SOURCE } : verdict),
         };
       }),
     });
@@ -675,7 +687,9 @@ router.patch('/licensing/tenants/:id/tier', async (req: Request, res: Response) 
        * design (invariant 1). Said in the response so nobody assumes a plan
        * change silently repossessed anything.
        */
-      note: 'Existing module grants are unchanged. Provision the tenant to apply the new plan.',
+      // Every module without a grant of its own follows the tier at once; the
+      // previous note told the operator nothing had changed (2026-11-12).
+      note: 'The new plan applies at once to every module without a grant of its own. Existing grants are unchanged; provision the tenant to write this plan\'s modules as grants.',
       provisionPath: `/api/admin/master/licensing/tenants/${id}/provision`,
       /**
        * Whether this decision's §11.10(e) row reached a store, and whether it

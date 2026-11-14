@@ -1,0 +1,19 @@
+Regression before runtime edit (exit 1):
+Test Files  1 failed (1)
+Tests  17 failed | 10 passed (27)
+Duration  3.29s
+
+Final existing focused/wrapper suites (exit 0):
+vitest run --config vitest.config.ts server/services/ana/__tests__/document-catalog-data-room.test.ts server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts server/services/ana/__tests__/document-catalog-program-binding.test.ts server/services/ana/__tests__/catalog-scope-platform-role.test.ts server/services/ana/__tests__/document-catalog-safe-errors.test.ts --reporter=default
+Test Files  5 passed (5)
+Tests  61 passed (61); 0 skipped
+Duration  8.93s
+
+Changed-file lint (exit 0):
+eslint server/services/ana/document-catalog-data-room.ts server/services/ana/__tests__/document-catalog-data-room.test.ts
+No output: 0 bytes; 0 errors, 0 warnings.
+
+Whitespace check (exit 0):
+git diff --check on owned paths; no output.
+
+These are bounded check summaries; log digests are in verification.json.

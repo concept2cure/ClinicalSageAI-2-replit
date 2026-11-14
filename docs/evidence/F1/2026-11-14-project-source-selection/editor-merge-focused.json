@@ -1,0 +1,32 @@
+{
+  "startedAt": "2026-11-14T03:10:11.902228+00:00",
+  "elapsedSeconds": 31.959,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyReceiverOwnership.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceDocumentStartFlow.test.tsx",
+    "client/src/concept2cure/v2/__tests__/documentAuthoringSaveLabelNoDoc.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/filingCommitNote.test.ts",
+    "server/services/c2c/__tests__/commitSectionControlledDocument.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "editor-merge-publication-inputs.json",
+  "inputCount": 32,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "editor-merge-focused.txt.gz",
+  "outputSha256": "4e1b7744994b64b457973e944100956e4acd0f7adf80007238fb294f0ab86a4f",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

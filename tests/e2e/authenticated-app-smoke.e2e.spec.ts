@@ -22,10 +22,30 @@
  * or via the boot-and-run recipe: `npm run test:e2e:smoke`.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { authenticateViaDevLogin } from './dev-auth-helper';
 
-const GREETING = /Good (morning|afternoon|evening), JM/;
+const PERSONALIZED_GREETING = /^Good (morning|afternoon|evening),\s*\S/;
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The protected heading must name this real authenticated session, never a fixture's personal default. */
+async function canonicalGreeting(page: Page, identity: { email: string; organizationId: string }): Promise<RegExp> {
+  const session = await page.evaluate(async () => {
+    const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+    const response = await fetch('/api/v1/auth/session', {
+      credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const body = await response.json() as { authenticated?: boolean; user?: { email?: string; organizationId?: string | number; firstName?: string } };
+    // Return identity fields only; tokens and the rest of the auth body never
+    // enter test output or an attached browser artifact.
+    return { status: response.status, authenticated: body.authenticated, email: body.user?.email,
+      organizationId: String(body.user?.organizationId ?? ''), firstName: body.user?.firstName };
+  });
+  expect(session).toMatchObject({ status: 200, authenticated: true, organizationId: String(identity.organizationId) });
+  expect(session.email?.toLowerCase()).toBe(identity.email.toLowerCase());
+  if (typeof session.firstName !== 'string' || !session.firstName.trim()) throw new Error('The canonical session did not name its signed-in person.');
+  return new RegExp(`^Good (morning|afternoon|evening), ${escapeRegExp(session.firstName)}$`);
+}
 
 // Cold-boot tolerance: a freshly-booted dev server compiles each route's module
 // graph on first navigation (Vite on-demand), which pushes the first authenticated
@@ -44,12 +64,12 @@ test.describe('Tier 5 — authenticated app smoke (live server)', () => {
     if (!baseURL) throw new Error('baseURL is required (set BASE_URL for the live server)');
 
     // Real session, applied before first paint via addInitScript.
-    const { organizationId } = await authenticateViaDevLogin(page, baseURL);
-    expect(organizationId, 'dev-login should resolve the seeded org').toBeTruthy();
+    const identity = await authenticateViaDevLogin(page, baseURL);
+    expect(identity.organizationId, 'dev-login should resolve the seeded org').toBeTruthy();
 
     // Landing: the authenticated greeting <h1>. If auth/guard regressed we'd be on /login.
     await page.goto('/concept2cure', { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('h1')).toContainText(GREETING, { timeout: FIRST_PAINT_TIMEOUT });
+    await expect(page.locator('h1')).toHaveText(await canonicalGreeting(page, identity), { timeout: FIRST_PAINT_TIMEOUT });
     expect(new URL(page.url()).pathname, 'must not be bounced to login').not.toContain('/login');
 
     // Projects: a distinct protected surface, proving the session carries across routes.
@@ -83,5 +103,6 @@ test.describe('Tier 5 — authenticated app smoke (live server)', () => {
     expect(page.url()).toContain('/concept2cure/login');
     // The Projects heading must NOT be present when unauthenticated.
     await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toHaveCount(0);
+    await expect(page.locator('h1').filter({ hasText: PERSONALIZED_GREETING })).toHaveCount(0);
   });
 });

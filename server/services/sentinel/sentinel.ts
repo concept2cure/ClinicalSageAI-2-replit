@@ -63,6 +63,62 @@ export const SENTINEL_PROJECT_HEALTH_SQL = `SELECT p.id, p.name,
        GROUP BY p.id, p.name
        HAVING COUNT(t.id) >= 5`;
 
+/**
+ * People with open work on more than three active projects (the cross-project
+ * analyzer's over-allocation finding), exported like the two above so a test
+ * runs this text on a real engine.
+ *
+ * `projects` is one aggregate of {id, name} pairs. Until 2026-11-12 the names
+ * and the ids were two aggregates, `ARRAY_AGG(DISTINCT p.name)` and
+ * `ARRAY_AGG(DISTINCT p.id)`, paired by position. DISTINCT sorts each by its
+ * own values, so the names came back alphabetical and the ids numeric, and a
+ * finding's affected items put one project's name on another project's id.
+ */
+export const SENTINEL_OVER_ALLOCATION_SQL = `SELECT t.assignee_id as user_id, u.name as user_name,
+              COUNT(DISTINCT t.project_id)::int as active_projects,
+              COUNT(t.id)::int as open_tasks,
+              JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', p.id, 'name', p.name)) as projects
+       FROM unified_tasks t
+       JOIN projects p ON t.project_id = p.id
+       -- The assignee's name through actor_name: someone who has left still
+       -- holds the work, and is still over-allocated (D3, 2026-09-29).
+       LEFT JOIN LATERAL public.actor_name(t.assignee_id) u ON TRUE
+       WHERE p.organization_id = $1
+         AND p.status = 'active'
+         AND t.deleted_at IS NULL
+         -- 'completed', not 'done' (see the deadline query above): otherwise a
+         -- user's whole task history counted as open work, so this reported
+         -- people as over-allocated on projects they had already finished.
+         AND t.status NOT IN ('completed', 'cancelled')
+         AND t.assignee_id IS NOT NULL
+       GROUP BY t.assignee_id, u.name
+       HAVING COUNT(DISTINCT t.project_id) > 3
+       ORDER BY active_projects DESC`;
+
+/** The {id, name} pairs of SENTINEL_OVER_ALLOCATION_SQL's `projects`, in the order of their ids. A pair with no project number or no name is dropped, never guessed. */
+export function overAllocationProjects(raw: unknown): Array<{ id: number; name: string }> {
+  if (!Array.isArray(raw)) return [];
+  const pairs: Array<{ id: number; name: string }> = [];
+  for (const entry of raw) {
+    const { id, name } = (entry ?? {}) as { id?: unknown; name?: unknown };
+    if (typeof id === 'number' && Number.isSafeInteger(id) && typeof name === 'string' && name.trim()) pairs.push({ id, name });
+  }
+  return pairs.sort((a, b) => a.id - b.id);
+}
+
+/**
+ * The projects a stored finding names: its own, then each project among its affected items, once each. A finding with
+ * no project of its own keeps not-a-number in first place on purpose: a caller that asks "can this person open every
+ * project it names?" must not read such a finding as one it can.
+ */
+export function findingNamedProjectIds(finding: { project_id?: unknown; affected_items?: unknown }): number[] {
+  const items: unknown[] = Array.isArray(finding.affected_items) ? finding.affected_items : [];
+  const named = items
+    .filter((item): item is { type: string; id: unknown } => !!item && typeof item === 'object' && (item as { type?: unknown }).type === 'project')
+    .map((item) => Number(item.id));
+  return [...new Set([finding.project_id === null || finding.project_id === undefined ? NaN : Number(finding.project_id), ...named])];
+}
+
 function normalizeConfig(
   organizationId: number,
   stored: Partial<SentinelConfig> | null | undefined
@@ -344,36 +400,16 @@ export class AISentinel {
     const findings: SentinelFinding[] = [];
 
     // Find resource over-allocation (users assigned to too many active projects)
-    const resourceResult = await this.pool.query(
-      `SELECT t.assignee_id as user_id, u.name as user_name,
-              COUNT(DISTINCT t.project_id)::int as active_projects,
-              COUNT(t.id)::int as open_tasks,
-              ARRAY_AGG(DISTINCT p.name) as project_names,
-              ARRAY_AGG(DISTINCT p.id) as project_ids
-       FROM unified_tasks t
-       JOIN projects p ON t.project_id = p.id
-       -- The assignee's name through actor_name: someone who has left still
-       -- holds the work, and is still over-allocated (D3, 2026-09-29).
-       LEFT JOIN LATERAL public.actor_name(t.assignee_id) u ON TRUE
-       WHERE p.organization_id = $1
-         AND p.status = 'active'
-         AND t.deleted_at IS NULL
-         -- 'completed', not 'done' (see the deadline query above): otherwise a
-         -- user's whole task history counted as open work, so this reported
-         -- people as over-allocated on projects they had already finished.
-         AND t.status NOT IN ('completed', 'cancelled')
-         AND t.assignee_id IS NOT NULL
-       GROUP BY t.assignee_id, u.name
-       HAVING COUNT(DISTINCT t.project_id) > 3
-       ORDER BY active_projects DESC`,
-      [orgId]
-    );
+    const resourceResult = await this.pool.query(SENTINEL_OVER_ALLOCATION_SQL, [orgId]);
 
     for (const row of resourceResult.rows) {
+      // Each project's name beside its own id; the lists below are both read from these pairs.
+      const projects = overAllocationProjects(row.projects);
+      if (projects.length === 0) continue;
       findings.push({
         findingId: uuidv4(),
         organizationId: orgId,
-        projectId: row.project_ids[0],
+        projectId: projects[0].id,
         analyzerType: 'cross_project',
         severity: row.active_projects > 5 ? 'high' : 'medium',
         title: `${row.user_name} is spread across ${row.active_projects} active projects`,
@@ -382,19 +418,15 @@ export class AISentinel {
           userId: row.user_id,
           activeProjects: row.active_projects,
           openTasks: row.open_tasks,
-          projectNames: row.project_names,
-          projectIds: row.project_ids,
+          projectNames: projects.map((p) => p.name),
+          projectIds: projects.map((p) => p.id),
         },
         recommendations: [
           'Consider redistributing tasks to balance workload',
           'Review task priorities across projects',
           'Assess if additional resources are needed',
         ],
-        affectedItems: row.project_ids.map((id: number, i: number) => ({
-          type: 'project',
-          id,
-          label: row.project_names[i],
-        })),
+        affectedItems: projects.map((p) => ({ type: 'project', id: p.id, label: p.name })),
         status: 'open',
         metadata: {},
         createdAt: new Date(),
@@ -768,11 +800,7 @@ export class AISentinel {
       [findingId, organizationId]
     );
     if (!rows[0]) return null;
-    const items: unknown[] = Array.isArray(rows[0].affected_items) ? rows[0].affected_items : [];
-    const named = items
-      .filter((item): item is { type: string; id: unknown } => !!item && typeof item === 'object' && (item as { type?: unknown }).type === 'project')
-      .map((item) => Number(item.id));
-    return [...new Set([rows[0].project_id === null ? NaN : Number(rows[0].project_id), ...named])];
+    return findingNamedProjectIds(rows[0]);
   }
 
   async updateFindingStatus(

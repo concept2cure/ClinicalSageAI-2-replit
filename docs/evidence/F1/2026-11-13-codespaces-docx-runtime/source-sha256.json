@@ -1,0 +1,10 @@
+{
+  ".devcontainer/post-create.sh": "1864d922f67475c921e7f3514a87b30302865d1d29d928c908572f8d9a5b3fed",
+  ".devcontainer/post-start.sh": "6e7fbadf0a626410c800a13ca9c42e7fc497ba18a6132f2e782440b7ee04e7b2",
+  "scripts/ops/codespaces-startup.test.mjs": "cc4cb11dacd23d5a502a63686506dc0443f727ef84c04663629c2aae58e2c846",
+  "scripts/ops/codespaces-docx-fixture.mjs": "ff5134e6d3cc57cea5a5cb67ebc2d374bb45068021748547315d3857e3655d72",
+  "requirements.txt": "6d3e15156566e1bf1af9b0b116ad303f44150a059dcbdfa01a761348e1d47886",
+  "docs/evidence/F1/2026-11-13-codespaces-docx-runtime/worker-smoke.mjs": "9ea68213390640e7fbf6ccf2dfb13381d20fae99d7016a7450195ebfd1f13ce6",
+  "scripts/ops/codespaces-csr-browser.test.mjs": "db64b9d318850061a85abe2218edc9be91478a8b8e19b6cb50831d2c439f4ca8",
+  "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390"
+}

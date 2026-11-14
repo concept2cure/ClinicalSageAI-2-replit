@@ -1,0 +1,33 @@
+{
+  "tsVersion": "5.6.3",
+  "cacheTsVersion": "5.6.3",
+  "configuredRootFiles": 10739,
+  "configurationErrorCount": 0,
+  "cachedOptionComparisons": 13,
+  "optionMismatches": [],
+  "parsedCompilerOptionKeys": [
+    "strict",
+    "noImplicitAny",
+    "target",
+    "module",
+    "lib",
+    "types",
+    "jsx",
+    "esModuleInterop",
+    "allowSyntheticDefaultImports",
+    "moduleResolution",
+    "skipLibCheck",
+    "resolveJsonModule",
+    "declaration",
+    "outDir",
+    "experimentalDecorators",
+    "emitDecoratorMetadata",
+    "typeRoots",
+    "paths",
+    "pathsBasePath",
+    "noEmit",
+    "incremental",
+    "tsBuildInfoFile",
+    "configFilePath"
+  ]
+}
