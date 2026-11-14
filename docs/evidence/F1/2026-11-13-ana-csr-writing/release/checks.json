@@ -11,10 +11,10 @@
     "environment": {
       "NODE_OPTIONS": "--max-old-space-size=6144"
     },
-    "startedAt": "2026-11-13T23:57:13.437519+00:00",
+    "startedAt": "2026-11-14T00:04:30.553338+00:00",
     "exitCode": 0,
-    "processSeconds": 31.353,
-    "selectedSourceFiles": 11924,
+    "processSeconds": 28.189,
+    "selectedSourceFiles": 11926,
     "sourceStable": true
   },
   "publication": "Not claimed by this pre-publication packet; observed only after ordinary direct canonical gates and remote verification.",
@@ -22,5 +22,31 @@
   "independentNarratorReview": "No concrete blocker found by read-only independent review of current core/handler/schema; no clinical qualification inferred.",
   "derivativeBoundary": "Exact approved derivative payload and verification retained; only local explicit CSR original-record refusal precedes dispatch.",
   "heldRoute": "authoring.router.ts unchanged; validated E3 prefix explains document structure separately from receiving-application metadata; global filing resolver not changed.",
-  "qualification": "Protocol approved P-118; modelPQ pending; actual CSR capture/verification incomplete; no training/clinical/deployment claim."
+  "qualification": "Protocol approved P-118; modelPQ pending; actual CSR capture/verification incomplete; no training/clinical/deployment claim.",
+  "preIntakeBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "node": "22.22.0",
+    "environment": {
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-11-13T23:57:13.437519+00:00",
+    "exitCode": 0,
+    "processSeconds": 31.353,
+    "selectedSourceFiles": 11924,
+    "sourceStable": true
+  },
+  "intakeReview": "intake-review.json.gz",
+  "intakeQualification": {
+    "passed": 57,
+    "files": 3,
+    "processSeconds": 10.412,
+    "sourcePins": 20,
+    "sourceStable": true,
+    "packet": "../intake-compat/README.md"
+  }
 }

@@ -26,11 +26,14 @@ IA preparation now recognizes that P-118's protocol is approved and names requir
 | Selected writing method and IA status | RED 12 failed/26 passed; the 14-file implementation phase retained 659 passes/one library failure; affected successors 29 cases/two files and 481 cases/four files passed separately |
 | Remaining oncology method assumption | Separate RED one failure/12 skipped; affected successor 37 passed across four files; 73 selected pins stable |
 | Service/editor delivery and current custody/source controls | Initial RED 19 failed/one passed, including one corrected fixture-priority expectation; final 250 passed across nine files; 29 selected pins stable |
+| Preserved current intake/native catalog compatibility | 57 passed across three files; 20 selected pins stable; admitted native metadata is not scientific approval |
 | Scoped lint | Zero errors and no warning growth; one existing narrator warning removed |
-| Integrated production build | Exit 0; 31.353 s process; client/server, audit verifier, qualification verifier and controlled runtime assets emitted |
-| Build source stability | All 11,924 selected source/configuration/test hashes unchanged across build and reverified afterward |
+| Integrated production build | Exit 0; 28.189 s process; client/server, audit verifier, qualification verifier and controlled runtime assets emitted |
+| Build source stability | All 11,926 selected source/configuration/test hashes unchanged across build and reverified afterward |
 
 The [method](method/README.md), [narrator](narrator/README.md) and [delivery](delivery/README.md) packets preserve original sources, meaningful failures, fixture/setup corrections, exact commands, successful successors and separate scope limits. Overlapping phases are not pooled or relabelled. [Release checks](release/checks.json) record the integrated build. Publication is observed separately after normal direct canonical gates, with no PR, force, bypass or baseline increase.
+
+Current canonical advanced to `0e6b15b100` during integration. Its collaboration-intake and native-catalog changes were normally merged without owned CSR runtime overlap. Both coordination entries were preserved. The [57-case compatibility packet](intake-compat/README.md) and fresh merged build passed; earlier build receipts remain separate.
 
 ## Qualification limits
 
