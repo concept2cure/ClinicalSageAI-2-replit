@@ -106,7 +106,7 @@ describe('a personal rule the turn cannot protect is left out, and the turn says
     expect(errors(events)).toEqual([]);
     expect(io.activate).toEqual([]);
     expect(warnings(events)).toHaveLength(1);
-    expect((warnings(events)[0] as { message: string }).message).toContain('encryption key');
+    expect((warnings(events)[0] as unknown as { message: string }).message).toContain('encryption key');
   });
 
   it('a self-hosted model beside an outside one still leaves it out: the answer could come from either', async () => {
@@ -120,7 +120,7 @@ describe('a personal rule the turn cannot protect is left out, and the turn says
     Object.assign(io, { rules: false, profile: true });
     const events = await turn();
     expect(io.activate).toEqual([]);
-    expect((warnings(events)[0] as { message: string }).message).toBe(personalContextNote('model', { rules: false, profile: true }));
+    expect((warnings(events)[0] as unknown as { message: string }).message).toBe(personalContextNote('model', { rules: false, profile: true }));
   });
 
   it('when the protected path can serve the turn, the rules go through it as before, and nothing is said', async () => {

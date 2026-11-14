@@ -2072,7 +2072,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
          written. The editor shows it beside the section and says "revision N recorded"; without it
          the count stayed at its old value until a reload, and the confirmation fell back to "open
          History to confirm" (S12's sweep, 2026-11-09, findings 14 and 26). */
-      if (content !== undefined) result.rows[0] = await withRevisionCount(client, result.rows[0], sectionId, tenantId);
+      if (content !== undefined) result.rows[0] = await withRevisionCount(client, result.rows[0], String(sectionId), tenantId);
 
       await client.query('COMMIT');
     } catch (err) {
@@ -2381,7 +2381,7 @@ router.post('/sections/:sectionId/revert', async (req: Request, res: Response) =
       );
 
       // The count beside the section, as the save answers it (finding 14): the revert mints a revision too.
-      result.rows[0] = await withRevisionCount(client, result.rows[0], sectionId, tenantId);
+      result.rows[0] = await withRevisionCount(client, result.rows[0], String(sectionId), tenantId);
       await client.query('COMMIT');
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});

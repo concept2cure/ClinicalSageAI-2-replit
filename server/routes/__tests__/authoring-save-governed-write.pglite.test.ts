@@ -487,8 +487,8 @@ describe('a save says how many revisions the section has, and its history says w
     const again = await author(request(app).patch(`/api/authoring/sections/${first.sectionId}`))
       .send({ content: `<p>${OWN_WORDS}</p>`, changeReason: 'Efficacy overview shortened after review' });
     expect(again.body.section.revision_count).toBe(2);
-    const oldest = (await jdb.pool.query(
-      'SELECT id FROM doc_revisions WHERE section_id = $1 ORDER BY created_at, id LIMIT 1', [first.sectionId])).rows[0].id;
+    const oldest = ((await jdb.pool.query(
+      'SELECT id FROM doc_revisions WHERE section_id = $1 ORDER BY created_at, id LIMIT 1', [first.sectionId])).rows[0] as { id: string }).id;
     const reverted = await author(request(app).post(`/api/authoring/sections/${first.sectionId}/revert`))
       .send({ rev_id: oldest, changeReason: 'Restored the version the reviewer approved' });
     expect(reverted.status, JSON.stringify(reverted.body)).toBe(200);
