@@ -1,0 +1,55 @@
+{
+  "digest-1440": {
+    "title": "Executive Readiness Digest",
+    "headings": [
+      "Executive summary",
+      "Source readiness",
+      "Blockers",
+      "Gaps",
+      "Assessment limits"
+    ],
+    "tables": [],
+    "rawIds": [],
+    "overflow": 0,
+    "errors": []
+  },
+  "digest-390": {
+    "title": "Executive Readiness Digest",
+    "headings": [
+      "Executive summary",
+      "Source readiness",
+      "Blockers",
+      "Gaps",
+      "Assessment limits"
+    ],
+    "tables": [],
+    "rawIds": [],
+    "overflow": 0,
+    "errors": []
+  },
+  "dependencies": {
+    "runId": 8,
+    "rows": [
+      {
+        "provider": "submission_readiness",
+        "sourceLabel": "Submission readiness",
+        "status": "missing"
+      },
+      {
+        "provider": "regional_package_manifest",
+        "sourceLabel": "Regional package",
+        "status": "partial"
+      },
+      {
+        "provider": "artifact_state",
+        "sourceLabel": "What the project holds",
+        "status": "ready"
+      },
+      {
+        "provider": "artifact_approval",
+        "sourceLabel": "Approved or locked",
+        "status": "missing"
+      }
+    ]
+  }
+}
