@@ -12,3 +12,6 @@ at-risk findings 200 total 7 [
   'JM Smith is spread across 5 active projects',
   '2 overdue tasks in "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)"'
 ]
+
+# 2026-11-14, after the read was restructured for the SQL interpolation gate (the deleted set is its own statement):
+findings 200 total 14 naming the probe project 0 []

@@ -59,3 +59,12 @@ The list has two meanings, and only one changes.
   project's id. Each is another lane's read; `{ openable: true }` is there for them to ask for.
 - `server/services/sentinel/sentinel.ts` still scans a deleted project's rows (its deadline analyzer leaves out only
   completed and archived). The coordinating session has routed that file to the CSR lane.
+
+## 2026-11-14: the read restructured for the SQL interpolation gate
+
+The first push was refused by `ci:sql-interpolation`: the openable read spliced two fixed SQL fragments into the
+admitted-projects statement, and the gate counts any value placed in SQL text. The deleted projects are now read by
+their own fixed statement (`CLOSED_PROJECTS_SQL`, bind parameters only) and taken out of the admitted list in code.
+The admitted-projects statement and its function are byte for byte what they were before this change. The same
+tests pass (the two new files, the 93-case contract suite, Reporting's suites: 97 files, 1,267), and the running
+app answers the same: no finding for the deleted project (`after-running-app.txt`).
