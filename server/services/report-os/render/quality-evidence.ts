@@ -4,13 +4,10 @@ import type { ReportSection } from './types';
 import { looksLikeHtml } from '../../../../shared/authoring/plain-text-html';
 import { inlineMarksToText } from '../../../export/inline-marks-to-text';
 import { blocksToPlainText, sectionContentToBlocks } from '../../../export/authoring-section-content';
+import { humanize } from './source-words';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
-}
-function humanize(key: string): string {
-  const words = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').trim().toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 export function isNativeQualityReport(summary: Record<string, unknown>): boolean {
   return Object.hasOwn(asRecord(summary.domain) ?? {}, 'qualityEvidence');

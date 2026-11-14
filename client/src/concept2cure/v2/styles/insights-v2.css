@@ -177,12 +177,19 @@
 .ro-lock-chip{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--warning); background:var(--warning-muted); padding:3px 9px; border-radius:999px; }
 .ro-lock-chip svg{ width:12px; height:12px; }
 .ro-pack-sub{ font-size:11px; color:var(--text-400); line-height:1.45; }
-.ro-port-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
-.ro-port-card{ display:flex; align-items:center; gap:12px; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:13px; }
+/* The readiness board. A card was a 210px row with the ring beside the text, which left the text about one word a
+   line (rehearsal finding 5.4, GA-DEMO-06). The figure and the name now share one row, and what holds the project
+   back runs across the card's width below. min(100%,280px) keeps one card a row at phone width without overflow. */
+.ro-port-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr)); gap:12px; }
+.ro-port-card{ display:flex; flex-direction:column; align-items:stretch; gap:12px; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.ro-port-top{ display:flex; align-items:center; gap:14px; }
 .ro-port-b{ min-width:0; }
+.ro-port-blockers{ display:grid; gap:6px; padding-top:12px; border-top:1px solid var(--border); }
+.ro-port-blocker{ font-size:12px; color:var(--text-200); line-height:1.5; }
 .ro-port-code{ font-size:14px; font-weight:600; color:var(--text-100); }
 .ro-port-ind{ font-size:11.5px; color:var(--text-300); line-height:1.4; margin:2px 0; }
-.ro-port-filing{ font-size:11px; color:var(--text-400); }
+/* The card's verdict, risk and blocker count: --text-300 at 12px. It was --text-400 at 11px, 4.5:1 with nothing to spare. */
+.ro-port-filing{ font-size:12px; color:var(--text-300); line-height:1.45; }
 /* ── Reporting library: catalog / run history / schedules / bundles ──
    The screens for the routes the 2026-10-01 reporting review left with no
    caller (ui-surface-registry.ui-v2.ts, the `insights` row). They live in the

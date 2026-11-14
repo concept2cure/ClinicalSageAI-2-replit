@@ -20,7 +20,9 @@ vi.mock('../../../db', () => {
       Promise.resolve().then(() => q.results.shift() ?? []).then(ok, ko);
     return c;
   };
-  return { db: { select: () => chain() }, pool: {}, getPool: () => ({}), getDb: () => ({}) };
+  /* The run also reads the filing's sections through the pool (orchestrator.ts readFilingSections). These projects
+     have no program record, so that read finds nothing; orchestrator-held-records.pglite.test.ts runs it on SQL. */
+  return { db: { select: () => chain() }, pool: { query: async () => ({ rows: [] }) }, getPool: () => ({}), getDb: () => ({}) };
 });
 
 import { computeInitialRun } from '../orchestrator';

@@ -96,6 +96,7 @@ import { ReportRegistryError, explicitReportRegistry } from '../services/report-
 import { UnsupportedReportClientScope } from '../services/report-os/client-scope';
 import { resolveOwnedReportScope, ReportScopeOwnershipError, type OwnedReportScopeInput } from '../services/report-os/scope-ownership';
 import { requestDb, requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { sourceLabel } from '../services/report-os/render/source-words';
 import { getAccessibleReportProjectIds, canAccessReportScope, recordedReportProjectIds, createReportQualityAccessContext, type ReportQualityAccessContext, type ReportProjectActor, type ReportAccessScope } from '../services/report-os/project-access';
 import { hasOrganizationProjectManagementRole } from '../services/project-sharing-access';
 import { persistReportRun, ReportRunRecordingError } from '../services/report-os/persistence';
@@ -1952,7 +1953,8 @@ router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
       )
       .orderBy(desc(reportRunDependencies.observedAt));
 
-    return res.json({ data: rows });
+    // Each row also names its source in words, by the report's own vocabulary; the stored id stays on the row.
+    return res.json({ data: rows.map((row) => ({ ...row, sourceLabel: sourceLabel(row.provider) })) });
   } catch (error: any) {
     return serverError(res, logger, 'loading dependencies', error);
   }

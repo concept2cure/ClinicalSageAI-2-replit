@@ -1,4 +1,4 @@
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { concept2cureArtifacts, projects, sections } from '@shared/schema';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { ReportScope } from '@shared/schema/report-os';
@@ -17,6 +17,8 @@ import { getApplicationType } from '../../../shared/regulatory/global-document-r
 import { filingDocumentClassForFiling, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes';
 import { explicitReportRegistry } from './registry-context';
 import type { InsightAtomRef } from './providers/types';
+import { readDossierFigures } from '../c2c/dossier-read';
+import { programOfProject } from '../c2c/program-project-anchor';
 
 export interface ProviderResult {
   provider: string;
@@ -42,6 +44,59 @@ export interface RunComputationResult {
   /** Subset of blockers tagged critical (regional gaps with severity 'critical'). */
   criticalBlockers: string[];
   summary: Record<string, unknown>;
+}
+
+/** The filing's sections in scope. `null` counts: the store is not provisioned in this environment. */
+interface FilingSections { sections: number | null; approvedOrLocked: number | null }
+
+/**
+ * The filing's sections for the projects in scope: how many are counted and how many are approved or locked.
+ *
+ * The run counted one store, `concept2cure_artifacts`, and told a project whose filing and Vault documents Project
+ * home showed that it held "No governed artifacts" (rehearsal finding 5.4, GA-DEMO-06; 2026-11-12). The filing is
+ * counted by the dossier's one definition (services/c2c/dossier-read.ts readDossierFigures, the home figure Project
+ * home shows), reached from each integer project through its root's program (programOfProject), each program once.
+ * `null` counts mean the store is not provisioned in this environment: that is said, never read as nothing. Any
+ * other failure throws, as the dossier's own read does.
+ */
+async function readFilingSections(organizationId: number, projectIds: readonly number[]): Promise<FilingSections> {
+  const programIds = new Set<string>();
+  for (const projectId of projectIds) {
+    const programId = await programOfProject(pool, organizationId, projectId);
+    if (programId) programIds.add(programId);
+  }
+  if (programIds.size === 0) return { sections: 0, approvedOrLocked: 0 };
+  let sections = 0;
+  let approvedOrLocked = 0;
+  for (const figure of (await readDossierFigures(pool, organizationId, [...programIds])).values()) {
+    if (figure.state === 'unavailable') return { sections: null, approvedOrLocked: null };
+    if (figure.state === 'measured') {
+      sections += figure.counted;
+      approvedOrLocked += figure.complete;
+    }
+  }
+  return { sections, approvedOrLocked };
+}
+
+/** The projects a scope reads its records over: the project itself, or a project group's members. */
+function projectsInScope(scopeType: ReportScope, scopeId: string, programProjectIds: readonly number[] | undefined): number[] {
+  if (scopeType === 'program') return [...(programProjectIds ?? [])];
+  if (scopeType !== 'project' && scopeType !== 'submission' && scopeType !== 'document') return [];
+  const projectId = Number(scopeId);
+  return Number.isSafeInteger(projectId) && projectId > 0 ? [projectId] : [];
+}
+
+const NOTHING_HELD = 'No filing document or governed artifact is recorded for this project.';
+const FILING_UNREAD = 'The filing’s sections could not be read in this environment, and no governed artifact is recorded.';
+
+/** What is not yet approved or locked, naming each thing counted and its count. */
+function noneApprovedSentence(filingSections: number, governedArtifacts: number): string {
+  if (filingSections > 0 && governedArtifacts > 0) {
+    return `No filing section (0 of ${filingSections}) or governed artifact (0 of ${governedArtifacts}) is approved or locked.`;
+  }
+  return filingSections > 0
+    ? `No filing section is approved or locked (0 of ${filingSections}).`
+    : `No governed artifact is approved or locked (0 of ${governedArtifacts}).`;
 }
 
 export async function computeInitialRun(
@@ -106,12 +161,17 @@ export async function computeInitialRun(
       await collectLifecycle(projectIds);
     }
   }
+  // What the scope holds is its filing's sections as well as its governed artifacts (readFilingSections).
+  const filing = await readFilingSections(organizationId, projectsInScope(scopeType, scopeId, options?.programProjectIds));
+  const filingSections = filing.sections ?? 0;
+  const holdsSomething = artifactCount > 0 || filingSections > 0;
 
-  if (artifactCount > 0) {
+  if (holdsSomething) {
     providers.push({ provider: 'artifact_state', observedAt: new Date().toISOString(), status: 'ready' });
   } else {
-    providers.push({ provider: 'artifact_state', observedAt: new Date().toISOString(), status: 'partial', blocker: 'No governed artifacts discovered for this scope' });
-    blockers.push('No governed artifacts discovered for this scope');
+    const nothing = filing.sections === null ? FILING_UNREAD : NOTHING_HELD;
+    providers.push({ provider: 'artifact_state', observedAt: new Date().toISOString(), status: 'partial', blocker: nothing });
+    blockers.push(nothing);
   }
 
   /* Submission readiness has ONE engine: evaluateReadiness, below, over the
@@ -126,26 +186,36 @@ export async function computeInitialRun(
     blockers.push(blocker);
   };
 
-  // Approval is lifecycle evidence, not an assessment of compliance controls.
+  // Approval is lifecycle evidence, not an assessment of compliance controls. An approved or locked filing
+  // section is that evidence too, by the dossier's definition of complete.
   const complianceStatus: ProviderResult['status'] =
-    approvedOrLockedCount > 0 ? 'ready' : reviewCount > 0 ? 'partial' : 'missing';
+    approvedOrLockedCount + (filing.approvedOrLocked ?? 0) > 0 ? 'ready' : reviewCount > 0 ? 'partial' : 'missing';
   const complianceBlocker =
     complianceStatus === 'ready'
       ? undefined
       : complianceStatus === 'partial'
-        ? 'Artifacts are in review but not approved/locked'
-        : 'No approved or locked governed artifacts';
+        ? 'Governed artifacts are in review; none is approved or locked yet.'
+        : holdsSomething ? noneApprovedSentence(filingSections, artifactCount) : 'Nothing is recorded to approve.';
   providers.push({
     provider: 'artifact_approval',
     observedAt: new Date().toISOString(),
     status: complianceStatus,
     blocker: complianceBlocker,
   });
-  if (complianceBlocker) blockers.push(complianceBlocker);
-  const lifecycleAtoms: InsightAtomRef[] = [{ sourceTable: 'concept2cure_artifacts', sourceField: 'status', transformation: 'aggregation' }];
+  // A scope that holds nothing has said so once already; "nothing approved" would say it again in other words.
+  if (complianceBlocker && holdsSomething) blockers.push(complianceBlocker);
+  const lifecycleAtoms: InsightAtomRef[] = [
+    { sourceTable: 'concept2cure_artifacts', sourceField: 'status', transformation: 'aggregation' },
+    { sourceTable: 'c2c_document_sections', sourceField: 'status', transformation: 'aggregation' },
+  ];
   for (const provider of providers) {
     provider.atoms = lifecycleAtoms;
-    provider.calculation = { method: provider.provider === 'artifact_state' ? 'Count governed artifacts' : 'Count approved or locked governed artifacts', organizationId, scopeType, scopeId };
+    provider.calculation = {
+      method: provider.provider === 'artifact_state' ? 'Count the filing’s sections and governed artifacts' : 'Count approved or locked filing sections and governed artifacts',
+      organizationId, scopeType, scopeId,
+      filingSections: filing.sections, filingSectionsApprovedOrLocked: filing.approvedOrLocked,
+      governedArtifacts: artifactCount, governedArtifactsApprovedOrLocked: approvedOrLockedCount,
+    };
   }
 
   // Provider 4/5: regional registry readiness + package completeness (project scopes)
@@ -394,6 +464,7 @@ export async function computeInitialRun(
             computedScope: 'project',
             complianceAssessment: 'not_evaluated',
             artifactCount,
+            filing,
             lifecycle: {
               approvedOrLockedCount,
               reviewCount,
@@ -429,6 +500,7 @@ export async function computeInitialRun(
       computedScope: scopeType,
       complianceAssessment: 'not_evaluated',
       artifactCount,
+      filing,
       lifecycle: {
         approvedOrLockedCount,
         reviewCount,
