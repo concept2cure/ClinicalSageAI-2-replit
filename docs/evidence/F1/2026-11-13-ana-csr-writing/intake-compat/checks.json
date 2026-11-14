@@ -1,0 +1,38 @@
+{
+  "passed": 57,
+  "failed": 0,
+  "pending": 0,
+  "files": 3,
+  "processSeconds": 10.412,
+  "sourcePins": 20,
+  "sourceStable": true,
+  "headStable": true,
+  "incomingStable": true,
+  "sourceHead": "78c381c3c0ae0d0b15439a01461182add193738a",
+  "incomingRef": "0e6b15b100939d5728b50bc34e70b823a6bbab09",
+  "command": {
+    "argv": [
+      "npx",
+      "vitest",
+      "run",
+      "--config",
+      "vitest.config.ts",
+      "client/src/concept2cure/v2/__tests__/collabIntakeLifetime.test.tsx",
+      "client/src/concept2cure/v2/__tests__/collabTaskOutcome.test.tsx",
+      "server/services/ana/__tests__/document-catalog-data-room.test.ts",
+      "--reporter=json",
+      "--outputFile=/workspace/scratch/ana-csr-20261113/intake-compat/tests.json"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "node": "22.22.0",
+    "environment": {
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    },
+    "startedAt": "2026-11-14T00:05:39.495372+00:00",
+    "exitCode": 0,
+    "processSeconds": 10.412
+  },
+  "review": "review.json.gz",
+  "setupRefusal": "setup-refusal.json.gz",
+  "phasesPooled": false
+}

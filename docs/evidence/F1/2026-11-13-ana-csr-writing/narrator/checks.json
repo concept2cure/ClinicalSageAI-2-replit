@@ -1,0 +1,41 @@
+{
+  "scope": "Existing deterministic narrator, registered handler and definition; PlanF1",
+  "sourceHead": "841c41466b6b96c6d95190432c41549ae9fc43b2",
+  "recoveredRegressionReference": "5b611fb6898f70105e327b2d9a1819177daa5fd6",
+  "red": {
+    "passed": 7,
+    "failed": 31,
+    "pending": 0,
+    "files": 3,
+    "processSeconds": 22.782,
+    "sourcePins": 10,
+    "sourceStable": true
+  },
+  "green": {
+    "passed": 38,
+    "failed": 0,
+    "pending": 0,
+    "files": 3,
+    "processSeconds": 17.355,
+    "sourcePins": 10,
+    "sourceStable": true
+  },
+  "liveProviderCalls": false,
+  "clinicalQualification": false,
+  "lint": {
+    "errors": 0,
+    "warningGrowth": false,
+    "originalRuntimeWarningCounts": {
+      "statistical-narrator.ts": 1,
+      "AnaToolExecutor.ts": 93,
+      "evidence-literature-tool-defs.ts": 1
+    },
+    "currentRuntimeWarningCounts": {
+      "statistical-narrator.ts": 0,
+      "AnaToolExecutor.ts": 93,
+      "evidence-literature-tool-defs.ts": 1
+    },
+    "testWarnings": 0
+  },
+  "wholeTreeTypeScript": "Pending ordinary pre-push"
+}

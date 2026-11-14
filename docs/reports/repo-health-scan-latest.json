@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-13T22:56:46.262Z",
+  "generatedAt": "2026-11-14T01:30:52.277Z",
   "git": {
-    "sha": "277a47e767c5fed14023109b2c29c4ee0b84f5bb",
+    "sha": "729fbb0e7d7487348eb6fccb21b54163aa992757",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2399,7 +2399,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1212061
+        "bytes": 1212545
       },
       {
         "file": "shared/schema.ts",
@@ -2617,7 +2617,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 22668
+        "lines": 22674
       },
       {
         "file": "shared/schema.ts",
@@ -2912,12 +2912,12 @@
         "lines": 1931
       },
       {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "file": "server/services/ana/evidence-literature-tool-defs.ts",
         "lines": 1921
       },
       {
-        "file": "server/services/ana/evidence-literature-tool-defs.ts",
-        "lines": 1916
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "lines": 1921
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/EctdCompile.tsx",
@@ -3053,7 +3053,7 @@
       },
       {
         "file": "server/services/ana/AnaDocumentDraftingService.ts",
-        "lines": 1576
+        "lines": 1614
       },
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
