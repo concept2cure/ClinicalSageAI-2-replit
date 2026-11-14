@@ -4,7 +4,7 @@ import { EmptyState, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { C2CFormConfig } from '../C2CForm';
 import { C2CForm } from '../C2CForm';
-import { cmcProjectUuid, cmcWriteFailed, cmcWriteThrew } from './cmcShared';
+import { cmcProjectUuid, cmcWriteFailed, cmcWriteThrew, headerMeta } from './cmcShared';
 import { C2CToast, useToast } from '../toast';
 import {
   methodForm, methodBody,
@@ -21,7 +21,7 @@ import {
   formulationRecordForm, formulationRecordBody, formulationRecordPatch,
   manufacturingProcessForm, manufacturingProcessBody, manufacturingProcessPatch,
   characterizationStudyForm, characterizationStudyBody, characterizationStudyPatch,
-  qualifyForm, qualifyBody, SIGNED_ACTS, METHOD_VALIDATION_OUTCOMES, type SignedWord,
+  qualifyForm, qualifyBody, SIGNED_ACTS, METHOD_VALIDATION_OUTCOMES, METHOD_SIGNED_STATES, type SignedWord,
   signedUpdateBlocked, retireSignedForm, retireSignedBody,
   asUserId,
 } from './cmcRegisterForms';
@@ -501,7 +501,8 @@ export function RegisterCard<T>({
         {/* `SCOPE_NOTE`'s text already opens with its own "·", so the line
             joins them with a space, not a second separator. */}
         <span className="sec-sub">
-          {meta(rows)} <RegisterScopeNote scope={scope} hasProgram={Boolean(projectId)} />
+          {headerMeta(live, rows, meta)}{' '}
+          <RegisterScopeNote scope={scope} hasProgram={Boolean(projectId)} />
         </span>
         {create && (
           <div className="pj-sec-acts">
@@ -615,14 +616,24 @@ function methodDefaults(r: AnalyticalMethodApiRow) {
  * so it needs no project in context; `projectId` is still forwarded when a
  * program is open so the method feeds that project's §3.2.S.4 / §3.2.P.5.
  */
+/** The signed word a method holds, or null: the method signature records one
+ *  of TWO outcomes (P-110), and the actions below knew only `validated`, so a
+ *  phase-appropriate method kept an enabled Edit and had no Retire. */
+export function methodSignedWord(status: unknown): SignedWord | null {
+  const v = String(status ?? '').trim().toLowerCase();
+  return (METHOD_SIGNED_STATES.find((s) => s === v) as SignedWord | undefined) ?? null;
+}
+
 export function CmMethodLibrary() {
   return (
     <RegisterCard<AnalyticalMethodApiRow>
       path="/api/cmc/analytical-methods"
       title="Analytical method library"
       meta={(rows) => {
-        const validated = rows.filter((r) => String(r.status || '').toLowerCase() === 'validated').length;
-        return `organization-wide — ICH Q2 — ${validated}/${rows.length} validated`;
+        const count = (word: string) => rows.filter((r) => String(r.status || '').toLowerCase() === word).length;
+        const suitable = count('phase-appropriate');
+        return `organization-wide — ICH Q2 — ${count('validated')}/${rows.length} validated` +
+          (suitable ? ` · ${suitable} signed suitable for phase` : '');
       }}
       icon={I.clipboardList}
       loadingTitle="Loading analytical methods…"
@@ -643,7 +654,7 @@ export function CmMethodLibrary() {
           label: 'Edit',
           subject: 'analytical method',
           form: (r) => methodForm(methodDefaults(r)),
-          disabledReason: (r) => signedUpdateBlocked(r.status, 'validated', 'analytical method'),
+          disabledReason: (r) => signedUpdateBlocked(r.status, methodSignedWord(r.status) ?? 'validated', 'analytical method'),
           path: (r) => `/api/cmc/analytical-methods/${r.id}`,
           toBody: (v, _r, projectId) => methodBody(v, projectId),
         },
@@ -664,7 +675,16 @@ export function CmMethodLibrary() {
           method: 'POST',
           toBody: (v) => qualifyBody(v),
         },
-        retireSignedAction('analytical method', 'validated', 'status', (r) => `${r.methodCode} — ${r.title}`, (r) => `/api/cmc/analytical-methods/${r.id}`),
+        {
+          /* Either signed outcome can be retired; the form names the one held. */
+          label: 'Retire',
+          icon: I.lock,
+          subject: 'analytical method',
+          when: (r) => methodSignedWord(r.status) !== null,
+          form: (r) => retireSignedForm('analytical method', `${r.methodCode} — ${r.title}`, methodSignedWord(r.status) ?? 'validated'),
+          path: (r) => `/api/cmc/analytical-methods/${r.id}`,
+          toBody: (v) => retireSignedBody(v, 'status'),
+        },
       ]}
       columns={[
         { header: 'Code', render: (r) => r.methodCode, mono: true, bold: true },

@@ -36,6 +36,7 @@ vi.mock('@/services/portal/authService', async (importOriginal) => ({
 
 import type { SurfaceViewProps } from '../surfaceViews';
 import { CmcModule } from '../surfaces/CmcModule';
+import { useAutoQ1e } from '../surfaces/cmcStabilityChart';
 
 const PROJECT = 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab';
 const STUDY = {
@@ -135,5 +136,87 @@ describe('the Stability register draws each Q1E fit', () => {
     await screen.findByText(/it records a biologic/);
     expect(screen.queryByRole('img', { name: /Assay/ })).toBeNull();
     expect(screen.queryAllByRole('alert').map((a) => a.textContent).join(' ')).not.toMatch(/biologic|estimate/i);
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * An estimate belongs to the results it was fitted from.
+ *
+ * The register estimated each study ONCE for the life of the screen. Recording
+ * a new pull point replaced the study's row — "Longest pull" and "Within
+ * limits" moved — while the Q1E estimate, its chart and its limiting attribute
+ * stayed as fitted from the earlier points, with nothing to say so. After a
+ * 12-month out-of-specification pull the cell still read the old shelf life;
+ * after the third point of a new study it still read "too few points". The
+ * shelf life is the claim §3.2.S.7 / §3.2.P.8 rest on.
+ * ────────────────────────────────────────────────────────────────────────────*/
+describe('useAutoQ1e — a study whose results changed is estimated again', () => {
+  function Probe({ studies, have, adopt }: {
+    studies: Array<{ id: number; hasResults: boolean; stamp?: number }>;
+    have: Record<number, { n: number }>;
+    adopt: (id: number, r: { n: number }) => void;
+  }) {
+    const refused = useAutoQ1e<{ n: number }>(studies, have, adopt, (v): v is { n: number } => typeof (v as { n?: unknown })?.n === 'number');
+    return <div data-testid="refused">{JSON.stringify(refused)}</div>;
+  }
+
+  it('asks once for a study whose results have not changed, however often the screen renders', async () => {
+    apiRequest.mockImplementation(async () => res({ success: true, data: { n: 3 } }));
+    const adopt = vi.fn();
+    const { rerender } = render(<Probe studies={[{ id: 41, hasResults: true, stamp: 3 }]} have={{}} adopt={adopt} />);
+    await waitFor(() => expect(adopt).toHaveBeenCalledTimes(1));
+    rerender(<Probe studies={[{ id: 41, hasResults: true, stamp: 3 }]} have={{}} adopt={adopt} />);
+    rerender(<Probe studies={[{ id: 41, hasResults: true, stamp: 3 }]} have={{ 41: { n: 3 } }} adopt={adopt} />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(shelfLifeCalls().length).toBe(1);
+  });
+
+  // The defect: the same study with one more result was never asked again.
+  it('asks again when the study has one more result and its old estimate was dropped', async () => {
+    apiRequest.mockImplementation(async () => res({ success: true, data: { n: 3 } }));
+    const adopt = vi.fn();
+    const { rerender } = render(<Probe studies={[{ id: 41, hasResults: true, stamp: 3 }]} have={{}} adopt={adopt} />);
+    await waitFor(() => expect(adopt).toHaveBeenCalledTimes(1));
+    rerender(<Probe studies={[{ id: 41, hasResults: true, stamp: 4 }]} have={{}} adopt={adopt} />);
+    await waitFor(() => expect(shelfLifeCalls().length).toBe(2));
+    await waitFor(() => expect(adopt).toHaveBeenCalledTimes(2));
+  });
+
+  it('forgets a refusal when it asks again — "too few points" does not outlive the third point', async () => {
+    apiRequest.mockImplementationOnce(async () => res({ success: false, error: 'Assay has 2 usable points; 3 are needed.' }, 409));
+    apiRequest.mockImplementation(async () => res({ success: true, data: { n: 3 } }));
+    const adopt = vi.fn();
+    const { rerender } = render(<Probe studies={[{ id: 41, hasResults: true, stamp: 2 }]} have={{}} adopt={adopt} />);
+    await waitFor(() => expect(screen.getByTestId('refused').textContent).toContain('3 are needed'));
+    rerender(<Probe studies={[{ id: 41, hasResults: true, stamp: 3 }]} have={{}} adopt={adopt} />);
+    await waitFor(() => expect(adopt).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId('refused').textContent).toBe('{}');
+  });
+});
+
+describe('the Stability register — the recorded shelf life against the study’s own estimate', () => {
+  const CLAIM = {
+    claim: '18 months', claimedMonths: 18, supportedMonths: 16.4, verdict: 'exceeds-estimate',
+    sentence: 'The recorded 18 months is longer than the 16.4 months this study\'s recorded results support (ICH Q1E, limited by Assay). A longer period rests on other supporting data or a justification, stated in the stability section.',
+  };
+
+  it('says, in the engine’s sentence, when the recorded period is longer than the study supports', async () => {
+    wire(() => res({ success: true, data: { ...REPORT([ESTIMATE]), recordedClaim: CLAIM } }));
+    await openStability();
+    const note = await screen.findByTestId('cmc-claim-vs-estimate-41');
+    expect(note.textContent).toContain('18 months is longer than the 16.4 months');
+    expect(note.getAttribute('data-tone')).toBe('warn');
+  });
+
+  it('says nothing beside a claim the estimate supports, and nothing when the server sent no judgement', async () => {
+    wire(() => res({ success: true, data: { ...REPORT([ESTIMATE]), recordedClaim: { ...CLAIM, verdict: 'within-estimate', sentence: 'within' } } }));
+    await openStability();
+    await screen.findAllByText(/16\.4 mo/);
+    expect(screen.queryByTestId('cmc-claim-vs-estimate-41')).toBeNull();
+    cleanup();
+    wire(() => res({ success: true, data: REPORT([ESTIMATE]) }));
+    await openStability();
+    await screen.findAllByText(/16\.4 mo/);
+    expect(screen.queryByTestId('cmc-claim-vs-estimate-41')).toBeNull();
   });
 });
