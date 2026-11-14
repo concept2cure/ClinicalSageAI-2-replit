@@ -1837,6 +1837,17 @@ left open at lines 721–730; no disclosure, erasure-policy, private-profile RLS
 plan/ledger, purge door or test-acceptance change is authorized by this reservation.
 No provider call, new screen/service/table/tool/dependency or filing/PQ claim.
 
+**Fix-all selection completion, 2026-11-14:** source and tests are frozen at
+`b40217a60`, preserved after canonical merge `ff42399a7` through `985559c5b`.
+Server128/128 and client155/155 pass; no skips, lint errors or warning growth.
+Independent client lifecycle review closes all findings. The complete merged
+production build exits0, and the bounded unpublished-source secret scan has
+zero findings/errors. Workers are closed; root retains only integration/Git,
+the normal compiler/push gates and exact remote verification. These selection
+holds release on publication. The three isolated offboarding failures remain
+explicitly pending the founder's profile export/disposal choice; no profile
+RLS, export, purge, plan, gate or assertion was changed to hide them.
+
 ### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
 
 The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical

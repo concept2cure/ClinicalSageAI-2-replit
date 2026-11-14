@@ -1,0 +1,40 @@
+{
+  "sourceHead": "ff42399a7a1af321519def5b9897894ec61ca5e2",
+  "mergedCanonicalThrough": "985559c5b",
+  "dateUTC": "2026-11-14",
+  "focused": {
+    "serverPassed": 128,
+    "clientPassed": 155,
+    "totalPassed": 283,
+    "skipped": 0,
+    "allSourceAndTestHashesMatchAfterMerge": true
+  },
+  "build": {
+    "exitCode": 0,
+    "viteSeconds": 22.96,
+    "logRawSha256": "41eb7efacf127e40986159761a0c466a0338af309d75764e6365b391cf147e01"
+  },
+  "lint": {
+    "serverErrors": 0,
+    "serverWarnings": 0,
+    "clientErrors": 0,
+    "clientWarnings": 6,
+    "clientBaselineWarnings": 6
+  },
+  "secretScan": {
+    "tool": "Gitleaks 8.28.0",
+    "range": "origin/concept2cure-v2..HEAD",
+    "scope": "unpublished local source commit; not full history",
+    "lazyFetch": false,
+    "exitCode": 0,
+    "findings": 0,
+    "scannerErrors": false
+  },
+  "nativeOffboarding": {
+    "passed": 3,
+    "failed": 3,
+    "policyChoice": "pending",
+    "privacyRlsExportPurgeSourceChanged": false
+  },
+  "finalPublication": "Normal push hook checks the combined whole-program compiler; local/remote identity is verified after successful publication. No gate bypass or force push."
+}

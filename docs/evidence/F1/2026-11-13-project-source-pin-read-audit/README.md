@@ -91,3 +91,21 @@ six-warning baseline: lint has zero errors and zero new warnings.
 hashes and counts; the adjacent compressed reports retain actual red/green and
 lint evidence. The disjoint server/client focused total is **283 passing**.
 Whole-checkout build/compiler/publication receipts follow separately.
+
+### Canonical integration — 2026-11-14
+
+The normal merge at `ff42399a7` retains canonical `985559c5b` and its published
+collaboration intake, locked peer-message and gateway account-use repairs.
+All eleven focused source/test hashes remain unchanged after that merge.
+The complete production build exits **0**; Vite completes in 22.96 seconds.
+A bounded Gitleaks 8.28 scan of the unpublished local source commit reports
+zero findings and no scanner errors with lazy fetching disabled; this is not
+a full-history scan. [`integration-verification.json`](integration-verification.json)
+and [`integration-build.txt.gz`](integration-build.txt.gz) record these boundaries.
+The normal push hook runs the final combined compiler, without bypass; origin
+identity is checked after successful publication.
+
+The separate native offboarding suite still has its reproduced **3 failed /
+3 passed** result. The founder's private-profile export/erasure choice remains
+pending; no profile policy or export/purge acceptance was weakened. This repair
+does not claim live-provider, scientific-release or hosted-Codespace acceptance.
