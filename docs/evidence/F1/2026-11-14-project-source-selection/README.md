@@ -334,3 +334,34 @@ inputs remain frozen. Source/test edit holds end at the recorded03:00UTC lease;
 root continues only normal integration, Git and owned evidence/runtime closure.
 No lane is claimed paused, no source edit is added, and publication remains
 unconfirmed until an actual successful push receipt.
+
+
+`final-source-start.json` applies the standard Codespaces startup successfully
+in37.99s at merged `6c466782c`. `final-source-runtime.json` confirms that exact
+served revision, schema ready and capabilities seeded. The only readiness
+failure remains local `ana: no_provider`. `final-source-browser.json` and
+`final-source-repaired-browser-observation.json` pass the actual two-source
+search/clear/reselect/exact-admission/unchanged-chooser/single-editor-start flow
+at that revision with no input/runner drift, page error or attempted document
+write. The chooser screenshot catches its existing drawer entrance animation;
+the completed editor-start screenshot records the stable existing form.
+No production styling or second editor was introduced.
+
+The next deferred-context RED should use an unstarted chat thread: a bound
+thread already has `THREAD_PROJECT_MISMATCH` protection. Existing test homes
+are `projectHomeOwnershipBoundary.test.tsx` for completed handoff A, unmount,
+`openProjectHome(B)` and remount, then `useAnaChat-attachments.test.ts` for the
+later request's source IDs/project pairing. Preserve same-project/bearer-refresh
+and one-turn consumption positives, plus actor/session and A-to-B-to-A controls.
+The current static trace still identifies `shellProject.ts`'s revision guard,
+`captureAuthoringSession` and existing pin consumption/reset as the owners; no
+new source implementation or runtime disclosure proof is claimed here.
+
+
+`publication-attempt-8.json` passes full compiler0/baseline0 and all89 normal
+lint gates at `6c466782c`, with no named-input or runner drift. Its upload then
+loses a reference race to `f5a7464ed`. Independent review finds its editor
+loading/error/filter and unbound-working-copy save-message repairs leave
+source selection, target/creation callbacks and filing safeguards intact. They
+are preserved by ordinary merge. The next run records targeted editor integration
+before normal publication; no source implementation is reopened.
