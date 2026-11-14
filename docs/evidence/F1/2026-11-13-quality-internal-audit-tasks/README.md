@@ -31,3 +31,9 @@ Task writes and their audit events roll back together on a lost compare-and-set,
 Initial and superseding red/green/adjacent logs, slim lint output and final source/held hashes are retained here. Current lead checks do not claim that the ordinary audit PATCH supports lead reassignment. Existing supplier/deviation and periodic-review policies are not changed by this audit-only repair. Compiler/publication results are recorded separately when available.
 
 The final combined run uses Vitest with `vitest.config.ts` over `source-task-internal-audit.pglite`, `source-task-quality-sql.pglite`, `source-task-capa-reassignment.pglite`, `source-task-training-project`, `source-task-quality-project`, `source-task`, `capa-tasks` and `qms-record-tasks` tests. The source and test hashes in `source-hashes.json` identify the frozen candidate; `initial-source-hashes.json` retains the superseded candidate. `held-verification.json` records the exact baseline/current comparison and extraction method.
+
+## Compiler integration
+
+The first full Node 22 compiler check at merged revision `2cdca3ec904ce55fc7a0fe7ba7dfcbf1880d9227` reports seven test-fixture type errors: PGlite's untyped query rows are `unknown`. Production source has no reported diagnostic. The original result is retained in `merged-typecheck-fixture-errors.txt`. The repair adds explicit fixture row types without changing assertions or production behavior; baseline zero remains required.
+
+Three query-result type annotations resolve those diagnostics. The typed fixture passes53/53 with zero lint errors/warnings; production source retains its reviewed hash. The pre-annotation hashes are retained in `pre-typecheck-source-hashes.json`, and current hashes are in `source-hashes.json`. Independent final review has no functional blocker.

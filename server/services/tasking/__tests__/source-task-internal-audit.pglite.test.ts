@@ -34,7 +34,7 @@ function input(over: Partial<InternalAuditTaskSource> = {}, actorId = 12): Repla
   h.key = plan.sourceEntityId;
   return { organizationId: 7, actorId, ...plan };
 }
-const tasks = async () => (await pg.query(`SELECT task_id,status,assignee_id,title,description,metadata,project_id,client_workspace_id,
+const tasks = async () => (await pg.query<Record<string, unknown>>(`SELECT task_id,status,assignee_id,title,description,metadata,project_id,client_workspace_id,
   progress,completion_percentage,due_at,approval_status,notes
   FROM unified_tasks WHERE organization_id=7 ORDER BY task_id`)).rows;
 const audits = async () => (await pg.query('SELECT task_id,command FROM task_audit_rows ORDER BY id')).rows;
@@ -228,11 +228,11 @@ describe('audit text refresh preserves a person’s task work', () => {
       summary: 'Updated task text from its current Quality audit record',
     } }]);
     expect(h.audit.mock.calls[0][1]).not.toHaveProperty('reason');
-    const stamp = (await pg.query('SELECT updated_at,last_modified_by FROM unified_tasks')).rows[0];
+    const stamp = (await pg.query<Record<string, unknown>>('SELECT updated_at,last_modified_by FROM unified_tasks')).rows[0];
     expect(stamp.last_modified_by).toBe(12); expect(new Date(String(stamp.updated_at)).getTime()).toBeGreaterThan(new Date('2026-11-13').getTime());
     expect(await replaceSourceTask(input(changed))).toBe('unchanged');
     expect(await audits()).toEqual([{ task_id: 'existing',command: 'task.transition' }]);
-    expect((await pg.query('SELECT updated_at,last_modified_by FROM unified_tasks')).rows[0]).toEqual(stamp);
+    expect((await pg.query<Record<string, unknown>>('SELECT updated_at,last_modified_by FROM unified_tasks')).rows[0]).toEqual(stamp);
   });
 
   it('refreshes a nullable old description with the same task and business state', async () => {

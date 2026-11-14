@@ -1,5 +1,5 @@
 {
   "server/services/tasking/source-task.ts": "97bd094f3c32a190b2b7e8074d5c079ecc3b94403aaba8c1c6f1b817bb6f91c4",
-  "server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts": "05a9790967098066ea391c0b1740ee0b90b2b7b57aab3715a67a82a9ec85a44b",
+  "server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts": "682ac7745c90e59dfbe409a621ed90b2efcf0a25ba93f8b8d98e2bc21b682a24",
   "server/services/tasking/__tests__/source-task-quality-project.test.ts": "4156e91b79b3678063596cb4c10ed898ec0193d238dbae24a0c4443d84dc758e"
 }
