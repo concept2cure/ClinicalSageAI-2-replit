@@ -93,6 +93,12 @@ both owners' records. Independent review finds no integration issue; the existin
 **27/27** on Node22 after merge, with its worker closed before the normal full compiler. No branch, force push,
 hook bypass or baseline adjustment is used.
 
+**2026-11-14 publication retry:** the first normal push at `b5abbc0f8` passes all89 CI lint gates and the full
+compiler with zero errors against baseline zero, then Git refuses the ref update because canonical advanced.
+That failed publication attempt is retained. Incoming `0e6b15b10`'s disjoint collaboration-intake repair is merged
+normally; its two focused suites pass **30/30**, with no material independent-review finding and all workers
+closed. The retry keeps every hook and compiler gate; the peer/gateway production source is unchanged.
+
 ## 2026-11-13 F1 continuation — current activity and unreadable credential custody
 
 The founder asked to continue the whole existing implementation after the Codespace demo publication. This
