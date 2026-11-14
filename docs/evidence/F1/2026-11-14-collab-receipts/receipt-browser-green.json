@@ -1,0 +1,24 @@
+{
+  "mode": "green",
+  "scope": "Actual local app and fictional account; intercepted message/task receipts; no real outbound message or task mutation.",
+  "cases": [
+    {
+      "scenario": "message-receipt",
+      "messages": 1,
+      "tasks": 0,
+      "retryBlocked": true,
+      "taskRows": 0,
+      "warning": "Whether your message was sent is unknown. Check with the recipient before sending it again."
+    },
+    {
+      "scenario": "task-receipt",
+      "messages": 1,
+      "tasks": 1,
+      "retryBlocked": true,
+      "taskRows": 0,
+      "warning": "The message was sent, but whether the task was created is unknown. Check the task board before trying to create it again."
+    }
+  ],
+  "pageErrors": [],
+  "status": "passed"
+}

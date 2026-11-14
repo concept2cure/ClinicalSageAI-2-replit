@@ -1,0 +1,101 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/collabMessageReceipt.test.tsx",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/collabOptionalTaskReceipt.test.tsx",
+    "errors": 0,
+    "warnings": 0,
+    "messages": []
+  },
+  {
+    "path": "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+    "errors": 0,
+    "warnings": 8,
+    "messages": [
+      {
+        "ruleId": "no-undef",
+        "severity": 1,
+        "message": "'queueMicrotask' is not defined.",
+        "line": 124,
+        "column": 5,
+        "messageId": "undef",
+        "endLine": 124,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'QuickTask' has too many lines (226). Maximum allowed is 100.",
+        "line": 480,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 480,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'QuickTask' has a complexity of 26. Maximum allowed is 15.",
+        "line": 480,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 480,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 41. Maximum allowed is 15.",
+        "line": 551,
+        "column": 43,
+        "messageId": "complex",
+        "endLine": 551,
+        "endColumn": 45
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'CollabDiscuss' has too many lines (166). Maximum allowed is 100.",
+        "line": 793,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 793,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Function 'CollabDiscuss' has a complexity of 20. Maximum allowed is 15.",
+        "line": 793,
+        "column": 1,
+        "messageId": "complex",
+        "endLine": 793,
+        "endColumn": 23
+      },
+      {
+        "ruleId": "max-lines",
+        "severity": 1,
+        "message": "File has too many lines (799). Maximum allowed is 500.",
+        "line": 803,
+        "column": 1,
+        "messageId": "exceed",
+        "endLine": 1188,
+        "endColumn": 1
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Async arrow function has a complexity of 47. Maximum allowed is 15.",
+        "line": 836,
+        "column": 25,
+        "messageId": "complex",
+        "endLine": 836,
+        "endColumn": 27
+      }
+    ]
+  }
+]
