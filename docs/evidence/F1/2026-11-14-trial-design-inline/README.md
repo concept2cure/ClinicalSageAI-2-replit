@@ -1,6 +1,6 @@
 # Trial design inline placement repair
 
-Plan F1 / W1 / D2. Initial canonical revision `7579b804a`. This packet follows the founder's explicit rejection of a side popup for Trial Design. TypeScript source is frozen at `6fdbe30a1`, with the final mobile CSS refinement at `d3a107c55`; compiler and publication are still pending at this checkpoint.
+Plan F1 / W1 / D2. Initial canonical revision `7579b804a`. This packet follows the founder's explicit rejection of a side popup for Trial Design. Product TypeScript source is frozen at `6fdbe30a1`, with final mobile CSS at `d3a107c55` and test-query typing repair at `9220ffab8`. Full compiler passes with zero errors against baseline zero; normal publication and the published demo handoff follow this sealed verification checkpoint.
 
 ## What already exists
 
@@ -44,4 +44,6 @@ The mobile-only follow-up after `d3a107c55` passes actual Unbind and controlled 
 
 Root normally merged canonical `ec174c812` (existing device outline completion) at `694c1e388`, with no overlapping product source and all eleven frozen source hashes still matching. Owned browsers/backend are paused for the sole compiler and normal publication checks; DB, private launch environment and existing synthetic records are retained for published read-only verification.
 
-The first full compiler run found six TS2769 errors, all in new test queries passing unsupported `exact: true` to role queries. Its failing receipt is retained as `typecheck-initial-red.log.gz`. Removing only that unsupported option preserves the default exact string-name matching; no application code or assertion is weakened. The affected two suites pass 17/17 again and their lint reports zero errors/warnings. The full compiler is rerun before publication with baseline zero unchanged.
+The first full compiler run found six TS2769 errors, all in new test queries passing unsupported `exact: true` to role queries. Its failing receipt is retained as `typecheck-initial-red.log.gz`. Removing only that unsupported option preserves the default exact string-name matching; no application code or assertion is weakened. The affected two suites pass 17/17 again and their lint reports zero errors/warnings. The full compiler rerun at `9220ffab8` passes **zero errors, baseline zero unchanged**, retained as `typecheck-green.log.gz`.
+
+All implementation workers and their processes are closed. Root owns the normal pre-push checks, canonical publication, remote ancestry/source-hash confirmation and restarting only the owned demo backend on the published revision. Final live handoff receipts remain in `/workspace/scratch/trial-design-inline/` so a receipt-only commit does not force another publication cycle. These runtime checks are read/open/cancel only, preserving the same existing project/protocol/design records.
