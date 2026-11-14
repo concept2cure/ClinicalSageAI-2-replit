@@ -1,0 +1,120 @@
+{
+  "390": {
+    "chips": [
+      "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "Audit & compliance reports",
+      "Build the Nonclinical readiness pack",
+      "Find",
+      "How ready is C2C-101 to file?",
+      "What reports can you run for C2C-101?",
+      "Compare readiness across all my projects",
+      "When does each project file?",
+      "Reports",
+      "Catalog",
+      "Run history",
+      "Schedules",
+      "Bundles",
+      "Open the catalog"
+    ],
+    "board": {
+      "cards": [
+        {
+          "text": "0 of 100 Readiness C2C-101 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 358,
+          "height": 188
+        },
+        {
+          "text": "0 of 100 Readiness LMN-401 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 358,
+          "height": 188
+        },
+        {
+          "text": "0 of 100 Readiness C2C-201 missing · critical risk · 23 critical blockers No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence",
+          "width": 358,
+          "height": 204
+        },
+        {
+          "text": "0 of 100 Readiness LMN-801 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 358,
+          "height": 188
+        },
+        {
+          "text": "0 of 100 Readiness LMN-201 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 358,
+          "height": 188
+        },
+        {
+          "text": "0 of 100 Readiness LMN-301 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 358,
+          "height": 188
+        },
+        {
+          "text": "0 of 100 Readiness NEUR missing · critical risk · 12 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Cover Letter: Required section \"Cover Letter\" (1) has no usable current evidence",
+          "width": 358,
+          "height": 188
+        }
+      ],
+      "head": "Portfolio — board view\nPortfolio readiness\n7 projects\navg readiness 0%"
+    },
+    "errors": []
+  },
+  "1440": {
+    "chips": [
+      "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "Audit & compliance reports",
+      "Build the Nonclinical readiness pack",
+      "Find",
+      "How ready is C2C-101 to file?",
+      "What reports can you run for C2C-101?",
+      "Compare readiness across all my projects",
+      "When does each project file?",
+      "Reports",
+      "Catalog",
+      "Run history",
+      "Schedules",
+      "Bundles",
+      "Open the catalog"
+    ],
+    "board": {
+      "cards": [
+        {
+          "text": "0 of 100 Readiness C2C-101 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 216,
+          "height": 430
+        },
+        {
+          "text": "0 of 100 Readiness LMN-401 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 216,
+          "height": 430
+        },
+        {
+          "text": "0 of 100 Readiness C2C-201 missing · critical risk · 23 critical blockers No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence Cover Letter: Required section \"Cover Letter\" (1.2) has no usable current evidence",
+          "width": 216,
+          "height": 430
+        },
+        {
+          "text": "0 of 100 Readiness LMN-801 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 216,
+          "height": 430
+        },
+        {
+          "text": "0 of 100 Readiness LMN-201 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 216,
+          "height": 382
+        },
+        {
+          "text": "0 of 100 Readiness LMN-301 missing · critical risk · 23 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Administrative Forms: Required section \"Administrative Forms\" (1.1) has no usable current evidence",
+          "width": 216,
+          "height": 382
+        },
+        {
+          "text": "0 of 100 Readiness NEUR missing · critical risk · 12 critical blockers No governed artifacts discovered for this scope No approved or locked governed artifacts Cover Letter: Required section \"Cover Letter\" (1) has no usable current evidence",
+          "width": 216,
+          "height": 382
+        }
+      ],
+      "head": "Portfolio — board view\nPortfolio readiness\n7 projects\navg readiness 0%"
+    },
+    "errors": []
+  }
+}

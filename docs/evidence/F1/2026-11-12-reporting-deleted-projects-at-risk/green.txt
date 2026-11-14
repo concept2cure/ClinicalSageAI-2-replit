@@ -1,0 +1,11 @@
+# After the change.
+# The two new files (project-access-openable.pglite.test.ts, sentinel-openable-projects.test.ts):
+ Test Files  2 passed (2)
+      Tests  8 passed (8)
+# Every server and contract test file that names project-access, project_visibility_settings, the list, canAccessReportProject or sentinel (281 files, found by search):
+ Test Files  278 passed | 3 skipped (281)
+      Tests  5602 passed | 13 skipped (5615)
+# The 3 skipped files and 13 skipped cases are skips those suites declare themselves; none is from this change.
+# Of note: tests/schema-contract/authoring-section-commits-to-filing.contract.test.ts, 93 of 93. A first version of this
+# change added the deleted-project filter to the default read too; this suite's database has no regulatory_programs
+# table, and 20 of its cases answered 503. The default read's statement is now unchanged.

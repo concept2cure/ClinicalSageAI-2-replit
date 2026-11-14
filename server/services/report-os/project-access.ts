@@ -26,6 +26,19 @@ function allowedByProjectPolicy(row: Record<string, unknown>, actor: ReportProje
   return forWrite ? canEditProject(input) : canUseProject(input) || row.review_assigned === true;
 }
 
+/* The projects deleted in Projects, and every work project under one. Deleting sets
+   regulatory_programs.deleted_at and leaves the anchor projects row as it was (routes/c2c/projects.ts closeOut); a
+   legacy row carries status 'deleted' itself. UNION, so a parent cycle cannot run on. Its own statement, with bind
+   parameters only: the admitted-projects statement below is not built from parts and is as it always was. */
+const CLOSED_PROJECTS_SQL = `
+    WITH RECURSIVE closed(id) AS (
+      SELECT cp.id FROM projects cp
+        LEFT JOIN regulatory_programs rp ON rp.id = cp.regulatory_program_id AND rp.organization_id = cp.organization_id
+       WHERE cp.organization_id = $1 AND (cp.status = 'deleted' OR rp.deleted_at IS NOT NULL)
+      UNION
+      SELECT child.id FROM projects child JOIN closed ON child.parent_project_id = closed.id WHERE child.organization_id = $1)
+    SELECT id FROM closed`;
+
 async function accessibleProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient, projectId?: number, forWrite = false): Promise<number[]> {
   positiveId(organizationId);
   positiveId(actor.userId);
@@ -43,9 +56,25 @@ async function accessibleProjectIds(organizationId: number, actor: ReportProject
   return rows.filter(row => allowedByProjectPolicy(row, actor, forWrite)).map(row => positiveId(row.id));
 }
 
-/** Read failures throw; [] means an actual evaluated denial/empty set. */
-export function getAccessibleReportProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient = getPool()): Promise<number[]> {
-  return accessibleProjectIds(organizationId, actor, client);
+/**
+ * The projects the sharing policy admits a person to. Read failures throw; [] means an actual evaluated
+ * denial/empty set.
+ *
+ * Two meanings share this list:
+ *   - the default: the projects whose saved reports the person may read. A deleted project stays in it, because a
+ *     signed report run is a record and deleting a project does not check for one (projects.ts
+ *     PROJECT_HOLD_READS). Run history and packs are admitted through it.
+ *   - `{ openable: true }`: the projects the person can open now. A project deleted in Projects, and a work
+ *     project under one, is left out; an archived project can still be opened and stays. The "at risk" read asked
+ *     for the default and listed a deleted project's finding under "the projects you can open" (seen in the
+ *     running app, 2026-11-12).
+ */
+export async function getAccessibleReportProjectIds(organizationId: number, actor: ReportProjectActor, client: RequestSqlClient = getPool(), options: { openable?: boolean } = {}): Promise<number[]> {
+  const admitted = await accessibleProjectIds(organizationId, actor, client);
+  if (options.openable !== true) return admitted;
+  const { rows } = await client.query(CLOSED_PROJECTS_SQL, [organizationId]);
+  const closed = new Set(rows.map((row) => positiveId(Number(row.id))));
+  return admitted.filter((id) => !closed.has(id));
 }
 
 export async function canAccessReportProject(organizationId: number, actor: ReportProjectActor, projectId: number, client: RequestSqlClient = getPool(), options: { forWrite?: boolean } = {}): Promise<boolean> {

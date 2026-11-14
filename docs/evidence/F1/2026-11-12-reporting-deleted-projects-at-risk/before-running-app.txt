@@ -1,0 +1,10 @@
+# Before the change, in the running app (RLS and launch scope enforced; the demo owner), 2026-11-12 23:31 UTC.
+# probe.mjs: create a project, make it overdue, scan, read the "at risk" findings, delete the project in Projects, read again.
+create 201 {"id":"6b0fef7b-3ea3-498e-a302-858dc935e6b6","anchor":9}
+(local data: projects.id 9 target_end_date set three days back, so the deadline analyzer names it)
+scan 200 {"message":"Scan completed","summary":{"totalFindings":8,"analyzersRun":4,"projectsScanned":7,...}}
+findings 200 total 8 naming the probe project 1 [ 'Project "DELETE-PROBE overdue project" is 3 days overdue' ]
+delete 200 {"ok":true,"projectId":"6b0fef7b-3ea3-498e-a302-858dc935e6b6"}
+regulatory_programs: 6b0fef7b-… | status active | deleted_at set      projects: 9 | active   (the anchor row is left as it was)
+findings 200 total 8 naming the probe project 1 [ 'Project "DELETE-PROBE overdue project" is 3 days overdue' ]
+=> A project deleted in Projects is still among "the projects you can open" for the at-risk read.
