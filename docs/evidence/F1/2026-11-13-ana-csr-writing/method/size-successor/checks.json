@@ -1,0 +1,48 @@
+{
+  "sourceHead": "60224daa8ea935eaa1524a1f8c8b7296d7df677b",
+  "actualGateRefusal": {
+    "source": "root-observed-push1-refusal.json.gz",
+    "compilerStarted": false,
+    "published": false,
+    "beforeBytes": 100089,
+    "ceilingBytes": 100000
+  },
+  "correction": {
+    "beforeBytes": 100089,
+    "afterBytes": 99881,
+    "ceiling": 100000,
+    "savedBytes": 208,
+    "beforeSha256": "d46234bdf19d089b00d9208b227ec55a4c86f75115276f861d525ab22aac7700",
+    "afterSha256": "c1766cccb2f9391996335a237f13a548f8447190a97cbe59e8f49ada9b24732f",
+    "onlyChangedBlock": "clinical.study-report Compose and revise",
+    "version": 2,
+    "versionBumpedAgain": false,
+    "changedOutsideBlock": false
+  },
+  "testSuccessor": {
+    "passed": 56,
+    "failed": 0,
+    "pending": 0,
+    "physicalFiles": 4,
+    "processSeconds": 27.398,
+    "sourcePins": 73,
+    "sourceStable": true,
+    "raw": "green.json.gz",
+    "command": "green-command.json.gz"
+  },
+  "lint": {
+    "files": 2,
+    "errors": 0,
+    "warnings": 0,
+    "warningGrowth": false,
+    "command": "lint-command.json.gz"
+  },
+  "version": 2,
+  "baselineOrCeilingChanged": false,
+  "currentOwnedSnapshot": "current-owned-source.json.gz",
+  "currentSelectedSnapshot": "green-source-after.json.gz",
+  "countsPooled": false,
+  "limits": [
+    "Wording cleanup and software checks only; no live model, medical-writing training, clinical qualification, deployment or agency acceptance."
+  ]
+}
