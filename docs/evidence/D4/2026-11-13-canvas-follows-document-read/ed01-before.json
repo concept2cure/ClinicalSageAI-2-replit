@@ -1,0 +1,34 @@
+{
+ "whileReading": {
+  "text": "Nothing to edit yetCreate the first document for this project and its sections open here.New documentEvery save records an auditable revision (21 CFR Part 11)",
+  "buttons": [
+   "New document"
+  ],
+  "tree": [
+   "Loading documents…"
+  ]
+ },
+ "afterTheRead": {
+  "text": "(no empty or error panel: a section is open)",
+  "buttons": []
+ },
+ "afterAFailedRead": {
+  "text": "Nothing to edit yetCreate the first document for this project and its sections open here.New documentEvery save records an auditable revision (21 CFR Part 11)",
+  "buttons": [
+   "New document"
+  ],
+  "tree": [
+   "Couldn’t load documentsThe document list didn’t respond. Sign in to your tenant and retry."
+  ]
+ },
+ "tryAgainOffered": false,
+ "filterApproved": {
+  "text": "Nothing to edit yetCreate the first document for this project and its sections open here.New documentEvery save records an auditable revision (21 CFR Part 11)",
+  "buttons": [
+   "New document"
+  ],
+  "tree": [
+   "Nothing at this stageThis project has no approved documents. Clear the filter to see the r"
+  ]
+ }
+}

@@ -2033,6 +2033,13 @@ Preserve current source/actor/privacy/model/independent-review gates and exact a
 CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source `1ea68c474` is integrated normally with current intake/catalog source at `78c381c3c`. All implementation workers are frozen. Narrator38/3 and delivery250/9 pass; writing method, selection and oncology successors remain separate in `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Current-intake57/3 and fresh merged production build pass with11,926 source hashes stable. Scoped lint has zero errors/no warning growth. The existing approved protocol/model/source/checker/scientific gates are unchanged; no model training or clinical qualification is claimed. Source holds named in this continuation release with canonical publication of this completion; root retains only Git, final gates and publication receipts. No other owner is paused.
 ### Codex continuation — verified report references and Railway beta assessment, 2026-11-14
 
+**Founder data-class clarification:** confidential sponsor documents without patient identifiers. Root owns
+only the corresponding correction to the existing deployment guide and AnA evidence README; the inventories
+below already identify those homes. Replace the synthetic-data assumption, retain the same architecture/cost
+model and identify actual contract/residency/access/provider/log-retention acceptance. No code, infrastructure,
+PHI permission, model qualification or launch-gate change. Read-only independent review precedes normal
+canonical publication; this documentation-only hold releases with that publication.
+
 Canonical starting revision `3692f44ad`. The founder reports successful real OpenAI-key drafting in Codespaces;
 this is user-attested functional evidence, not an independently witnessed run or model PQ. Continue existing
 **F1/W1/D2** AnA coordination and, in a separate bounded **F1/W2/D1** lane, assess Railway beta hosting. This is
@@ -2083,3 +2090,7 @@ test/lint processes are closed and source/test holds transfer to root for integr
 Canonical08044016b is merged normally without source-scope overlap. Root retains Git, adjacent integration,
 sole normal pre-push compiler, publication and owned Codespace verification. All holds release on successful
 canonical publication. Railway acceptance, paid provision, clinical qualification and AWS launch remain unclaimed.
+
+**Codex saved-task assignment continuation, 2026-11-14 (F1 W1/D2; ends at publication):** holds only existing TaskAssignmentControls.tsx latest delayed-read/write-admission callbacks plus taskAssignmentRequest.ts outcome classifier, and their focused tests/design/evidence. Two workers own disjoint control/transport tests and audit before source edits; no shared contract, backend, TaskBoard/TaskTray/CommunicationCenter or provider changes. Root owns local runtime, integration/Git and the sole full compiler. Existing task/actor/workspace/CAS and persisted completion safeguards remain.
+
+**Saved-task assignment completion:** frozen existing controls/request helper and tests pass118/118 combined with zero lint errors/warnings. Genuine controls RED7fail/19controls and transport RED8fail/23controls retained; original controls proof is separate. Latest props govern delayed admission/callbacks while already-issued same-scope writes retain truthful receipts. Timeout/unknown writes stay unconfirmed; known refusal and atomic audit rollback controls pass. Controlled actual Task board browser passes timeout/read-recovery and permission-refusal cases with zero forwarded assignment writes/page errors. Both peer reviews have no blocker. These source/test/design/evidence holds release with canonical publication; root retains ordinary integration/Git/full compiler and owned local runtime only. Provider configuration is untouched.
