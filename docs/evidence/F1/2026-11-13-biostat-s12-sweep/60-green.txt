@@ -1,0 +1,11 @@
+# Finding 60, green (server).
+ ✓ binary-effect-is-the-rates-difference.test.ts > the normalized effect size of a binary design with both rates > is the difference between the rates, not a stated figure that disagrees with them
+ ✓ binary-effect-is-the-rates-difference.test.ts > the normalized effect size of a binary design with both rates > says so, naming both figures, when the stated effect size disagrees
+ ✓ binary-effect-is-the-rates-difference.test.ts > the normalized effect size of a binary design with both rates > carries no float noise: 0.30 − 0.08 is 0.22, not 0.21999999999999997
+ ✓ binary-effect-is-the-rates-difference.test.ts > the normalized effect size of a binary design with both rates > raises no warning when the stated effect size is the difference
+ ✓ binary-effect-is-the-rates-difference.test.ts > the normalized effect size of a binary design with both rates > refuses a superiority design whose rates are equal: there is no difference to size on
+ ✓ binary-effect-is-the-rates-difference.test.ts > the normalized effect size of a binary design with both rates > leaves a non-binary design’s stated effect size alone
+ ✓ binary-effect-is-the-rates-difference.test.ts > the Sample Size Rationale states the difference the study was sized on > prints 0.22 in the assumptions, the scenarios and the sensitivity line — and 0.47 nowhere
+ ✓ binary-effect-is-the-rates-difference.test.ts > the Sample Size Rationale states the difference the study was sized on > sizes the same study whether the stale figure is stated or not
+ Test Files  1 passed (1)
+      Tests  8 passed (8)

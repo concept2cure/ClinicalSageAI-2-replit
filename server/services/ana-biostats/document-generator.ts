@@ -870,11 +870,17 @@ export class DocumentGenerator {
     _domain: DomainAdaptation,
     regulatory?: RegulatoryCustomization
   ): string {
-    /* A design that records no interim analysis is told so, and the plan is
-       then drawn for one. It used to read "This plan governs 1 planned interim
-       analysis" for a design that planned none. */
+    /* A design that records no interim analysis gets a plan that says none is
+       planned, and nothing else. It read "This plan governs 1 planned interim
+       analysis … at approximately 50%" for a design that planned none (S12
+       biotech sweep, finding 64); from 2026-11-12 to 2026-11-13 it said "drawn
+       for one" and still printed that look's timing, a solved boundary table,
+       stopping rules and an unblinded interim statistician — a pre-specified
+       interim design the design, its SAP and its DSMB charter say does not
+       exist. Zero and no count read the same: the design adapter records a zero
+       as no count. */
     const recorded = input.interimAnalyses && input.interimAnalyses > 0 ? input.interimAnalyses : 0;
-    const k = recorded || 1;
+    const k = recorded;
     /* The count arrives unvalidated: timing is listed, and boundaries solved,
        for a whole number of looks the plan can state. */
     const listable = Number.isInteger(k) && k <= MAX_INTERIM_LOOKS;
@@ -883,9 +889,13 @@ export class DocumentGenerator {
     // "an equivalence study", "an adaptive study": it read "a equivalence study".
     const study = `${/^[aeiou]/i.test(phrase) ? 'an' : 'a'} ${phrase} study (target N = ${n}, ${(comp.power * 100).toFixed(0)}% power at α = ${input.alpha})`;
     let c = `# Interim Analysis Plan\n\n`;
-    c += recorded
-      ? `## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for ${study}. It controls the overall Type I error and defines stopping rules.\n\n`
-      : `## 1. Purpose\n\nThe design records no interim analysis. This plan is drawn for one interim analysis of ${study}, so that one can be pre-specified; record the number of interim analyses on the design to change it. It controls the overall Type I error and defines stopping rules.\n\n`;
+    if (!recorded) {
+      c += `## 1. Purpose\n\nNo interim efficacy analysis is planned for ${study}. The design records none, so no alpha is spent before the final analysis and no efficacy stopping boundary applies. To pre-specify one, record the number of interim analyses on the design.\n\n`;
+      c += `## 2. Safety Monitoring\n\nSafety is monitored per the DSMB charter, if one applies, independently of any efficacy look.\n\n`;
+      c += this.provenanceFooter();
+      return c;
+    }
+    c += `## 1. Purpose\n\nThis plan governs ${k} planned interim ${k === 1 ? 'analysis' : 'analyses'} for ${study}. It controls the overall Type I error and defines stopping rules.\n\n`;
     c += listable
       ? `## 2. Timing\n\nInterim ${k === 1 ? 'analysis is' : 'analyses are'} planned at approximately ${Array.from({ length: k }, (_, i) => `${Math.round(((i + 1) / (k + 1)) * 100)}%`).join(', ')} of planned information (events/completers).\n\n`
       : `## 2. Timing\n\nThe design records ${k} interim analyses. Timing is listed for a whole number of up to ${MAX_INTERIM_LOOKS}.\n\n`;
