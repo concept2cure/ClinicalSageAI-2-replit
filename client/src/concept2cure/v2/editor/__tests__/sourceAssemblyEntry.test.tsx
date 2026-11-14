@@ -51,8 +51,13 @@ beforeEach(async () => {
   documents = () => ok({ success: true, documents: [documentRow] });
   apiRequest.mockReset().mockImplementation(async (_method: string, path: string) => {
     if (path.startsWith('/api/authoring/docs?')) return documents();
-    if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources`)) return ok({ success: true, projectId: PROGRAM, sources,
-      total: sources.length, currentTotal: sources.length, page: { limit: 50, offset: 0 }, window: { shown: sources.length, truncated: false } });
+    if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources`)) {
+      const exactIds = new URL(path, 'http://example.test').searchParams.get('sourceIds')?.split(',').map(Number);
+      const rows = exactIds ? sources.filter(row => exactIds.includes(row.id)) : sources;
+      return ok({ success: true, projectId: PROGRAM, sources: rows,
+        ...(exactIds ? { selection: { scope: 'verified-accessible-sources', sourceIds: exactIds } } : {}),
+        total: rows.length, currentTotal: rows.length, page: { limit: 50, offset: 0 }, window: { shown: rows.length, truncated: false } });
+    }
     if (path === `/api/c2c/projects/${PROGRAM}`) return ok({ id: PROGRAM, name: 'Original project', code: 'P191' });
     return ok({ success: true, data: { tree: [] } });
   });

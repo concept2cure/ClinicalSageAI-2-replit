@@ -1,0 +1,23 @@
+{
+  "startedAt": "2026-11-14T01:20:17.559375+00:00",
+  "elapsedSeconds": 4.072,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "docs/evidence/F1/2026-11-14-project-source-selection/lint-comparison.cjs",
+    "accepted"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "accepted-inputs.json",
+  "inputCount": 24,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "docs/evidence/F1/2026-11-14-project-source-selection/lint-comparison.cjs": "a9a5601364c99de872e898e63fa6b2ca51dcd3d32a25b4bebaecf5ae9895b187"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "accepted-lint.txt.gz",
+  "outputSha256": "09757ed9119874337c965d4b0601b9de787eb9423383697057515bdb44acb86d",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

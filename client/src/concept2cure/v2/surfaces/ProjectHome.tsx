@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo, useId, useCallback } from 'react';
 import { authService, useAuthUser } from '@/services/portal/authService';
-import { getAuthToken } from '@/utils/authToken';
+import { capturedActorHeaders, getAuthToken } from '@/utils/authToken';
 import { I } from '../icons';
-import { EmptyState, ErrorState, useLiveData, hasKeys, type DataState, type ShapeGuard } from '../dataConnect';
+import { EmptyState, ErrorState, liveGetOrNull, useDataReadVisit, useLiveData, hasKeys, type DataResult, type DataState, type ShapeGuard } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
@@ -20,7 +20,8 @@ import { ProjectFilesPanel } from '../editor/ProjectFilesPanel';
 import { openVaultCatalog } from '../editor/DataRoomSourcesPanel';
 import { SourceCatalogLine, SourceSnippet } from '../editor/SourceCatalogLine';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
-import { SourceAssemblyAction } from '../editor/SourceAssemblyDialog';
+import { SourceAssemblyDialog } from '../editor/SourceAssemblyDialog';
+import { ASSEMBLY_SOURCE_LIMIT, readAssemblySourceSelectors } from '@shared/authoring/assembly-sources';
 import { StatusPill, rowsOf, updatedWords, useDocumentList, type BuiltDocument, type ListRead } from '../editor/CanvasDocumentList';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
 import type { ReviewItem } from '../fixtures/review-data';
@@ -52,7 +53,7 @@ import { ProjectTeamSharing } from './ProjectTeamSharing';
 import { mdxProjectPlan } from './ProjectMdxWorkflow';
 import { ProjectPlan } from './ProjectPlan';
 import { biotechPlanEntry } from './ProjectBiotechPlan';
-import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
+import { captureAuthoringSession, useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { filingLifecycleReferenceFor } from '@shared/regulatory/filing-lifecycle-reference';
 import { ProjectSettings, type ProjectSettingsRequest } from './ProjectSettings';
 import { ProjectCoreWork, ProjectWorkProjects, workAreasFor, workProjectOpenable } from './ProjectCoreWork';
@@ -60,7 +61,7 @@ import { actionWords, enumWords, filingTypeWords } from './projectWords';
 import { WS_LABEL } from './ProjectPortfolioFilters';
 import { filingDocumentClassOf } from '@shared/regulatory/filing-document-classes';
 import { AGENCY_LABEL, regionalDeviceApplicationClassOf } from '@shared/regulatory/filing-catalog';
-import { isSourcesPage, sourceCanGround, sourcesUrl, SOURCES_PAGE, type SourceRow, type SourcesPage } from './projectSources';
+import { isSourcesPage, selectedSourcesUrl, SELECTED_SOURCE_LIMIT, sourceCanGround, sourcesUrl, SOURCES_PAGE, verifiedSourceSelection, type SourceRow, type SourcesPage } from './projectSources';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -442,20 +443,47 @@ function SourceFileActions({ source: s, projectId: pid, reloadKey, onPull, onCha
   </>;
 }
 
-function DataRoomBuildAction({ pid, pinned, sources, onNav, disabled }: {
-  pid: string | null; pinned: number[]; sources: SourceRow[]; onNav: (id: string) => void; disabled: boolean;
+type VerifiedProjectSources = { sources: SourceRow[]; current: () => boolean };
+const UNVERIFIED_SOURCE_SELECTION = 'The selected source identities could not be verified. Refresh the catalogue and select them again.';
+
+function DataRoomBuildAction({ pid, selected, verify, onNav, disabled }: {
+  pid: string | null; selected: SourceRow[]; verify: () => Promise<VerifiedProjectSources | null>;
+  onNav: (id: string) => void; disabled: boolean;
 }) {
-  if (!pid || !pinned.length) return null;
-  const selected = pinned.map(id => sources.find(source => source.id === id));
-  return <div data-testid="data-room-build-selected"><SourceAssemblyAction programId={pid} onNav={onNav} disabled={disabled}
-    sources={pinned.map((sourceId, index) => ({ kind: 'data-room', sourceId,
-      ...(selected[index]?.checksum ? { expectedChecksum: selected[index]!.checksum! } : {}) }))}
-    titles={selected.map((source, index) => source?.title || `Source ${pinned[index]}`)}
-    unavailable={selected.some(source => !source) ? 'Refresh the source list before building from this selection.' : null} /></div>;
+  const reasonId = useId();
+  const [launch, setLaunch] = useState<VerifiedProjectSources | null>(null);
+  const selectors = selected.map(source => ({ kind: 'data-room' as const, sourceId: source.id,
+    ...(source.checksum ? { expectedChecksum: source.checksum } : {}) }));
+  const parsed = readAssemblySourceSelectors(selectors);
+  const reason = selected.length > ASSEMBLY_SOURCE_LIMIT
+    ? `Select up to ${ASSEMBLY_SOURCE_LIMIT} sources to build in the editor. ${selected.length} are selected.`
+    : parsed ? null : UNVERIFIED_SOURCE_SELECTION;
+  if (!pid || !selected.length) return null;
+  const start = async () => {
+    if (disabled || reason || !parsed) return;
+    const verified = await verify();
+    if (verified?.current()) setLaunch(verified);
+  };
+  return <div data-testid="data-room-build-selected"><div className="source-work-action">
+    <button type="button" className="btn ghost" disabled={disabled || !!reason} onClick={() => void start()}
+      title={reason ?? undefined} aria-describedby={reason ? reasonId : undefined}>{I.penLine} Build in editor</button>
+    {reason && <p className="sec-sub" id={reasonId}>Build in editor: {reason}</p>}
+    {launch?.current() && parsed && <SourceAssemblyDialog programId={pid} sources={parsed}
+      titles={selected.map(source => source.title || `Source ${source.id}`)} onNav={onNav}
+      isCurrent={launch.current} onClose={() => setLaunch(null)} />}
+  </div></div>;
 }
 
 function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
   const available = useSurfaceAvailable();
+  const session = useAuthoringReadSession(authService.getUser());
+  const projectVisit = useRef({ current: captureShellProjectGuard(), key: 0 });
+  if (!projectVisit.current.current()) projectVisit.current = { current: captureShellProjectGuard(), key: projectVisit.current.key + 1 };
+  const visit = projectVisit.current;
+  const owner = { key: `${pid}:${session.actor}:${session.key}:${visit.key}`,
+    current: () => session.sameRevision() && visit.current() && String(readShellProject()?.id ?? '') === pid };
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [reloadKey, setReloadKey] = useState(0);
   const [pullSource, setPullSource] = useState<SourceRow | null>(null);
   const [q, setQ] = useState('');
@@ -470,12 +498,18 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   // Sources the user has pinned as context for the next AnA turn. Handed over
   // via window.C2C_SOURCE_PINS, matching the window.C2C_PROJECT / C2C_CONVO
   // convention this surface already uses for cross-surface handoff.
-  const [pinned, setPinned] = useState<number[]>([]);
+  const [pinned, setPinned] = useState<SourceRow[]>([]);
+  const selectedVisit = useRef({ key: '', epoch: 0 });
+  const retireSelection = () => { selectedVisit.current = { ...selectedVisit.current, epoch: selectedVisit.current.epoch + 1 }; };
+  const [verification, setVerification] = useState<{ scope: object } | null>(null);
+  const pending = useRef<{ scope: object } | null>(null);
+  const [selectionError, setSelectionError] = useState<{ scope: object; message: string } | null>(null);
 
   const sourceRead = useLiveData<SourcesPage>(
     pid ? sourcesUrl(pid, term, offset) : null,
     [pid, reloadKey, term, offset],
     isSourcesPage,
+    owner,
   );
   const state = !sourceRead.loading && !sourceRead.error && !sourceRead.data
     ? { ...sourceRead, error: 'The source list could not be verified.', empty: false }
@@ -509,9 +543,15 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   // file is unavailable; withdrawn and replaced data cannot ground a draft.
   useEffect(() => {
     if (state.loading || state.error || !state.data) return;
-    const eligible = new Set(state.data.sources.filter(sourceCanGround).map(s => s.id));
-    setPinned(prev => prev.every(id => eligible.has(id)) ? prev : prev.filter(id => eligible.has(id)));
-    if (window.C2C_SOURCE_PINS) window.C2C_SOURCE_PINS = window.C2C_SOURCE_PINS.filter(id => eligible.has(Number(id)));
+    // Only an observed ineligible row retires a choice. Absence from this
+    // searched/page response says nothing about an off-page source.
+    const ineligible = new Set(state.data.sources.filter(source => !sourceCanGround(source)).map(source => source.id));
+    setPinned(prev => {
+      if (!prev.some(source => ineligible.has(source.id))) return prev;
+      retireSelection();
+      return prev.filter(source => !ineligible.has(source.id));
+    });
+    if (window.C2C_SOURCE_PINS) window.C2C_SOURCE_PINS = window.C2C_SOURCE_PINS.filter(id => !ineligible.has(Number(id)));
   }, [state.data, state.loading, state.error]);
   // The server searched title and text; the list is its answer, not a filter of this page.
   const rows = sources;
@@ -529,17 +569,60 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
      file's size, so a whole data room would make a turn the model request
      cannot carry. When the list is cut, here or by the server's window, the
      words say "newest" rather than claiming the data room's readable set. */
-  const groundable = sources.filter(sourceCanGround).map(s => s.id);
+  const groundable = sources.filter(sourceCanGround);
   const handed = groundable.slice(0, HANDOFF_LIMIT);
   const handedWords = `the ${handed.length}${truncated || groundable.length > handed.length ? ' newest' : ''} readable source${handed.length === 1 ? '' : 's'}`;
   /* Hand a set of sources to AnA. It resolves each source back to the upload
      its bytes live in and grounds the turn on exactly those documents, not on
      whatever its own retrieval would have picked. */
   const sourceReadConfirmed = !state.loading && !state.error && Boolean(state.data);
-  const handOff = (ids: number[], words: string) => {
-    if (!sourceReadConfirmed || uploading || !ids.every(id => groundable.includes(id))) return;
-    window.C2C_SOURCE_PINS = ids.map(String);
-    onAsk(words);
+  const checked = pinned.length ? pinned : handed;
+  const selectionKey = JSON.stringify(checked.map(source => [source.id, source.checksum]));
+  if (selectedVisit.current.key !== selectionKey) selectedVisit.current = { key: selectionKey, epoch: selectedVisit.current.epoch + 1 };
+  const selectionScope = selectedVisit.current;
+  const exactPath = pid && checked.length ? selectedSourcesUrl(pid, checked) : null;
+  const exactVisit = useDataReadVisit(exactPath, { key: `${owner.key}:${selectionScope.epoch}`,
+    current: () => selectedVisit.current === selectionScope && owner.current() && sourceReadConfirmed && !uploading });
+  const verifying = verification?.scope === selectionScope;
+  const limitReason = pinned.length > SELECTED_SOURCE_LIMIT
+    ? `Choose at most ${SELECTED_SOURCE_LIMIT} exact source identifiers. ${pinned.length} are selected.` : null;
+  const verify = async (): Promise<VerifiedProjectSources | null> => {
+    if (!mounted.current || !pid || !exactPath || pending.current?.scope === selectionScope || !exactVisit.current()) return null;
+    const capturedSession = captureAuthoringSession(), capturedProject = captureShellProjectGuard();
+    let retired = false;
+    const current = () => {
+      if (retired) return false;
+      if (!capturedSession.sameRevision() || !capturedProject() || !exactVisit.current()) retired = true;
+      return !retired;
+    };
+    if (!current()) return null;
+    const attempt = { scope: selectionScope }; pending.current = attempt;
+    setVerification(attempt); setSelectionError(null); window.C2C_SOURCE_PINS = [];
+    const admitResponse = (response: DataResult<SourcesPage>): VerifiedProjectSources | null => {
+      if (!mounted.current || !current() || pending.current !== attempt) return null;
+      const verified = !response.error && response.meta?.pendingStore !== true ? verifiedSourceSelection(response.data, pid, checked) : null;
+      if (!verified) {
+        setSelectionError({ scope: selectionScope, message: response.error || UNVERIFIED_SOURCE_SELECTION }); return null;
+      }
+      return { sources: verified, current };
+    };
+    try {
+      const [organizationId, userId] = session.actor.split(':').map(Number);
+      const headers = capturedActorHeaders({ organizationId, userId });
+      if (!current()) return null;
+      return admitResponse(await liveGetOrNull<SourcesPage>(exactPath, isSourcesPage, headers));
+    } catch {
+      if (mounted.current && current()) setSelectionError({ scope: selectionScope, message: UNVERIFIED_SOURCE_SELECTION });
+      return null;
+    } finally {
+      if (pending.current === attempt) { pending.current = null; if (mounted.current) setVerification(null); }
+    }
+  };
+  const handOff = async (words: string) => {
+    const verified = await verify();
+    if (!verified?.current()) return;
+    window.C2C_SOURCE_PINS = verified.sources.map(source => String(source.id));
+    if (verified.current()) onAsk(words);
   };
 
   return (
@@ -709,13 +792,14 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                         document cannot provide. */}
                     <input
                       type="checkbox"
-                      checked={pinned.includes(s.id)}
+                      checked={pinned.some(source => source.id === s.id)}
                       disabled={!sourceCanGround(s)}
-                      onChange={(e) =>
-                        setPinned((prev) =>
-                          e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
-                        )
-                      }
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        retireSelection();
+                        setPinned(prev => checked ? [...prev.filter(source => source.id !== s.id), { ...s }]
+                          : prev.filter(source => source.id !== s.id));
+                      }}
                       aria-label={`Use ${s.title || `source ${s.id}`} as context`}
                       title={sourcePinTitle(s)}
                     />
@@ -794,14 +878,13 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             context of the next turn, in the one conversation. With sources
             pinned, the pinned set is the one handed over. A data room with
             nothing readable offers neither. */}
-        <DataRoomBuildAction pid={pid} pinned={pinned} sources={sources} onNav={onNav} disabled={uploading || !sourceReadConfirmed} />
+        <DataRoomBuildAction pid={pid} selected={pinned} verify={verify} onNav={onNav} disabled={uploading || !sourceReadConfirmed || verifying} />
         {pinned.length === 0 && groundable.length > 0 && (
           <button
             className="btn small"
-            disabled={uploading || !sourceReadConfirmed}
+            disabled={uploading || !sourceReadConfirmed || verifying}
             title={`Ask AnA to draft from ${handedWords} in this data room`}
-            onClick={() => handOff(
-              handed,
+            onClick={() => void handOff(
               `Use ${handedWords} in this project's data room as the context for drafting.`,
             )}
           >
@@ -809,18 +892,25 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           </button>
         )}
         {pinned.length > 0 && (
+          <>
           <button
             className="btn small"
-            disabled={uploading || !sourceReadConfirmed}
-            onClick={() => handOff(
-              pinned,
+            disabled={uploading || !sourceReadConfirmed || verifying || !!limitReason}
+            onClick={() => void handOff(
               `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
             )}
           >
             {I.sparkles} Draft with {pinned.length} pinned source{pinned.length === 1 ? '' : 's'}
           </button>
+          <button type="button" className="btn small" onClick={() => {
+            retireSelection(); setPinned([]); setSelectionError(null); window.C2C_SOURCE_PINS = [];
+          }}>Clear selection</button>
+          </>
         )}
       </div>
+      {(limitReason || selectionError?.scope === selectionScope) && <p className="sec-sub" role="alert">
+        {limitReason || selectionError?.message}
+      </p>}
     </section>
   );
 }

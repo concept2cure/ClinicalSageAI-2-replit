@@ -1,17 +1,24 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 const request = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: null }), useAuthUser: () => actual.authService.getUser() };
+});
 vi.mock('@/lib/queryClient', async original => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest: request }));
+vi.mock('@/contexts/TenantContext', () => ({
+  useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }),
+}));
 import { ProjectHome } from '../surfaces/ProjectHome';
+import { authService, type AuthUser } from '@/services/portal/authService';
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
 const ok = (data: unknown) => ({ ok: true, status: 200, json: async () => data }) as Response;
-const row = (id: number) => ({ id, title: `source-${id}.pdf`, extractionStatus: 'extracted', textAvailable: true, isCurrent: true, dataEligible: true });
+const row = (id: number) => ({ id, title: `source-${id}.pdf`, checksum: 'a'.repeat(64), extractionStatus: 'extracted', textAvailable: true, isCurrent: true, dataEligible: true });
 const props = { surface: { id: 'project-home' } as never, segment: 'biopharma', onNav: vi.fn() };
 function pendingRead() {
   let resolve!: (response: Response) => void;
@@ -19,13 +26,15 @@ function pendingRead() {
   return { response, resolve };
 }
 function openEvidence(onAsk: (text: string) => void) {
+  const user = { id: '7', organizationId: '4', email: 'synthetic@example.test', roles: ['member'], permissions: [] } as unknown as AuthUser;
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.fixture`, user, 'fixture-refresh');
   window.C2C_PROJECT = { id: A, title: 'Programme A' };
   const view = render(<ProjectHome {...props} onAsk={onAsk} />);
   const tab = Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find(button => button.textContent?.trim() === 'Evidence')!;
   fireEvent.click(tab);
   return view;
 }
-afterEach(() => { cleanup(); request.mockReset(); delete window.C2C_PROJECT; delete window.C2C_SOURCE_PINS; });
+afterEach(() => { cleanup(); authService.endSession(null); request.mockReset(); delete window.C2C_PROJECT; delete window.C2C_SOURCE_PINS; });
 it('withholds drafting while the refreshed source admission is unknown, then adopts withdrawal', async () => {
   const pending = pendingRead(); let reads = 0;
   request.mockImplementation(async (_method: string, path: string) => {
@@ -44,6 +53,10 @@ it('withholds drafting while the refreshed source admission is unknown, then ado
 it('retires local and handoff pins on programme change before the new source read resolves', async () => {
   const pending = pendingRead(); const onAsk = vi.fn();
   request.mockImplementation(async (_method: string, path: string) => {
+    if (path.includes('/sources?sourceIds=')) {
+      const pid = path.includes(B) ? B : A;
+      return ok({ projectId: pid, sources: [row(pid === A ? 1 : 2)], selection: { scope: 'verified-accessible-sources', sourceIds: [pid === A ? 1 : 2] } });
+    }
     if (path === `/api/c2c/projects/${A}/sources`) return ok({ sources: [row(1)] });
     if (path === `/api/c2c/projects/${B}/sources`) return pending.response;
     return ok({ id: path.includes(B) ? B : A });
@@ -51,7 +64,7 @@ it('retires local and handoff pins on programme change before the new source rea
   const view = openEvidence(onAsk);
   fireEvent.click(await screen.findByLabelText('Use source-1.pdf as context'));
   fireEvent.click(screen.getByRole('button', { name: 'Draft with 1 pinned source' }));
-  expect(window.C2C_SOURCE_PINS).toEqual(['1']);
+  await waitFor(() => expect(window.C2C_SOURCE_PINS).toEqual(['1']));
   window.C2C_PROJECT = { id: B, title: 'Programme B' };
   view.rerender(<ProjectHome {...props} onAsk={onAsk} />);
   expect(screen.queryByRole('button', { name: 'Draft with 1 pinned source' })).toBeNull();
@@ -61,5 +74,5 @@ it('retires local and handoff pins on programme change before the new source rea
   fireEvent.click(screen.getByRole('button', { name: 'Evidence' }));
   await act(async () => pending.resolve(ok({ sources: [row(2)] })));
   fireEvent.click(await screen.findByRole('button', { name: 'Write from these sources' }));
-  expect(window.C2C_SOURCE_PINS).toEqual(['2']);
+  await waitFor(() => expect(window.C2C_SOURCE_PINS).toEqual(['2']));
 });

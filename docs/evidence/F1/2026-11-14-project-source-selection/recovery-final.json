@@ -1,0 +1,31 @@
+{
+  "startedAt": "2026-11-14T01:19:55.293258+00:00",
+  "elapsedSeconds": 54.659,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "accepted-inputs.json",
+  "inputCount": 24,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "recovery-final.txt.gz",
+  "outputSha256": "f2ae5da311b282ccc44b24b386c3b1973737f146be825003b24f712d392d1ae3",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": true
+}

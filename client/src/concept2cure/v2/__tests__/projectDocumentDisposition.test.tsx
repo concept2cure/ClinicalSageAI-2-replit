@@ -6,10 +6,17 @@ import type { DocumentDispositionChoice } from '@shared/document-data-dispositio
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: null }), useAuthUser: () => actual.authService.getUser() };
+});
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<Record<string, unknown>>()), apiRequest }));
+vi.mock('@/contexts/TenantContext', () => ({
+  useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }),
+}));
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { Vault } from '../surfaces/Vault';
+import { authService, type AuthUser } from '@/services/portal/authService';
 import { PID, DOC_ID, ok, props, uploadDoc, cabinetTree, vaultPayload, mockVaultApi } from './_vault-surface-fixtures';
 
 /** The data room is on Project home's Evidence tab (FILING_SPINE.md F3). */
@@ -27,8 +34,12 @@ const preview = () => ({ target: { type: 'captured_source', id: '1', title: 'Pro
   retention: { legalHolds: 0, retentionUntil: null, physicalErasure: false }, approvals: { active: 0 }, blockers: [],
   replacement: null, allowedChoices: ['keep_data', 'remove_data', 'supersede'], previewToken: 'review-token',
   expiresAt: new Date(Date.now() + 600_000).toISOString(), currentDisposition: null });
-beforeEach(() => { apiRequest.mockReset(); window.C2C_PROJECT = { id: PID, title: 'Program', code: 'PRG', ws: '', status: 'active' }; });
-afterEach(() => { cleanup(); delete window.C2C_PROJECT; delete window.C2C_SOURCE_PINS; });
+beforeEach(() => {
+  apiRequest.mockReset(); window.C2C_PROJECT = { id: PID, title: 'Program', code: 'PRG', ws: '', status: 'active' };
+  const user = { id: '7', organizationId: '4', email: 'synthetic@example.test', roles: ['member'], permissions: [] } as unknown as AuthUser;
+  authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.fixture`, user, 'fixture-refresh');
+});
+afterEach(() => { cleanup(); authService.endSession(null); delete window.C2C_PROJECT; delete window.C2C_SOURCE_PINS; });
 
 describe('reachable project document lifecycle controls', () => {
   it('shows a Quality record as a record: no file wording, no working copy, no file removal', async () => {
@@ -53,7 +64,9 @@ describe('reachable project document lifecycle controls', () => {
   it.each(['keep_data', 'remove_data'] as const)('DataRoom refresh applies %s eligibility to both local and handed-off pins', async choice => {
     let disposition: DocumentDispositionChoice | null = null;
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (url === `/api/c2c/projects/${PID}/sources`) return ok({ sources: [source({ disposition, dataEligible: disposition !== 'remove_data', originalFileAvailable: disposition === null })] });
+      if (url.startsWith(`/api/c2c/projects/${PID}/sources`)) return ok({ projectId: PID,
+        ...(url.includes('sourceIds=') ? { selection: { scope: 'verified-accessible-sources', sourceIds: [1] } } : {}),
+        sources: [source({ disposition, dataEligible: disposition !== 'remove_data', originalFileAvailable: disposition === null })] });
       if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'Program', code: 'PRG' });
       if (url.includes('/document-dispositions/preview')) return ok({ preview: preview() });
       if (method === 'POST' && url.endsWith('/document-dispositions')) {
@@ -65,7 +78,7 @@ describe('reachable project document lifecycle controls', () => {
     const onAsk = vi.fn(); render(<ProjectHome {...props()} onAsk={onAsk} />); openEvidence();
     const pin = await screen.findByRole('checkbox', { name: 'Use Protocol.pdf as context' });
     fireEvent.click(pin); fireEvent.click(screen.getByRole('button', { name: /Draft with 1 pinned source/ }));
-    expect(window.C2C_SOURCE_PINS).toEqual(['1']);
+    await waitFor(() => expect(window.C2C_SOURCE_PINS).toEqual(['1']));
     fireEvent.click(screen.getByRole('button', { name: 'Review removal of Protocol.pdf' }));
     await screen.findByText('a'.repeat(64));
     fireEvent.click(screen.getByRole('radio', { name: choice === 'keep_data' ? /Remove file; retain extracted data/ : /Remove file and withdraw extracted data/ }));

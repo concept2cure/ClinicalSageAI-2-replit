@@ -1,0 +1,29 @@
+{
+  "startedAt": "2026-11-14T01:19:24.557091+00:00",
+  "elapsedSeconds": 14.115,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.config.ts",
+    "--maxWorkers=1",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx",
+    "-t",
+    "deliberately clear a now-unavailable off-page selection"
+  ],
+  "exitCode": 1,
+  "sourceDrift": [],
+  "inputs": "recovery-red-inputs.json",
+  "inputCount": 24,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/vitest/vitest.mjs": "39db22f579acf5639bbb17a261408debbde03f4692c0c439e77e7f13aeba74d6"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "recovery-red.txt.gz",
+  "outputSha256": "079dbc6d8d1e19bf55319a415a8d0e1f7c0adab070e0d8e2a88b13b7aa5244cd",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": true
+}

@@ -38,6 +38,8 @@ vi.mock('../../../services/clinical-regulatory-evidence/source-usage.service.js'
 }));
 
 import router from '../projects';
+import { DataRoomQueryError, parseDataRoomQuery } from '../../../services/clinical-regulatory-evidence/data-room-search.js';
+import { getCurrentReadableSourceScope } from '../../../services/clinical-regulatory-evidence/source-read-access';
 
 const P = '11111111-1111-1111-1111-111111111111';
 let authorityDb: PGlite;
@@ -242,5 +244,125 @@ describe('GET /:id/sources', () => {
     const cur = Object.fromEntries(res.body.sources.map((s: { id: number; isCurrent: boolean }) => [s.id, s.isCurrent]));
     expect(cur).toEqual({ 1: false, 2: true, 3: true });
     expect(res.body.window).toEqual({ shown: 3, truncated: false });
+  });
+});
+
+describe('exact project source selection query', () => {
+  it('retains one through twenty PostgreSQL integer identities instead of an ordinary list', () => {
+    expect(parseDataRoomQuery(P, { sourceIds: '2147483647' })).toMatchObject({ programId: P, sourceIds: [2147483647] });
+    const ids = Array.from({ length: 20 }, (_, index) => index + 1);
+    expect(parseDataRoomQuery(P, { sourceIds: ids.join(',') })).toMatchObject({ sourceIds: ids });
+  });
+
+  const malformed: unknown[] = [undefined, null, [], ['11'], ['11', '22'], { id: '11' }, 11,
+    '', ' ', '0', '-1', '+1', '1.5', '1e2', '0x10', '1,,2', ',1', '1,', '1, 2',
+    '11,11', '1,01', '2147483648', '9007199254740993', Array.from({ length: 21 }, (_, index) => index + 1).join(',')];
+  it.each(malformed.map((value, index) => ({ value, index })))('refuses malformed exact source identity input $index', ({ value }) => {
+    expect(() => parseDataRoomQuery(P, { sourceIds: value })).toThrow(DataRoomQueryError);
+  });
+
+  const exclusions = ['q', 'status', 'kind', 'from', 'to', 'current', 'scope', 'project', 'study', 'ctd', 'folder', 'limit', 'offset', 'includeUnscoped'];
+  it.each(exclusions)('refuses a simultaneously present %s filter even when blank', name => {
+    expect(() => parseDataRoomQuery(P, { sourceIds: '11,22', [name]: '' })).toThrow(DataRoomQueryError);
+  });
+
+  it('keeps ordinary search/paging behavior without claiming exact admission', () => {
+    expect(parseDataRoomQuery(P, { q: 'protocol', limit: '25', offset: '50' })).toMatchObject({ q: 'protocol', limit: 25, offset: 50 });
+    expect(parseDataRoomQuery(P, {})).not.toHaveProperty('sourceIds');
+  });
+});
+
+describe('GET /:id/sources verifies the entire explicit selection', () => {
+  const exactSource = (id: number, over: Record<string, unknown> = {}) => ({ ...src(id), clientProgramId: P,
+    checksum: String(id).padStart(64, 'a'), dataEligible: true, textAvailable: true, ...over });
+  const admitted = (sourceIds: number[]) => ({ scope: 'verified-accessible-sources', sourceIds });
+
+  beforeAll(async () => {
+    // This suite also runs alone by test name. Its source rows support the real
+    // late canonical access check, independently of the mocked page projection.
+    await authorityDb.exec(`CREATE TABLE IF NOT EXISTS cre_evidence_sources
+      (id int PRIMARY KEY,organization_id int,client_program_id uuid,is_current boolean,checksum text,deleted_at timestamptz);
+      ALTER TABLE cre_evidence_sources ADD COLUMN IF NOT EXISTS visibility_class text,
+        ADD COLUMN IF NOT EXISTS source_type text DEFAULT 'client_document',
+        ADD COLUMN IF NOT EXISTS client_workspace_id int,
+        ADD COLUMN IF NOT EXISTS provenance jsonb DEFAULT '{}', ADD COLUMN IF NOT EXISTS metadata jsonb DEFAULT '{}';`);
+    for (const id of [11, 22]) await authorityDb.query(`INSERT INTO cre_evidence_sources
+      (id,organization_id,client_program_id,is_current,checksum) VALUES($1,7,$2,true,$3) ON CONFLICT(id) DO NOTHING`,
+    [id, P, String(id).padStart(64, 'a')]);
+  });
+
+  it('returns the canonical complete admission and checked project with every selected row', async () => {
+    searchDataRoom.mockResolvedValue({ total: 2, currentTotal: 2, sources: [exactSource(22), exactSource(11)], selection: admitted([11, 22]) });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=22,11`);
+    expect(res.status).toBe(200);
+    expect(searchDataRoom).toHaveBeenCalledWith(7, expect.objectContaining({ programId: P, sourceIds: [22, 11] }), { userId: 3 });
+    expect(res.body).toMatchObject({ projectId: P, selection: admitted([11, 22]), total: 2, window: { shown: 2, truncated: false } });
+    expect(res.body.sources.map((row: { id: number }) => row.id).sort((a: number, b: number) => a - b)).toEqual([11, 22]);
+    expect(res.body.sources.every((row: { projectId: string }) => row.projectId === P)).toBe(true);
+    expect(catalogProgramIds).not.toHaveBeenCalled();
+    expect(listClientDocuments).not.toHaveBeenCalled();
+    expect(listVaultForCatalog).not.toHaveBeenCalled();
+  });
+
+  it('retains readable data facts when the original file is unavailable', async () => {
+    searchDataRoom.mockResolvedValue({ total: 1, currentTotal: 1, sources: [exactSource(11, { originalFileAvailable: false })], selection: admitted([11]) });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=11`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ selection: admitted([11]), sources: [{ id: 11, dataEligible: true, textAvailable: true, originalFileAvailable: false }] });
+  });
+
+  it('does not hide a retired selected row behind a current-only list filter', async () => {
+    searchDataRoom.mockResolvedValue({ total: 1, currentTotal: 0, sources: [exactSource(11, { isCurrent: false, dataEligible: false })], selection: admitted([11]) });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=11`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ selection: admitted([11]), sources: [{ id: 11, isCurrent: false, dataEligible: false }] });
+  });
+
+  it('refuses exact source delivery when membership is revoked while delayed grading completes', async () => {
+    expect(await getCurrentReadableSourceScope({ query: queryMock }, { organizationId: 7, userId: 3, programId: P, sourceIds: [11] }))
+      .toMatchObject(admitted([11]));
+    searchDataRoom.mockResolvedValue({ total: 1, currentTotal: 1, sources: [exactSource(11)], selection: admitted([11]) });
+    gradeSources.mockImplementation(async () => {
+      await authorityDb.exec('DELETE FROM organization_users WHERE organization_id=7 AND user_id=3');
+      return new Map();
+    });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=11`);
+    expect(gradeSources).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('PROJECT_NOT_FOUND');
+    expect(res.body.selection).toBeUndefined();
+    expect(res.body.sources).toBeUndefined();
+  });
+
+  it.each([
+    { name: 'missing row', sources: [exactSource(11)], selection: admitted([11, 22]) },
+    { name: 'duplicate row', sources: [exactSource(11), exactSource(11)], selection: admitted([11, 22]) },
+    { name: 'unrelated row', sources: [exactSource(11), exactSource(33)], selection: admitted([11, 22]) },
+    { name: 'wrong-project row', sources: [exactSource(11), exactSource(22, { clientProgramId: '22222222-2222-4222-8222-222222222222' })], selection: admitted([11, 22]) },
+    { name: 'missing admission', sources: [exactSource(11), exactSource(22)], selection: undefined },
+    { name: 'partial admission', sources: [exactSource(11), exactSource(22)], selection: admitted([11]) },
+    { name: 'duplicate admission', sources: [exactSource(11), exactSource(22)], selection: admitted([11, 11]) },
+    { name: 'unrelated admission', sources: [exactSource(11), exactSource(22)], selection: admitted([11, 33]) },
+    { name: 'unverified admission', sources: [exactSource(11), exactSource(22)], selection: { scope: 'unverified', sourceIds: [11, 22] } },
+  ])('refuses a malformed canonical projection: $name', async ({ sources, selection }) => {
+    searchDataRoom.mockResolvedValue({ total: 2, currentTotal: 2, sources, selection });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=11,22`);
+    expect(res.status).toBe(503);
+    expect(res.body.selection).toBeUndefined();
+    expect(res.body.sources).toBeUndefined();
+  });
+
+  it('rejects repeated HTTP parameters before any source read', async () => {
+    searchDataRoom.mockResolvedValue({ total: 0, sources: [] });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?sourceIds=11&sourceIds=22`);
+    expect(res.status).toBe(400);
+    expect(searchDataRoom).not.toHaveBeenCalled();
+  });
+
+  it('does not mark an ordinary page as an exact selection', async () => {
+    searchDataRoom.mockResolvedValue({ total: 1, sources: [exactSource(11)] });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources`);
+    expect(res.status).toBe(200);
+    expect(res.body.selection).toBeUndefined();
   });
 });

@@ -21,7 +21,7 @@ vi.mock('../../qms/project-evidence', () => ({ readQualityProjectEvidence: h.col
 // chain's independent SQL suites own seal verification, not this race fixture.
 vi.mock('../data-room-capture-audit', () => ({ captureActor: () => null, recordCapture: async () => undefined, recordSupersession: async () => undefined }));
 
-import { catalogProgramIds, searchDataRoom } from '../data-room-search';
+import { catalogProgramIds, parseDataRoomQuery, searchDataRoom } from '../data-room-search';
 import { getCurrentReadableSourceScope } from '../source-read-access';
 import { listClientDocuments } from '../evidence-spine.service';
 
@@ -355,5 +355,115 @@ describe('one read admits a project once, however many of its sources it lists',
     } finally {
       await pg.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, USER]);
     }
+  });
+});
+
+async function capturedFile(programId = PROGRAM) {
+  const result = await pg.query<{ id: number }>(`INSERT INTO cre_evidence_sources
+    (organization_id,client_program_id,source_type,title,checksum,is_current,extraction_status,extracted_text,provenance,metadata)
+    VALUES ($1,$2,'client_document','Selected protocol.pdf',$3,true,'extracted','Retained selected protocol facts','{}'::jsonb,'{}'::jsonb) RETURNING id`,
+  [ORG, programId, 'f'.repeat(64)]);
+  return result.rows[0].id;
+}
+const selected = (sourceIds: number[]) => searchDataRoom(ORG,
+  parseDataRoomQuery(PROGRAM, { sourceIds: sourceIds.join(',') }), { userId: USER });
+
+describe('exact selected sources use canonical admission without refreshing the room', () => {
+  it('admits and projects only requested identities despite an unrelated stale native record', async () => {
+    await catalogue();
+    const id = await capturedFile(); await capturedFile();
+    await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]);
+    const before = await storedSources(); h.collect.mockClear(); h.authorize.mockClear(); h.query.mockClear(); queryTrace = [];
+    const result = await selected([id]);
+    expect(result).toMatchObject({ total: 1, selection: { scope: 'verified-accessible-sources', sourceIds: [id] }, sources: [{ id, checksum: 'f'.repeat(64) }] });
+    expect(result.sources).toHaveLength(1);
+    expect(h.collect).not.toHaveBeenCalled();
+    expect(h.authorize).not.toHaveBeenCalled();
+    expect(queryTrace).not.toContain('BEGIN');
+    expect(await storedSources()).toEqual(before);
+    const admissionReads = h.query.mock.calls.filter(([sql]) => sql.includes('($2::int[] IS NULL OR s.id=ANY($2::int[]))'));
+    expect(admissionReads.length).toBeGreaterThanOrEqual(2);
+    for (const [, args] of admissionReads) expect(args).toEqual([ORG, [id], PROGRAM]);
+    const projected = h.query.mock.calls.find(([sql]) => sql.includes('clock_timestamp() AS processing_observed_at'));
+    expect(projected?.[0]).toContain('s.id=ANY(');
+    expect(projected?.[1]).toContainEqual([id]);
+  });
+
+  it('keeps selected retained native text readable without an original binary', async () => {
+    const captured = await catalogue(); const id = captured.sources[0].id;
+    const before = await storedSources(); queryTrace = [];
+    const result = await selected([id]);
+    expect(result).toMatchObject({ total: 1, selection: { scope: 'verified-accessible-sources', sourceIds: [id] },
+      sources: [{ id, dataEligible: true, textAvailable: true, originalFileAvailable: false }] });
+    expect(queryTrace).not.toContain('BEGIN');
+    expect(await storedSources()).toEqual(before);
+  });
+
+  it('refuses a missing member instead of attesting the readable subset', async () => {
+    const id = await capturedFile();
+    await expect(selected([id, 2147483647])).rejects.toMatchObject({ status: 404, code: 'SOURCE_NOT_FOUND' });
+  });
+
+  it('refuses a selected identity recorded under a different readable project', async () => {
+    const id = await capturedFile(SIBLING);
+    await expect(selected([id])).rejects.toMatchObject({ status: 404, code: 'SOURCE_NOT_FOUND' });
+  });
+
+  it('cannot attest an exact selection without an admitted actor', async () => {
+    const id = await capturedFile();
+    await expect(searchDataRoom(ORG, parseDataRoomQuery(PROGRAM, { sourceIds: String(id) }))).rejects.toBeDefined();
+  });
+
+  it('refuses a stale selected native title without silently recapturing its successor', async () => {
+    const captured = await catalogue(); const id = captured.sources[0].id;
+    const collect = h.collect.getMockImplementation()!;
+    h.collect.mockImplementation(async (...args: unknown[]) => (await collect(...args)).map((record: NativeRecordSnapshot) => ({ ...record, title: 'Renamed controlled procedure' })));
+    const before = await storedSources(); queryTrace = [];
+    await expect(selected([id])).rejects.toMatchObject({ status: 409, code: 'NATIVE_SOURCE_CHANGED' });
+    expect(queryTrace).not.toContain('BEGIN');
+    expect(await storedSources()).toEqual(before);
+  });
+
+  it('retains the explicitly selected historical capture after a native successor is recorded', async () => {
+    const captured = await catalogue(); const id = captured.sources[0].id;
+    await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]); await catalogue();
+    const result = await selected([id]);
+    expect(result).toMatchObject({ total: 1, selection: { scope: 'verified-accessible-sources', sourceIds: [id] }, sources: [{ id, isCurrent: false }] });
+    expect(result.sources).toHaveLength(1);
+  });
+});
+
+describe('exact source responses keep their final admission and row-identity fences', () => {
+  it('refuses a selected source removed after projection rather than publish its old identity', async () => {
+    const id = await capturedFile();
+    afterPage(async () => { await pg.query('DELETE FROM cre_evidence_sources WHERE id=$1', [id]); });
+    await expect(selected([id])).rejects.toMatchObject({ status: 503, code: 'SOURCE_READ_ACCESS_CHANGED' });
+  });
+
+  it('refuses a selected native record changed after projection', async () => {
+    const captured = await catalogue(); const id = captured.sources[0].id;
+    afterPage(async () => { await pg.query('UPDATE quality_fixture_state SET content=$1 WHERE id=9', [CHANGED]); });
+    await expect(selected([id])).rejects.toMatchObject({ status: 503, code: 'SOURCE_READ_ACCESS_CHANGED' });
+  });
+
+  it('refuses a membership revoked after projection', async () => {
+    const id = await capturedFile();
+    afterPage(async () => { await pg.query('DELETE FROM organization_users WHERE organization_id=$1 AND user_id=$2', [ORG, USER]); });
+    try { await expect(selected([id])).rejects.toMatchObject({ status: 403 }); }
+    finally { await pg.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, USER]); }
+  });
+
+  it.each(['missing', 'duplicate', 'unrelated', 'wrong-project'])('refuses a malformed SQL projection with a %s row', async kind => {
+    const first = await capturedFile(); const second = await capturedFile();
+    const query = h.query.getMockImplementation()!;
+    h.query.mockImplementation(async (sql: string, args?: unknown[]) => {
+      const result = await query(sql, args);
+      if (!sql.includes('clock_timestamp() AS processing_observed_at')) return result;
+      const rows = result.rows.filter((row: { id: number }) => row.id === first || row.id === second);
+      if (kind === 'missing') return { ...result, rows: rows.slice(0, 1) };
+      if (kind === 'duplicate') return { ...result, rows: [rows[0], rows[0]] };
+      return { ...result, rows: [rows[0], { ...rows[1], ...(kind === 'unrelated' ? { id: 2147483647 } : { client_program_id: SIBLING }) }] };
+    });
+    await expect(selected([first, second])).rejects.toMatchObject({ status: 503 });
   });
 });

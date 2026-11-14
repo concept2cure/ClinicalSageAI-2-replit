@@ -1,0 +1,26 @@
+{
+  "startedAt": "2026-11-14T00:16:10.421191+00:00",
+  "elapsedSeconds": 2.888,
+  "argv": [
+    "/workspace/scratch/node22/bin/node",
+    "node_modules/eslint/bin/eslint.js",
+    "server/routes/c2c/projects.ts",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts"
+  ],
+  "exitCode": 0,
+  "sourceDrift": [],
+  "inputs": "server-green-inputs.json",
+  "inputCount": 8,
+  "executionInputs": {
+    "docs/evidence/F1/2026-11-14-project-source-selection/run.py": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+    "node_modules/eslint/bin/eslint.js": "bb07a179294caee1175397035fef38347782cb8fbf00356ca8c6fd2c87a989fa"
+  },
+  "executionInputDrift": [],
+  "harnessSha256": "3f9d96376a08332bd0af8a7ddab71398a5937c991c4846c1157612491ead3927",
+  "output": "server-lint.txt.gz",
+  "outputSha256": "4e06cfa2307e3026c14354b3b83e5a483caa6ed52280b7beead0a628744486db",
+  "rawLogRetainedPrivately": true,
+  "outputRedacted": false
+}

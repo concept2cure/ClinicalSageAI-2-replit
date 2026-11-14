@@ -22,14 +22,21 @@ import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/re
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
    no AuthProvider mounted, the real useAuth throws before Project home renders. */
-vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null }) }));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual, useAuth: () => ({ user: null }), useAuthUser: () => actual.authService.getUser() };
+});
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+vi.mock('@/contexts/TenantContext', () => ({
+  useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }),
+}));
 
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
+import { authService, type AuthUser } from '@/services/portal/authService';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 
@@ -85,7 +92,7 @@ function mockApi(sourcesResponse: (url: string) => Response) {
 }
 
 afterEach(() => {
-  cleanup();
+  cleanup(); authService.endSession(null);
   delete (window as any).C2C_PROJECT;
 });
 beforeEach(() => {
@@ -308,9 +315,12 @@ describe('ProjectHome — pinning sources as context', () => {
   });
 
   it('hands the pinned set to AnA', async () => {
-    mockApi(() =>
+    const user = { id: '7', organizationId: '4', email: 'synthetic@example.test', roles: ['member'], permissions: [] } as unknown as AuthUser;
+    authService.setToken(`fixture.${btoa(JSON.stringify({ userId: 7, organizationId: 4 }))}.fixture`, user, 'fixture-refresh');
+    mockApi(url =>
       ok({
         projectId: PID,
+        ...(url.includes('sourceIds=') ? { selection: { scope: 'verified-accessible-sources', sourceIds: [11, 22] } } : {}),
         sources: [
           source({ id: 11, title: 'a.pdf' }),
           source({ id: 22, title: 'b.pdf' }),
@@ -328,7 +338,7 @@ describe('ProjectHome — pinning sources as context', () => {
     const draft = await screen.findByText(/Draft with 2 pinned sources/);
     fireEvent.click(draft);
 
-    expect((window as any).C2C_SOURCE_PINS).toEqual(['11', '22']);
+    await waitFor(() => expect((window as any).C2C_SOURCE_PINS).toEqual(['11', '22']));
     expect(p.onAsk).toHaveBeenCalledTimes(1);
   });
 
