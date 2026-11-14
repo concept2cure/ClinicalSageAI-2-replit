@@ -974,10 +974,13 @@ export function savedSectionName(section: { code?: string | null; title?: string
 export function filingCommitNote(filing: unknown): string {
   if (!filing || typeof filing !== 'object') return '';
   const f = filing as { committed?: unknown; reason?: unknown; partOf?: unknown; outsideFiling?: unknown };
-  /* A Quality controlled document is approved and released in Quality and is never part of a filing, so
-     its save has nothing to say about one (it read "saved in the editor but not in the filing" on every
-     save of an SOP, 2026-11-12). The server says which documents these are. */
-  if (f.committed === false && f.outsideFiling === 'controlled-document') return '';
+  /* A document with no filing for its text to reach has nothing to report about one. A Quality controlled
+     document is approved and released in Quality and is never part of a filing; a working copy bound to
+     no filing (every template copy starts so) says "Unbound working copy" on the page beside it. Each
+     read "saved in the editor but not in the filing" on every save, as if the save had half failed
+     (2026-11-12). The server names both states; a bound document whose text did not reach its filing
+     carries neither, and still says so below. */
+  if (f.committed === false && (f.outsideFiling === 'controlled-document' || f.outsideFiling === 'unbound-working-copy')) return '';
   /* QA 2026-10-08, walk 2: a section under an undivided outline node (2.5.1 of
      the 2.5 Clinical Overview) goes into that node with the document's other
      sections there; the server names the node as `partOf`. */
@@ -4587,6 +4590,9 @@ export function DocumentWorkbench({
               icon={I.alertTriangle}
               title="Couldn’t load documents"
               hint="The document list didn’t respond. Sign in to your tenant and retry."
+              /* The sentence said "retry" and offered nothing to press. With a
+                 document pinned this list is the only place the failure shows. */
+              retry={() => void loadDocs()}
             />
           ) : docs.length === 0 ? (
             <>
@@ -5237,6 +5243,32 @@ export function DocumentWorkbench({
                     offered. When there are no documents at all this now offers
                     the action; when there IS a document open, "choose a
                     section" is genuinely correct — the tree beside it is full. */}
+                {/* "Nothing to edit yet" is a statement that the project has no
+                    documents, so it waits for the list to answer. This keyed on
+                    `docs.length` alone: while the list was being read, or after
+                    the read had failed, it invited a first document over a list
+                    nobody had seen, and with a stage filter on it said the same
+                    about a project with documents at other stages. The outline
+                    beside it already told these apart (the CSR lane's ED-01,
+                    2026-11-12). A failed read offers recovery and no create. */}
+                {!activeDoc && docsState === 'loading' ? (
+                  <EmptyState busy icon={I.fileText} title="Loading documents…" />
+                ) : !activeDoc && docsState === 'error' ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn’t load documents"
+                    hint="The document list did not answer, so nothing is shown or offered here."
+                    retry={() => void loadDocs()}
+                  />
+                ) : !activeDoc && docs.length === 0 && status !== 'all' ? (
+                  <EmptyState
+                    icon={I.fileText}
+                    title="Nothing at this stage"
+                    hint={`This project has no ${status.replace('_', ' ')} documents. Clear the filter to see the rest.`}
+                    action={{ label: 'Show all documents', onAct: () => requestLeave({ kind: 'filter', status: 'all' }) }}
+                  />
+                ) : (
                 <EmptyState
                   icon={I.fileText}
                   title={activeDoc ? 'Select a section to edit' : docs.length === 0 ? 'Nothing to edit yet' : 'Select a document'}
@@ -5250,6 +5282,7 @@ export function DocumentWorkbench({
                     ? 'Every save records an auditable revision (21 CFR Part 11)'
                     : undefined}
                 />
+                )}
               </div>
             ) : (
               <>
