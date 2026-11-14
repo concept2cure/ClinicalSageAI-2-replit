@@ -5,6 +5,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const { createHash }=require('node:crypto');
 const out=__dirname;
+const outputPrefix=(process.env.C2C_REVIEWER_OUTPUT_PREFIX??'').replace(/[^A-Za-z0-9_-]/g,'_').slice(0,64);
+const publicPath=file=>path.join(out,outputPrefix+file);
 const downloads=path.join('/workspace/scratch/c2c-demo-downloads',new Date().toISOString().replace(/[:.]/g,'-'));
 const measurements={sections:null,document:null,exports:[],failures:[]};
 
@@ -110,7 +112,7 @@ async function measureWorkingCopy(page,format) {
  page.on('pageerror',e=>errors.push(e.message.slice(0,300)));
  page.on('response',r=>{if(r.status()>=400&&new URL(r.url()).pathname.startsWith('/api/'))failed.push({path:new URL(r.url()).pathname,status:r.status()})});
  page.on('requestfailed',request=>{const failure=classifyRequestFailure(request);if(failure.path.startsWith('/api/'))failedRequests.push(failure);});
- async function step(name,shot){steps.push({name,url:page.url(),text:(await page.locator('main').innerText()).slice(0,18000)});console.info(name);if(shot)await page.screenshot({path:out+'/'+shot});}
+ async function step(name,shot){steps.push({name,url:page.url(),text:(await page.locator('main').innerText()).slice(0,18000)});console.info(name);if(shot)await page.screenshot({path:publicPath(shot)});}
  try{
  await page.goto((process.argv[2]||'http://127.0.0.1:5000')+'/concept2cure/login',{waitUntil:'domcontentloaded',timeout:120000});
  const chooser=page.getByRole('combobox',{name:'Demo person'});await chooser.waitFor();
@@ -154,9 +156,9 @@ async function measureWorkingCopy(page,format) {
  await scientific.getByText('2. Each figure in the saved text',{exact:true}).waitFor();
  steps.push({name:'scientific-preview',status:response.status(),body:await response.json()});
  await step('review-preview','reviewer-scientific-preview-1440.png');
- await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Collapse',exact:true}).click();steps.push({name:'mobile',viewport:390,bodyWidth:await page.evaluate(()=>document.documentElement.scrollWidth),dialogWidth:await dialog.evaluate(el=>Math.round(el.getBoundingClientRect().width))});await page.screenshot({path:out+'/reviewer-scientific-preview-390.png'});
+ await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'Collapse',exact:true}).click();steps.push({name:'mobile',viewport:390,bodyWidth:await page.evaluate(()=>document.documentElement.scrollWidth),dialogWidth:await dialog.evaluate(el=>Math.round(el.getBoundingClientRect().width))});await page.screenshot({path:publicPath('reviewer-scientific-preview-390.png')});
  console.info('scientific preview completed');
- }catch(e){steps.push({name:'failure',message:e.message,url:page.url(),text:(await page.locator('body').innerText()).slice(0,20000),buttons:await page.getByRole('button').allTextContents()});await page.screenshot({path:out+'/browser-failure.png'});process.exitCode=1;}
+ }catch(e){steps.push({name:'failure',message:e.message,url:page.url(),text:(await page.locator('body').innerText()).slice(0,20000),buttons:await page.getByRole('button').allTextContents()});await page.screenshot({path:publicPath('browser-failure.png')});process.exitCode=1;}
  if(errors.length||failed.length||failedRequests.some(row=>row.classification==='transport-failure')||measurements.failures.length)process.exitCode=1;
- fs.writeFileSync(out+'/reviewer-current-walk.json',JSON.stringify({scope:'Existing synthetic CSR, uncontrolled working copies and scientific preview. No review decision, freeze, signature or filing submitted; no live generation initiated.',steps,errors,failed,failedRequests,measurements},null,2));await browser.close();
+ fs.writeFileSync(publicPath('reviewer-current-walk.json'),JSON.stringify({scope:'Existing synthetic CSR, uncontrolled working copies and scientific preview. No review decision, freeze, signature or filing submitted; no live generation initiated.',steps,errors,failed,failedRequests,measurements},null,2));await browser.close();
 })().catch(e=>{console.error(e.message);process.exit(1)});

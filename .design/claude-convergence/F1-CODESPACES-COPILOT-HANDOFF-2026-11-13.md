@@ -25,6 +25,11 @@ No new screen, editor, route, table, service, model or deployment is proposed.
 - `scripts/demo/launch-demo/seed.mjs` and its existing biotech/device/Lumen packs
   supply fictional projects, records and reviewable CSRs through product APIs.
   Existing scientific review, signature, model and filing gates remain enforced.
+- `scripts/cre/fetch-cdisc-pilot-adam.mjs` already downloads and verifies the
+  attributed CDISC pilot outside Git. The managed verifier's proxy-only egress
+  needs an explicit existing `undici` environment-proxy agent with image Node
+  22.16.0; the packet retains this download-process preload and its measured
+  diagnostic. The existing fetch, browser preparation and startup are reused.
 - `docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md` is the operator's
   current Codespaces guide. Today's upstream evidence includes a native
   bookworm setup/start and cached restart; this continuation must identify

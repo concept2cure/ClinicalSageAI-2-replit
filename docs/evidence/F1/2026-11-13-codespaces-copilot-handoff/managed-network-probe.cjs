@@ -1,0 +1,5 @@
+// Retained source of the diagnostic first executed through node stdin.
+const {EnvHttpProxyAgent,setGlobalDispatcher}=require('undici');
+const url='https://raw.githubusercontent.com/cdisc-org/sdtm-adam-pilot-project/master/updated-pilot-submission-package/900172/m5/datasets/cdiscpilot01/analysis/adam/datasets/adsl.xpt';
+async function probe(label){try{const r=await fetch(url,{method:'HEAD',signal:AbortSignal.timeout(15000)});console.info(JSON.stringify({label,status:r.status}));}catch(error){console.info(JSON.stringify({label,errorName:error.name,causeCode:error.cause?.code??null}));}}
+(async()=>{console.info(JSON.stringify({node:process.version,httpsProxyPresent:Boolean(process.env.HTTPS_PROXY),extraCaPresent:Boolean(process.env.NODE_EXTRA_CA_CERTS),envProxyAgentAvailable:typeof EnvHttpProxyAgent==='function'}));await probe('native-fetch');setGlobalDispatcher(new EnvHttpProxyAgent());await probe('explicit-env-proxy');})().catch(error=>{console.error(JSON.stringify({errorName:error.name,causeCode:error.cause?.code??null}));process.exitCode=1;});
