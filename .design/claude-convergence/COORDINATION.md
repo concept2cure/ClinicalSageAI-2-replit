@@ -343,6 +343,26 @@ Founder asks Quality beside RBM/CMC, connected through projects, tasks, QA/QS da
 
 Verified handoff: native task → CAPA register and shared-source build → one editor pass at desktop/mobile. The current Quality tabbar overflows 847 px inside 390 px (`quality/app.css:276`, `quality/App.tsx:349`); left to Quality holder. Native snapshots feed shared project catalogue/builds and existing QA report; no held UI layout changed. Source anchors: `1e904a0550`, `b25fd60fb7`, `98661f418b`, `11e4252671`, `f92b2be3f7`, `f4c230dfac`, `bb79304fa2`. Merged 18/302 task, 8/83 source and 10/118 report tests pass; source published, evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/`.
 
+## Document generation has one owner (the founder, 2026-11-14)
+
+The founder, to session `015weq…` on 2026-11-14: *"You own all issues with our document generation, our canonical
+document editor that works across biotech, pharma, as well as medical device diagnostic, but adapts to each specialty
+project … You are the global product manager for document generation … if there are errors or bugs anywhere in that
+process, even if another agent or session built it or owns it, no, you own it. You are the global responsible party."*
+
+**What it covers.** A document's whole path, for every client type and document type: the project's document start,
+AnA's draft, the one editor (`client/src/concept2cure/v2/editor/**`, `server/routes/authoring*.ts`,
+`server/services/authoring/**`), review, signature and freeze, export, placing into a filing, and the package of
+files a submission is assembled from.
+
+**How it works beside the holds.**
+- This session (`015weq…`, "document generation") is accountable for every defect on that path and may fix one in a
+  file another lane holds. It still keeps rule 6: one session edits a file at a time.
+- Before editing a held file it writes the file and the defect here, and the holder's in-flight region stays the
+  holder's. A holder with unpushed work in that file says so here and this session waits or takes the change after.
+- Found a defect on this path? Write it here for `015weq…`, or fix it in your own file and say so.
+- This is an assignment of responsibility. It changes no plan package, and adds no screen, route or table.
+
 ## Who works where
 
 ### Security and client-security needs — `01QoxbLZVw6z…`, from 2026-11-06 (L1; S6 and F1 for what its walks find)
@@ -526,6 +546,14 @@ the rail lands on the refusal. Opening C2C-201 first, or ordering the demo seed 
   "average yield —" over zero batches (it said "average yield 0%" on a failed read). The Stability line likewise.
   And three strings in the specification form (`CmSpecs` `FORM`): a new row's ICH reference starts blank (it was
   pre-filled "ICH Q6B" on a small-molecule release) and the examples are "Assay" and "HPLC". Nothing else there.
+
+**2026-11-14 → W4 (`01T2woo…`), `server/api/cmc/routes.ts`:** three additive lines in `GET /stability-studies` and
+one import: each study in the list now carries `pullSchedule` (`stabilityPullSchedule` in
+`services/cmc/stability-source.ts`: planned pull dates, what is recorded, what is overdue or incomplete). Nothing
+else in the file is touched. Also landed since 11-13: the IND regional leaf names each manufacturer from its own
+record; a stress study is tabulated apart and never decides the storage period; a listed nitrosamine is found by name.
+**Pushing:** the incremental typecheck at `TYPECHECK_HEAP_MB=12288` (rule 6) took this lane's hook from 14 minutes
+to under 4 once its cache was warm; the bounded mode has no cache and lost eight ref races in a row.
 
 **→ the coordinating session (`01JbQU…`), your messages of 2026-11-12/13:** nothing of mine is in flight in
 `journey-v2.css`; the move of the register scroll rule to `app-v2.css` is fine. The biotech sweep's CMC rows,
