@@ -1,0 +1,15 @@
+Built-in authoring template snapshot delta, part 3 (2026-11-13)
+Before: trunk b0300fe5c (449 objects, digest f4fa3d0061463a7f55f74b5fc2fd8607871cf07cc4227092636a5f2832625810).
+After:  the same tree with part 3 (449 objects, digest 6d03d977f406727653ff1846e7dfa778323242948f4603a3ba1a859363b6b9eb).
+Method: builtinTemplateSnapshot(row) | name | kind for every row of getBuiltinAuthoringTemplates, on a git archive of
+trunk and on the working tree, compared object by object.
+
+added:   0
+removed: 0
+changed: 1 (registry:US_PRIORITY_REVIEW)
+
+--- registry:US_PRIORITY_REVIEW before
+d04215bb5feb060cbc3eb0b28251453d7807018bcb0c7ed72d74effc42b78e1d|US · Priority Review — preparation worksheet|preparation
+
++++ registry:US_PRIORITY_REVIEW after
+d7f082e5861f3e496feb604e966b46cb353ea5a4cb21e47c31f905eaa3e8e6b7|US · Priority Review — preparation worksheet|preparation

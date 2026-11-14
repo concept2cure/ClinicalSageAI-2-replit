@@ -1,0 +1,13 @@
+Part 3, neighbourhood: 195 test files that import or name the changed modules, on trunk b0300fe5c with part 3.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 193 passed (195)
+      Tests  1 failed | 4164 passed | 31 skipped (4196)
+vitest exit 1
+
+Failing (both red on an unmodified archive of b0300fe5c too, eTMF lane 2dc105c1b / 790706d7c):
+ FAIL  server/services/__tests__/vault-taxonomy-etmf.test.ts > the eTMF screen and the catalog > the eTMF screen takes artifact names from the catalog, not from fixtures
+ FAIL  tests/schema-contract/catalog-module-claims.contract.test.ts [ tests/schema-contract/catalog-module-claims.contract.test.ts ]
+
+Re-run on trunk d44d5313d after the fast-forward: the part-3 test, the class-pack contract, the corrections scope,
+the cross-sector digest, registryPickerOffers and projectBootstrapFromRegistry: 6 files, 128 of 128.
+ci:migration-set-order OK (475); ci:migration-drop-safety OK (475).
