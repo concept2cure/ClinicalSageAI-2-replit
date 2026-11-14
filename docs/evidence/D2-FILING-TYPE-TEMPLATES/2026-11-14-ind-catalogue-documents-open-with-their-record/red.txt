@@ -1,0 +1,14 @@
+Item 15 red: the new test on trunk 462855c80 before the change. 4 of 6 fail on assertions; both controls pass.
+
+× server/services/authoring/__tests__/ind-catalogue-documents-open-with-their-record.test.ts > an IND catalogue document opens with the parts its record already has > the Pre-IND briefing document opens with the Pre-IND meeting r
+→ expected [ 'Pre-IND briefing document' ] to deeply equal [ …(8) ]
+✓ server/services/authoring/__tests__/ind-catalogue-documents-open-with-their-record.test.ts > an IND catalogue document opens with the parts its record already has > the SAP row keeps its parts exactly (control) 63ms
+× server/services/authoring/__tests__/ind-catalogue-documents-open-with-their-record.test.ts > an IND catalogue document opens with the parts its record already has > phase3.drug_substance:subtask:manufacture is judged on its own
+→ expected 'Manufacture — preparation worksheet' to be '3.2.S.2 · Manufacture' // Object.is equality
+× server/services/authoring/__tests__/ind-catalogue-documents-open-with-their-record.test.ts > an IND catalogue document opens with the parts its record already has > phase3.drug_product:subtask:pd_manufacture is judged on its ow
+→ expected 'Manufacture — preparation worksheet' to be '3.2.P.3 · Manufacture' // Object.is equality
+× server/services/authoring/__tests__/ind-catalogue-documents-open-with-their-record.test.ts > an IND catalogue document opens with the parts its record already has > no two IND catalogue documents share a name with different par
+→ expected [ …(2) ] to deeply equal [ …(2) ]
+✓ server/services/authoring/__tests__/ind-catalogue-documents-open-with-their-record.test.ts > an IND catalogue document opens with the parts its record already has > a data table and a signed form stay worksheets (controls) 63m
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+Tests  4 failed | 2 passed (6)

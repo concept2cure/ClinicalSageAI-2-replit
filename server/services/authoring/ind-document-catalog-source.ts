@@ -46,9 +46,13 @@ function subtaskDeliverable(subtask: SubTask, base: DeliverableContext, sections
   const normalized = normalizeCtdCode(code);
   const sectionCodes = code ? [code] : base.sectionCodes;
   const artifactTypes = subtask.documentBinding?.artifactTypes ?? base.artifactTypes;
+  // A subtask bound to its own CTD section is judged on that section and its own artifacts, not on every section of
+  // its parent task: 3.2.S.2 was a worksheet because the same task holds 3.2.S.4.4 batch analyses (F1, 2026-11-14).
+  const judgedTask = code ? '' : base.taskId;
+  const judgedArtifacts = code ? subtask.documentBinding?.artifactTypes ?? [] : artifactTypes;
   return [{ ...base, id: `${base.taskId}:subtask:${subtask.id}`, title,
     sectionCodes, module: normalized ? `M${normalized[0]}` : base.module, artifactTypes,
-    aiDraftable: narrativeDraftable(title, base.taskId, sectionCodes, artifactTypes, sections) }];
+    aiDraftable: narrativeDraftable(title, judgedTask, sectionCodes, judgedArtifacts, sections) }];
 }
 
 function taskDeliverables(task: PyramidTask, phase: IndDocumentCatalogPhase | undefined, sections: INDSection[]): IndDocumentCatalogDeliverable[] {

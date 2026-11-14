@@ -1,0 +1,98 @@
+Built-in authoring template snapshot delta, item 15 (2026-11-14)
+Before: trunk 462855c80. After: the same tree with item 15. 449 objects both.
+added: 0  removed: 0  changed: 19
+
+--- phase2.briefing_package:deliverable:0
+7718cb74ddce4df2ee4a2561905e4735aebc2543795f167da807fff975a701ac|Pre-IND briefing document|narrative
++++ phase2.briefing_package:deliverable:0
+744a9955c18ab26174c7997fa99bfb97bcb7e6fbe99be854e09d76346c930b45|Pre-IND briefing document|narrative
+
+--- phase3.drug_substance:subtask:general_info
+c24724c9096cd0cce552e746811885495ef202e5edb0fe7c15d1a3997f0907c7|General Information — preparation worksheet|preparation
++++ phase3.drug_substance:subtask:general_info
+a6b1f900704b235e43ed9a802c81ecdac37b1d14b9c6e99d69c3141937b63621|3.2.S.1 · General Information|narrative
+
+--- phase3.drug_substance:subtask:manufacture
+f8b35afb823fc3f03d2dbb4a05b399da77e35b053baed8c44dc165817b2a0ce1|Manufacture — preparation worksheet|preparation
++++ phase3.drug_substance:subtask:manufacture
+e729f3dfc38a8342725ceb9a029e3fe680fa15c039a35559fca5583df4348aab|3.2.S.2 · Manufacture|narrative
+
+--- phase3.drug_substance:subtask:characterisation
+b451250c39c41c122a245672856f90a58e867a820b01437a808cc5fbd6d556db|Characterisation — preparation worksheet|preparation
++++ phase3.drug_substance:subtask:characterisation
+3c4ec322b247712728c7d0c815b0391b58d02f76742dd5a050bd2fb57df94777|Characterisation|narrative
+
+--- phase3.drug_substance:subtask:controls
+2c7f83d482c5fcdc4fe841f82f6a6e31e986900daa38a91cd36ac416571492d6|Control of Drug Substance — preparation worksheet|preparation
++++ phase3.drug_substance:subtask:controls
+ce5a5ee3d8dd8b3e41634d45b9934b65bb8d952c269400c772b1009722419ca6|3.2.S.4 · Control of Drug Substance|narrative
+
+--- phase3.drug_substance:subtask:ref_standards
+9cda9c5a3e3cda4742493682950c0deff6ce0252d7843fa4aa3d51e838879aa3|Reference Standards — preparation worksheet|preparation
++++ phase3.drug_substance:subtask:ref_standards
+467c721e4792dcd79030d03ecfcf2dde6c25434b81d573f0035131a2eaf4ba43|3.2.S.5 · Reference Standards — preparation worksheet|preparation
+
+--- phase3.drug_substance:subtask:stability
+2ccd25da495f8b338413e9b6549cc57f45cba7ddd13064dc17adbee81ab4136d|Stability — preparation worksheet|preparation
++++ phase3.drug_substance:subtask:stability
+de55d7d4cfca0ff8ce35160cf47e9d9b5da43b979c9c4adbd5aa8fc358644e4e|3.2.S.7 · Stability|narrative
+
+--- phase3.drug_product:subtask:composition
+c52abbdde2c9c83c4c833d5f4a92173c315d2f09fdb76d0e6d2a8e7d83fd35a4|Description and Composition — preparation worksheet|preparation
++++ phase3.drug_product:subtask:composition
+0de125ee67fd1279cd6f34626f6d1393abaa5e1eb0d8c06c7c8a9857236cfacc|3.2.P.1 · Description and Composition|narrative
+
+--- phase3.drug_product:subtask:pd_development
+f6543df9a59c5541a7aa1dbc2e747d3d624b8dfdbbac5a063535e27c4b819453|Pharmaceutical Development — preparation worksheet|preparation
++++ phase3.drug_product:subtask:pd_development
+9624cc4f3a8cd673e108c5ec71604f7453de4e85e018db42ca1d019856c2fe3d|3.2.P.2 · Pharmaceutical Development|narrative
+
+--- phase3.drug_product:subtask:pd_manufacture
+6f7bb231e4a985fa840a0c3c00678dc8e6389f0a303807a9a81e1c0b8350a247|Manufacture — preparation worksheet|preparation
++++ phase3.drug_product:subtask:pd_manufacture
+4983de5eaba2add67adf4f7d2e09d0ffbb42db2919eceeebf818e23086e39f0f|3.2.P.3 · Manufacture|narrative
+
+--- phase3.drug_product:subtask:pd_controls
+aa3bb0bba320d6f59c54384c96552624e0020d93aed33977bf0b9ca60806e6e2|Control of Drug Product — preparation worksheet|preparation
++++ phase3.drug_product:subtask:pd_controls
+03e331f1ed4ddb667e5b2302b686d16acfde9c915929e44e7670033c8fa83580|3.2.P.5 · Control of Drug Product|narrative
+
+--- phase3.drug_product:subtask:container_closure
+9c7d77304d4a111d18832bddd1bc4c99fefb8020067057f12b4a6ff4bf4d4926|Container Closure System — preparation worksheet|preparation
++++ phase3.drug_product:subtask:container_closure
+86ad2e4a838b62117c029ea1fec9b77a6dccc08b8a01772a6b681a96fafdd292|3.2.P.7 · Container Closure System — preparation worksheet|preparation
+
+--- phase4.pharmacology:subtask:primary_pd
+0c33abddd50b69add7d34835ca0bf30627416956a11465e168a49c47476514c2|Primary Pharmacodynamics — preparation worksheet|preparation
++++ phase4.pharmacology:subtask:primary_pd
+6ddeaa7f5216eed2e08fe3c2f402318d8caa7543bbad7be58723a0311d7d094b|4.2.1.1 · Primary Pharmacodynamics — preparation worksheet|preparation
+
+--- phase4.pharmacology:subtask:secondary_pd
+d79008ae7f4f92cfc2401c4bda1938e81045cb758c22abd598e4960c634ddd27|Secondary Pharmacodynamics — preparation worksheet|preparation
++++ phase4.pharmacology:subtask:secondary_pd
+e08924236361c5be694abaa58a214388e54914917dca69c1959c27d8499e4b1a|4.2.1.2 · Secondary Pharmacodynamics — preparation worksheet|preparation
+
+--- phase4.pharmacology:subtask:safety_pharm
+4763461c1c233657bac840613bf7110cc4bbe8589e307609cdcc5c6bcdb0d0e8|Safety Pharmacology — preparation worksheet|preparation
++++ phase4.pharmacology:subtask:safety_pharm
+0db1764aca59fe881a5168f94d5f603b0dcd50634607ef942545f08edacefd54|4.2.1.3 · Safety Pharmacology — preparation worksheet|preparation
+
+--- phase4.toxicology:subtask:single_dose
+a7ddeb5a787bd69bca4a7f3646ad8c7bfa81bc2bf09cf19112eecd1a32f765a1|Single-Dose Toxicity — preparation worksheet|preparation
++++ phase4.toxicology:subtask:single_dose
+082aef799e8a2d3d64399b905f81cbb9e0ad7b4a70c868d528bc87806c187e62|4.2.3.1 · Single-Dose Toxicity — preparation worksheet|preparation
+
+--- phase4.toxicology:subtask:repeat_dose
+240eeda3364f3dd9890be616ec07e3c72d7fd74e8c9de176c6967db4148387f5|Repeat-Dose Toxicity — preparation worksheet|preparation
++++ phase4.toxicology:subtask:repeat_dose
+1f8be77343623139a48d85f7bbae239b8d3789de145e2a9791642e776fa88411|4.2.3.2 · Repeat-Dose Toxicity — preparation worksheet|preparation
+
+--- phase4.toxicology:subtask:genotox
+f53a6c298da35278cbac2c4d2863d1f70e6bb5afc4dcbb4f2e7a4ebbabdf34a3|Genotoxicity — preparation worksheet|preparation
++++ phase4.toxicology:subtask:genotox
+6836f4f4e62f93b9fbec1c30b8589a90dbcdb826c0d6977e5f6b104b29bee110|4.2.3.3 · Genotoxicity — preparation worksheet|preparation
+
+--- phase4.toxicology:subtask:local_tol
+390685498f5e78dd83863f488570b3a5ade039abe42fb543cda4764e8fbf5b79|Local Tolerance — preparation worksheet|preparation
++++ phase4.toxicology:subtask:local_tol
+de9806c3d5e2c7d09dcbf1655cb49666a0203cab0183698ea2dc967ef07053e7|4.2.3.6 · Local Tolerance — preparation worksheet|preparation

@@ -59,9 +59,15 @@ describe('existing internal planning outlines reach the same builtin catalog', (
     // significant improvement in safety or effectiveness, where the supporting data sit in the application)
     // in place of the shared Breakthrough/RMAT one. Was f4fa3d0061463a7f55f74b5fc2fd8607871cf07cc4227092636a5f2832625810.
     // Per-object delta: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-12-fda-filings-not-an-nda/part3-builtin-snapshot-delta.txt.
+    // Re-recorded 2026-11-14 (F1, sweep item 15): 19 changed and no other, none added or removed. The Pre-IND
+    // briefing document opens with the Pre-IND meeting record's eight parts in place of one empty section, and the 18
+    // IND catalogue subtasks are judged on their own CTD section and named with its code, so each now equals its
+    // section row (3.2.S.2 and 3.2.P.3 were both "Manufacture — preparation worksheet"). The SAP row is unchanged.
+    // Was 6d03d977f406727653ff1846e7dfa778323242948f4603a3ba1a859363b6b9eb.
+    // Per-object delta: docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-11-14-ind-catalogue-documents-open-with-their-record/builtin-snapshot-delta.txt.
     expect(createHash('sha256').update(stableStringify(
       prior.map(template => ({ id: template.id, snapshot: builtinTemplateSnapshot(template) })),
-    )).digest('hex')).toBe('6d03d977f406727653ff1846e7dfa778323242948f4603a3ba1a859363b6b9eb');
+    )).digest('hex')).toBe('5b0679cc028d20e239b752efe70064a7eb6762445ac40dd504cb9c029ba3b286');
   });
 
   it.each(IDS)('reaches %s with its exact source, no filing placement and no authored facts', async id => {
