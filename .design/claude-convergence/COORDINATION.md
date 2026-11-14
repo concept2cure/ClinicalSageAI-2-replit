@@ -1803,3 +1803,16 @@ cached exact-version/health check in the existing local Codespace-image runtime;
 hosted Codespace, Stripe settlement or broader regulatory/commercial acceptance is declared.
 
 Publication request, Codex collaboration-context repair, 2026-11-13 23:10 UTC: two canonical ref races followed every normal gate passing, including full compiler0 and 89 CI gates each time. Under rule6, a 15-minute publication window is requested from the coordinating session. No callable cross-session channel reaches it from this task; no other lane is claimed paused. Ordinary fetch/merge/retry continues, with no force or skipped hooks. Verified source279a6f144, both disjoint canonical billing/activity/connector updates preserved.
+
+
+### Codex CSR medical-writing repair continuation, 2026-11-13 (F1 / W1 / D2)
+
+Current source `841c41466`; inventory `.design/claude-convergence/F1-ANA-CSR-WRITING-2026-11-13.md`, evidence `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Narrow holds end at canonical publication or **2026-11-14 02:37 UTC**, whichever comes first. Existing source only; no other lane is paused. The held draft/accept handler in `server/routes/authoring.router.ts` is excluded.
+
+| Holder | Existing files and bounded scope |
+|---|---|
+| Root | `server/services/ana/statistical-narrator.ts`; only `narrate_statistical_result` handler in `AnaToolExecutor.ts` and `NARRATE_STATISTICAL_RESULT` in `evidence-literature-tool-defs.ts`; focused narrator tests, this entry/design/evidence, integration/Git and sole full compiler |
+| Method worker | `server/services/ana/skills/library/medical-writing.ts`, `clinical.ts`, `server/services/ana/medical-writing.ts`, `server/services/ind/ctd/csr-e3-writing.ts`; existing `server/eval/pq/run-pq.ts` IA preflight remaining-action text and focused tests only |
+| Delivery worker | `server/services/ana/AnaDocumentDraftingService.ts` ordinary CSR writing/manual admission and local explicit manual refusal only; `server/services/authoring/authoring-draft-template.ts` validated drafting context/binding; focused service/template tests only |
+
+Preserve current source/actor/privacy/model/independent-review gates and exact attested derivative payload. No protocol criteria, model registry, qualification approval or UI change. No source branch/worktree or new product owner is created.

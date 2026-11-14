@@ -364,6 +364,7 @@ Selecting a primary or secondary endpoint, deciding how a concept should be meas
 
   skill({
     key: 'clinical.study-report',
+    version: 2,
     name: 'Clinical study reports (ICH E3)',
     description:
       'Writing or reviewing a clinical study report in the ICH E3 structure: synopsis, disposition, efficacy on the pre-specified population, safety by MedDRA SOC and PT, narratives, causality wording, and the consistency checks that keep text, tables and other documents in agreement.',
@@ -405,6 +406,8 @@ Selecting a primary or secondary endpoint, deciding how a concept should be meas
       'check_dossier_consistency',
       'build_abbreviation_list',
       'medical_writing_review',
+      'critique_draft',
+      'verify_revision',
       // Where the report is written (step 12): the canvas and the editor. Pinned
       // here because a method naming a tool the relevance cap dropped cannot be
       // followed (turn-skills.ts toolPins).
@@ -427,13 +430,16 @@ Drafting, structuring or checking a clinical study report for an interventional 
 3. Results sections (E3 2 synopsis, 10 study patients, 11 efficacy, 12 safety, 13 discussion and overall conclusions): call \`get_csr_section_evidence\` before writing a word, with the retained Submission Center run, the study and the E3 heading. Write every figure from its cells, cite the table key and the evidence digest, and keep its limitations. Then pass each figure you wrote back to it as claims with that digest, and correct every figure it reports as not reconciling. If it refuses, say the evidence is unavailable and why; never describe the section as having no data and never supply the figures yourself.
 4. Synopsis (E3 section 2): self-contained and consistent with the body, figure for figure.
 5. Disposition (E3 section 10): account for every participant from screening onward by arm: screen failures where the study records them, randomised, treated, completed and discontinued with reasons. Report protocol deviations and the analysis sets as the SAP defines them.
-6. Efficacy (E3 section 11): the primary analysis on the pre-specified population and estimand, with the sensitivity analyses the SAP planned. Keep pre-specified and post hoc analyses apart. State each result through \`narrate_statistical_result\`, which flags multiplicity and exploratory status.
+6. Efficacy (E3 section 11): the primary analysis on the pre-specified population and estimand, with the sensitivity analyses the SAP planned. Keep pre-specified and post hoc analyses apart. Use \`narrate_statistical_result\` only with its supported analysis context and the recorded hypothesis, method, sidedness, prespecification, significance level and multiplicity information. Non-inferiority, equivalence and Bayesian decisions retain their source-defined margins, uncertainty or posterior criteria; unsupported inference stays descriptive or unassessed, never a superiority p-value decision. Tool wording from as-given figures is not evidence reconciliation.
 7. Safety (E3 section 12): exposure; adverse events by system organ class and preferred term, by arm, with severity and relatedness; deaths, serious adverse events, discontinuations for adverse events and other significant events; laboratory and vital-sign findings. State the MedDRA version once and use it throughout. Code verbatim terms only with \`code_meddra\`; when it reports license_required or no_match, say so and never supply a code.
 8. Narratives: draft each with \`draft_safety_narrative\` from structured case facts, in one order for every narrative: exposure timeline, the event, its management, outcome, causality. Report the missing fields the tool lists; never fill them.
 9. Causality wording attributes the judgement to its assessor: "assessed by the investigator as related", "considered by the sponsor as not related". Never state causality as fact.
 10. Subgroups: present results by age, sex and race where the SAP or E3 calls for it; for a US NDA the integrated summaries present effectiveness and safety by these subgroups (21 CFR 314.50(d)(5)).
-11. Before release: \`check_numerical_integrity\` on the draft, \`reconcile_dossier_numbers\` across protocol, SAP, CSR and Module 2, \`check_dossier_consistency\` against the project, \`build_abbreviation_list\`, and \`medical_writing_review\` (document type csr) for heading coverage. Heading coverage is not completeness.
+11. Before review: \`check_numerical_integrity\` on the draft, \`reconcile_dossier_numbers\` across protocol, SAP, CSR and Module 2, \`check_dossier_consistency\` against the project, \`build_abbreviation_list\`, and \`medical_writing_review\` (document type csr) for heading coverage. Heading coverage is not completeness, scientific review or authority to release.
 12. Write it where the person works on it. A report or sections drafted in the conversation are saved with \`draft_authoring_document\` as a CSR document of the open project (document type ICH_CSR, module M5, one section per E3 heading with its E3 number as the code): the person sees it as a canvas, opens it in the editor, and changes it there, where every change you propose is accepted or refused by a person. First call \`list_authoring_outline\`: when the project already has a CSR document, do not make a second; say which it is and that its sections are drafted in the editor, where "Build from the study's data" fills the results sections from the frozen study data. Saving a draft is not approving it.
+
+## Compose and revise
+Author in stages: establish the section purpose and source map, compose a connected account from the mapped records, then revise and harmonise across the report. Methods report sourced conduct; results distinguish observations from interpretation; discussion states both strengths and limitations. Write the synopsis against the settled body and reconcile it figure for figure. Manual original-record sections require retained originals, not generated approvals, signatures or patient forms. When revising, read the existing draft and preserve correct figures, citations, qualifiers and limitations; follow the person's requested scope and explain material changes. Use \`critique_draft\` and \`verify_revision\` where available to expose remaining issues. A passed engineering check is not completed medical-writing training or clinical qualification.
 
 ## Pitfalls reviewers raise
 - Figures in the text that differ from the tables.

@@ -13,9 +13,10 @@ const MW_KNOWLEDGE = 'server/services/ana/medical-writing.ts';
 export const MEDICAL_WRITING_SKILLS: LibrarySkillSource[] = [
   skill({
     key: 'medical-writing',
+    version: 2,
     name: 'Medical writing',
     description:
-      'Regulatory writing quality for any document: findings first, consistent terminology, every number traced to its source, working cross-references, defined abbreviations and readable prose, checked by the deterministic writing tools.',
+      'Regulatory writing quality for any document: section-purpose planning, source-mapped composition and author-directed revision, consistent terminology, traceable figures and readable prose, checked by the deterministic writing tools.',
     disciplines: ['medical-writing'],
     useCases: ['drafting', 'review'],
     surfaces: ['document-authoring'],
@@ -66,12 +67,13 @@ export const MEDICAL_WRITING_SKILLS: LibrarySkillSource[] = [
 Writing, revising or quality-checking any regulatory or scientific document: protocol, CSR, CTD summaries, briefing documents, responses to agency questions, CERs, manuscripts. The document-specific sub-skills add their structure; this is the craft and the checks every document gets.
 
 ## Method
-1. Establish the document type, its governing standard, the audience and the region. Run \`medical_writing_guidance\` with document_type (and therapeutic_area, region, audience and client_segment when known) before drafting or critiquing, and follow the structure and conventions it returns.
+1. Establish the document type, its governing standard, the audience and the region. Run \`medical_writing_guidance\` with document_type (and section, therapeutic_area, region, audience and client_segment when known) before drafting or critiquing, and follow the structure and conventions it returns. Its section-specific instructions govern the purpose of that section.
 2. Read the sources before writing. Use \`project_knowledge_search\` for the project's study reports, analyses and agency correspondence, and write from them. A statement whose source cannot be found is marked as needing one.
-3. Write findings first. Each section opens with its conclusion, then the evidence for it. One message per paragraph. Past tense for what a study did and found; present tense for what the document concludes.
-4. Hold terminology steady. The product name, population names, endpoint names and treatment-arm labels are used exactly as the protocol and SAP define them, every time. Each abbreviation is defined at first use.
-5. Trace every number to its table, listing or governed value. Never compute, round or re-derive a figure in the text. Word statistical results with \`narrate_statistical_result\` from the reported estimate, interval and p-value, so the language claims no more than the analysis supports, including for exploratory and multiplicity-uncontrolled results.
-6. Check the draft with the deterministic tools:
+3. Plan the section purpose before composing. Make a source map: the required point, its retained source/version and location, the relevant population, endpoint, time point and analysis method, and any missing or conflicting evidence. A source map is a drafting aid, not proof of verification. Keep precedent examples separate from this study's facts.
+4. Compose to that purpose. Methods describe the sourced design and actual conduct; results open with a neutral finding on the named population and time point, followed by the supporting output and its limitations; discussion separates observations from interpretation. Appendices reproduce or index retained originals rather than invent their content. One message per paragraph, with a clear topic sentence and connected reasoning. Explain the finding instead of repeating every table cell; include unfavourable and null findings without spin. Past tense for what a study did and found; present tense for what the document contains.
+5. Hold terminology steady. The product name, population names, endpoint names and treatment-arm labels are used exactly as the protocol and SAP define them, every time. Each abbreviation is defined at first use. Keep seriousness separate from severity, participant incidence from event counts, and absolute effects from relative effects.
+6. Trace every number to its table, listing or governed value. Never compute, round or re-derive a figure in the text. Use \`narrate_statistical_result\` only within its supported method and hypothesis context, supplying the recorded prespecification, sidedness, significance level and multiplicity information. For non-inferiority, equivalence and Bayesian analyses, preserve the source's method-specific decision and uncertainty verbatim and keep unsupported inference descriptive or unassessed; never convert it to a superiority p-value decision or invent a missing statistic. As-given wording is not source verification.
+7. Check the draft with the deterministic tools:
    - \`critique_draft\` runs grounding, in-document consistency, readability, abbreviation, claims-language and structure checks and returns a revision brief; revise against it, then confirm with \`verify_revision\` that the revision improved and introduced nothing new.
    - \`critique_document\` does the same across a whole saved multi-section document.
    - \`medical_writing_review\` checks headings against the document type's outline; heading coverage is not completeness.
@@ -79,7 +81,8 @@ Writing, revising or quality-checking any regulatory or scientific document: pro
    - \`validate_cross_references\` checks that CTD section references resolve to a section that exists.
    - \`build_abbreviation_list\` returns the abbreviation table and the abbreviations left undefined.
    - \`assess_readability\` scores reading level against the audience.
-7. Report each tool's findings as found. A candidate inconsistency is adjudicated by the author, not dismissed by AnA.
+8. Revise by the author's instruction. Read the existing draft and its sources before editing; preserve correct figures, citations, qualifiers, limitations and attributed clinical judgments. Change the requested passage or issue without silently broadening the claim or rewriting unrelated sections. Compare the revision with the source map and the previous draft, then use \`verify_revision\` where available. An alternative is a proposed wording for review, not an approved replacement.
+9. Report each tool's findings as found, the material changes made and the unresolved gaps. A candidate inconsistency is adjudicated by the author, not dismissed by AnA. These versioned instructions and engineering checks do not establish that a model has completed medical-writer training.
 
 ## Before answering
 - Every figure has a source, and none was calculated in the text.

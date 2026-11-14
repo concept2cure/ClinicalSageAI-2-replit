@@ -1,0 +1,40 @@
+{
+  "compression": "gzip;mtime0;lossless",
+  "archives": [
+    {
+      "file": "build-before.json.gz",
+      "bytes": 605006,
+      "sha256": "aceabd323a4a8937a6f9087492531178d2774b85863207c7205103b0f3be0a21",
+      "uncompressedBytes": 1579894,
+      "uncompressedSha256": "8533b17a3888b669744a645e23695e3fcc3edd4af1353fddb329418dc2d5979e"
+    },
+    {
+      "file": "build-after.json.gz",
+      "bytes": 605006,
+      "sha256": "aceabd323a4a8937a6f9087492531178d2774b85863207c7205103b0f3be0a21",
+      "uncompressedBytes": 1579894,
+      "uncompressedSha256": "8533b17a3888b669744a645e23695e3fcc3edd4af1353fddb329418dc2d5979e"
+    },
+    {
+      "file": "build-command.json.gz",
+      "bytes": 264,
+      "sha256": "9cf01190bdbdb078e4e82e0e2cfd7f91090b41e9ec5ea8760153d3dec600216c",
+      "uncompressedBytes": 346,
+      "uncompressedSha256": "28fd0688e4c2c34f94380291a3c00d491fbd96bcdd446603619e23a2e042e465"
+    },
+    {
+      "file": "build.txt.gz",
+      "bytes": 5435,
+      "sha256": "03c035646efb9f2f6651e0388dac4c674b80485abe069bd9a4738aded3dccc1a",
+      "uncompressedBytes": 18141,
+      "uncompressedSha256": "42cc18d7d723bf9577f8e1dc36be5fa0d3295cf560d6b693e815fb3126fb4e5b"
+    },
+    {
+      "file": "build-and-pin.py.gz",
+      "bytes": 962,
+      "sha256": "ab8e0ab67a54f8c1bde870d0c7aad065c36415fd6b8b0e7e151b69fcd4270dc6",
+      "uncompressedBytes": 1876,
+      "uncompressedSha256": "4b48ccfcf7d211b4cda8fdd256805df702b18d76ffcdf01d8b56842b24170464"
+    }
+  ]
+}
