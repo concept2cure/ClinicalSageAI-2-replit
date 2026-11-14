@@ -13,6 +13,11 @@ describe('the save confirmation and the filing', () => {
       reason: 'This is a controlled document in the Quality register. It is approved and released there, and is not part of a filing.' })).toBe('');
   });
 
+  it('says nothing about a filing for a working copy that is in none: the page already says it is unbound', () => {
+    expect(filingCommitNote({ committed: false, outsideFiling: 'unbound-working-copy',
+      reason: 'This document is not bound to a filing, so there is no governed section to update.' })).toBe('');
+  });
+
   it('still says when a filing document was saved but did not reach its filing, with the reason', () => {
     expect(filingCommitNote({ committed: false, reason: 'This document is not bound to a filing, so there is no governed section to update.' }))
       .toBe(' The text is saved in the editor but not in the filing: This document is not bound to a filing, so there is no governed section to update.');

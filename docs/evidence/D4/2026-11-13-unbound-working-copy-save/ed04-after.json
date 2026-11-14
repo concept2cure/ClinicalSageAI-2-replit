@@ -1,0 +1,26 @@
+{
+ "url": "/concept2cure/document-authoring?program=e00d4d40-5378-41dc-b85e-e49662afe6a6&documentId=caf5f425-bb94-4cef-a3d6-7e9f2964c76b",
+ "pageSaysBeforeSave": [
+  "ed-tree-m: Saved draft sections · unbound",
+  "scaf-note: Unbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections."
+ ],
+ "said": [
+  "Attribution highlighting is paused while you edit — it describes the text as last saved.",
+  "Section saved — revision 3 recorded (1.2 Cover Letter)."
+ ],
+ "pageSaysAfterSave": [
+  "ed-tree-m: Saved draft sections · unbound",
+  "scaf-note: Unbound working copy. These sections belong to the saved draft. Review and place the document into a filing before treating them as filing sections."
+ ],
+ "saves": [
+  {
+   "status": 200,
+   "filing": {
+    "committed": false,
+    "reason": "This document is not bound to a filing, so there is no governed section to update.",
+    "outsideFiling": "unbound-working-copy"
+   }
+  }
+ ],
+ "apiFailures": []
+}
