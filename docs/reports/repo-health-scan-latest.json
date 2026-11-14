@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T02:49:20.333Z",
+  "generatedAt": "2026-11-14T03:03:09.729Z",
   "git": {
-    "sha": "3268e96410c647acc108706ef3d99cd53356d7a2",
+    "sha": "234da9cb9f54e2dfc2fc21ae341ec320a5871c2f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2419,7 +2419,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 362954
+        "bytes": 365165
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
@@ -2629,7 +2629,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 6911
+        "lines": 6944
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",

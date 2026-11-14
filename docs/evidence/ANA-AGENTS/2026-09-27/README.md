@@ -2,6 +2,14 @@
 
 ## 2026-11-14 continued F1 — report-reference reachability and Railway assessment
 
+**Founder clarification, 2026-11-14:** the initial Railway beta will use **confidential sponsor documents without
+patient identifiers**. This replaces the assessment's earlier synthetic/de-identified assumption. The existing
+deployment guide now makes that boundary explicit and names the applicable confidentiality/processor terms,
+residency, operator/application MFA, tenant separation, provider data handling, log redaction and retention
+proofs. Pro remains the proposed compute baseline; no Enterprise/BAA requirement is inferred merely from
+confidentiality. Actual PHI would require its own scope/contract review. No hosting, data transfer, source code,
+model qualification, cost arithmetic or existing artifact/audit gates change with this documentation correction.
+
 Starting canonical revision `3692f44ad`. The founder reports that their Codespace completed drafting with their
 OpenAI key. This is **user-attested functional success**, with no key collected and no independent provider run,
 formal model qualification or hosted acceptance inferred. Continue the existing F1/W1/D2 coordination repair;
