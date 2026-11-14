@@ -11,9 +11,9 @@
     "environment": {
       "NODE_OPTIONS": "--max-old-space-size=6144"
     },
-    "startedAt": "2026-11-14T00:13:25.681329+00:00",
+    "startedAt": "2026-11-14T01:16:18.782349+00:00",
     "exitCode": 0,
-    "processSeconds": 29.247,
+    "processSeconds": 28.846,
     "selectedSourceFiles": 11926,
     "sourceStable": true
   },
@@ -92,5 +92,38 @@
     "sourceStable": true,
     "lintErrors": 0,
     "lintWarnings": 0
+  },
+  "preGatewayBuild": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/ClinicalSageAI-2-replit",
+    "node": "22.22.0",
+    "environment": {
+      "NODE_OPTIONS": "--max-old-space-size=6144"
+    },
+    "startedAt": "2026-11-14T00:13:25.681329+00:00",
+    "exitCode": 0,
+    "processSeconds": 29.247,
+    "selectedSourceFiles": 11926,
+    "sourceStable": true
+  },
+  "secondPushPreflight": {
+    "normalPushStarted": false,
+    "hooksStarted": false,
+    "preflightExitCode": 78,
+    "knownRemote": "0e6b15b100939d5728b50bc34e70b823a6bbab09",
+    "observedRemote": "985559c5b5cf952b3cc2934b45df20e2ff19266e"
+  },
+  "gatewayCompatibility": {
+    "passed": 165,
+    "files": 6,
+    "processSeconds": 80.648,
+    "sourcePins": 20,
+    "sourceStable": true,
+    "packet": "../gateway-compat/README.md",
+    "independentReadOnlyReview": "No blocker found; no model/clinical qualification inferred."
   }
 }

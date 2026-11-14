@@ -161,6 +161,69 @@
       "sha256": "9071c895d47569e36082b8001cc43452d7e456f452f495e244681a7f79a890d6",
       "uncompressedBytes": 1897,
       "uncompressedSha256": "6034bf069dd40e086975b7df013688defae0fd24090b793bd1d8c0845f959674"
+    },
+    {
+      "file": "push2-preflight1.json.gz",
+      "bytes": 172,
+      "sha256": "de52e7d8cbb20fe3cd4415f7b27cda40723907389f5ce05f0c326192e4a50737",
+      "uncompressedBytes": 210,
+      "uncompressedSha256": "ee91b7908fc82f040bd22091eabfd6b3b77765f44ffffb6edcc33fe5a65b7c1c"
+    },
+    {
+      "file": "push2-preflight-fetch.txt.gz",
+      "bytes": 144,
+      "sha256": "4f87578b81609e8a97fabebc649ad1b6882ea7b0b1ea8a8e13d8d960cc4d4186",
+      "uncompressedBytes": 187,
+      "uncompressedSha256": "e7e3eac6b7d82075edb0c35a92d00c78432bf968455bdd3ad3dc10a406871852"
+    },
+    {
+      "file": "gateway-merge.txt.gz",
+      "bytes": 153,
+      "sha256": "2efacbfb07d04cb64c8e77d858f06feaaa8d30921527674afaa9957d0742ca43",
+      "uncompressedBytes": 203,
+      "uncompressedSha256": "470da6847e72c93db08f94985114cbc8599db12ef17a8fec3903a3422e3fe7fd"
+    },
+    {
+      "file": "gateway-merge-commit.txt.gz",
+      "bytes": 432,
+      "sha256": "396615bd6f678573f6fe805cdf28ee5b13abd1393fdb2275fb00f19e3964d8ba",
+      "uncompressedBytes": 644,
+      "uncompressedSha256": "f9aea5115266ee65c7be55a625de92fc802da7c7bb177fe18f7188756167defe"
+    },
+    {
+      "file": "gateway-merged-build-before.json.gz",
+      "bytes": 605128,
+      "sha256": "bf4f3f3384f9e2fa9ce9b4476a6a204e85130312582277cc96ea430aa3ba08f4",
+      "uncompressedBytes": 1580175,
+      "uncompressedSha256": "80ceef6dc5c760f7eae9adc4e4dfd6e48f5b9ca40e48dc46af981788ae519cbc"
+    },
+    {
+      "file": "gateway-merged-build-after.json.gz",
+      "bytes": 605128,
+      "sha256": "bf4f3f3384f9e2fa9ce9b4476a6a204e85130312582277cc96ea430aa3ba08f4",
+      "uncompressedBytes": 1580175,
+      "uncompressedSha256": "80ceef6dc5c760f7eae9adc4e4dfd6e48f5b9ca40e48dc46af981788ae519cbc"
+    },
+    {
+      "file": "gateway-merged-build-command.json.gz",
+      "bytes": 263,
+      "sha256": "3246391a3198891cb8b4f307e2b9e4ac71ff7e3c11f15bb2684aa792f681c18c",
+      "uncompressedBytes": 346,
+      "uncompressedSha256": "a8e83396bbe3f571b6383adbe4ad2620d0e1cd306d4615a0c2cf5051be2107ee"
+    },
+    {
+      "file": "gateway-merged-build.txt.gz",
+      "bytes": 5440,
+      "sha256": "5ad3aff4d255fbf23c3b7095e5efc320f588f9880fecc15210b923e01307da73",
+      "uncompressedBytes": 18141,
+      "uncompressedSha256": "e29beda9373fe2fce887f5342263c436f9d06404bf562588480aeeadd41d44c5"
+    },
+    {
+      "file": "build-gateway-and-pin.py.gz",
+      "bytes": 976,
+      "sha256": "87372411c1f718fe9e2d42cdf2870be4eb24e2746faccd29335ae59396205a27",
+      "uncompressedBytes": 1897,
+      "uncompressedSha256": "b52819f94ca2e3d101322cccb24bd2a97f30845f73c3cb473c6f03b6f114cfaa"
     }
   ]
 }

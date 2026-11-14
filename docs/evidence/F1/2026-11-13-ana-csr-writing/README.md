@@ -28,8 +28,9 @@ IA preparation now recognizes that P-118's protocol is approved and names requir
 | Service/editor delivery and current custody/source controls | Initial RED 19 failed/one passed, including one corrected fixture-priority expectation; final 250 passed across nine files; 29 selected pins stable |
 | Preserved current intake/native catalog compatibility | 57 passed across three files; 20 selected pins stable; admitted native metadata is not scientific approval |
 | Size-ceiling wording successor | 56 passed across four files; 73 pins stable; clinical skill 99,881 bytes below unchanged 100,000-byte limit |
+| Preserved current coordination/submission-account compatibility | 165 passed across six files; 20 selected pins stable; independent read-only review found no blocker |
 | Scoped lint | Zero errors and no warning growth; one existing narrator warning removed |
-| Integrated production build | Exit 0; 29.247 s process; client/server, audit verifier, qualification verifier and controlled runtime assets emitted |
+| Integrated production build | Exit 0; 28.846 s process; client/server, audit verifier, qualification verifier and controlled runtime assets emitted |
 | Build source stability | All 11,926 selected source/configuration/test hashes unchanged across build and reverified afterward |
 
 The [method](method/README.md), [narrator](narrator/README.md) and [delivery](delivery/README.md) packets preserve original sources, meaningful failures, fixture/setup corrections, exact commands, successful successors and separate scope limits. Overlapping phases are not pooled or relabelled. [Release checks](release/checks.json) record the integrated build. Publication is observed separately after normal direct canonical gates, with no PR, force, bypass or baseline increase.
@@ -37,6 +38,8 @@ The [method](method/README.md), [narrator](narrator/README.md) and [delivery](de
 Current canonical advanced to `0e6b15b100` during integration. Its collaboration-intake and native-catalog changes were normally merged without owned CSR runtime overlap. Both coordination entries were preserved. The [57-case compatibility packet](intake-compat/README.md) and fresh merged build passed; earlier build receipts remain separate.
 
 The first ordinary push correctly refused the clinical skill at 100,089 bytes against the existing 100,000-byte ceiling before reaching TypeScript. Only the new compose/revise paragraph was tightened by 208 bytes; its meaning, current step12 and later records remain. The [56-case successor](method/README.md), scoped lint and fresh merged build passed. The gate/ceiling/baseline were not changed. This refused attempt is not a compiler or publication pass.
+
+The next read-only push preflight caught current canonical `985559c5b5` before starting hooks. Normal merge preserved its worker-message and submission-account freshness repairs without owned CSR writing overlap, including both coordination append records. The [165-case compatibility cohort](gateway-compat/README.md) and fresh merged production build passed; all 11,926 selected source hashes are stable. This is not a live provider, agency transport or qualification pass.
 
 ## Qualification limits
 
