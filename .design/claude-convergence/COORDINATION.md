@@ -1909,3 +1909,47 @@ Preserve current source/actor/privacy/model/independent-review gates and exact a
 
 
 CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source `1ea68c474` is integrated normally with current intake/catalog source at `78c381c3c`. All implementation workers are frozen. Narrator38/3 and delivery250/9 pass; writing method, selection and oncology successors remain separate in `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Current-intake57/3 and fresh merged production build pass with11,926 source hashes stable. Scoped lint has zero errors/no warning growth. The existing approved protocol/model/source/checker/scientific gates are unchanged; no model training or clinical qualification is claimed. Source holds named in this continuation release with canonical publication of this completion; root retains only Git, final gates and publication receipts. No other owner is paused.
+### Codex continuation — verified report references and Railway beta assessment, 2026-11-14
+
+Canonical starting revision `3692f44ad`. The founder reports successful real OpenAI-key drafting in Codespaces;
+this is user-attested functional evidence, not an independently witnessed run or model PQ. Continue existing
+**F1/W1/D2** AnA coordination and, in a separate bounded **F1/W2/D1** lane, assess Railway beta hosting. This is
+an assessment and existing hosted-policy repair, not deployment authorization or a change to AWS launch gates.
+
+#### What already exists
+
+`server/services/ana/run-events.ts` verifies the ledger before projecting workers/messages; `turn-plan.ts` exposes
+that projection to its host. `sub-agent-shape.ts` serializes parent team context, and `agentic-workflow-tools.ts`
+serves the existing team action. Recorded worker reports already carry `reportSha256`, but normal parent context
+omits the report reference required by existing `update_plan.worker_dispositions`. Extend that same verified pass
+and context with bounded, content-free latest report receipts/hashes (maximum six), never a latest progress or
+disposition receipt masquerading as a report. Preserve source admission, privacy, ledger verification and budgets.
+The existing real-worker stream and PGlite coordination fixtures will prove reachability without a test-computed
+hash oracle. Searches covered report/revision/rework/team/receipt aliases, unreachable callers and full deletion
+history for agent-swarm/monitor/control-registry homes; no replacement projection exists. Terminal-worker restart,
+extra budgets and a full autonomous rework loop are outside this repair.
+
+`server/startup/env.ts` already refuses production hosted owner credentials and policy overrides, but recognizes
+only ECS metadata. Extend its private hosted predicate to nonblank automatic `RAILWAY_PROJECT_ID` or
+`RAILWAY_ENVIRONMENT_ID`, preserving the same policy/alias set and marker-free self-hosted behavior. Existing
+`env-hosted-owner-credential.test.ts` and `env-production-overrides-posture.test.ts` are the RED/GREEN homes.
+
+`Dockerfile.optimized` already supplies the production Node22/document/OCR image and provision target;
+`docker-compose.beta.yml` names the app, PostgreSQL/pgvector, Redis, ClamAV and embeddings. Existing database
+provision/migration scripts, readiness, shutdown and AWS S3/KMS custody remain canonical. Railway-specific config,
+workflow or deleted-history implementation was not found. Existing `docs/deployment/DEPLOYMENT.md` contains an
+obsolete Vercel recipe and generic Railway steps; `deployment-guide.md` still calls deleted `deploy.sh`.
+Converge those existing documentation homes onto the current image/database contract with official pricing,
+storage/security limitations, a concrete operator sequence and explicit unexecuted acceptance checks. Do not
+restore deleted Vercel/Replit/Celery deployment stacks or invent another image, worker service or provider.
+
+| Holder | Existing files and scope |
+|---|---|
+| Report-reference agent | `server/services/ana/{run-events,turn-plan,sub-agent-shape,agentic-workflow-tools}.ts`; existing `server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts`, `server/services/ana/__tests__/{run-coordination-dispositions,sub-agent-hostable}.test.ts` only |
+| Hosted-runtime agent | `server/startup/env.ts`; existing `server/startup/__tests__/{env-hosted-owner-credential,env-production-overrides-posture}.test.ts` only |
+| Root | This inventory, existing AnA evidence README, `docs/deployment/{DEPLOYMENT,deployment-guide}.md`, official-source assessment, integration, Git and sole full compiler |
+
+These narrow holds end at publication or **2026-11-15 00:00 UTC**, whichever comes first. No other lane is paused.
+No new production file, dependency, table, screen, route, tool, model or infrastructure is introduced. Agents do
+not mutate Git/runtime/compiler state. Interface contracts above are approved; root releases each implementation
+after this inventory and the matching evidence entry are written.

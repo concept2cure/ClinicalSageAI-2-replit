@@ -19,6 +19,11 @@ vi.mock('../../config/load-env-files', () => ({ ENV_FILES: [] }));
 const ORIGINAL = { ...process.env };
 const ECS = { ECS_CONTAINER_METADATA_URI_V4: 'http://169.254.170.2/v4/0123456789abcdef-1234' };
 const OWNER = 'postgresql://c2c_admin:pw@db:5432/app?sslmode=verify-full';
+const RAILWAY_MARKERS = ['RAILWAY_PROJECT_ID', 'RAILWAY_ENVIRONMENT_ID'] as const;
+const OWNER_NAMES = [
+  'DATABASE_URL', 'DATABASE_URL_PROD', 'DATABASE_NEON_NEW_SECRET',
+  'NEON_DATABASE_URL', 'DATABASE_OWNER_URL', 'APP_SERVICE_DB_PASSWORD',
+] as const;
 
 function bootWith(env: Record<string, string>) {
   for (const k of Object.keys(process.env)) delete process.env[k];
@@ -30,8 +35,7 @@ function bootWith(env: Record<string, string>) {
   // Deleted, not assigned undefined: process.env stores that as the string "undefined".
   for (const k of [
     'ECS_CONTAINER_METADATA_URI', 'ECS_CONTAINER_METADATA_URI_V4',
-    'DATABASE_URL', 'DATABASE_URL_PROD', 'DATABASE_NEON_NEW_SECRET', 'NEON_DATABASE_URL',
-    'DATABASE_OWNER_URL', 'APP_SERVICE_DB_PASSWORD',
+    ...RAILWAY_MARKERS, ...OWNER_NAMES,
   ]) delete process.env[k];
   Object.assign(process.env, env);
 }
@@ -55,14 +59,7 @@ describe('the hosted API holds no database owner credential', () => {
     Object.assign(process.env, ORIGINAL);
   });
 
-  it.each([
-    'DATABASE_URL',
-    'DATABASE_URL_PROD',
-    'DATABASE_NEON_NEW_SECRET',
-    'NEON_DATABASE_URL',
-    'DATABASE_OWNER_URL',
-    'APP_SERVICE_DB_PASSWORD',
-  ])('on an ECS task, refuses %s, naming it', async name => {
+  it.each(OWNER_NAMES)('on an ECS task, refuses %s, naming it', async name => {
     bootWith({ ...ECS, [name]: OWNER });
     const { validateEnvironment } = await import('../env');
     expect(() => validateEnvironment()).toThrow(/process\.exit\(1\)/);
@@ -88,6 +85,43 @@ describe('the hosted API holds no database owner credential', () => {
     const { validateEnvironment } = await import('../env');
     expect(() => validateEnvironment()).not.toThrow();
     expect(exitSpy).not.toHaveBeenCalled();
+  });
+
+  describe.each(RAILWAY_MARKERS)('Railway hosted marker %s', marker => {
+    it.each(OWNER_NAMES)('refuses %s without ECS metadata, naming only the credential alias', async name => {
+      bootWith({ [marker]: ' railway-id ', [name]: OWNER });
+      const { validateEnvironment } = await import('../env');
+      expect(() => validateEnvironment()).toThrow(/process\.exit\(1\)/);
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      const message = errorSpy.mock.calls.flat().join('\n');
+      expect(message).toMatch(new RegExp(`\\b${name}\\b`));
+      expect(message).not.toContain(OWNER);
+    });
+
+    it('boots with only the runtime credential and ignores empty owner aliases', async () => {
+      bootWith({ [marker]: 'railway-id', DATABASE_URL: '  ' });
+      const { validateEnvironment } = await import('../env');
+      expect(() => validateEnvironment()).not.toThrow();
+      expect(exitSpy).not.toHaveBeenCalled();
+    });
+
+    it.each(['', ' \t '])('does not classify a blank marker %j as hosted', async value => {
+      bootWith({ [marker]: value, DATABASE_URL: OWNER });
+      const { validateEnvironment } = await import('../env');
+      expect(() => validateEnvironment()).not.toThrow();
+    });
+
+    it('treats a nonblank marker as an identity, including the literal false', async () => {
+      bootWith({ [marker]: 'false', DATABASE_URL: OWNER });
+      const { validateEnvironment } = await import('../env');
+      expect(() => validateEnvironment()).toThrow(/process\.exit\(1\)/);
+    });
+
+    it('does not change owner-credential policy outside production', async () => {
+      bootWith({ NODE_ENV: 'development', [marker]: 'railway-id', DATABASE_URL: OWNER });
+      const { validateEnvironment } = await import('../env');
+      expect(() => validateEnvironment()).not.toThrow();
+    });
   });
 
   it('refuses exactly the names the deploy preflight refuses on the API task definition', async () => {
