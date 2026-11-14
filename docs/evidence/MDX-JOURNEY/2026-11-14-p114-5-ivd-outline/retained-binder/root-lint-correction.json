@@ -1,0 +1,15 @@
+{
+  "change": "Replace console.log with identical newline-terminated process.stdout.write output",
+  "runtimeSourceChanged": false,
+  "originalSha256": "ba72e8b1adb98b3a61483c9e7dee379b7d5466189e014e0949a0e9709b9abd77",
+  "currentSha256": "7e0a1173d6ba719920acd2e682c5bf834ca98dec3c3e9fe0ffecc3a933d3931c",
+  "actualFormReinspection": {
+    "pdfSha256": "df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1",
+    "templateSha256": "cbd37201e9a9b7e96b16134c6f434b392d6337416bf20b74ba96c6d2c118d74c",
+    "templateBytes": 10940178,
+    "templatePath": "/workspace/scratch/ivd-retained-binder-raw-template.xml",
+    "command": "Node 22 node --import tsx inspect-raw-form.mjs"
+  },
+  "lintErrors": 0,
+  "lintWarnings": 0
+}

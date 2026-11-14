@@ -462,3 +462,14 @@ a06ae96c83a203ad17a195453deb6f0d9e020740:docs/evidence/D6-PLATFORM-SCOPE/2026-10
 #   Exact-value search finds only Terraform tests and a historical evidence harness,
 #   with no production default or runtime import. No real provider credential is claimed.
 7310d3083ad2057f61e36646a9baefe7b9914616:terraform/modules/alb/tests/alb_timeouts.tftest.hcl:generic-api-key:30
+
+# status: not a secret (reviewed 2026-11-14, F1 GA CI continuation)
+# reason: These three published Codespaces input-manifest entries are single
+#   file/digest JSON pairs for scripts/visual-qa/api-fixtures.d.mts. Each value
+#   equals the SHA-256 of that exact same-commit source blob. The existing
+#   file-digest regex omits .mts; these exact historical fingerprints avoid a
+#   broader rule/path exception. No credential or revocation status changes.
+#   Independent verification: docs/evidence/F1/2026-11-14-ga-ci-continuation/.
+96cf2a157701e6beca42569c270885abb5a021a1:docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/merged-inputs.json:generic-api-key:4004
+96cf2a157701e6beca42569c270885abb5a021a1:docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/merged-lint-inputs.json:generic-api-key:4004
+d7a1884538510ef85c473564344b3cc831e24295:docs/evidence/F1/2026-11-13-codespaces-copilot-handoff/inputs.json:generic-api-key:4002

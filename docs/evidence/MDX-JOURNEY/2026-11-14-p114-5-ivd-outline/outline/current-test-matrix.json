@@ -1,0 +1,42 @@
+[
+  {
+    "path": "tests/regulatory/template-library-truth.test.ts",
+    "passed": 7,
+    "failed": 0,
+    "pending": 0,
+    "report": "tests.json",
+    "reportSha256": "0c47f5132bc6f4951430b1847fecd453039c6eeeabe6d8d5e343f3843dcddcbf"
+  },
+  {
+    "path": "tests/schema-contract/ivd-510k-outline-template.contract.test.ts",
+    "passed": 6,
+    "failed": 0,
+    "pending": 0,
+    "report": "tests.json",
+    "reportSha256": "0c47f5132bc6f4951430b1847fecd453039c6eeeabe6d8d5e343f3843dcddcbf"
+  },
+  {
+    "path": "tests/schema-contract/k510-denovo-outline-v1-1-replay.contract.test.ts",
+    "passed": 9,
+    "failed": 0,
+    "pending": 0,
+    "report": "tests.json",
+    "reportSha256": "0c47f5132bc6f4951430b1847fecd453039c6eeeabe6d8d5e343f3843dcddcbf"
+  },
+  {
+    "path": "tests/schema-contract/k510-ivd-outline-v1-0-replay.contract.test.ts",
+    "passed": 9,
+    "failed": 0,
+    "pending": 0,
+    "report": "tests.json",
+    "reportSha256": "0c47f5132bc6f4951430b1847fecd453039c6eeeabe6d8d5e343f3843dcddcbf"
+  },
+  {
+    "path": "server/services/regulatory/__tests__/section-blueprint-consistency.test.ts",
+    "passed": 17,
+    "failed": 0,
+    "pending": 0,
+    "report": "tests.json",
+    "reportSha256": "0c47f5132bc6f4951430b1847fecd453039c6eeeabe6d8d5e343f3843dcddcbf"
+  }
+]

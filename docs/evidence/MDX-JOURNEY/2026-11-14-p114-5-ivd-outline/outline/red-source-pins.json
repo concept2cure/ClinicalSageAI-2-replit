@@ -1,0 +1,6 @@
+{
+  "shared/regulatory/device-authoring-sections.ts": "3e32bf73ba586af0460a98eeac64f7372babb637749565792948e7aaf3d43bc0",
+  "shared/regulatory/project-bootstrap.ts": "e208cbc6981f9b5c824fab7350f9062daa6016fa4d61df5905564f4e80f6076d",
+  "migrations/20261005c_k510_denovo_estar_outline_v1_1.sql": "de0d8edc1085cd8dbac8e0c3d7dc09c76e4dce8c56e9464e0f0fcb2f6795f570",
+  "tests/schema-contract/ivd-510k-outline-template.contract.test.ts": "259315edc96e9f0005091ad6c67b15507f27ba6529b529c037920301d5df50f2"
+}

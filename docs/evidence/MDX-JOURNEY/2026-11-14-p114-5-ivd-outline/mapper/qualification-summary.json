@@ -1,0 +1,59 @@
+{
+  "status": "corrected_component_qualified",
+  "passed": 109,
+  "failed": 0,
+  "pending": 0,
+  "distinctFiles": 5,
+  "selectedReport": "corrected-cohort-tests.json",
+  "sourcePins": {
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts": "a2b62a7f088c4078a5cc9d2eefc8bea1f97636874a3a9ad45eed90924fdd2227",
+    "server/services/pathway-engines/estar/__tests__/estar-mapper.test.ts": "9505f95cd7756fd36dde83528dd61c9bb21a3fd25919204e3b3408df0b885afe",
+    "server/services/pathway-engines/estar/__tests__/estar-outline-requirements.test.ts": "48de29a211b61f859cae9ab827aac6dc87b3374cefffbc8943b05f8476a96189",
+    "server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts": "08fb5fb907503517a0333a2b72fa0e4178783c975f1bc9aabce9647558a12c3d",
+    "tests/schema-contract/estar-mapper-matches-shipped-outlines.contract.test.ts": "7e8480c6d0635d6c53ed1d60c1317cc5453e21c028f09b95668217215a5b9f76",
+    "server/services/pathway-engines/estar/estar-mapper.ts": "eba0867149a4add098792f8a5062aff233b396e5ffb6f3ff9ab55b64f8aa3aff",
+    "server/services/pathway-engines/estar/estar-outline-requirements.ts": "4000172288a7972bbf03d186d24ab03a10ffef79b37491e6cc1ead4ff3258261",
+    "server/services/pathway-engines/estar/estar-filing-readiness.ts": "8d448bc4c7db76339625c7c4b8deb5f1d69dd7ee2ca691846c5346d4559ca884",
+    "server/services/pathway-engines/source-aware-evidence.ts": "6e6d9f22a483bb829e76da857bd4ef777e92f16ff01f10c3e926d0d9a99b83a4",
+    "migrations/20261005c_k510_denovo_estar_outline_v1_1.sql": "856d61ae3f294c29744a7e5e9f80daff2e9689b40923c26d786bf867b6fffa91",
+    "migrations/20260901b_estar_510k_denovo_outlines.sql": "c8fa7c11e35267314857d44d2880e5b037c1807e0fb79ec8b6f921e4d0b6700d",
+    "assets/estar-templates/eSTAR-510k-ivd.pdf": "df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd"
+  },
+  "sourceStable": true,
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "baselineRuntimeWarnings": 0,
+    "selectedReport": "corrected-final-eslint-current.json"
+  },
+  "scope": {
+    "runtime": [
+      "server/services/pathway-engines/estar/estar-mapper.ts"
+    ],
+    "tests": [
+      "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts"
+    ]
+  },
+  "supersededReports": [
+    "green-tests.json",
+    "cohort-tests.json",
+    "superseded-qualification-summary.json"
+  ],
+  "limitations": [
+    "Root compiler/build/publication pending",
+    "Human applicability, FDA acceptance and deployment qualification not established"
+  ],
+  "selectedReports": {
+    "default": "corrected-cohort-tests.json",
+    "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts": "corrected-final-test-grouping-tests.json"
+  },
+  "testGroupingBridge": {
+    "exactPriorBytesRestoredByRemovingOnlyDescribeBoundary": true,
+    "priorTestSha256": "62cb7532c64792de668148dc7eed04242242352aaf2a39b29a0dee22e8710288",
+    "currentTestSha256": "a2b62a7f088c4078a5cc9d2eefc8bea1f97636874a3a9ad45eed90924fdd2227",
+    "unchangedOtherSourcePins": 13,
+    "newWholeTestRerunPassed": 13
+  }
+}
