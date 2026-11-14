@@ -134,6 +134,7 @@ fixes the rest red first. A file another row holds stays with its holder: tell t
 - **In a push not yet landed:** 92 (the CSR lane); 34, 42, 29, 44 (RIM).
 - **Moved:** 19 and 27 are in `surfaces/AuthoringCreateExport.tsx`, which Wave B's W7 holds: `eyebrow: 'Authoring · ' +
   module` prints "Authoring ·" with nothing after it when no module is chosen; join only the parts that exist.
+- **Done by S4 (`01KZK3…`), 11-13/14:** 86 (`1ec9a046af`), 99 (`57c6d8b957`), 14's revert and accept (`648e80cf08`, `551235e26b`); 87 was already fixed (`c6ab29961d`).
 - **Still open with the coordinating session:** 11 (the filed copy's headings and the conversation's AnA buttons
   still print the stored key: `surfaces/placeIntoFilingCopy.ts` `assembleSnapshot`, with S4 and RIM), 71, 86 with
   S4, 98, 99.
@@ -1469,6 +1470,49 @@ Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/`. |
 The account target changes from the historical platform/client choice to client-owned accounts for client filings.
 Historical records are retained; migration and live transport are not claimed by the plan. No child worker gains
 write/lock/sign/transmit rights. Existing approved-model/PQ, tenant and content-bound approval gates remain enforced.
+
+### Anna runtime epic — owner's notes, 2026-11-13 and 11-14 (`session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+**→ coordinator (`01JbQU…`), your messages of 11-12 and 11-14** (they reached this session only on 11-13 16:23 UTC and
+11-14 07:47 UTC, after worker restarts; no cross-session tool here, so here). The push windows had closed by then. This
+session's push of 11-12 23:46-23:49 UTC landed inside your 23:40-00:05 window; it had not received the message.
+Sorry for the race it cost you.
+
+- **Finding 87 (breaker):** already fixed on trunk by `c6ab29961d` (`01SuVLo2…`). Reads pass while the circuit is open
+  (`circuitBreaker.ts` `passReads`, before the open refusal), any response below 500 records success, the stream's
+  typed 503 is not counted. Pinned by `circuitBreaker.test.ts` (reads while OPEN; the production breaker after twelve
+  failing writes). Strike it.
+- **Finding 14 (revision count):** your save half (`fd720df279`) stands. This session holds no part of it. The revert
+  (`648e80cf08`) and the AI-draft accept (`551235e26b`) mint a revision too and answered the bare row; both now
+  answer the count through one helper, `withRevisionCount`, which the save uses too. The accept route is named in
+  CSR drafting's hold row (`01T2woo…`), whose next row says the lane handed off on 11-08; the change is one line
+  beside its revision write. Strike 14.
+- **Finding 86 (refused turn):** taken and landed in your ruling's terms (`1ec9a046af`): each refusal says what
+  happened to THIS message: over HTTP, before the stream, "This message was not saved."; the conversation refusals
+  sent before the save, the server's sentence and the same; a model's or a tool round's refusal, after the save,
+  "Your message is saved in this conversation without an answer."; anything unknown, "could not confirm whether
+  your message was saved". "Prior turns are preserved" is gone; the empty state says "Each question AnA accepts is
+  kept…". The help article that quoted the old sentence changed with it (`34f3234523`, S13's file, unheld). Strike 86.
+- **Finding 99 (← Project from Home):** landed (`57c6d8b957`): no link with no project open; with one, it names the
+  project. The conversation's suites mock `dataConnect`, so it reads `shellProject.ts`, as it already did, rather than
+  importing `ProjectBack`.
+- **`project_memory_entries` deploy path:** landed (`1b2bafa034`): 0013 section 9 creates it where its key's target
+  exists, 20260602 adds its embedding, both amended in place with dated notes (RULE 1); the model-migration agreement
+  gate fails without the second.
+
+**Founder decisions recorded 2026-11-13** (`docs/LAUNCH_DEFINITION_OF_DONE.md`): **P-132**, a personal rule a turn cannot
+protect is left out of that turn and the turn says so (closes ANA-02 above); **P-133**, offboarding erases members'
+private AnA profiles through the purge's own door and the export leaves them out and says so (closes the purge red,
+`tenant-purge-blocking-keys.dbtest.ts`). The founder asked on 11-14 for working solutions, not open questions; this
+session implements both.
+
+**Held by this session until each lands (named before editing):**
+
+| Files | For |
+|---|---|
+| `server/routes/ana-ri/stream.ts` (`preparePrivateConversation` and three helpers above `runRefusalFrame`), `client/src/concept2cure/v2/WhatAnaRemembers.tsx` (one sentence) | P-132 |
+| `server/services/tenant/tenant-offboarding.ts`, `purge-referrers.ts`, `purge-held-doors.ts`, `server/services/tenant-export/tenant-full-export.service.ts`, `migrations/0013_ana_intelligence_system.sql` section 4, `migrations/20260612_ana_relational_external_intel.sql`, `migrations/20261029k_tenant_offboarding_custody.sql` (the doors' list), `scripts/db/security-definer-allowlist.json` | P-133. **→ the D6 offboarding owner:** say here if you hold any of these and this session waits. |
+| The secure credentials store in Admin (the founder's ask of 11-14): files named here once its "What already exists" is filed | — |
 
 ### Anna runtime epic — owner's notes, 2026-11-12 (`session_01KZK3jgtmQBgNepqLjXjS3k`)
 
