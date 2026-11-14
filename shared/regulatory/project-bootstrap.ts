@@ -354,6 +354,26 @@ const US_RMAT_SECTIONS: SectionDefinition[] = [
   US_DESIGNATION_COMMON.plan,
 ];
 
+/**
+ * Priority review designation request (2026-11-13). It is not an FD&C Act 506
+ * designation: the review designation is FDA's, under the PDUFA review goals,
+ * for a drug that treats a serious condition and, if approved, would provide a
+ * significant improvement in safety or effectiveness (expedited-programs
+ * guidance, 2014; recalled, not re-read here). The applicant may ask for it
+ * with the original NDA, BLA or efficacy supplement, so it carries no
+ * development plan. It read the generic designation list, whose part 5 is the
+ * Breakthrough and RMAT evidence and whose part 4 is the Fast Track criterion.
+ * Codes keep the place they had there.
+ */
+const US_PRIORITY_REVIEW_SECTIONS: SectionDefinition[] = [
+  { ...US_DESIGNATION_COMMON.request, guidance: 'The request for priority review designation, made with the original NDA, BLA or efficacy supplement it concerns. Where the request rests on a statutory provision that grants priority review (a priority review voucher, a qualified infectious disease product), name it.' },
+  US_DESIGNATION_COMMON.product,
+  { ...US_DESIGNATION_COMMON.serious, guidance: 'Priority review criterion: the drug treats a serious condition.' },
+  { code: '4', title: 'Available Therapy', module: 1, required: true, contentType: 'narrative', guidance: 'The therapies the improvement is measured against, or that none exists.', formerTitles: ['Unmet Medical Need Analysis'] },
+  { code: '5', title: 'Significant Improvement in Safety or Effectiveness', module: 1, required: true, contentType: 'mixed', guidance: 'Priority review criterion: if approved, the drug would provide a significant improvement in the safety or effectiveness of the treatment, diagnosis or prevention of the condition. Cite the application\'s own results: increased effectiveness, elimination or substantial reduction of a treatment-limiting adverse reaction, documented improvement in compliance expected to improve serious outcomes, or safety and effectiveness in a new subpopulation.', formerTitles: ['Preliminary Clinical Evidence (Breakthrough/RMAT)'] },
+  { code: '6', title: 'Location of the Supporting Data in the Application', module: 1, required: false, contentType: 'list', guidance: 'Where in the application the data behind parts 3 to 5 are.', formerTitles: ['Development Plan and Requested Features'] },
+];
+
 /** Orphan designation request. Shared: the EU orphan designation request reads it; the US request reads US_ORPHAN_SECTIONS. */
 const ORPHAN_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Administrative Information and Sponsor', module: 1, required: true, contentType: 'form' },
@@ -954,7 +974,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   jp_pre_consult_sections: { id: 'jp_pre_consult_sections', name: 'PMDA Consultation Briefing', sections: PRE_IND_SECTIONS },
   au_presub_meeting_sections: { id: 'au_presub_meeting_sections', name: 'TGA Pre-submission Briefing', sections: PRE_IND_SECTIONS },
   jp_sakigake_sections: { id: 'jp_sakigake_sections', name: 'Sakigake Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
-  us_priority_review_sections: { id: 'us_priority_review_sections', name: 'Priority Review Request', sections: DESIGNATION_REQUEST_SECTIONS },
+  us_priority_review_sections: { id: 'us_priority_review_sections', name: 'Priority Review Request', sections: US_PRIORITY_REVIEW_SECTIONS },
   eu_accel_assess_sections: { id: 'eu_accel_assess_sections', name: 'Accelerated Assessment Request', sections: DESIGNATION_REQUEST_SECTIONS },
   uk_ilap_sections: { id: 'uk_ilap_sections', name: 'ILAP Innovation Passport Application', sections: DESIGNATION_REQUEST_SECTIONS },
   eu_biosimilar_maa_sections: { id: 'eu_biosimilar_maa_sections', name: 'Biosimilar MAA (EU)', sections: CTD_SECTIONS },
