@@ -1,8 +1,8 @@
 {
   "artifacts": {
     "README.md": {
-      "bytes": 7124,
-      "sha256": "59d141899cbd7bd2b4b6ff8c2bd25ea4420fc0568ff5b575de5b01a332da7f59"
+      "bytes": 7441,
+      "sha256": "51c950abe2ee7c97719da681846deefdf3989fa2283f3aeef3c2ad47f3fc2334"
     },
     "canonical-integration-bridge.json": {
       "bytes": 10745,
@@ -441,8 +441,8 @@
       "sha256": "a045383f79780ea77040f99257f14192d174d5883cdb7ef53763994802dd73fe"
     },
     "qualification-summary.json": {
-      "bytes": 1229,
-      "sha256": "dd0720ea267dde6daf397aad7406c3ebd56ef7db8f0c139472838abab00e077f"
+      "bytes": 1236,
+      "sha256": "744529a42fc4b0e9b7066e5f4a40a2153b9f2a448ba3c8e460b0a911aeddb079"
     },
     "remaining-workflow-gaps.md": {
       "bytes": 3409,
@@ -656,6 +656,18 @@
       "bytes": 5434,
       "sha256": "c96588edaaf60239a7a78aee631fc7922207fac57e774e74d478e7bc437c0e74"
     },
+    "root/build-final-start.json": {
+      "bytes": 1655004,
+      "sha256": "0b45901f665debccb6f714547f6f5c68a34db7307a5f7265d7bcf5d0d822259f"
+    },
+    "root/build-final.json": {
+      "bytes": 297,
+      "sha256": "48c2127eccf33fe32cfd44c3685d4b5eb2a8fab71770333d2762d0310ee9d71d"
+    },
+    "root/build-final.log.gz": {
+      "bytes": 5429,
+      "sha256": "24f94ae7e2a8c9b497100662c9894dd045f21bfccc1c5ad513731f560a7bf1dc"
+    },
     "root/build-start.json": {
       "bytes": 1653444,
       "sha256": "871c10416d1820d008a8d2e28875c6130ce08b5927b7154b5816428ab64a014c"
@@ -667,6 +679,18 @@
     "root/build.log.gz": {
       "bytes": 5434,
       "sha256": "a9246ce6a0ba151dc90794429db89e62f85b316e31673f2a4831ba508bec43a9"
+    },
+    "root/ivd-typecheck-cache-exact-audit.json": {
+      "bytes": 383,
+      "sha256": "7c31d888a9c5ffc50e0559556e440fe0cc82fd3f2fddf383a605c74d0a4c70e2"
+    },
+    "root/ivd-typecheck-cache-options-audit.json": {
+      "bytes": 662,
+      "sha256": "2dce5e0c72fdb9ca82699975328888576e4a9f6121ede9344eb68ab6db7ab10a"
+    },
+    "root/ivd-typecheck-cache-rootset-audit.json": {
+      "bytes": 149,
+      "sha256": "228b1ad0b951e41146bac5f9f9dc2169ba8354492bc66e0a1c0e03f1720b79de"
     },
     "root/push-1-start.json": {
       "bytes": 1653446,
@@ -756,6 +780,18 @@
       "bytes": 146,
       "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
     },
+    "root/typecheck-push5-warm-start.json": {
+      "bytes": 1655023,
+      "sha256": "0c884922878eba0b308d036597f40fee99498a08eab217f1ed28d35482e6fc3a"
+    },
+    "root/typecheck-push5-warm.json": {
+      "bytes": 342,
+      "sha256": "2d07b9cd274cc671f790d62a356231fe541f7a0dad1c260b0a529f6edf4c255c"
+    },
+    "root/typecheck-push5-warm.log.gz": {
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
+    },
     "root/typecheck-start.json": {
       "bytes": 1653465,
       "sha256": "3ee7010eb2e6813b8f0dc394cc7cecb97ad41f35ddd516bfec9cf1629896d4a6"
@@ -789,5 +825,5 @@
       "sha256": "101e1a02570896ca50c8df44585186bb7f61f45ed2cb76a5b3a8c32b04d7837a"
     }
   },
-  "count": 197
+  "count": 206
 }
