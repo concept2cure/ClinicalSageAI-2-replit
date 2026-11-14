@@ -22,6 +22,7 @@ import { db } from '../../db';
 import { withTenantConnection } from '../../db/withTenantConnection';
 import type { RequestSqlClient } from '../../db/requestDb';
 import * as schema from '../../../shared/schema';
+import { stableStringify } from '../../../shared/canonical-json';
 import { ACTION_TRANSITIONS, CAPA_TRANSITIONS } from '../../../shared/constants/capa-lifecycle';
 import unifiedTaskService, { type UnifiedTaskInput, type TaskWriteRunner } from '../unifiedTaskService';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
@@ -87,6 +88,7 @@ export interface ReconcileSourceTasksResult {
 type OpenSourceTask = {
   taskId: string; status: unknown; metadata: unknown; sourceEntityId: string | null;
   projectId?: number | null; clientWorkspaceId?: number | null; assigneeId?: number | null;
+  title?: string; description?: string | null;
 };
 
 const NATIVE_PROJECT_SOURCES = new Set(['capa_record', 'capa_action', 'qms_periodic_review', 'qms_training']);
@@ -212,6 +214,45 @@ async function trainingTaskPlacement(q: RequestSqlClient, input: ReconcileSource
   return { projectId: anchor.id, clientWorkspaceId: anchor.clientWorkspaceId };
 }
 
+function validInternalAuditRow(row: Record<string, unknown> | null): row is Record<string, unknown> {
+  return row !== null && ['planned', 'in_progress', 'closed', 'cancelled'].includes(String(row.status))
+    && typeof row.audit_number === 'string' && row.audit_number.length > 0 && typeof row.scope === 'string' && row.scope.length > 0
+    && (row.planned_date === null || !!dueDay(row.planned_date))
+    && (row.auditor_lead_id === null || Number.isSafeInteger(row.auditor_lead_id) && Number(row.auditor_lead_id) > 0);
+}
+
+/** Internal audits are organization records; their current native plan grants no project placement. */
+async function currentInternalAuditInput(q: RequestSqlClient, input: ReconcileSourceTasks): Promise<ReconcileSourceTasks> {
+  const key = 'exact' in input.match ? input.match.exact : '';
+  const match = /^qms-internal-audit:([1-9]\d{0,9})$/.exec(key);
+  if (!match || Number(match[1]) > 2_147_483_647 || [...input.desired.keys()].some(id => id !== key)) {
+    throw new Error('Invalid internal-audit task source');
+  }
+  const actor = await readCurrentProgramActor(q, { organizationId: input.organizationId, userId: input.actorId, forShare: true });
+  if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw new Error('Current Quality write authority is required');
+  const { rows } = await q.query(`SELECT id,audit_number,scope,status,planned_date,auditor_lead_id FROM qms_internal_audits
+    WHERE id=$1 AND organization_id=$2 FOR SHARE`, [Number(match[1]), input.organizationId]);
+  const row = rows.length === 1 ? rows[0] : null;
+  if (!validInternalAuditRow(row)) throw new Error('The current native internal audit could not be verified');
+  // The planner already imports this writer. Load it after initialization and reuse its one lifecycle/date policy.
+  const { internalAuditTaskPlan } = await import('../qms/qms-record-tasks');
+  const plan = internalAuditTaskPlan(row as unknown as Parameters<typeof internalAuditTaskPlan>[0], input.actorId);
+  const wanted = input.desired.get(key);
+  if (Boolean(wanted) !== Boolean(plan.next) || stableStringify(wanted?.next ?? null) !== stableStringify(plan.next)
+    || input.closeAs(key) !== plan.closeAs) {
+    throw new Error('The task plan no longer matches the current internal audit; the previous task was preserved');
+  }
+  const desired = new Map<string, DesiredSourceTask>();
+  if (plan.next) desired.set(key, { next: plan.next, same: plan.same });
+  return { ...input, desired, closeAs: () => plan.closeAs };
+}
+
+async function desiredQualityTaskPlacement(q: RequestSqlClient, input: ReconcileSourceTasks, id: string, task: DesiredSourceTask) {
+  if (input.sourceEntityType === 'qms_internal_audit') return null;
+  return input.sourceEntityType === 'qms_training'
+    ? trainingTaskPlacement(q, input, id, task) : nativeTaskPlacement(q, input, id);
+}
+
 /** The open tasks under `match`, by key: one SELECT, the prefix matched literally and checked again on each row read. */
 async function readOpenTasks(input: ReconcileSourceTasks, inScope: (id: string) => boolean, runner: TaskWriteRunner = db): Promise<Map<string, OpenSourceTask[]>> {
   const { match } = input;
@@ -221,7 +262,8 @@ async function readOpenTasks(input: ReconcileSourceTasks, inScope: (id: string) 
   const openTasks: OpenSourceTask[] = await runner
     .select({ taskId: schema.unifiedTasks.taskId, status: schema.unifiedTasks.status, metadata: schema.unifiedTasks.metadata,
       sourceEntityId: schema.unifiedTasks.sourceEntityId, projectId: schema.unifiedTasks.projectId,
-      clientWorkspaceId: schema.unifiedTasks.clientWorkspaceId, assigneeId: schema.unifiedTasks.assigneeId })
+      clientWorkspaceId: schema.unifiedTasks.clientWorkspaceId, assigneeId: schema.unifiedTasks.assigneeId,
+      title: schema.unifiedTasks.title, description: schema.unifiedTasks.description })
     .from(schema.unifiedTasks)
     .where(and(
       eq(schema.unifiedTasks.organizationId, input.organizationId),
@@ -286,6 +328,23 @@ async function repairTaskPlacement(input: ReconcileSourceTasks, id: string, task
     payload: { sourceEntityType, sourceEntityId: id, before, after }, summary: 'Reconciled the task with its recorded Quality project' });
 }
 
+/** A text-only audit edit preserves the person's task identity, assignment and progress. */
+async function refreshInternalAuditTaskText(input: ReconcileSourceTasks, id: string, task: OpenSourceTask, wanted: DesiredSourceTask,
+  tx: SourceTaskTransaction): Promise<void> {
+  if (input.sourceEntityType !== 'qms_internal_audit') return;
+  const before = { title: task.title ?? null, description: task.description ?? null };
+  const after = { title: wanted.next.title, description: wanted.next.description ?? null };
+  if (before.title === after.title && before.description === after.description) return;
+  const changed = await tx.client.query(`UPDATE unified_tasks SET title=$1,description=$2,updated_at=NOW(),last_modified_by=$3
+    WHERE task_id=$4 AND organization_id=$5 AND source_entity_type=$6 AND source_entity_id=$7 AND status=$8
+      AND title IS NOT DISTINCT FROM $9 AND description IS NOT DISTINCT FROM $10 AND deleted_at IS NULL RETURNING task_id`,
+  [after.title,after.description,input.actorId,task.taskId,input.organizationId,input.sourceEntityType,id,String(task.status),before.title,before.description]);
+  if (changed.rows.length !== 1) throw new Error('The source task changed before its text could be reconciled');
+  await auditTaskActionInTx(tx.client, { orgId: input.organizationId, userId: input.actorId, command: 'task.transition', taskId: task.taskId,
+    payload: { sourceEntityType: input.sourceEntityType, sourceEntityId: id, before: task.status, after: task.status, text: { before, after } },
+    summary: 'Updated task text from its current Quality audit record' });
+}
+
 async function closeSourceTask(input: ReconcileSourceTasks, id: string, task: OpenSourceTask, tx?: SourceTaskTransaction) {
   const { organizationId, sourceEntityType } = input;
   const options = { organizationId, expectedStatus: String(task.status) };
@@ -297,6 +356,10 @@ async function closeSourceTask(input: ReconcileSourceTasks, id: string, task: Op
     payload: { sourceEntityType, sourceEntityId: id, before: task.status, after: status } });
 }
 
+function sourceTaskUnchanged(open: OpenSourceTask[], wanted: DesiredSourceTask): boolean {
+  return open.length === 1 && wanted.same((open[0].metadata ?? {}) as Record<string, unknown>);
+}
+
 /** One key: keep its open task when it records the same thing; otherwise close what is open and write what is wanted. */
 async function reconcileKey(input: ReconcileSourceTasks, id: string, open: OpenSourceTask[], result: ReconcileSourceTasksResult,
   tx?: SourceTaskTransaction): Promise<void> {
@@ -304,8 +367,11 @@ async function reconcileKey(input: ReconcileSourceTasks, id: string, open: OpenS
   const wanted = input.desired.get(id);
   const assigneeChanged = capaAssigneeChanged(sourceEntityType, open, wanted?.next);
   if (assigneeChanged && tx) await verifyCapaAssigneeChange(input, id, wanted!, tx);
-  if (wanted && !assigneeChanged && open.length === 1 && wanted.same((open[0].metadata ?? {}) as Record<string, unknown>)) {
-    if (tx) await repairTaskPlacement(input, id, open[0], wanted, tx);
+  if (wanted && !assigneeChanged && sourceTaskUnchanged(open, wanted)) {
+    if (tx) {
+      await refreshInternalAuditTaskText(input, id, open[0], wanted, tx);
+      await repairTaskPlacement(input, id, open[0], wanted, tx);
+    }
     result.kept += 1; return;
   }
   for (const task of open) {
@@ -329,7 +395,7 @@ export async function reconcileSourceTasks(input: ReconcileSourceTasks): Promise
   const { organizationId, sourceEntityType, match } = input;
   const result: ReconcileSourceTasksResult = { kept: 0, closed: 0, written: [], failed: false };
   try {
-    if (NATIVE_PROJECT_SOURCES.has(sourceEntityType)) return await reconcileQualityTasks(input);
+    if (NATIVE_PROJECT_SOURCES.has(sourceEntityType) || sourceEntityType === 'qms_internal_audit') return await reconcileQualityTasks(input);
     const inScope = (id: string) => ('exact' in match ? id === match.exact : id.startsWith(match.prefix));
     const byKey = await readOpenTasks(input, inScope);
     for (const id of new Set([...byKey.keys(), ...[...input.desired.keys()].filter(inScope)])) {
@@ -370,15 +436,15 @@ async function reconcileQualityTasks(input: ReconcileSourceTasks): Promise<Recon
         organizationId: input.organizationId, userId: input.actorId, forShare: true,
       });
       await q.query('SELECT pg_advisory_xact_lock(hashtext($1),hashtext($2))', [String(input.organizationId), sourceTaskLockKey(input)]);
+      const currentInput = input.sourceEntityType === 'qms_internal_audit' ? await currentInternalAuditInput(q, input) : input;
       const inScope = (id: string) => 'exact' in input.match ? id === input.match.exact : id.startsWith(input.match.prefix);
       const desired = new Map<string, DesiredSourceTask>();
-      for (const [id, task] of input.desired) {
+      for (const [id, task] of currentInput.desired) {
         if (!inScope(id)) continue;
-        const place = input.sourceEntityType === 'qms_training'
-          ? await trainingTaskPlacement(q, input, id, task) : await nativeTaskPlacement(q, input, id);
+        const place = await desiredQualityTaskPlacement(q, input, id, task);
         desired.set(id, { ...task, next: { ...task.next, projectId: place?.projectId, clientWorkspaceId: place?.clientWorkspaceId ?? undefined } });
       }
-      const scoped = { ...input, desired };
+      const scoped = { ...currentInput, desired };
       const runner = drizzle(q, { schema });
       const result: ReconcileSourceTasksResult = { kept: 0, closed: 0, written: [], failed: false };
       const byKey = await readOpenTasks(scoped, inScope, runner);
