@@ -252,10 +252,26 @@ describe('what the report read', () => {
     serve(INTACT);
     await open();
     const deps = await screen.findByTestId('rl-deps');
-    expect(within(deps).getByText('submission_readiness')).toBeTruthy();
-    expect(within(deps).getByText('artifact_lifecycle')).toBeTruthy();
+    // These rows carry no name from the server, so the id is read as words.
+    expect(within(deps).getByText('submission readiness')).toBeTruthy();
+    expect(within(deps).getByText('artifact lifecycle')).toBeTruthy();
     expect(within(deps).getByText('Not available')).toBeTruthy();
     expect(within(deps).getByText('No artifact lifecycle rows for this project.')).toBeTruthy();
+  });
+
+  /* Sales rehearsal E17: the table printed the engine's id for each source ("artifact_state"). The route now sends
+     each row's name in words (report-os render/source-words.ts), and the table prints that. A row from a server
+     that sends none is read as words here, never as the stored id. */
+  it('names each source in words, never by the engine\u2019s id', async () => {
+    serve(INTACT, [
+      { id: 1, runId: 41, provider: 'artifact_state', sourceLabel: 'What the project holds', status: 'ready', blocker: null, observedAt: '2026-10-02T09:00:00.000Z' },
+      { id: 2, runId: 41, provider: 'regional_package_manifest', status: 'partial', blocker: null, observedAt: '2026-10-02T09:00:01.000Z' },
+    ]);
+    await open();
+    const table = await screen.findByTestId('rl-deps');
+    const sources = [...table.querySelectorAll('tbody tr')].map((tr) => tr.querySelector('td')?.textContent);
+    expect(sources).toEqual(['What the project holds', 'regional package manifest']);
+    expect(table.textContent).not.toMatch(/artifact_state|regional_package_manifest/);
   });
 
   it('no recorded providers says so, and does not imply the run read nothing', async () => {

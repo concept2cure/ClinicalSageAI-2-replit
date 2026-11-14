@@ -55,10 +55,11 @@ describe('renderReport', () => {
     const table = providers?.blocks.find(b => b.kind === 'table');
     expect(table?.kind).toBe('table');
     if (table?.kind === 'table') {
-      expect(table.columns).toEqual(['Provider', 'Status', 'Note']);
+      // Each source and its status in words (render-source-words.test.ts pins the vocabulary).
+      expect(table.columns).toEqual(['Source', 'Status', 'Note']);
       expect(table.rows).toHaveLength(2);
-      expect(table.rows[0]).toEqual(['artifact_state', 'ready', '—']);
-      expect(table.rows[1]).toEqual(['submission_readiness', 'partial', 'No approved artifacts']);
+      expect(table.rows[0]).toEqual(['What the project holds', 'Ready', '—']);
+      expect(table.rows[1]).toEqual(['Submission readiness', 'Partial', 'No approved artifacts']);
     }
   });
 

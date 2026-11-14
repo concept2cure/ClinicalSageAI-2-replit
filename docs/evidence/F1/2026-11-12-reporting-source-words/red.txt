@@ -1,0 +1,18 @@
+# Before the change (HEAD 18bf658a22 + the new and changed cases): failing cases and totals.
+ × client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > what the report read > lists each provider with its outcome, and the engine’s own blocker sentence 21ms
+   → Unable to find an element with the text: submission readiness. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > what the report read > names each source in words, never by the engine’s id 22ms
+   → expected [ 'artifact_state', …(1) ] to deeply equal [ 'What the project holds', …(1) ]
+ × server/routes/__tests__/report-os-dependency-words.test.ts > GET /runs/:id/dependencies > sends each source’s name in words beside the stored id 22ms
+   → expected [ …(3) ] to deeply equal [ [ 'artifact_state', …(1) ], …(2) ]
+ FAIL  server/services/report-os/render/__tests__/render-source-words.test.ts [ server/services/report-os/render/__tests__/render-source-words.test.ts ]
+Error: Cannot find module '../source-words' imported from /home/user/ClinicalSageAI-2-replit/server/services/report-os/render/__tests__/render-source-words.test.ts
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+ FAIL  server/routes/__tests__/report-os-dependency-words.test.ts > GET /runs/:id/dependencies > sends each source’s name in words beside the stored id
+AssertionError: expected [ …(3) ] to deeply equal [ [ 'artifact_state', …(1) ], …(2) ]
+ FAIL  client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > what the report read > lists each provider with its outcome, and the engine’s own blocker sentence
+TestingLibraryElementError: Unable to find an element with the text: submission readiness. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/insightsRunEvidence.test.tsx > what the report read > names each source in words, never by the engine’s id
+AssertionError: expected [ 'artifact_state', …(1) ] to deeply equal [ 'What the project holds', …(1) ]
+ Test Files  3 failed (3)
+      Tests  3 failed | 25 passed (28)

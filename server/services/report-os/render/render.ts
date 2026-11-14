@@ -13,6 +13,8 @@ import { labelCurrencyMatrixOf, renderLabelCurrencyMatrix } from './label-curren
 import { lifecycleCalendarOf, renderLifecycleCalendar } from './lifecycle-calendar';
 import { readinessSentence } from '../../../../shared/regulatory/readiness-statement';
 import { isNativeQualityReport, qualityEvidenceSections } from './quality-evidence';
+import { humanize, sourceLabel, sourceStatusWords } from './source-words';
+import { filingArticle } from '../../../../shared/regulatory/filing-document-classes';
 
 /**
  * Inputs to {@link renderReport}. Mirrors the shape produced by the
@@ -280,12 +282,6 @@ function gapsSectionFor(
   };
 }
 
-/** "activeRegistrations" → "Active registrations". */
-function humanize(key: string): string {
-  const words = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').trim().toLowerCase();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
-
 /** The register's statement that its counts are the organisation's, not one
  *  program's. One sentence: the lifecycle calendar states it too, because under
  *  an open project it lists every admitted project's obligations (D2, 2026-10-29). */
@@ -369,7 +365,7 @@ function marketBlocks(market: Record<string, unknown>): ReportBlock[] {
   const filing = str('filing');
   const agency = str('agency');
   if (filing && agency) {
-    blocks.push({ kind: 'summary', text: `Assessed as a ${filing} with ${agency.replace(/_/g, ' ')}.` });
+    blocks.push({ kind: 'summary', text: `Assessed as ${filingArticle(filing)} ${filing} with ${agency.replace(/_/g, ' ')}.` });
   }
   /* The canonical market statement, verbatim: it is the same sentence the market
      rows, the New submission options and the New project picker show
@@ -524,16 +520,19 @@ function computationMetadata(summary: Record<string, unknown>, scopeType: string
   return { computedScope, ...(!nativeQuality && provenance ? { provenance } : {}) };
 }
 
+/** Each source the run read, its status and the engine's own note, in words (source-words.ts). Every report that
+ *  was not a Quality report printed the engine's id and stored status here (sales rehearsal E17 and E18). The
+ *  section's id is unchanged: it is the key the screens and the PDF find it by. */
 function providerReadinessSection(providers: RenderInput['providers'], nativeQuality = false): ReportSection {
   const providerRows: Array<Array<string | number | null>> = providers.map(p => [
-    nativeQuality ? (p.provider === 'quality_project_evidence' ? 'Quality evidence' : humanize(p.provider)) : p.provider,
-    p.status,
+    sourceLabel(p.provider),
+    sourceStatusWords(p.status),
     p.blocker ?? '—',
   ]);
   return {
     id: 'provider-readiness',
-    title: 'Provider readiness',
-    blocks: [{ kind: 'table', columns: ['Provider', 'Status', 'Note'], rows: providerRows, ...(!nativeQuality && providers.some((p) => p.atoms?.length) ? { provenance: providers.flatMap((p) => p.atoms ?? []) } : {}) }],
+    title: 'Source readiness',
+    blocks: [{ kind: 'table', columns: ['Source', 'Status', 'Note'], rows: providerRows, ...(!nativeQuality && providers.some((p) => p.atoms?.length) ? { provenance: providers.flatMap((p) => p.atoms ?? []) } : {}) }],
   };
 
 }
