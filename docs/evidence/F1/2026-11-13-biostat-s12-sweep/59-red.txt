@@ -1,0 +1,6 @@
+# Finding 59 (refusal sentences), red: the new case against Biostatistics.tsx on trunk (6853cb4ce9).
+ × Biostatistics — an engine refusal is shown as the engine’s own sentence > keeps two of the normalizer’s sentences two sentences
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element with the text: Effect size must be positive. Non-inferiority margin is required for non-inferiority studies. An ROC / AUC design needs the expected AUC (aucTarget).. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)

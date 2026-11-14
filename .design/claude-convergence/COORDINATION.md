@@ -127,6 +127,25 @@ fixes the rest red first. A file another row holds stays with its holder: tell t
 | Client administration and screen work (`01T2woo…`) | 93, 95, 96, 97 | 93 and 97 are in `TaskBoard.tsx`, Wave B's W6 |
 | The founder | 78 | Duplicate CAPA numbers in the organisation's register, and the README's isolation item (one client's Quality records in another client's project) |
 
+**The Biostatistics lane's answer, 2026-11-14** (`01KiDof7…`; each re-checked on trunk `6853cb4ce9` before any fix;
+evidence `docs/evidence/F1/2026-11-13-biostat-s12-sweep/`):
+- **Done:** 60, 61, 64, 67, 69, and what was left of 58 and 59 (`f759a829ae`).
+- **Already fixed on trunk before this:**
+  - 58's blocker, by `44f25b3fdb` and `098899e6ae`. This lane converged the two sibling resolvers the finding named
+    (`biostatPlatform.ts`, `biostat-design-stats.ts`) onto `resolveOrgId`.
+  - 59's sizing, by `e965a16772` and `d22d9a51f9`. Its refusal sentences no longer run together.
+- **64 reverses `cf6b0293f3` on purpose:** with no interim analysis recorded, the plan no longer drafts one look at 50%.
+- **Next, in this order:** 66, then 68, then 63 (S3 and S1).
+- **→ the coordinating session (the editor):** 58's `authoringHandoff.ts` half is still open and is yours. A 503
+  `PROJECT_ACCESS_UNAVAILABLE` is raised before any write, with "Nothing was changed"
+  (`authoring-program-access.ts`), but `writeHandoffStage` maps every 5xx to "unknown", so the notice says "Could not
+  confirm whether the document was saved". Mapping that one code to "refused" keeps the conservative rule for every
+  other 5xx.
+- **Also landed:** P-132 (the founder, 2026-11-14: "place on left rail above cmc"). Biostatistics now opens the
+  rail's work areas, directly above CMC (`bc0c3e1bdf` records it, `71b1fc6e59` makes it). Rows that pin the rail's
+  order: `registryModel.test.ts`, `shellNav.test.tsx` and `cmdkPlaces.test.tsx` now pin it.
+- **Taken from R1's row:** "Pivotal OS (survival)" names MMRM for a time-to-event endpoint (`biostatWorkedExamples.ts`).
+
 **Progress, 2026-11-13 00:15 UTC** (each re-checked on current trunk by its owner):
 - **Done:** 1, 5, 7, 8, 39, 40 (S12, `3c3a6665dc`); 89, 94 (Reporting, `91197119fe`, `9aa5a51059`; 94's "withdraw the
   device section" is left to the founder under P-122); 22, 84, 51 and the editor's parts of 11, 14, 24, 26 (the
@@ -322,6 +341,26 @@ Founder asks Quality beside RBM/CMC, connected through projects, tasks, QA/QS da
 **→ D3 Project owner:** `ProjectCoreWork.tsx` omits Quality while ProjectReview already has its count/door; the door calls only `onNav('quality')`, and QP3 needs the retained open project. Please place Quality beside existing work-area links within your held layout. Native snapshots support shared selected-source builds and the typed source_ids conversation context; per-row study actions without source_ids should not promise whole-record tool reads (there is no native Vault UUID or upload to open). **→ Reporting owner:** existing `compliance.audit_assurance_pack` now consumes scoped Quality facts; no additional reporting screen is requested. **→ tasking coordinator:** this lane completed native Quality task project/source linkage in shared TaskBoard, preserving all layout and other task behavior.
 
 Verified handoff: native task → CAPA register and shared-source build → one editor pass at desktop/mobile. The current Quality tabbar overflows 847 px inside 390 px (`quality/app.css:276`, `quality/App.tsx:349`); left to Quality holder. Native snapshots feed shared project catalogue/builds and existing QA report; no held UI layout changed. Source anchors: `1e904a0550`, `b25fd60fb7`, `98661f418b`, `11e4252671`, `f92b2be3f7`, `f4c230dfac`, `bb79304fa2`. Merged 18/302 task, 8/83 source and 10/118 report tests pass; source published, evidence `docs/evidence/DESIGN/R1/2026-11-06-quality-core-workflow/`.
+
+## Document generation has one owner (the founder, 2026-11-14)
+
+The founder, to session `015weq…` on 2026-11-14: *"You own all issues with our document generation, our canonical
+document editor that works across biotech, pharma, as well as medical device diagnostic, but adapts to each specialty
+project … You are the global product manager for document generation … if there are errors or bugs anywhere in that
+process, even if another agent or session built it or owns it, no, you own it. You are the global responsible party."*
+
+**What it covers.** A document's whole path, for every client type and document type: the project's document start,
+AnA's draft, the one editor (`client/src/concept2cure/v2/editor/**`, `server/routes/authoring*.ts`,
+`server/services/authoring/**`), review, signature and freeze, export, placing into a filing, and the package of
+files a submission is assembled from.
+
+**How it works beside the holds.**
+- This session (`015weq…`, "document generation") is accountable for every defect on that path and may fix one in a
+  file another lane holds. It still keeps rule 6: one session edits a file at a time.
+- Before editing a held file it writes the file and the defect here, and the holder's in-flight region stays the
+  holder's. A holder with unpushed work in that file says so here and this session waits or takes the change after.
+- Found a defect on this path? Write it here for `015weq…`, or fix it in your own file and say so.
+- This is an assignment of responsibility. It changes no plan package, and adds no screen, route or table.
 
 ## Who works where
 

@@ -221,7 +221,8 @@ const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submissi
 // this entry. Its door is project-scoped, so it opens on a project
 // (railOpensWithoutProject.test.ts). The comment here said the opposite until
 // 2026-11-09, citing RULE 4 and P-79, while the list below already named it.
-const WORK_AREAS = ['CMC / Module 3', 'Biostatistics', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
+// It opens the work areas, above CMC, by the founder's decision of 2026-11-14 (P-132): "place on left rail above cmc".
+const WORK_AREAS = ['Biostatistics', 'CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
   it('exactly the places, then the work areas, in order', async () => {

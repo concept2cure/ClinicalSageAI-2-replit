@@ -1,0 +1,12 @@
+# Finding 58 (sibling resolvers), green.
+ ✓ biostat-org-claim-is-a-number.test.ts > biostatPlatform.ts > an organization carried as text ("7") is recorded as the number 7
+ ✓ biostat-org-claim-is-a-number.test.ts > biostatPlatform.ts > an organization claim of "seven" reaches no service and writes nothing
+ ✓ biostat-org-claim-is-a-number.test.ts > biostatPlatform.ts > an organization claim of 0 reaches no service and writes nothing
+ ✓ biostat-org-claim-is-a-number.test.ts > biostatPlatform.ts > an organization claim of -1 reaches no service and writes nothing
+ ✓ biostat-org-claim-is-a-number.test.ts > biostatPlatform.ts > an organization claim of null reaches no service and writes nothing
+ ✓ biostat-org-claim-is-a-number.test.ts > biostat-design-stats.ts > a numeric organization carried as text is admitted
+ ✓ biostat-org-claim-is-a-number.test.ts > biostat-design-stats.ts > an organization claim of "seven" is refused before anything is computed
+ ✓ biostat-org-claim-is-a-number.test.ts > biostat-design-stats.ts > an organization claim of 0 is refused before anything is computed
+ ✓ biostat-org-claim-is-a-number.test.ts > biostat-design-stats.ts > an organization claim of -1 is refused before anything is computed
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

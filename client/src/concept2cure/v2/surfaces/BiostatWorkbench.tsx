@@ -75,6 +75,7 @@ import type { FireToast } from '../toast';
 import { useAuthoringHandoff } from '../authoringHandoff';
 import { AuthoringHandoffNotice } from '../AuthoringHandoffNotice';
 import { engineResultToHtml, engineResultTableColumns, engineResultCellText, type EngineResultTable } from '../engineResultHtml';
+import { humanizeKey } from '@shared/biostat-vocabulary';
 
 /**
  * Where a computed result belongs in the filing.
@@ -202,10 +203,10 @@ function ratingTone(r: string | undefined) {
   return 'ok';
 }
 
-/** Insert spaces before capitals so `posteriorSe` reads as `posterior Se`. */
-function humanize(key: string): string {
-  return key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
-}
+/** A result key as a label, through the one label helper (shared/biostat-vocabulary.ts): `typeIError` reads
+ *  "Type I error" and `rmstTreatment` "RMST treatment". This file had its own copy until 2026-11-13, which
+ *  printed "Type IError", "Rmst Treatment" and "Ci Lower" (S12 biotech sweep, finding 67). */
+const humanize = humanizeKey;
 
 function fmt(v: number): string {
   if (Number.isInteger(v)) return String(v);
@@ -290,12 +291,39 @@ function objectTables(value: unknown, prefix = '', depth = 0): EngineResultTable
     if (k === 'provenance') continue;
     const label = prefix ? `${prefix} · ${humanize(k)}` : humanize(k);
     if (isRowArray(v)) {
-      const table: EngineResultTable = { label, rows: v };
-      table.columns = engineResultTableColumns(table).map(({ key }) => ({ key, label: humanize(key) }));
-      out.push(table);
+      out.push(...rowTables(label, v));
     } else if (depth === 0 && isPlainObject(v)) {
       out.push(...objectTables(v, label, depth + 1));
     }
+  }
+  return out;
+}
+
+/**
+ * A table, and a table of its own for each column whose cells are themselves rows. The group-sequential
+ * result's `perLook` printed as JSON in a "Per Look" cell (S12 biotech sweep, finding 67). Each nested row
+ * leads with its parent row's first field (the drift, for the operating characteristics), so a reader can
+ * tell which scenario it belongs to. The nested key is left out of the parent's rows, not only its columns:
+ * the column list is the union of every row's keys.
+ */
+function rowTables(label: string, rows: Array<Record<string, unknown> | null>): EngineResultTable[] {
+  const nestedKeys = Array.from(new Set(rows.flatMap((r) => (r ? Object.keys(r).filter((key) => isRowArray(r[key])) : []))));
+  const parentRows = nestedKeys.length === 0
+    ? rows
+    : rows.map((r) => (r ? Object.fromEntries(Object.entries(r).filter(([key]) => !nestedKeys.includes(key))) : r));
+  const tableOf = (tableLabel: string, tableRows: Array<Record<string, unknown> | null>): EngineResultTable => {
+    const table: EngineResultTable = { label: tableLabel, rows: tableRows };
+    table.columns = engineResultTableColumns(table).map(({ key }) => ({ key, label: humanize(key) }));
+    return table;
+  };
+  const out = [tableOf(label, parentRows)];
+  for (const nk of nestedKeys) {
+    const childRows = rows.flatMap((r) => {
+      if (!r || !isRowArray(r[nk])) return [];
+      const lead = Object.entries(r).find(([key, val]) => !nestedKeys.includes(key) && (typeof val !== 'object' || val === null));
+      return (r[nk] as Array<Record<string, unknown> | null>).map((child) => (lead ? { [lead[0]]: lead[1], ...(child ?? {}) } : child));
+    });
+    out.push(tableOf(`${label} · ${humanize(nk)}`, childRows));
   }
   return out;
 }
@@ -681,11 +709,17 @@ export function DefensibilitySection({ fireToast }: { fireToast: FireToast }) {
     setAsmtBusy(true); setAsmtNeeds([]);
     try {
       const n = (v: string) => (v.trim() === '' ? undefined : Number(v));
+      /* Only the fields the form shows for this endpoint: rates for a binary one, the effect size for any
+         other. Both were always sent, so rates typed while the endpoint was binary went along with a
+         continuous assessment (S12 biotech sweep, finding 69). */
+      const binary = asmt.endpointType === 'binary';
       const { ok, status, data, error, needs } = await readData<Defensibility>('/api/statistical-defensibility/assess', {
         clientTrack: 'biotech_pharma',
         phase: asmt.studyPhase, indication: asmt.indication || undefined,
         studyType: asmt.studyType, objectiveType: asmt.objectiveType, endpointType: asmt.endpointType,
-        effectSize: n(asmt.effectSize), controlRate: n(asmt.controlRate), treatmentRate: n(asmt.treatmentRate),
+        effectSize: binary ? undefined : n(asmt.effectSize),
+        controlRate: binary ? n(asmt.controlRate) : undefined,
+        treatmentRate: binary ? n(asmt.treatmentRate) : undefined,
         nonInferiorityMargin: asmt.studyType === 'non_inferiority' ? n(asmt.margin) : undefined,
         equivalenceMargin: asmt.studyType === 'equivalence' ? n(asmt.margin) : undefined,
         alpha: n(asmt.alpha), powerTarget: n(asmt.powerTarget), attritionRate: n(asmt.attritionRate),

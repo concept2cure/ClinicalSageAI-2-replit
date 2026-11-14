@@ -184,7 +184,8 @@ describe('BiostatWorkbench — real statistical engine', () => {
     });
     // Rendered from the server's response — the browser computes nothing.
     expect(await screen.findByText('0.72')).toBeTruthy();
-    expect(screen.getByText('Power At Prior Mean')).toBeTruthy();
+    // Labels through the shared label helper (humanizeKey) since 2026-11-13: sentence case, acronyms whole.
+    expect(screen.getByText('Power at prior mean')).toBeTruthy();
   });
 
   it('omits a blank optional field rather than sending a placeholder value', async () => {
@@ -604,7 +605,7 @@ describe('D4 — structured scientific result fidelity in Authoring', () => {
     fill(/^Prior SD/, '0.15');
     fill(/^n per arm/, '120');
     fireEvent.click(screen.getByRole('button', { name: /^Compute$/ }));
-    expect(await screen.findByText('Oc Table')).toBeTruthy();
+    expect(await screen.findByText('OC table')).toBeTruthy();
     expect(screen.getByText(/Showing 60 of 65 rows/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Insert into document/ }));
 
@@ -612,13 +613,13 @@ describe('D4 — structured scientific result fidelity in Authoring', () => {
       const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections');
       expect(section).toBeTruthy();
       const content: string = section![2].content;
-      for (const expected of ['Oc Table', 'Drift', 'Power', 'Stopped Early', '0.0250000000000123', '<td>64</td><td>0.64</td>', '&lt;script&gt;not markup&lt;/script&gt;', '{"lower":null,"upper":3.14}', `inputs ${FULL_HASH}`]) {
+      for (const expected of ['OC table', 'Drift', 'Power', 'Stopped early', '0.0250000000000123', '<td>64</td><td>0.64</td>', '&lt;script&gt;not markup&lt;/script&gt;', '{"lower":null,"upper":3.14}', `inputs ${FULL_HASH}`]) {
         expect(content).toContain(expected);
       }
       expect(content).not.toContain('<script>');
       expect(apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs')![2]).toMatchObject({ client_program_id: PROGRAM, module: 'M5' });
     });
-    expect(screen.getByRole('columnheader', { name: 'Stopped Early' })).toBeTruthy();
+    expect(screen.getByRole('columnheader', { name: 'Stopped early' })).toBeTruthy();
     expect(screen.getByText('0.0250000000000123')).toBeTruthy();
   });
 

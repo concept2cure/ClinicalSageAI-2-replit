@@ -36,6 +36,7 @@ import {
 } from '@shared/biostat-vocabulary';
 import {
   DesignBridgePanel,
+  DesignGapList,
   FilingPlacementNote,
   StudyDesignCard,
   placementForDoc,
@@ -471,6 +472,23 @@ async function stillSaved(prior: SavedWorkingDoc, current: () => boolean): Promi
 }
 
 /** One engine vocabulary as a select: every value the engine accepts, by its label. */
+/** A binary design that gives both rates is sized on their difference (the engine's test reads the
+ *  rates), so that difference is its delta — to six decimals, as the server normalizes it. Null when a
+ *  rate is missing or the endpoint is not binary. S12 biotech sweep, finding 60. */
+function binaryRatesDelta(input: { endpointType?: string; controlRate?: number; treatmentRate?: number }): number | null {
+  const { controlRate: c, treatmentRate: t } = input;
+  if (input.endpointType !== 'binary' || typeof c !== 'number' || typeof t !== 'number') return null;
+  if (!Number.isFinite(c) || !Number.isFinite(t)) return null;
+  return Number(Math.abs(t - c).toFixed(6));
+}
+
+/** One of the normalizer's sentences, ending in a full stop: several carry none, and joined with a space
+ *  two refusals read as one run-on sentence (S12 biotech sweep, finding 59). */
+function asSentence(message: string): string {
+  const t = message.trim();
+  return /[.!?]$/.test(t) ? t : t + '.';
+}
+
 function VocabSelect({ label, map, value, onChange }: { label: string; map: VocabularyMap; value: string | undefined; onChange: (v: string) => void }) {
   return (
     <label className="bs-f"><span>{label}</span>
@@ -501,7 +519,10 @@ type EngineState =
       interpretation?: AnaInterpretation;
       warnings: InputWarning[];
     }
-  | { kind: 'refused'; message: string };
+  | { kind: 'refused'; message: string }
+  /** The selected study design records too little for the engine to size it (its assessment's adapter
+   *  input is null). Nothing is computed in its name; its gaps say what it lacks. */
+  | { kind: 'not_sized' };
 
 /** The governed document, as the engine generated it. */
 type DocState =
@@ -619,14 +640,21 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     if (first) setSelectedStudyId(first.studyId);
   }, [program, selectedStudyId, designs.loading, designs.rows]);
   useEffect(() => {
-    const seed = loadedDesign?.adapter.input;
-    if (!seed) return;
-    // The adapter emits the engine's StatisticalInput, which is exactly what
-    // this surface's controls hold and what it posts back to the engine.
-    setInput(seed as unknown as EngineInput);
+    /* The assessment hook keeps the previous design's answer while the next one loads: it is applied only
+       once it is the selected design's own. */
+    if (!loadedDesign || loadedDesign.studyId !== selectedStudyId) return;
+    const seed = loadedDesign.adapter.input;
+    /* A design the engine cannot size yet is still the chosen design: the page says it is not sized
+       (below) instead of leaving the previous design's figures, or a worked example, in its place.
+       S12 biotech sweep, finding 61. */
     setPreset('design');
     setEdited(false);
-  }, [loadedDesign]);
+    // The adapter emits the engine's StatisticalInput, which is exactly what
+    // this surface's controls hold and what it posts back to the engine.
+    if (seed) setInput(seed as unknown as EngineInput);
+  }, [loadedDesign, selectedStudyId]);
+  /* The selected design, loaded, with no input the engine can size — and no worked example chosen since. */
+  const notSized = preset === 'design' && !!selectedStudyId && !!loadedDesign && loadedDesign.studyId === selectedStudyId && !loadedDesign.adapter.input;
 
   // Governed statistical documents — the ONE stored, org-scoped slice of this
   // surface. GET /api/ana-biostats/governed-documents reads real persisted
@@ -640,6 +668,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     : '/api/ana-biostats/governed-documents';
   const govDocs = useLiveRows<BiostatPlan>(govDocsPath);
   const set = (k: string, v: unknown) => { autoLoaded.current = true; setPersonChose(true); setEdited(true); setInput((s) => ({ ...s, [k]: v })); };
+  /* A rate edit carries the delta with it: the form never shows or sends a delta the engine does not size on. */
+  const setRate = (k: 'controlRate' | 'treatmentRate', v: number | undefined) => {
+    autoLoaded.current = true; setPersonChose(true); setEdited(true);
+    setInput((s) => {
+      const next = { ...s, [k]: v };
+      const d = binaryRatesDelta(next);
+      return d === null ? next : { ...next, effectSize: d };
+    });
+  };
   const applyPreset = (k: string) => { autoLoaded.current = true; setPersonChose(true); setPreset(k); setInput(BS_PRESETS[k].input); setEdited(false); };
   /* Keyed on the SOURCE of the inputs, not on whether they were edited. */
   const isExample = preset !== 'design';
@@ -680,6 +717,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
 
   useEffect(() => {
     const gen = ++generation.current;
+    if (notSized) { setEngine({ kind: 'not_sized' }); return undefined; }
     setEngine({ kind: 'computing' });
     if (holdForDesign) return undefined;
     const timer = setTimeout(async () => {
@@ -698,7 +736,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         setEngine({
           kind: 'refused',
           message: said.length
-            ? said.join(' ')
+            ? said.map(asSentence).join(' ')
             : 'The statistical engine could not size this design and gave no reason.',
         });
         return;
@@ -722,7 +760,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       });
     }, COMPUTE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [input, retryTick, holdForDesign]);
+  }, [input, retryTick, holdForDesign, notSized]);
 
   const docDef = docById(docType);
 
@@ -733,7 +771,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
 
   useEffect(() => {
     const gen = ++docGeneration.current;
-    if (!ready || !docDef) { setDoc({ kind: 'idle' }); return; }
+    /* `notSized` is read here as well as through `ready`: in the render where an unsized design arrives,
+       the previous design's result is still `ready`, and it is not written up in the new design's name. */
+    if (!ready || !docDef || notSized) { setDoc({ kind: 'idle' }); return; }
     setDoc({ kind: 'generating' });
     let cancelled = false;
     void (async () => {
@@ -762,7 +802,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       });
     })();
     return () => { cancelled = true; };
-  }, [ready, docDef, isExample, exampleName, loadedDesign]);
+  }, [ready, docDef, isExample, exampleName, loadedDesign, notSized]);
 
   const md = doc.kind === 'ready' ? doc.markdown : '';
   const html = useMemo(() => (md ? renderSafeMarkdown(md) : ''), [md]);
@@ -778,6 +818,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const isAgreement = input.endpointType === 'agreement';
   const isSurv = input.endpointType === 'time_to_event';
   const isBin = input.endpointType === 'binary';
+  const ratesDelta = binaryRatesDelta(input);
   const isCont = input.endpointType === 'continuous';
   const isNI = input.studyType === 'non_inferiority';
   const isEquiv = input.studyType === 'equivalence';
@@ -912,6 +953,13 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     if (engine.kind === 'computing') {
       return {
         summary: 'Biostatistics — the statistical engine is still sizing the design on screen, so no sample size, power or verdict is shown yet; ' + gov + '.',
+        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts, ...designFacts },
+      };
+    }
+    if (engine.kind === 'not_sized') {
+      return {
+        summary: 'Biostatistics — the loaded study design' + (loadedDesign ? ' "' + loadedDesign.title + '"' : '')
+          + ' is not sized yet: it records too little for the statistical engine to size it, so no sample size, power or verdict is shown; ' + gov + '.',
         facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts, ...designFacts },
       };
     }
@@ -1096,6 +1144,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                   omit values the engine accepts, so a dose–response design
                   showed "superiority" — the first option — while being sized
                   as dose–response. */}
+              {/* Inert while the selected design is not sized: the values on screen are another design's or an
+                  example's, and editing them would size something in this design's name. */}
+              <fieldset disabled={notSized} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
               <div className="bs-fields">
                 <VocabSelect label="Track" map={TRACK_LABELS} value={input.clientTrack} onChange={(v) => set('clientTrack', v)} />
                 <VocabSelect label="Agency" map={AGENCY_LABELS} value={input.regulatoryBody} onChange={(v) => set('regulatoryBody', v)} />
@@ -1103,12 +1154,12 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                 <VocabSelect label="Endpoint" map={ENDPOINT_TYPE_LABELS} value={input.endpointType} onChange={(v) => set('endpointType', v)} />
                 <label className="bs-f"><span>Alpha</span><input type="number" step="0.005" value={input.alpha} onChange={(e) => set('alpha', vf(e.target.value) || 0.05)} /></label>
                 <label className="bs-f"><span>Power</span><input type="number" step="0.05" value={input.powerTarget} onChange={(e) => set('powerTarget', vf(e.target.value) || 0.8)} /></label>
-                {usesEffect && <label className="bs-f"><span>{isSurv ? 'HR reduction' : isBin ? 'Delta rate' : 'Effect (d)'}</span><input type="number" step="0.01" value={input.effectSize} onChange={(e) => set('effectSize', vf(e.target.value) || 0)} /></label>}
+                {usesEffect && <label className="bs-f"><span>{isSurv ? 'HR reduction' : isBin ? 'Delta rate' : 'Effect (d)'}</span><input type="number" step="0.01" value={ratesDelta ?? input.effectSize} readOnly={ratesDelta !== null} title={ratesDelta !== null ? 'The difference between the treatment and control rates. Change a rate to change it.' : undefined} onChange={(e) => { if (ratesDelta === null) set('effectSize', vf(e.target.value) || 0); }} /></label>}
                 {isNI && <label className="bs-f"><span>NI margin</span><input type="number" step="0.05" value={input.nonInferiorityMargin || ''} onChange={(e) => set('nonInferiorityMargin', vf(e.target.value))} /></label>}
                 {isEquiv && <label className="bs-f"><span>Equivalence margin</span><input type="number" step="0.05" value={input.equivalenceMargin || ''} onChange={(e) => set('equivalenceMargin', vf(e.target.value))} /></label>}
                 {isCont && <label className="bs-f"><span>Variance</span><input type="number" step="0.1" value={input.variance || ''} onChange={(e) => set('variance', vf(e.target.value))} /></label>}
-                {isBin && <label className="bs-f"><span>Control rate</span><input type="number" step="0.05" value={input.controlRate || ''} onChange={(e) => set('controlRate', vf(e.target.value))} /></label>}
-                {isBin && <label className="bs-f"><span>Treatment rate</span><input type="number" step="0.05" value={input.treatmentRate || ''} onChange={(e) => set('treatmentRate', vf(e.target.value))} /></label>}
+                {isBin && <label className="bs-f"><span>Control rate</span><input type="number" step="0.05" value={input.controlRate || ''} onChange={(e) => setRate('controlRate', vf(e.target.value))} /></label>}
+                {isBin && <label className="bs-f"><span>Treatment rate</span><input type="number" step="0.05" value={input.treatmentRate || ''} onChange={(e) => setRate('treatmentRate', vf(e.target.value))} /></label>}
                 {isSurv && <label className="bs-f"><span>Event rate</span><input type="number" step="0.05" value={input.eventRate || ''} onChange={(e) => set('eventRate', vf(e.target.value))} /></label>}
                 {isAccuracy && <label className="bs-f"><span>Sensitivity</span><input type="number" step="0.01" value={input.sensitivity || ''} onChange={(e) => set('sensitivity', vf(e.target.value))} /></label>}
                 {isAccuracy && <label className="bs-f"><span>Specificity</span><input type="number" step="0.01" value={input.specificity || ''} onChange={(e) => set('specificity', vf(e.target.value))} /></label>}
@@ -1124,12 +1175,18 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                 <label className="bs-f"><span>Attrition</span><input type="number" step="0.05" value={input.attritionRate} onChange={(e) => set('attritionRate', vf(e.target.value) || 0)} /></label>
                 <label className="bs-f"><span>Interims</span><input type="number" step="1" value={input.interimAnalyses || 0} onChange={(e) => set('interimAnalyses', parseInt(e.target.value) || 0)} /></label>
               </div>
+              </fieldset>
 
               {/* The engine's answer for the design above — or an honest account
                   of why there is not one. A figure is never shown while the
                   engine is still running, and never when it refused. */}
               {engine.kind === 'computing' && (
                 <div role="status" className="scaf-note" style={{ marginTop: 10 }}>Computing the design on the statistical engine…</div>
+              )}
+              {engine.kind === 'not_sized' && (
+                <div role="status" className="scaf-note" style={{ marginTop: 10 }}>
+                  {loadedDesign?.title ?? 'This design'} is not sized yet, so these inputs are not its own and the engine is not asked to size them. Choose a worked example to size one, or record what the design lacks.
+                </div>
               )}
               {engine.kind === 'refused' && (
                 <div style={{ marginTop: 10 }}>
@@ -1241,6 +1298,16 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                 title={'The engine did not write the ' + (docDef?.label ?? 'document')}
                 hint={doc.message}
                 retry={retryCompute}
+              />
+            ) : engine.kind === 'not_sized' ? (
+              /* What the design lacks, in the assessment's own words — not a document over another design's input. */
+              <EmptyState
+                icon={I.alertTriangle}
+                title={(loadedDesign?.title ?? 'This design') + ' is not sized yet'}
+                hint={<>
+                  <span style={{ display: 'block', marginBottom: 6 }}>The document is written from the engine’s own sizing of the design, and this design records too little to size. Record what it lacks on the study design and the engine sizes it here.</span>
+                  <DesignGapList gaps={loadedDesign?.adapter.gaps ?? []} />
+                </>}
               />
             ) : engine.kind === 'refused' ? (
               /* The engine's own sentence is rendered once, beside the design

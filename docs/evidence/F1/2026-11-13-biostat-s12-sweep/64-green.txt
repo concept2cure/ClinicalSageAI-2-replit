@@ -1,0 +1,27 @@
+# Finding 64, green: the same test after the fix.
+ ✓ the engine it now calls agrees with the published tables > 2 looks
+ ✓ the engine it now calls agrees with the published tables > 3 looks
+ ✓ the engine it now calls agrees with the published tables > 4 looks
+ ✓ a superiority comparison: the table is the engine’s > two interim looks print ±3.71, ±2.51 and a final ±1.99 — not ±2.76, ±2.56 and ±1.97
+ ✓ a superiority comparison: the table is the engine’s > every printed boundary is the engine’s own solve, rounded
+ ✓ a superiority comparison: the table is the engine’s > the final boundary moves with α; it is not a constant
+ ✓ a superiority comparison: the table is the engine’s > the cumulative spend at the final analysis is α/2 in each direction, and says so
+ ✓ a superiority comparison: the table is the engine’s > the table has four narrow columns, and says what the short headings mean
+ ✓ a superiority comparison: the table is the engine’s > a p-value below the printed precision is written <0.0001, never 0.0000
+ ✓ a superiority comparison: the table is the engine’s > it no longer calls its own figures indicative, and names how they were computed
+ ✓ a superiority comparison: the table is the engine’s > states what the boundaries cost in power, from the same engine
+ ✓ a non-inferiority comparison is one-sided > prints an upper boundary with no ±, at α/2
+ ✓ a design the boundaries are not for gets no number, and the reason > equivalence (two one-sided tests)
+ ✓ a design the boundaries are not for gets no number, and the reason > diagnostic accuracy with co-primary endpoints
+ ✓ a design the boundaries are not for gets no number, and the reason > more than two groups
+ ✓ a design the boundaries are not for gets no number, and the reason > more than one primary endpoint
+ ✓ the count of looks arrives unvalidated > an absurd count is refused at once, not solved
+ ✓ the count of looks arrives unvalidated > a fractional count is not rounded into a design nobody recorded
+ ✓ a design that plans no interim analysis is told so > a design that records zero gets a plan saying none is planned, with no look, boundary or stopping rule
+ ✓ a design that plans no interim analysis is told so > a design that records no count gets a plan saying none is planned, with no look, boundary or stopping rule
+ ✓ a design that plans no interim analysis is told so > agrees with the SAP and the DSMB charter drawn from the same design
+ ✓ a design that plans no interim analysis is told so > a design that records them is unchanged in its first line
+ ✓ a design that plans no interim analysis is told so > writes "an equivalence study", not "a equivalence study"
+ ✓ an adaptive design > gets the efficacy boundaries and is told what they do not cover
+ Test Files  1 passed (1)
+      Tests  24 passed (24)

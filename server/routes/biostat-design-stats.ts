@@ -11,6 +11,7 @@
 
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { resolveOrgId } from '../types/auth-request';
 import {
   solveSpendingBoundaries,
   operatingCharacteristics,
@@ -97,13 +98,15 @@ import { driftForTwoSampleMeans } from '../services/stats/group-sequential-oc';
 const router = Router();
 const authMiddleware = authenticateToken;
 
-/** Resolve the organization id from the authenticated request. */
+/**
+ * The caller's organization as a positive integer, through the one resolver every route uses
+ * (server/types/auth-request.ts). This router had its own copy until 2026-11-13, which returned any
+ * truthy claim as given: "seven" or -1 reached tenant queries and was written as a row's organization
+ * (S12 biotech sweep, finding 58 — the sibling of the ana-biostats.ts resolver fixed in 44f25b3fdb).
+ */
 function resolveOrganizationId(req: Request): number {
-  const orgId =
-    (req as any).organizationId ||
-    (req as any).user?.organizationId ||
-    (req as any).tenantContext?.organizationId;
-  if (!orgId) throw new Error('Organization context required');
+  const orgId = resolveOrgId(req);
+  if (orgId === null) throw new Error('Organization context required');
   return orgId;
 }
 
