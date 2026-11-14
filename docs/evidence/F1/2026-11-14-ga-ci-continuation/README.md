@@ -119,3 +119,15 @@ not needed for these proof/ledger repairs. The normal push hook still checks
 the combined whole program and repository gates before publication. The fresh
 hosted full-history job is checked separately after the push; source and policy
 acceptance are not inferred from a local scanner or a Codespace demonstration.
+
+## Canonical integration
+
+Normal merge `c4daaf73b` retains canonical `bc8fd9190`: the newer ordinary
+working-copy save, honest canvas empty-state and confidential sponsor deployment
+scope updates remain intact. The eight-file combined taxonomy/security/editor
+set passes **84/84**, zero skips, in 31.34 seconds. The complete production build
+exits **0** (Vite24.65s). All eight taxonomy/reader input hashes remain unchanged.
+`integration-verification.json` and adjacent compressed test/build logs bind
+these checks to that merged source. The normal push gates still check the final
+combined compiler; fresh full-history CI and remote identity are verified after
+publication. No root production implementation or privacy-policy change.
