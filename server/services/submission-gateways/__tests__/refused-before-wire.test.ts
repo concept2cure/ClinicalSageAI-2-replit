@@ -215,12 +215,17 @@ describe('refusedBeforeWire — refusals inside a gateway that PROVE nothing was
 const dbCalls: string[] = [];
 // The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
 vi.mock('../../storage', async () => (await import('./sent-package-storage-stub')).storageModule);
+// Positive adapter cases have a durably chained account-use receipt. The
+// current signer and gateway-account reads below still run through production.
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: async () => ({ persisted: true, chained: true }) }));
 
 vi.mock('../../../db', () => ({
   db: {},
   pool: {
-    query: async (text: string) => {
+    query: async (text: string, params: unknown[] = []) => {
       dbCalls.push(text.replace(/\s+/g, ' ').trim());
+      if (/SELECT ou\.role FROM organization_users ou/.test(text) && params[0] === 11 && params[1] === 7 &&
+          params[2] === 'active' && JSON.stringify(params[3]) === '["active"]') return { rowCount: 1, rows: [{ role: 'admin' }] };
       return /INSERT INTO submission_transmittals/.test(text) ? { rowCount: 1, rows: [{ id: 41 }] } : { rowCount: 1, rows: [] };
     },
   },

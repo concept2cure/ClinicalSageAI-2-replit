@@ -7,7 +7,8 @@
  * (support/coordination-fixture.ts).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { coordinationSha256, readRunCoordination } from '../run-events';
+import { coordinationSha256, readRunCoordination, coordinationRefusalReceipt, readCoordinationEvents,
+  type CoordinationPool, type RunCoordinationHost } from '../run-events';
 import type { WorkerEstimate, WorkerPhase, WorkerSnapshot } from '@shared/ana/turn-timeline';
 import { runWithTenantScope } from '../../../db/tenantStore';
 import { syntheticCurrentPolicyClient } from './support/source-read-tool-fixture';
@@ -56,6 +57,20 @@ describe('run coordination decisions (spike check 1)', () => {
   beforeEach(seedCoordinationMember);
   registerMeasuredWorkerCases();
   registerEstimateLedgerCases();
+  registerRecipientLifecycleCases();
+  registerMessageSnapshotCases();
+
+  it('reconciles a lost COMMIT reply and retries the same intent without a duplicate event', async () => {
+    let lost = true, disposed = false;
+    const adapter: CoordinationPool = { ...pool, connect: async () => ({ release(error) { if (error) disposed = true; },
+      query: async (sql, args) => { const result = await pool.query(sql, args); if (sql === 'COMMIT' && lost) { lost = false; throw new Error('lost reply'); } return result; } }) };
+    const { host, scope } = await subject(adapter);
+    const first = await host.assign(assignment('one-intent')), again = await host.assign(assignment('one-intent'));
+    expect(first.receipt).toEqual(again.receipt); expect(disposed).toBe(true);
+    expect((await readRunCoordination(pool, scope)).receipts).toHaveLength(1);
+    await expect(host.assign({ ...assignment('one-intent'), role: 'verify' })).rejects.toMatchObject({ code: 'COORDINATION_INTENT_CHANGED' });
+    expect((await readRunCoordination(pool, scope)).receipts).toHaveLength(2);
+  });
 
   it('records a measured checking estimate before projection and reconstructs the exact immutable basis', async () => {
     const broadcastReads: Array<Promise<void>> = [];
@@ -118,6 +133,88 @@ describe('run coordination decisions (spike check 1)', () => {
     expect(audit).not.toContain('superseded source version');
   });
 });
+
+function registerMessageSnapshotCases() {
+  it.each(['parent','child'] as const)('retains the original %s message through caller mutation before the actual append',async actor => {
+    let pause=false,entered=() => {},resume=() => {};
+    const waiting=new Promise<void>(resolve => {entered=resolve;});
+    const continued=new Promise<void>(resolve => {resume=resolve;});
+    const adapter:CoordinationPool={query:pool.query,connect:async () => {
+      if(pause){entered();await continued;}return pool.connect();
+    }};
+    const {scope,source,host}=await subject(adapter);
+    const sender=await host.assign({...assignment('snapshot-sender'),source});
+    const recipient=await host.assign({...assignment('snapshot-recipient'),parentStep:'s2',source});
+    const other=await host.assign({...assignment('snapshot-other'),parentStep:'s3',source});
+    const basis=[{kind:'rule' as const,ref:'original-rule',sha256:coordinationSha256('original-rule')}];
+    const model={provider:'fixture-provider',model:'fixture-model',requestId:'original-request',approvedModelId:'fixture-pin',pqStatus:'pending',approvedForHighRisk:false};
+    const request:Parameters<RunCoordinationHost['message']>[1]={intentId:'snapshot-message',recipient:recipient.handle.worker,messageKind:'review',basis,model};
+    const original={...request,basis:basis.map(row => ({...row})),model:{...model}};
+    const handle=actor==='parent'?null:sender.handle;
+    pause=true;const pending=host.message(handle,request);await waiting;
+    request.intentId='mutated-intent';request.recipient=other.handle.worker;request.messageKind='source';
+    basis[0].ref='mutated-rule';basis[0].sha256=coordinationSha256('mutated-rule');
+    basis.push({kind:'rule',ref:'injected-rule',sha256:coordinationSha256('injected-rule')});
+    model.provider='mutated-provider';model.model='mutated-model';model.requestId='mutated-request';
+    model.approvedModelId='mutated-pin';model.pqStatus='failed';model.approvedForHighRisk=true;
+    pause=false;resume();const committed=await pending;
+    const event=(await readCoordinationEvents(pool,scope)).find(row => row.eventId===committed.receipt.eventId);
+    expect(event).toMatchObject({sender:actor==='parent'?'anna':sender.handle.worker,recipient:original.recipient,
+      messageKind:original.messageKind,basis:original.basis,model:original.model});
+    expect(event?.basis).toEqual(original.basis);
+    expect(committed.snapshot.worker).toBe(actor==='parent'?recipient.handle.worker:sender.handle.worker);
+    expect((await host.message(handle,original)).receipt).toEqual(committed.receipt);
+    expect((await readCoordinationEvents(pool,scope)).filter(row => row.operation==='message')).toHaveLength(1);
+  });
+}
+
+function registerRecipientLifecycleCases() {
+  const terminalCases=(['completed','incomplete','cancelled','failed'] as const).flatMap(outcome =>
+    [{actor:'parent' as const,outcome},{actor:'child' as const,outcome}]);
+  it.each(terminalCases)('refuses a new $actor request to a $outcome recipient with one immutable replayable refusal',async ({actor,outcome}) => {
+    const projected:WorkerSnapshot[]=[];
+    const {scope,source,host}=await subject(pool,projection => projected.push(projection.snapshot));
+    const sender=await host.assign({...assignment('sender'),source});
+    const recipient=await host.assign({...assignment('recipient'),parentStep:'s2',source});
+    await host.report(recipient.handle,{intentId:'recipient-report',reportSha256:coordinationSha256('Recipient report'),outcome,source});
+    const before=(await readRunCoordination(pool,scope)).workers,projectionsBefore=projected.length;
+    expect(before.find(worker => worker.worker===recipient.handle.worker)?.phase).toBe(
+      ['cancelled','failed'].includes(outcome)?'stopped':'reported');
+    const request={intentId:'late-review-request',recipient:recipient.handle.worker,messageKind:'review' as const};
+    const attempt=() => host.message(actor==='parent'?null:sender.handle,request);
+    const firstError=await attempt().then(() => null,error => error);
+    expect(firstError).toMatchObject({code:'COORDINATION_WORKER_STOPPED'});
+    const firstReceipt=coordinationRefusalReceipt(firstError);
+    expect(firstReceipt).toMatchObject({eventId:expect.any(String),eventHash:expect.stringMatching(/^[a-f0-9]{64}$/)});
+    const secondError=await attempt().then(() => null,error => error);
+    expect(secondError).toMatchObject({code:'COORDINATION_WORKER_STOPPED'});
+    expect(coordinationRefusalReceipt(secondError)).toEqual(firstReceipt);
+    expect((await readRunCoordination(pool,scope)).workers).toEqual(before);
+    expect(projected).toHaveLength(projectionsBefore);
+    const refused=await pool.query("SELECT new_values FROM audit_logs WHERE record_id=$1 AND new_values->>'operation'='refused'",[scope.runId]);
+    expect(refused.rows).toMatchObject([{new_values:{operation:'refused',refusal:'COORDINATION_WORKER_STOPPED'}}]);
+    expect((await pool.query("SELECT 1 FROM audit_logs WHERE record_id=$1 AND new_values->>'operation'='message'",[scope.runId])).rows).toEqual([]);
+    await expect(pool.query("UPDATE audit_logs SET action='changed' WHERE record_id=$1 AND new_values->>'operation'='refused'",[scope.runId])).rejects.toThrow();
+  });
+  const activeCases=(['assigned','started','checking','waiting','held'] as const).flatMap(phase =>
+    [{actor:'parent' as const,phase},{actor:'child' as const,phase}]);
+  it.each(activeCases)('retains $actor messages to $phase recipients and exact historical success replay after stop',async ({actor,phase}) => {
+    const {scope,source,host}=await subject();
+    const sender=await host.assign({...assignment('sender'),source});
+    const recipient=await host.assign({...assignment('recipient'),parentStep:'s2',source});
+    if(phase!=='assigned')await host.progress(recipient.handle,phase,{intentId:'recipient-progress',completed:null,total:null});
+    const request={intentId:'live-help-request',recipient:recipient.handle.worker,messageKind:'help' as const};
+    const handle=actor==='parent'?null:sender.handle;
+    const committed=await host.message(handle,request);
+    expect((await host.message(handle,request)).receipt).toEqual(committed.receipt);
+    await host.report(recipient.handle,{intentId:'recipient-stopped',reportSha256:coordinationSha256('Stopped after request'),outcome:'cancelled'});
+    const stopped=(await readRunCoordination(pool,scope)).workers;
+    expect((await host.message(handle,request)).receipt).toEqual(committed.receipt);
+    expect((await readRunCoordination(pool,scope)).workers).toEqual(stopped);
+    const messages=await pool.query("SELECT new_values FROM audit_logs WHERE record_id=$1 AND new_values->>'operation'='message'",[scope.runId]);
+    expect(messages.rows).toHaveLength(1);
+  });
+}
 
 function registerMeasuredWorkerCases() {
   it('measures the five declared aggregates with both optional checks and updates only the remaining-check range',async () => {

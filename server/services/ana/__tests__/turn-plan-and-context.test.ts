@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { ORG, AUTHOR } from '../../../routes/__tests__/_authoring-canvas-fixture';
-import { openRunCoordination, readRunCoordination, assertCoordinationProjection, coordinationSha256, type CoordinationPool, type CoordinationScope } from '../run-events';
+import { openRunCoordination, readRunCoordination, assertCoordinationProjection, coordinationSha256, coordinationRefusalReceipt, readCoordinationEvents, type CoordinationPool, type CoordinationScope } from '../run-events';
 import { markRunOwnerPrivate, readOwnerPrivateBoundary, recheckRunOwnerPrivacy } from '../run-control';
 import { TurnRecorder, writeTurnRecord } from '../turn-record';
 import { runWithTenantScope } from '../../../db/tenantStore';
@@ -109,23 +109,48 @@ describe('durable scoped peer coordination on canonical PostgreSQL tables', () =
     await expect(host.progress(assigned.handle, 'started', { intentId: 'revoked', completed: null, total: null })).rejects.toThrow();
     expect((await pool.query('SELECT 1 FROM audit_logs WHERE record_id=$1', [scope.runId])).rows).toHaveLength(1);
   });
-  it('reconciles a lost COMMIT reply and retries the same intent without a duplicate event', async () => {
-    let lost = true, disposed = false;
-    const adapter: CoordinationPool = { ...pool, connect: async () => ({ release(error) { if (error) disposed = true; },
-      query: async (sql, args) => { const result = await pool.query(sql, args); if (sql === 'COMMIT' && lost) { lost = false; throw new Error('lost reply'); } return result; } }) };
-    const { host, scope } = await subject(adapter);
-    const first = await host.assign(assignment('one-intent')), again = await host.assign(assignment('one-intent'));
-    expect(first.receipt).toEqual(again.receipt); expect(disposed).toBe(true);
-    expect((await readRunCoordination(pool, scope)).receipts).toHaveLength(1);
-    await expect(host.assign({ ...assignment('one-intent'), role: 'verify' })).rejects.toMatchObject({ code: 'COORDINATION_INTENT_CHANGED' });
-    expect((await readRunCoordination(pool, scope)).receipts).toHaveLength(2);
-  });
   registerEncryptedPeerCaptureProof();
   registerOwnerPrivateCaptureProof();
   registerPrivateChatCaptureProof();
 });
 
 function registerEncryptedPeerCaptureProof() {
+  it.each(['input_mutation','recipient_stop'] as const)('retains private message custody during preparation acknowledgement: %s',async mode => {
+    const {scope,source}=await subject();
+    let entered=() => {},resume=() => {},projected=0;
+    const waiting=new Promise<void>(resolve => {entered=resolve;}),continued=new Promise<void>(resolve => {resume=resolve;});
+    const host=await openRunCoordination({...scope,pool,source,onProjection:() => {projected++;},onPrivateActivated:async () => {entered();await continued;}});
+    const sender=await host.assign({...assignment('text-sender'),source}),recipient=await host.assign({...assignment('text-recipient'),parentStep:'s2',source});
+    const other=await host.assign({...assignment('text-other'),parentStep:'s3',source});
+    await pool.query('UPDATE organizations SET settings=$1 WHERE id=$2',[{derivativeCustody:{policy:{enabled:true,kmsKeyArn:keyArn,version:1}}},ORG]);
+    const request={intentId:'prepared-text',recipient:recipient.handle.worker,text:'ORIGINAL_PRIVATE_MESSAGE_831'};
+    const original={...request};
+    const pending=inVerifiedOwner(() => host.message(sender.handle,request));await waiting;
+    if(mode==='recipient_stop')await host.report(recipient.handle,{intentId:'stop-recipient',reportSha256:coordinationSha256('Cancelled while preparing message'),outcome:'cancelled'});
+    else {request.recipient=other.handle.worker;request.text='MUTATED_PRIVATE_MESSAGE_992';}
+    const before=(await readRunCoordination(pool,scope)).workers,projectionsBefore=projected;resume();
+    if(mode==='recipient_stop') {
+      const error=await pending.then(() => null,error => error);
+      expect(error).toMatchObject({code:'COORDINATION_WORKER_STOPPED'});
+      expect(coordinationRefusalReceipt(error)).toMatchObject({eventId:expect.any(String),eventHash:expect.stringMatching(/^[a-f0-9]{64}$/)});
+      const retry=await inVerifiedOwner(() => host.message(sender.handle,original)).then(() => null,error => error);
+      expect(coordinationRefusalReceipt(retry)).toEqual(coordinationRefusalReceipt(error));
+      expect((await readRunCoordination(pool,scope)).workers).toEqual(before);expect(projected).toBe(projectionsBefore);
+      const events=await readCoordinationEvents(pool,scope);
+      expect(events.filter(event => event.operation==='message')).toHaveLength(0);
+      expect(events.filter(event => event.operation==='refused')).toHaveLength(1);
+      return;
+    }
+    const committed=await pending;
+    const rows=await pool.query("SELECT new_values FROM audit_logs WHERE new_values->>'eventId'=$1",[committed.receipt.eventId]);
+    const event=rows.rows[0].new_values as {recipient:string;payload:unknown};
+    expect(event.recipient).toBe(original.recipient);
+    expect(await inVerifiedOwner(() => openCoordinationText(pool,scope,event.payload))).toBe(original.text);
+    expect((await inVerifiedOwner(() => host.message(sender.handle,original))).receipt).toEqual(committed.receipt);
+    expect((await pool.query("SELECT 1 FROM audit_logs WHERE record_id=$1 AND new_values->>'operation'='message'",[scope.runId])).rows).toHaveLength(1);
+    expect(JSON.stringify((await pool.query('SELECT new_values FROM audit_logs WHERE record_id=$1',[scope.runId])).rows))
+      .not.toMatch(/ORIGINAL_PRIVATE_MESSAGE_831|MUTATED_PRIVATE_MESSAGE_992/);
+  });
   it('rolls back before wire on audit failure, and stores raw peer text only as tenant-key ciphertext', async () => {
     let failAudit = true, frames = 0;
     const adapter: CoordinationPool = { ...pool, connect: async () => ({ release() {}, query: (sql, args) => {
