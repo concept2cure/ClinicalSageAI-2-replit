@@ -109,3 +109,21 @@ The separate native offboarding suite still has its reproduced **3 failed /
 3 passed** result. The founder's private-profile export/erasure choice remains
 pending; no profile policy or export/purge acceptance was weakened. This repair
 does not claim live-provider, scientific-release or hosted-Codespace acceptance.
+
+### Final compiler correction and canonical refresh — 2026-11-14
+
+The first normal push refused `4041374b4` on one real compiler error, TS2345:
+the current-visit plus selected-response validator returned a boolean without
+declaring the `SourcesPage` type predicate required by `liveGetOrNull`.
+`a0c3c0e41` supplies that annotation; runtime validation is unchanged. The
+actual compiler refusal is retained in `integration-typecheck-red.txt.gz`.
+No baseline, gate or refusal assertion was changed.
+
+The subsequent normal merge `7f3a15330` preserves canonical `2e5ae2e71`, including
+the published CSR-writing/current-account integration and automatic repository
+health refresh. The ten-file combined focused run passes **283/283**, zero
+skips, in 64.97 seconds; the refreshed complete production build exits **0**
+(Vite25.45s). `integration-verification.json` records the final eleven source/test
+hashes separately from the earlier pre-annotation receipts, with the adjacent
+`integration-final-*.txt.gz` logs. The normal push hook checks the final whole
+program again before publication. The private-profile choice remains pending.
