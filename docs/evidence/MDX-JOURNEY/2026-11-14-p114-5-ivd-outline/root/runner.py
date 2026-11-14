@@ -13,10 +13,10 @@ base.mkdir(exist_ok=True)
 mode = sys.argv[1]
 env = dict(os.environ, PATH='/workspace/.tooling/node_modules/node/bin:' + os.environ['PATH'])
 env['TYPECHECK_HEAP_MB'] = '12288'
-if mode == 'build':
+if mode.startswith('build'):
     command = ['npm', 'run', 'build']
     env['NODE_OPTIONS'] = '--max-old-space-size=6144'
-elif mode == 'typecheck':
+elif mode.startswith('typecheck'):
     command = ['node', 'scripts/ci/typecheck-no-regression.mjs', '--incremental']
 elif mode.startswith('server-build'):
     command = ['node', 'scripts/build-server.mjs']

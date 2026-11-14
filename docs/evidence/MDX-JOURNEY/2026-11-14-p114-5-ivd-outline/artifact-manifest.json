@@ -1,8 +1,8 @@
 {
   "artifacts": {
     "README.md": {
-      "bytes": 6249,
-      "sha256": "90582f86553338774e9d3bde413223346b4cd6789e1269f0066e3ed17f857db6"
+      "bytes": 6660,
+      "sha256": "4e9104e711dca648363a710620761a91bbf4e9e317f148e6b2b72a94e8b29b0c"
     },
     "canonical-integration-bridge.json": {
       "bytes": 10745,
@@ -413,8 +413,12 @@
       "sha256": "a045383f79780ea77040f99257f14192d174d5883cdb7ef53763994802dd73fe"
     },
     "qualification-summary.json": {
-      "bytes": 1043,
-      "sha256": "f1e2e8fc783d08b7f328333edb4051059af1dadaf0486b4f99831d03d4c5999d"
+      "bytes": 1229,
+      "sha256": "dd0720ea267dde6daf397aad7406c3ebd56ef7db8f0c139472838abab00e077f"
+    },
+    "remaining-workflow-gaps.md": {
+      "bytes": 3409,
+      "sha256": "c0b8afe62f0fdbe75c98b53db1b1eaeb7084d98a8757c8e09fce1c8cb9cd1841"
     },
     "retained-binder/README.md": {
       "bytes": 9774,
@@ -612,6 +616,18 @@
       "bytes": 7062,
       "sha256": "58cd5d6aa8d03f469b82b070355fc718dc605277d63f0b8545293c1eb5364e64"
     },
+    "root/build-after-cmc-start.json": {
+      "bytes": 1654864,
+      "sha256": "2e2b079af1a59aefa261ec1e6e4662aebfc9b35eb1366205be3ae312a9099975"
+    },
+    "root/build-after-cmc.json": {
+      "bytes": 297,
+      "sha256": "682e3767c7902a0956ac8c1412ef48c5e49d18b687e3893f68f10dfb775d56df"
+    },
+    "root/build-after-cmc.log.gz": {
+      "bytes": 5434,
+      "sha256": "c96588edaaf60239a7a78aee631fc7922207fac57e774e74d478e7bc437c0e74"
+    },
     "root/build-start.json": {
       "bytes": 1653444,
       "sha256": "871c10416d1820d008a8d2e28875c6130ce08b5927b7154b5816428ab64a014c"
@@ -661,8 +677,8 @@
       "sha256": "6b1b2df94c7bea59b5ba9b29cc7bebafe3d5df33f3c33ffa67ef06668c8b61d7"
     },
     "root/runner.py": {
-      "bytes": 3246,
-      "sha256": "b13e0e5831dfdb841b733fa302ef33b6c631f1654ff57d1398ed708fb19da344"
+      "bytes": 3264,
+      "sha256": "40786409982ea0e6745dc90f874bf73c9c7c3f9fc49ee259e8c5039f66aeb26f"
     },
     "root/server-build-after-sql-start.json": {
       "bytes": 1653452,
@@ -687,6 +703,18 @@
     "root/server-build.log.gz": {
       "bytes": 161,
       "sha256": "8cfeabcfff4b9f76d25642b7d39187e02d91c3e2ce1f6b52a98a2b8b4d92e1e6"
+    },
+    "root/typecheck-final-warm-start.json": {
+      "bytes": 1654886,
+      "sha256": "d93eedfadde7acd6534ed9a90937149e813cb8a8a397e5fcab846dd1801f67eb"
+    },
+    "root/typecheck-final-warm.json": {
+      "bytes": 342,
+      "sha256": "551a6537a75ac9570d68b92b69ab3eb7e9217d2781212d45251b3e86e9e629b6"
+    },
+    "root/typecheck-final-warm.log.gz": {
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
     },
     "root/typecheck-start.json": {
       "bytes": 1653465,
@@ -721,5 +749,5 @@
       "sha256": "101e1a02570896ca50c8df44585186bb7f61f45ed2cb76a5b3a8c32b04d7837a"
     }
   },
-  "count": 180
+  "count": 187
 }

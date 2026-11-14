@@ -12,12 +12,12 @@
   "lintWarningCountsUnchanged": true,
   "build": "passed",
   "compiler": "passed",
-  "publication": "pending_remote_ref_race",
+  "publication": "pending_retry_after_canonical_merge",
   "humanAcceptance": "not_executed",
   "agencyAcceptance": "not_established",
   "nativePostgreSQL": "not_executed",
   "buildReport": "root/build.json",
-  "qualifiedRuntimeHead": "e44ec6e1866df879cda300fabafdcf2aaa98c2e8",
+  "qualifiedRuntimeHead": "006353ba29c0e122ddcbb9c9450f634c1c2784dc",
   "compilerErrors": 0,
   "compilerBaseline": 0,
   "compilerReport": "root/typecheck.json",
@@ -26,5 +26,8 @@
   "mandatoryPushCompiler": "passed",
   "mandatoryPushCompilerErrors": 0,
   "mandatoryPushCompilerReport": "root/push-3.log.gz",
-  "ciLintGatesPassed": 89
+  "ciLintGatesPassed": 89,
+  "latestBuildReport": "root/build-after-cmc.json",
+  "latestCompilerReport": "root/typecheck-final-warm.json",
+  "knownRemainingWorkflowGaps": "remaining-workflow-gaps.md"
 }
