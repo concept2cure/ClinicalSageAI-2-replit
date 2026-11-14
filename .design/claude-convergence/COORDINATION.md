@@ -2038,6 +2038,13 @@ CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source 
 
 ### Codex continuation — verified report references and Railway beta assessment, 2026-11-14
 
+**Founder data-class clarification:** confidential sponsor documents without patient identifiers. Root owns
+only the corresponding correction to the existing deployment guide and AnA evidence README; the inventories
+below already identify those homes. Replace the synthetic-data assumption, retain the same architecture/cost
+model and identify actual contract/residency/access/provider/log-retention acceptance. No code, infrastructure,
+PHI permission, model qualification or launch-gate change. Read-only independent review precedes normal
+canonical publication; this documentation-only hold releases with that publication.
+
 Canonical starting revision `3692f44ad`. The founder reports successful real OpenAI-key drafting in Codespaces;
 this is user-attested functional evidence, not an independently witnessed run or model PQ. Continue existing
 **F1/W1/D2** AnA coordination and, in a separate bounded **F1/W2/D1** lane, assess Railway beta hosting. This is
