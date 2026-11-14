@@ -10,7 +10,7 @@ import { describe, it, expect } from 'vitest';
 import * as docx from 'docx';
 import AdmZip from 'adm-zip';
 
-import { engineResultToHtml, provenanceStampHtml } from '../../client/src/concept2cure/v2/engineResultHtml';
+import { engineResultCellText, engineResultToHtml, provenanceStampHtml } from '../../client/src/concept2cure/v2/engineResultHtml';
 import { sectionContentToBlocks } from '../../server/export/authoring-section-content';
 import { blocksToHtml } from '../../server/export/authoring-blocks-to-html';
 import { blocksToDocx, orderedListNumbering } from '../../server/export/authoring-blocks-to-docx';
@@ -149,5 +149,26 @@ describe('engine result → authored section → export', () => {
     expect(html).toContain('<td>64</td><td>0.64</td>');
     expect((html.match(/<td>/g) ?? [])).toHaveLength(130);
     expect(html).toContain(FULL_HASH);
+  });
+});
+
+/* S12 biotech sweep, finding 67 (2026-11-09): table cells printed String(value), so binary noise in the
+   16th and 17th significant digits reached the screen and the filed section (0.025000000000000005). Fifteen
+   significant digits remove it; every decimal of fifteen or fewer digits still round-trips exactly. */
+describe('engineResultCellText — a number as the engine meant it', () => {
+  it('drops binary noise', () => {
+    expect(engineResultCellText(0.025000000000000005)).toBe('0.025');
+    expect(engineResultCellText(0.9750000000000004)).toBe('0.975');
+    expect(engineResultCellText(0.30000000000000004)).toBe('0.3');
+    expect(engineResultCellText(0.1 + 0.2)).toBe('0.3');
+  });
+
+  it('keeps every digit of a value stated to fifteen significant digits, and whole numbers as they are', () => {
+    expect(engineResultCellText(0.0250000000000123)).toBe('0.0250000000000123');
+    expect(engineResultCellText(0.876543210987654)).toBe('0.876543210987654');
+    expect(engineResultCellText(64)).toBe('64');
+    expect(engineResultCellText(-1.5)).toBe('-1.5');
+    expect(engineResultCellText(Number.NaN)).toBe('NaN');
+    expect(engineResultCellText(Number.POSITIVE_INFINITY)).toBe('Infinity');
   });
 });

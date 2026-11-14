@@ -1,0 +1,16 @@
+# Finding 58 (sibling resolvers), red: the test as written, against trunk's biostatPlatform.ts and biostat-design-stats.ts (6853cb4ce9).
+ × biostatPlatform.ts > an organization carried as text ("7") is recorded as the number 7
+ × biostatPlatform.ts > an organization claim of "seven" reaches no service and writes nothing
+ ✓ biostatPlatform.ts > an organization claim of 0 reaches no service and writes nothing
+ × biostatPlatform.ts > an organization claim of -1 reaches no service and writes nothing
+ ✓ biostatPlatform.ts > an organization claim of null reaches no service and writes nothing
+ ✓ biostat-design-stats.ts > a numeric organization carried as text is admitted
+ × biostat-design-stats.ts > an organization claim of "seven" is refused before anything is computed
+ ✓ biostat-design-stats.ts > an organization claim of 0 is refused before anything is computed
+ × biostat-design-stats.ts > an organization claim of -1 is refused before anything is computed
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '7' to be 7 // Object.is equality
+AssertionError: expected 200 to be greater than or equal to 400
+AssertionError: expected 200 to be 401 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  5 failed | 4 passed (9)

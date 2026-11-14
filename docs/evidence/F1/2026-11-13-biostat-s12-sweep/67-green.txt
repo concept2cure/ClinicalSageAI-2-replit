@@ -1,0 +1,8 @@
+# Finding 67, green.
+ ✓ workbenchNestedTables.test.tsx > the group-sequential result > renders the per-look rows as a table, not as JSON in a cell
+ ✓ workbenchNestedTables.test.tsx > the group-sequential result > prints the engine’s figures without binary noise
+ ✓ workbenchNestedTables.test.tsx > the group-sequential result > keeps acronyms and Type I whole in its labels
+ ✓ engine-result-filing.test.ts > engineResultCellText — a number as the engine meant it > drops binary noise
+ ✓ engine-result-filing.test.ts > engineResultCellText — a number as the engine meant it > keeps every digit of a value stated to fifteen significant digits, and whole numbers as they are
+ Test Files  2 passed (2)
+      Tests  5 passed | 12 skipped (17)

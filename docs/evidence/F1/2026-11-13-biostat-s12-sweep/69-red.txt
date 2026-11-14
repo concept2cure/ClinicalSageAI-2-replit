@@ -1,0 +1,8 @@
+# Finding 69, red: the new cases against BiostatWorkbench.tsx on trunk (6853cb4ce9).
+ × the assessment request carries only the fields shown for its endpoint > rates typed for a binary endpoint are not sent with a continuous one
+ × the assessment request carries only the fields shown for its endpoint > an effect size typed for a continuous endpoint is not sent with a binary one
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { Object (clientTrack, phase, ...) } to not have property "controlRate" with value 0.08
+AssertionError: expected 0.5 to be undefined
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)

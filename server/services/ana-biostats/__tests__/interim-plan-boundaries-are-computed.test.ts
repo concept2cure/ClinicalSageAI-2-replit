@@ -240,12 +240,42 @@ describe('the count of looks arrives unvalidated', () => {
   });
 });
 
+/* S12 biotech sweep, finding 64 (2026-11-09): with Interims = 0 the plan said "This plan governs 1
+   planned interim analysis … at approximately 50% of planned information". cf6b0293f3 (2026-11-12)
+   kept the look and said "The design records no interim analysis. This plan is drawn for one" — but
+   then printed its timing, a solved boundary table (±2.96 / ±1.97), stopping rules and an unblinded
+   interim statistician: a pre-specified interim design that the design, its SAP and its DSMB charter
+   all say does not exist. RULE 2: a boundary the design did not produce is not printed. */
 describe('a design that plans no interim analysis is told so', () => {
-  it('does not claim to govern one planned interim analysis', () => {
-    const { content } = plan({ ...SURVIVAL, interimAnalyses: undefined });
-    expect(content).toMatch(/The design records no interim analysis\. This plan is drawn for one interim analysis/);
-    expect(content).not.toMatch(/This plan governs 1 planned interim analysis/);
-    expect(rows(content).map((r) => r[1])).toEqual(['±2.96', '±1.97']);
+  it.each([
+    ['records zero', 0],
+    ['records no count', undefined],
+  ])('a design that %s gets a plan saying none is planned, with no look, boundary or stopping rule', (_label, interimAnalyses) => {
+    const { content } = plan({ ...SURVIVAL, interimAnalyses });
+    expect(content).toMatch(/No interim efficacy analysis is planned for a superiority study \(target N = \d+/);
+    expect(content).toMatch(/record the number of interim analyses on the design/);
+    expect(content).toMatch(/DSMB charter/);
+    expect(content).not.toMatch(/planned interim analys/i);
+    expect(content).not.toMatch(/drawn for one/);
+    expect(content).not.toContain('50%');
+    expect(content).not.toContain('## 3. Alpha Spending');
+    expect(content).not.toContain('## 4. Stopping Rules');
+    expect(content).not.toMatch(/±\d/);
+    expect(content).not.toMatch(/Interim analyses are performed/);
+    expect(rows(content)).toEqual([]);
+  });
+
+  it('agrees with the SAP and the DSMB charter drawn from the same design', () => {
+    const input = { ...SURVIVAL, interimAnalyses: 0 };
+    const computation = computationEngine.compute(input);
+    const judgment = judgmentEngine.judge(input, computation);
+    const domain = domainAdapter.adapt(input, computation, judgment);
+    const ctx = { projectId: 1, organizationId: 1, userId: 1 };
+    const sap = documentGenerator.generate('sap_section_draft', input, computation, judgment, domain, undefined, ctx).content;
+    const charter = documentGenerator.generate('dsmb_charter', input, computation, judgment, domain, undefined, ctx).content;
+    expect(sap).not.toMatch(/planned interim analys/i);
+    expect(charter).not.toMatch(/\d+ planned/);
+    expect(plan(input).content).not.toMatch(/planned interim analys/i);
   });
 
   it('a design that records them is unchanged in its first line', () => {
