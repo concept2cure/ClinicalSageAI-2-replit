@@ -153,17 +153,21 @@ export function StabilityFitCharts({ estimates }: { estimates: Q1eChartEstimate[
  * register, not raised as a failure.
  */
 export function useAutoQ1e<R>(
-  studies: Array<{ id: number; hasResults: boolean }>,
+  /* `stamp` identifies the state of the study's results (their count). */
+  studies: Array<{ id: number; hasResults: boolean; stamp?: number }>,
   have: Record<number, R>,
   adopt: (id: number, report: R) => void,
   /** The report's shape is checked before it is adopted: a reply of another shape is said, not rendered. */
   isReport: (value: unknown) => value is R,
 ): Record<number, string> {
   const [refused, setRefused] = React.useState<Record<number, string>>({});
-  /* Asked once per study for the life of the register. A run is not cancelled
-     when the set changes (adopting one estimate changes it); only an unmount
-     stops it adopting what it reads. */
-  const asked = React.useRef<Set<number>>(new Set());
+  /* Asked once per study PER STATE OF ITS RESULTS. It was once per study for
+     the life of the register, so a study that gained a pull point kept the
+     estimate (or the "too few points" refusal) fitted from the points before
+     it. A run is not cancelled when the set changes (adopting one estimate
+     changes it); only an unmount stops it adopting what it reads. */
+  const asked = React.useRef<Set<string>>(new Set());
+  const keyOf = (s: { id: number; stamp?: number }) => `${s.id}:${s.stamp ?? ''}`;
   const mounted = React.useRef(true);
   /* Set on every mount, not only at creation: React's development double mount
      runs this cleanup once before the real mount, and a ref left false then
@@ -172,11 +176,14 @@ export function useAutoQ1e<R>(
     mounted.current = true;
     return () => { mounted.current = false; };
   }, []);
-  const dueKey = studies.filter((s) => s.hasResults && !have[s.id] && !asked.current.has(s.id)).map((s) => s.id).join(',');
+  const dueKey = studies.filter((s) => s.hasResults && !have[s.id] && !asked.current.has(keyOf(s))).map(keyOf).join(',');
   React.useEffect(() => {
     if (!dueKey) return;
-    const ids = dueKey.split(',').map(Number).filter((id) => !asked.current.has(id));
-    ids.forEach((id) => asked.current.add(id));
+    const keys = dueKey.split(',').filter((k) => !asked.current.has(k));
+    keys.forEach((k) => asked.current.add(k));
+    const ids = keys.map((k) => Number(k.split(':')[0]));
+    /* A study asked again is not "refused" until it answers again. */
+    setRefused((m) => (ids.some((id) => id in m) ? Object.fromEntries(Object.entries(m).filter(([id]) => !ids.includes(Number(id)))) : m));
     void (async () => {
       for (const id of ids) {
         try {
@@ -194,4 +201,35 @@ export function useAutoQ1e<R>(
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dueKey is the set of studies still to estimate
   }, [dueKey]);
   return refused;
+}
+
+/** A per-study map without one study: what was fitted from its earlier results is no longer its estimate. */
+export function withoutStudy<T>(byStudy: Record<number, T>, studyId: number): Record<number, T> {
+  return Object.fromEntries(Object.entries(byStudy).filter(([id]) => Number(id) !== studyId)) as Record<number, T>;
+}
+
+/** The study's recorded shelf life judged against its own estimate, by the server (ich-compliance-q1e.ts). */
+export interface RecordedClaim {
+  verdict: 'within-estimate' | 'exceeds-estimate' | 'not-comparable';
+  sentence: string;
+}
+
+/**
+ * The recorded period against the study's own fit, in the engine's sentence.
+ *
+ * The two figures stood side by side with nothing said: "21.9 mo, limited by
+ * Assay" beside "24 months retest" (walked 2026-11-12). Shown when the recorded
+ * period is longer than the results support, or cannot be compared; a
+ * supported claim needs no remark. The browser states the verdict it was
+ * given and derives none (RULE 2).
+ */
+export function ClaimAgainstEstimate({ studyId, claim }: { studyId: number; claim?: RecordedClaim }) {
+  if (!claim || claim.verdict === 'within-estimate') return null;
+  return (
+    <p className="sec-sub" style={{ margin: '4px 0 0', maxWidth: 360, whiteSpace: 'normal' }}>
+      <span data-testid={`cmc-claim-vs-estimate-${studyId}`} data-tone={claim.verdict === 'exceeds-estimate' ? 'warn' : undefined}>
+        {claim.sentence}
+      </span>
+    </p>
+  );
 }
