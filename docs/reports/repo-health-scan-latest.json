@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T02:38:20.219Z",
+  "generatedAt": "2026-11-14T02:49:20.333Z",
   "git": {
-    "sha": "b86a4b7d3856f4c519f4d3262152013cb4543db3",
+    "sha": "3268e96410c647acc108706ef3d99cd53356d7a2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2570,12 +2570,12 @@
         "bytes": 125356
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
-        "bytes": 124562
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 124990
       },
       {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 122645
+        "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
+        "bytes": 124562
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
