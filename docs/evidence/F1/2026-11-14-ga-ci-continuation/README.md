@@ -131,3 +131,11 @@ exits **0** (Vite24.65s). All eight taxonomy/reader input hashes remain unchange
 these checks to that merged source. The normal push gates still check the final
 combined compiler; fresh full-history CI and remote identity are verified after
 publication. No root production implementation or privacy-policy change.
+
+The subsequent normal merge `28e90ee1b` preserves canonical `f9656d88e` and
+its current saved-task assignment/uncertain-outcome fixes. Both affected
+assignment suites pass **57/57**, zero skips, in 3.53 seconds. The refreshed
+complete production build exits **0** (Vite23.82s); the taxonomy/reader input
+hashes remain unchanged. Those separate integration logs and revision are
+recorded in the same verification JSON. The disjoint focused total is 141
+passing checks across the recorded integration phases.

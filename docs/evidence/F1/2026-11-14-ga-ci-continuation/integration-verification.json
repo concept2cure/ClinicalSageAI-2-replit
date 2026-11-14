@@ -45,5 +45,23 @@
     "Workspace readiness report does not observe production credentials or acceptance.",
     "No live provider, scientific qualification, deployment or filing transmission."
   ],
-  "publication": "Normal compiler and repository push gates run on final combined tree; verify actual remote identity after success."
+  "publication": "Normal compiler and repository push gates run on final combined tree; verify actual remote identity after success.",
+  "assignmentCanonicalIntegration": {
+    "sourceHead": "28e90ee1b87546fa7fe66a54e104ce07065868e4",
+    "canonicalThrough": "f9656d88e",
+    "checks": {
+      "passed": 57,
+      "failed": 0,
+      "skipped": 0,
+      "files": 2,
+      "seconds": 3.53
+    },
+    "build": {
+      "exitCode": 0,
+      "viteSeconds": 23.82
+    },
+    "taxonomyInputsUnchanged": true,
+    "productionSourceChangedByOurCiRepair": false,
+    "incomingSource": "Current saved-task controls and uncertain-outcome classification preserved normally."
+  }
 }
