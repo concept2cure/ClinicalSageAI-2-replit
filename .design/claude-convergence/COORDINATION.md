@@ -198,6 +198,12 @@ this session.
 
 ### Holds on other files (one session per file, plan §4.6)
 
+**Deviation-task currentness, Codex 2026-11-14 (F1/W1/D2; ends on publication or 2026-11-14 03:00 UTC):** holds only unheld native-record dispatch/admission/refresh regions in `server/services/tasking/source-task.ts`, plus new test-only `__tests__/source-task-deviation.pglite.test.ts`; the existing internal-audit SQL fixture may gain a bounded preservation control. Preserve `nativeTaskPlacement`, all P-111 producer lines and the entire `qms-record-tasks.ts` file unchanged. No native route/domain/signature, training, periodic-review, catalogue or UI changes. Inventory `.design/claude-convergence/F1-QUALITY-DEVIATION-TASKS-2026-11-14.md`; evidence `docs/evidence/F1/2026-11-14-quality-deviation-tasks/`. One implementation worker owns all source edits; root owns Git/compiler/integration, and independent reviewers are read-only.
+
+2026-11-14 deviation-task source completion: implementation is frozen and independent review is clear. Baseline SQL regression reproduces 48 failures/60 controls; repair passes 217/217 across ten suites, including 54 deviation and 54 audit cases, with zero scoped lint errors/warnings. Current native task facts govern deviation lifecycle/date/classification, and same-date priority refresh preserves manual assignment/progress/task identity with field/status CAS and atomic lineage. Audit text-only refresh preserves concurrent manual priority. Held placement/planner code is byte-identical; no split or baseline growth. All source/evidence holds in this continuation release with canonical publication; root retains Git/compiler/integration receipts only. No live provider, production cleanup or hosted-Codespace acceptance is claimed.
+
+2026-11-14 deviation-task integration: source commit `ce99df732` is merged normally with canonical changes through `3e85d1ac5`, preserving Data Room selection and collaboration receipts. Full Node 22 TypeScript at merge `bc96e47e9` passes zero errors/baseline zero with native exit zero; all three reviewed hashes match. Root publishes the batch through normal hooks and verifies the remote. The evidence packet above retains red/green/adjacent/compiler receipts and their exact limits.
+
 **Internal-audit task currentness, Codex 2026-11-13 (F1; ends on publication or 2026-11-14 02:00 UTC):** holds only the unheld dispatcher/current-plan validation/transactional reconciliation regions of `server/services/tasking/source-task.ts` for existing `qms_internal_audit`, plus new test-only `server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts`. Root owns only the obsolete generic-audit example in `__tests__/source-task-quality-project.test.ts` (move the generic-path control to another existing generic source). Existing `nativeTaskPlacement` and P-111 producer holds are preserved byte-for-byte; no training, periodic-review semantics, UI, route, schema or model changes. Inventory `.design/claude-convergence/F1-QUALITY-INTERNAL-AUDIT-TASKS-2026-11-13.md`; evidence `docs/evidence/F1/2026-11-13-quality-internal-audit-tasks/`. Root owns Git, the sole compiler and integration.
 
 2026-11-14 internal-audit task source completion: all implementation files are frozen, with independent review clear. Final SQL/adjacent validation passes157/157 across eight suites, including53 audit cases, and scoped lint has zero errors/warnings. Delayed plans are checked against the current locked native record; same-date text refresh preserves task identity, manual assignment and progress with text/status CAS and transactional lineage. The initial close/replacement candidate and its failed text-preservation controls remain in evidence as superseded. Held placement/planner code is unchanged. These source/evidence holds release with canonical publication; root retains only Git/compiler/integration receipts. No provider or hosted-Codespace qualification is claimed.
@@ -1970,3 +1976,56 @@ Preserve current source/actor/privacy/model/independent-review gates and exact a
 CSR medical-writing continuation source complete, 2026-11-14 (F1/W1/D2): source `1ea68c474` is integrated normally with current intake/catalog source at `78c381c3c`. All implementation workers are frozen. Narrator38/3 and delivery250/9 pass; writing method, selection and oncology successors remain separate in `docs/evidence/F1/2026-11-13-ana-csr-writing/`. Current-intake57/3 and fresh merged production build pass with11,926 source hashes stable. Scoped lint has zero errors/no warning growth. The existing approved protocol/model/source/checker/scientific gates are unchanged; no model training or clinical qualification is claimed. Source holds named in this continuation release with canonical publication of this completion; root retains only Git, final gates and publication receipts. No other owner is paused.
 
 2026-11-14 02:07 UTC source-selection overlap integration: canonical08044016b publishes the independent b40217a60 selection repair. Root now reconciles that published owner with the verified local continuation in the same existing files: client worker uses canonical one-action owner with its abort/debounce/parent/digest guards, adding the complete admission marker, pending-store refusal and explicit clear recovery; server worker preserves one exact SQL reader with both canonical raw admission/tenant/count checks and local marker/after-grading fences. Both regression sets remain. Source-read-access, plan, ledger, gates and unrelated UI stay unchanged. Root alone owns merge resolution/staging, all jobs and publication; this integration remains inside the existing03:00UTC/publication lease. Earlier401-case/compiler receipts keep their own revisions and do not claim this combined source has passed yet.
+
+### Codex continuation — verified report references and Railway beta assessment, 2026-11-14
+
+Canonical starting revision `3692f44ad`. The founder reports successful real OpenAI-key drafting in Codespaces;
+this is user-attested functional evidence, not an independently witnessed run or model PQ. Continue existing
+**F1/W1/D2** AnA coordination and, in a separate bounded **F1/W2/D1** lane, assess Railway beta hosting. This is
+an assessment and existing hosted-policy repair, not deployment authorization or a change to AWS launch gates.
+
+#### What already exists
+
+`server/services/ana/run-events.ts` verifies the ledger before projecting workers/messages; `turn-plan.ts` exposes
+that projection to its host. `sub-agent-shape.ts` serializes parent team context, and `agentic-workflow-tools.ts`
+serves the existing team action. Recorded worker reports already carry `reportSha256`, but normal parent context
+omits the report reference required by existing `update_plan.worker_dispositions`. Extend that same verified pass
+and context with bounded, content-free latest report receipts/hashes (maximum six), never a latest progress or
+disposition receipt masquerading as a report. Preserve source admission, privacy, ledger verification and budgets.
+The existing real-worker stream and PGlite coordination fixtures will prove reachability without a test-computed
+hash oracle. Searches covered report/revision/rework/team/receipt aliases, unreachable callers and full deletion
+history for agent-swarm/monitor/control-registry homes; no replacement projection exists. Terminal-worker restart,
+extra budgets and a full autonomous rework loop are outside this repair.
+
+`server/startup/env.ts` already refuses production hosted owner credentials and policy overrides, but recognizes
+only ECS metadata. Extend its private hosted predicate to nonblank automatic `RAILWAY_PROJECT_ID` or
+`RAILWAY_ENVIRONMENT_ID`, preserving the same policy/alias set and marker-free self-hosted behavior. Existing
+`env-hosted-owner-credential.test.ts` and `env-production-overrides-posture.test.ts` are the RED/GREEN homes.
+
+`Dockerfile.optimized` already supplies the production Node22/document/OCR image and provision target;
+`docker-compose.beta.yml` names the app, PostgreSQL/pgvector, Redis, ClamAV and embeddings. Existing database
+provision/migration scripts, readiness, shutdown and AWS S3/KMS custody remain canonical. Railway-specific config,
+workflow or deleted-history implementation was not found. Existing `docs/deployment/DEPLOYMENT.md` contains an
+obsolete Vercel recipe and generic Railway steps; `deployment-guide.md` still calls deleted `deploy.sh`.
+Converge those existing documentation homes onto the current image/database contract with official pricing,
+storage/security limitations, a concrete operator sequence and explicit unexecuted acceptance checks. Do not
+restore deleted Vercel/Replit/Celery deployment stacks or invent another image, worker service or provider.
+
+| Holder | Existing files and scope |
+|---|---|
+| Report-reference agent | `server/services/ana/{run-events,turn-plan,sub-agent-shape,agentic-workflow-tools}.ts`; existing `server/routes/ana-ri/__tests__/stream-run-agent-real.test.ts`, `server/services/ana/__tests__/{run-coordination-dispositions,sub-agent-hostable}.test.ts` only |
+| Hosted-runtime agent | `server/startup/env.ts`; existing `server/startup/__tests__/{env-hosted-owner-credential,env-production-overrides-posture}.test.ts` only |
+| Root | This inventory, existing AnA evidence README, `docs/deployment/{DEPLOYMENT,deployment-guide}.md`, official-source assessment, integration, Git and sole full compiler |
+
+These narrow holds end at publication or **2026-11-15 00:00 UTC**, whichever comes first. No other lane is paused.
+No new production file, dependency, table, screen, route, tool, model or infrastructure is introduced. Agents do
+not mutate Git/runtime/compiler state. Interface contracts above are approved; root releases each implementation
+after this inventory and the matching evidence entry are written.
+
+**Implementation freeze:** hosted policy passes75/75 after30 genuine RED failures; verified report-reference
+reachability passes90/90 after actual-parent and corrected exact-baseline RED. Scoped lint has zero errors/no
+warning growth. Independent review closes both source slices and the costed deployment assessment. Worker
+test/lint processes are closed and source/test holds transfer to root for integration; no further worker edits.
+Canonical08044016b is merged normally without source-scope overlap. Root retains Git, adjacent integration,
+sole normal pre-push compiler, publication and owned Codespace verification. All holds release on successful
+canonical publication. Railway acceptance, paid provision, clinical qualification and AWS launch remain unclaimed.

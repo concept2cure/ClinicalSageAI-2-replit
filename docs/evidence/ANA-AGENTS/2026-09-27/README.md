@@ -1,5 +1,101 @@
 # AnA runs multiple agents; Manual/Auto is a real run policy (row 74)
 
+## 2026-11-14 continued F1 — report-reference reachability and Railway assessment
+
+Starting canonical revision `3692f44ad`. The founder reports that their Codespace completed drafting with their
+OpenAI key. This is **user-attested functional success**, with no key collected and no independent provider run,
+formal model qualification or hosted acceptance inferred. Continue the existing F1/W1/D2 coordination repair;
+the separately scoped F1/W2/D1 lane assesses Railway as an interim beta host without deploying infrastructure.
+
+### What already exists
+
+`server/services/ana/run-events.ts` admits and verifies audit events, including worker report hashes, before
+projecting workers/messages. `turn-plan.ts` supplies the host snapshot; `sub-agent-shape.ts` strips private text
+for parent context; `agentic-workflow-tools.ts` exposes the team action. The existing parent assessment requires
+an exact report event ID/hash that this normal context currently omits. Extend the same verified event pass with
+at most six latest content-free report references: worker, report receipt and SHA256. Never derive the reference
+from a later progress/disposition receipt or expose report text. Existing real-worker stream/PGlite fixtures
+will obtain references only through normal parent context and exercise the actual assessment tool. Retain audit,
+source-admission, privacy, qualified-model and budget gates. Terminal-worker restart is outside this repair.
+Searches covered report/revision/rework/team/receipt and deleted agent-swarm/monitor/control-registry homes;
+no alternate current projection supplies the missing references. Exact files/ownership are in the existing
+`.design/claude-convergence/COORDINATION.md` continuation inventory, recorded before implementation.
+
+`server/startup/env.ts` already refuses ECS-hosted production owner credentials and operator policy overrides.
+Railway automatic project/environment markers currently escape that hosted predicate. Extend the existing
+predicate to either nonblank Railway marker; preserve the existing owner-alias set, production condition and
+marker-free self-hosted behavior. The two existing hosted-owner/production-override test homes will demonstrate
+RED before the predicate repair and GREEN afterward.
+
+`Dockerfile.optimized`, `docker-compose.beta.yml`, `scripts/db/{provision,deploy-migrate}.mjs`, `/readyz`, PostgreSQL
+sessions, shutdown draining and AWS S3/KMS evidence custody already provide the deployment substrate. No Railway
+configuration/current or deleted implementation was found. Existing deployment guides contain retired Vercel
+instructions and a deleted `deploy.sh` reference; update those existing documents to a concrete Railway
+assessment/operator sequence. Official Railway prices and storage/compliance restrictions will be dated and
+linked. Do not replace AWS versioning/Object Lock/KMS with incompatible object storage, weaken verified TLS,
+put owner credentials on the web service, or claim unexecuted Railway acceptance. No new production file,
+dependency, provider, model, screen, route, table or deployment is authorized by this assessment.
+
+### Executed hosted-policy and assessment results
+
+- Real Railway-policy RED against unchanged `env.ts`: **30 failed /45 passed**, then **75/75 GREEN** in the two
+  existing environment suites. Each automatic Railway marker independently exercises all six existing owner
+  aliases, operator acceptance shapes and disabled audit enforcement. Blank markers, empty aliases, false
+  overrides, nonproduction and marker-free self-hosted controls remain valid. No credential values are logged.
+  Scratch receipts: `/workspace/scratch/railway-hosted-parity-{red,green}.log`. Scoped lint has zero errors and
+  no warning growth; independent source/test review found no correctness blocker.
+- Existing `docs/deployment/DEPLOYMENT.md` now carries a concrete, dated Railway assessment and operator
+  sequence. Cost arithmetic independently reviewed: all-service average scenarios produce **$78.50/$147/
+  $256.50 monthly Railway usage**, not measured utilization or a quote. Model tokens, AWS custody, SMTP,
+  backups/add-ons, staging, taxes and any BAA commitment are excluded. Official SMTP restrictions justify Pro
+  as the practical minimum; its $20 minimum is credited toward usage, not the complete stack bill.
+- Official-source review confirms current Railway buckets lack required versioning/Object Lock, its HTTP
+  duration ceiling is15minutes and default termination grace is zero. The guide retains AWS S3/KMS, names
+  existing reconnect/polling and honest shutdown behavior, and requires actual edge-cutoff/drain rehearsals.
+  It identifies template CA distribution/renewal, pgaudit recording/external retention, separate privileged
+  provisioning, private dependencies, ECR token renewal and first real SMTP login as pending operator proofs.
+  No Railway deploy, paid provision, DNS/IAM change, provider call, new release workflow or qualification claim.
+
+### Executed report-reference results
+
+The actual registered worker now reaches its parent through the existing recorded team context, carrying
+only its verified report event receipt and SHA256. The parent uses that received reference in the real
+registered `update_plan.worker_dispositions` handler to record **rework** against the exact immutable report.
+The regression never computes a report hash outside the model context to feed the parent. Provider transport
+is scripted; coordination, source SQL, worker execution, assessment and audit use the actual implementation.
+This proves assessment reachability, not provider qualification or automatic terminal-worker restart.
+
+- Pre-edit actual-parent RED: **1 intended failure /7 skipped**, missing report references in the received
+  context. Corrected exact-baseline replay against explicit `3692f44ad`'s four production modules: **2 intended
+  failures /71 skipped**, covering both normal parent flow and coordinator report projection. Logs:
+  `/workspace/scratch/anna-report-reference-red.log` and `anna-report-reference-exact-original-red.log`.
+  Nine earlier controls also failed before the projection. The first GREEN attempt exposed a test-only reused
+  assignment/report intent; giving the report its own intent fixed that premise. That collision is not counted
+  as evidence of the production defect.
+- Final **90/90 across three existing suites**, receipt `/workspace/scratch/anna-report-reference-green.log`:
+  latest report/revision rather than later disposition, completed/incomplete/cancelled outcomes, stale report
+  refusal, malformed/mismatched/hash-tampered metadata, durable replay/current-source admission and private
+  metadata stripping. No raw report/brief/source/reason is added to parent context; existing model/source,
+  privacy, human-governance, lifecycle and quota gates remain intact.
+- Scoped lint: **zero errors, no warning growth** (four pre-existing registration/complexity warnings in the
+  existing workflow module). Independent read-only review found no material source, privacy, assessment,
+  interface or import-cycle regression. Frozen seven-file hashes are retained at
+  `/workspace/scratch/anna-report-reference-frozen.sha256`; all worker processes are closed.
+
+Normal canonical merge retains separately published project source-selection/read-currentness and collaboration
+receipt repairs from `08044016b`; independent review found no source-scope conflict. UI selection is a preliminary
+handoff; existing server admission remains authoritative. Incoming browser receipts remain controlled client
+evidence, not actual backend delivery. Root owns adjacent integration, normal publication/full compiler and
+final exact-version Codespace verification; only executed receipts will establish those results.
+
+Adjacent integration is **261/261 across seven existing suites** on the normally merged source, receipt
+`/workspace/scratch/nov14-report-railway-adjacent-green.log`: turn-plan/private context, sub-agent/toolset,
+stream hosting, real project-scope admission, exact project-source reads and current native catalog records.
+All test processes exited; the seven frozen implementation hashes still match. The initial CLI invocation
+rejected an unsupported `--minWorkers` option before tests started; the actual run uses the existing Vitest4
+single-worker configuration. Source/test bytes remain frozen for normal pre-push gates and the sole full
+TypeScript compiler. No test or compiler bypass is used.
+
 ## 2026-11-13 continued F1 — peer lifecycle and gateway account-use custody
 
 The founder asked to continue after canonical `917486637`; this continuation starts from current canonical

@@ -35,7 +35,7 @@ function input(over: Partial<InternalAuditTaskSource> = {}, actorId = 12): Repla
   return { organizationId: 7, actorId, ...plan };
 }
 const tasks = async () => (await pg.query<Record<string, unknown>>(`SELECT task_id,status,assignee_id,title,description,metadata,project_id,client_workspace_id,
-  progress,completion_percentage,due_at,approval_status,notes
+  progress,completion_percentage,due_at,approval_status,notes,priority
   FROM unified_tasks WHERE organization_id=7 ORDER BY task_id`)).rows;
 const audits = async () => (await pg.query('SELECT task_id,command FROM task_audit_rows ORDER BY id')).rows;
 async function seedOpen(over: Partial<InternalAuditTaskSource> = {}, assigneeId = 12) {
@@ -55,7 +55,7 @@ beforeAll(async () => {
     CREATE TABLE unified_tasks(task_id text PRIMARY KEY,organization_id int,source_entity_type text,source_entity_id text,status text,
       assignee_id int,title text,description text,metadata jsonb,project_id int,client_workspace_id int,deleted_at timestamptz,
       progress int DEFAULT 0,completion_percentage int DEFAULT 0,due_at timestamptz DEFAULT '2026-12-01',
-      approval_status text DEFAULT 'pending',notes text DEFAULT 'Manual task note',updated_at timestamptz DEFAULT '2026-11-13',last_modified_by int DEFAULT 99);
+      approval_status text DEFAULT 'pending',notes text DEFAULT 'Manual task note',priority text DEFAULT 'medium',updated_at timestamptz DEFAULT '2026-11-13',last_modified_by int DEFAULT 99);
     CREATE TABLE task_audit_rows(id serial PRIMARY KEY,organization_id int,actor_id int,task_id text,command text,payload jsonb);`);
   h.query = async (text, params) => {
     h.trace.push({ text, params });
@@ -212,6 +212,15 @@ describe('native audit task text and source identity', () => {
 });
 
 describe('audit text refresh preserves a person’s task work', () => {
+  it('leaves a concurrent manual priority edit untouched during an audit text refresh', async () => {
+    await seedOpen({},11); await pg.exec("UPDATE unified_tasks SET priority='high'; UPDATE qms_internal_audits SET scope='Updated audit scope' WHERE id=4");
+    const before = (await tasks())[0],desired = internalAuditTaskPlan({...native,scope: 'Updated audit scope'},12).next!;
+    h.beforeTextUpdate = async () => {await pg.exec("UPDATE unified_tasks SET priority='critical' WHERE task_id='existing'");};
+    expect(await replaceSourceTask(input({scope: 'Updated audit scope'}))).toBe('unchanged');
+    expect(await tasks()).toEqual([{...before,description: desired.description,priority: 'critical'}]);
+    const payload = (await pg.query<Record<string,unknown>>('SELECT payload FROM task_audit_rows')).rows[0].payload;
+    expect(payload).not.toHaveProperty('priority'); expect(payload).not.toHaveProperty('fields');
+  });
   it.each([['number','IA-2026-REVISED'],['scope','Updated current audit scope']])('preserves manual assignee, progress and identity on same-date %s edits', async (field,value) => {
     await seedOpen({},11);
     await pg.exec(`UPDATE unified_tasks SET metadata=metadata || '{"manualTag":"retain me"}'::jsonb WHERE task_id='existing'`);
