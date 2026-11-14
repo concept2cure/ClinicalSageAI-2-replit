@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T03:03:09.729Z",
+  "generatedAt": "2026-11-14T03:42:51.466Z",
   "git": {
-    "sha": "234da9cb9f54e2dfc2fc21ae341ec320a5871c2f",
+    "sha": "c6d7aaddf8c61b98d6e82fe4fa5126a34452e804",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2511,7 +2511,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "bytes": 141850
+        "bytes": 141871
       },
       {
         "file": "server/storage.ts",
@@ -2571,7 +2571,7 @@
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 124990
+        "bytes": 125023
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx",
@@ -2753,7 +2753,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 2571
+        "lines": 2572
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
