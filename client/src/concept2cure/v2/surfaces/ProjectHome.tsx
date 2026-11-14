@@ -472,8 +472,8 @@ function sourceActionHeaders(current: () => boolean): Record<string, string> | n
   } catch { return null; }
 }
 
-function verifiedSelectedReply(reply: { data: unknown; error?: string }, pid: string, checked: readonly CheckedSource[]): SourcesPage | null {
-  return !reply.error && selectedSourcesRead(reply.data, pid, checked) ? reply.data : null;
+function verifiedSelectedReply(reply: { data: unknown; error?: string; meta?: Record<string, unknown> }, pid: string, checked: readonly CheckedSource[]): SourcesPage | null {
+  return !reply.error && reply.meta?.pendingStore !== true && selectedSourcesRead(reply.data, pid, checked) ? reply.data : null;
 }
 
 function DataRoom({ pid, onNav, onAsk, session }: {
@@ -906,6 +906,7 @@ function DataRoom({ pid, onNav, onAsk, session }: {
           </button>
         )}
         {pinned.length > 0 && (
+          <>
           <button
             className="btn small"
             disabled={uploading || !sourceReadConfirmed || checking || !!sourceLimitReason}
@@ -917,6 +918,10 @@ function DataRoom({ pid, onNav, onAsk, session }: {
           >
             {I.sparkles} Draft with {pinned.length} pinned source{pinned.length === 1 ? '' : 's'}
           </button>
+          <button type="button" className="btn small" onClick={() => {
+            retireAction(); setPinned([]); window.C2C_SOURCE_PINS = [];
+          }}>Clear selection</button>
+          </>
         )}
       </div>
       {checking && <p className="sec-sub" role="status">Checking selected sources…</p>}

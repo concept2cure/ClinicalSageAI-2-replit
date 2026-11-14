@@ -44,7 +44,7 @@ const values = { title: 'Initial dose-ranging design', phase: '2', indication: '
   timepoint: 'Week 12', population: 'Adults with plaque psoriasis', inferentialFrame: 'superiority',
   structuralDesign: 'parallel_group', controlType: 'placebo', intervention: 'Drug X', reason: REASON };
 async function completeDesign() {
-  const form = within(await screen.findByRole('dialog'));
+  const form = within(await screen.findByRole('region', { name: 'Create a study design' }));
   for (const [label, value] of Object.entries({ 'Study design title': values.title, Phase: values.phase, Indication: values.indication,
     'Primary objective': values.objective, 'Primary endpoint name': values.endpointName, 'Endpoint type': values.endpointType,
     'Endpoint definition': values.endpointDefinition, 'Endpoint timepoint': values.timepoint, 'Target population': values.population,
@@ -89,7 +89,7 @@ describe('Protocol F09/F11 completion', () => {
     });
     const { container } = mount();
     fireEvent.click(await screen.findByRole('button', { name: 'Start a protocol' }));
-    const form = within(await screen.findByRole('dialog'));
+    const form = within(await screen.findByRole('region', { name: 'Start a protocol' }));
     fireEvent.change(form.getByLabelText(/Protocol title/), { target: { value: 'New protocol' } });
     fireEvent.change(form.getByLabelText(/Reason for change/), { target: { value: REASON } });
     fireEvent.click(form.getByRole('button', { name: 'Start protocol' }));
@@ -137,7 +137,7 @@ describe('Protocol F09/F11 completion', () => {
     const { container } = mount();
     fireEvent.change(await screen.findByRole('combobox', { name: 'Protocol scope' }), { target: { value: 'unfiled' } });
     fireEvent.click(await screen.findByRole('button', { name: 'File protocol in open project' }));
-    const form = within(await screen.findByRole('dialog'));
+    const form = within(await screen.findByRole('region', { name: 'File protocol in open project' }));
     fireEvent.change(form.getByLabelText(/Reason for change/), { target: { value: REASON } });
     fireEvent.click(form.getByRole('button', { name: 'File protocol' }));
     await waitFor(() => expect(container.querySelector('.pd-title')?.textContent).toBe('Protocol 1'));
@@ -165,7 +165,7 @@ describe("Protocol F09/F11 completion — recovery", () => {
       return ok(url === '/api/study-design/persist' ? { studyId: 'sd_first', validation: { blocksApproval: true } } : { studyDesignId: 'sd_first' });
     });
     fireEvent.click(screen.getByRole('button', { name: 'Create a study design' })); await completeDesign();
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Create a study design' })).toBeNull());
     const writes = apiRequest.mock.calls.filter(([method]) => method === 'POST');
     expect(writes).toHaveLength(2);
     expect(writes[0]).toEqual(['POST', '/api/study-design/persist', { design: initialStudyDesign(values, PROGRAM), reason: REASON }]);
@@ -186,10 +186,10 @@ describe("Protocol F09/F11 completion — recovery", () => {
       return ++bindings === 1 ? fail() : ok({ studyDesignId: 'sd_saved' });
     });
     fireEvent.click(screen.getByRole('button', { name: 'Create a study design' })); await completeDesign();
-    const form = within(await screen.findByRole('dialog', { name: 'Bind saved study design' }));
+    const form = within(await screen.findByRole('region', { name: 'Bind saved study design' }));
     expect(await form.findByText(/sd_saved was saved.*Binding to this protocol failed/)).toBeTruthy();
     fireEvent.click(form.getByRole('button', { name: 'Retry binding' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Bind saved study design' })).toBeNull());
     expect(apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && url === '/api/study-design/persist')).toHaveLength(1);
     expect(apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && url.endsWith('/41/study-design'))).toHaveLength(2);
   });
@@ -198,7 +198,7 @@ describe("Protocol F09/F11 completion — recovery", () => {
     routeProtocol([document()]); mount(); fireEvent.click(await screen.findByRole('tab', { name: /Study design/ }));
     apiRequest.mockImplementation(async (method: string) => method === 'GET' ? ok({ data: [document()] }) : ok({ validation: {} }));
     fireEvent.click(screen.getByRole('button', { name: 'Create a study design' })); await completeDesign();
-    const form = within(await screen.findByRole('dialog', { name: 'Check persisted study designs' }));
+    const form = within(await screen.findByRole('region', { name: 'Check persisted study designs' }));
     expect(form.queryByRole('button', { name: 'Create and bind design' })).toBeNull();
     expect(form.getByText(/The save outcome is unknown/)).toBeTruthy();
     expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
@@ -213,11 +213,11 @@ describe("Protocol F09/F11 completion — recovery", () => {
       return { ok: false, status: 403, json: async () => payload } as Response;
     });
     fireEvent.click(screen.getByRole('button', { name: 'Create a study design' })); await completeDesign();
-    const form = within(await screen.findByRole('dialog', { name: 'Create a study design' }));
+    const form = within(await screen.findByRole('region', { name: 'Create a study design' }));
     expect(await form.findByText(/Current program management permission is required/)).toBeTruthy();
     expect(form.queryByText(/PROGRAM_ACCESS_DENIED/)).toBeNull();
     expect(form.getByRole('button', { name: 'Create and bind design' })).toBeTruthy();
-    expect(screen.queryByRole('dialog', { name: 'Check persisted study designs' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Check persisted study designs' })).toBeNull();
   });
 
   it('keeps persisted-only binding recovery while suppressing driver details and enum error codes', async () => {
@@ -230,20 +230,20 @@ describe("Protocol F09/F11 completion — recovery", () => {
       return { ok: false, status: 500, json: async () => ({ error: { code: 'INTERNAL_ERROR', message: 'relation "protocol_documents" does not exist' } }) } as Response;
     });
     fireEvent.click(screen.getByRole('button', { name: 'Create a study design' })); await completeDesign();
-    const form = within(await screen.findByRole('dialog', { name: 'Bind saved study design' }));
+    const form = within(await screen.findByRole('region', { name: 'Bind saved study design' }));
     expect(await form.findByText(/sd_saved was saved.*Binding to this protocol failed/)).toBeTruthy();
     expect(form.queryByText(/relation "protocol_documents"/)).toBeNull(); expect(form.queryByText(/INTERNAL_ERROR/)).toBeNull();
     fireEvent.click(form.getByRole('button', { name: 'Retry binding' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Bind saved study design' })).toBeNull());
     expect(apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && url === '/api/study-design/persist')).toHaveLength(1);
   });
 
-  it('shows canonical program filing refusal copy and retains the drawer for a safe retry', async () => {
+  it('shows canonical program filing refusal copy and retains the inline form for a safe retry', async () => {
     routeProtocol([document('1', null)], () => ({ ok: false, status: 403, json: async () => ({ error: 'PROGRAM_ACCESS_DENIED', message: 'Current program management permission is required.' }) }) as Response);
     mount();
     fireEvent.change(await screen.findByRole('combobox', { name: 'Protocol scope' }), { target: { value: 'unfiled' } });
     fireEvent.click(await screen.findByRole('button', { name: 'File protocol in open project' }));
-    const form = within(await screen.findByRole('dialog'));
+    const form = within(await screen.findByRole('region', { name: 'File protocol in open project' }));
     fireEvent.change(form.getByLabelText(/Reason for change/), { target: { value: REASON } });
     fireEvent.click(form.getByRole('button', { name: 'File protocol' }));
     expect(await form.findByText('Current program management permission is required.')).toBeTruthy();

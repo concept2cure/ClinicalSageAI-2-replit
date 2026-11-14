@@ -354,6 +354,26 @@ const US_RMAT_SECTIONS: SectionDefinition[] = [
   US_DESIGNATION_COMMON.plan,
 ];
 
+/**
+ * Priority review designation request (2026-11-13). It is not an FD&C Act 506
+ * designation: the review designation is FDA's, under the PDUFA review goals,
+ * for a drug that treats a serious condition and, if approved, would provide a
+ * significant improvement in safety or effectiveness (expedited-programs
+ * guidance, 2014; recalled, not re-read here). The applicant may ask for it
+ * with the original NDA, BLA or efficacy supplement, so it carries no
+ * development plan. It read the generic designation list, whose part 5 is the
+ * Breakthrough and RMAT evidence and whose part 4 is the Fast Track criterion.
+ * Codes keep the place they had there.
+ */
+const US_PRIORITY_REVIEW_SECTIONS: SectionDefinition[] = [
+  { ...US_DESIGNATION_COMMON.request, guidance: 'The request for priority review designation, made with the original NDA, BLA or efficacy supplement it concerns. Where the request rests on a statutory provision that grants priority review (a priority review voucher, a qualified infectious disease product), name it.' },
+  US_DESIGNATION_COMMON.product,
+  { ...US_DESIGNATION_COMMON.serious, guidance: 'Priority review criterion: the drug treats a serious condition.' },
+  { code: '4', title: 'Available Therapy', module: 1, required: true, contentType: 'narrative', guidance: 'The therapies the improvement is measured against, or that none exists.', formerTitles: ['Unmet Medical Need Analysis'] },
+  { code: '5', title: 'Significant Improvement in Safety or Effectiveness', module: 1, required: true, contentType: 'mixed', guidance: 'Priority review criterion: if approved, the drug would provide a significant improvement in the safety or effectiveness of the treatment, diagnosis or prevention of the condition. Cite the application\'s own results: increased effectiveness, elimination or substantial reduction of a treatment-limiting adverse reaction, documented improvement in compliance expected to improve serious outcomes, or safety and effectiveness in a new subpopulation.', formerTitles: ['Preliminary Clinical Evidence (Breakthrough/RMAT)'] },
+  { code: '6', title: 'Location of the Supporting Data in the Application', module: 1, required: false, contentType: 'list', guidance: 'Where in the application the data behind parts 3 to 5 are.', formerTitles: ['Development Plan and Requested Features'] },
+];
+
 /** Orphan designation request. Shared: the EU orphan designation request reads it; the US request reads US_ORPHAN_SECTIONS. */
 const ORPHAN_SECTIONS: SectionDefinition[] = [
   { code: '1', title: 'Administrative Information and Sponsor', module: 1, required: true, contentType: 'form' },
@@ -795,7 +815,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   us_505b2_sections: { id: 'us_505b2_sections', name: '505(b)(2) Sections', sections: CTD_SECTIONS },
 
   // US Device Applications
-  us_510k_sections: { id: 'us_510k_sections', name: '510(k) Sections', sections: DEVICE_SECTIONS },
+  us_510k_sections: { id: 'us_510k_sections', name: '510(k) Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_510k_sections },
   us_pma_sections: { id: 'us_pma_sections', name: 'PMA Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_sections },
   us_de_novo_sections: { id: 'us_de_novo_sections', name: 'De Novo Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_de_novo_sections },
 
@@ -870,10 +890,10 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // ── Medical devices & IVDs ──────────────────────────────────────────────────
   // Device market submissions (510(k)/PMA/De Novo family + national licences)
   us_hde_sections: { id: 'us_hde_sections', name: 'Humanitarian Device Exemption (HDE)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_hde_sections },
-  us_510k_mod_sections: { id: 'us_510k_mod_sections', name: '510(k) for Device Modification', sections: DEVICE_SECTIONS },
+  us_510k_mod_sections: { id: 'us_510k_mod_sections', name: '510(k) for Device Modification', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_510k_mod_sections },
   us_pma_supp_sections: { id: 'us_pma_supp_sections', name: 'PMA Supplement', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_supp_sections },
   us_cdx_pma_sections: { id: 'us_cdx_pma_sections', name: 'Companion Diagnostic PMA', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_cdx_pma_sections },
-  us_cdx_510k_sections: { id: 'us_cdx_510k_sections', name: 'Companion Diagnostic 510(k) Expansion', sections: DEVICE_SECTIONS },
+  us_cdx_510k_sections: { id: 'us_cdx_510k_sections', name: 'Companion Diagnostic 510(k) Expansion', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_cdx_510k_sections },
   ca_mdl_sections: { id: 'ca_mdl_sections', name: 'Canada Medical Device Licence (SOR/98-282)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.ca_mdl_sections },
   jp_shonin_sections: { id: 'jp_shonin_sections', name: 'Japan Device Approval (Shonin, Class III/IV)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.jp_shonin_sections },
   uk_device_reg_sections: { id: 'uk_device_reg_sections', name: 'UK Device Registration (MHRA / UKCA)', sections: DEVICE_SECTIONS },
@@ -905,7 +925,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_sscp_ivd_sections: { id: 'eu_sscp_ivd_sections', name: 'Summary of Safety & Performance (Class C/D IVD)', sections: IVD_PERFORMANCE_SECTIONS },
   eu_ivd_reeval_sections: { id: 'eu_ivd_reeval_sections', name: 'IVD Periodic Performance Re-evaluation', sections: IVD_PERFORMANCE_SECTIONS },
   us_clia_waiver_sections: { id: 'us_clia_waiver_sections', name: 'CLIA Waiver Application', sections: IVD_PERFORMANCE_SECTIONS },
-  us_510k_ivd_sections: { id: 'us_510k_ivd_sections', name: '510(k) for Class II IVD', sections: IVD_PERFORMANCE_SECTIONS },
+  us_510k_ivd_sections: { id: 'us_510k_ivd_sections', name: '510(k) for Class II IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_510k_ivd_sections },
   us_pma_ivd_sections: { id: 'us_pma_ivd_sections', name: 'PMA for Class III IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_ivd_sections },
   us_de_novo_ivd_sections: { id: 'us_de_novo_ivd_sections', name: 'De Novo for Novel IVD', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_de_novo_ivd_sections },
   us_eua_ivd_sections: { id: 'us_eua_ivd_sections', name: 'IVD Emergency Use Authorization', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_eua_ivd_sections },
@@ -954,7 +974,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   jp_pre_consult_sections: { id: 'jp_pre_consult_sections', name: 'PMDA Consultation Briefing', sections: PRE_IND_SECTIONS },
   au_presub_meeting_sections: { id: 'au_presub_meeting_sections', name: 'TGA Pre-submission Briefing', sections: PRE_IND_SECTIONS },
   jp_sakigake_sections: { id: 'jp_sakigake_sections', name: 'Sakigake Designation Request', sections: DESIGNATION_REQUEST_SECTIONS },
-  us_priority_review_sections: { id: 'us_priority_review_sections', name: 'Priority Review Request', sections: DESIGNATION_REQUEST_SECTIONS },
+  us_priority_review_sections: { id: 'us_priority_review_sections', name: 'Priority Review Request', sections: US_PRIORITY_REVIEW_SECTIONS },
   eu_accel_assess_sections: { id: 'eu_accel_assess_sections', name: 'Accelerated Assessment Request', sections: DESIGNATION_REQUEST_SECTIONS },
   uk_ilap_sections: { id: 'uk_ilap_sections', name: 'ILAP Innovation Passport Application', sections: DESIGNATION_REQUEST_SECTIONS },
   eu_biosimilar_maa_sections: { id: 'eu_biosimilar_maa_sections', name: 'Biosimilar MAA (EU)', sections: CTD_SECTIONS },

@@ -1,0 +1,12 @@
+{
+  "reviewer": "Independent keyboard audit owner, read-only",
+  "result": "No blocker",
+  "checked": [
+    "Composing/defaultPrevented admission after top-layer guard",
+    "Ordinary Escape/Tab/current close callback preserved",
+    "Captured panel and mutable opener ownership",
+    "Remaining-top focus and disconnected-opener fallback",
+    "Whole-stack teardown/opener chain and StrictMode controls"
+  ],
+  "limits": "No visibility/focusability policy change or additional implementation."
+}

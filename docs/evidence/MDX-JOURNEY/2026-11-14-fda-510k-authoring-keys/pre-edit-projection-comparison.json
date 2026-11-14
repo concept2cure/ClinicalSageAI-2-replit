@@ -1,0 +1,698 @@
+{
+  "head": "76f8fe588e9a3b5034432c8975e714a4ea6931ae",
+  "comparisonPassed": true,
+  "genericCandidate": [
+    {
+      "key": "A",
+      "label": "Administrative",
+      "mandatory": true
+    },
+    {
+      "key": "A1",
+      "label": "Cover letter",
+      "mandatory": true
+    },
+    {
+      "key": "A2",
+      "label": "Submitter, applicant and correspondent information",
+      "mandatory": true
+    },
+    {
+      "key": "A3",
+      "label": "Pre-submission correspondence and previous communications",
+      "mandatory": false
+    },
+    {
+      "key": "A4",
+      "label": "Consensus standards and declarations of conformity",
+      "mandatory": false
+    },
+    {
+      "key": "A5",
+      "label": "510(k) summary or 510(k) statement (21 CFR 807.92 / 807.93)",
+      "mandatory": true
+    },
+    {
+      "key": "A6",
+      "label": "Truthful and accuracy statement (21 CFR 807.87(k))",
+      "mandatory": true
+    },
+    {
+      "key": "A7",
+      "label": "Class III summary and certification (21 CFR 807.94), where applicable",
+      "mandatory": false
+    },
+    {
+      "key": "A8",
+      "label": "Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on",
+      "mandatory": false
+    },
+    {
+      "key": "A9",
+      "label": "MDUFA user fee — Form FDA 3601 and payment",
+      "mandatory": true
+    },
+    {
+      "key": "B",
+      "label": "Device description",
+      "mandatory": true
+    },
+    {
+      "key": "B1",
+      "label": "Device description and principles of operation",
+      "mandatory": true
+    },
+    {
+      "key": "B2",
+      "label": "Indications for use statement",
+      "mandatory": true
+    },
+    {
+      "key": "B3",
+      "label": "Classification, product code and regulation",
+      "mandatory": true
+    },
+    {
+      "key": "C",
+      "label": "Substantial equivalence",
+      "mandatory": true
+    },
+    {
+      "key": "C1",
+      "label": "Predicate and reference devices",
+      "mandatory": true
+    },
+    {
+      "key": "C2",
+      "label": "Substantial equivalence discussion and comparison table",
+      "mandatory": true
+    },
+    {
+      "key": "D",
+      "label": "Design, manufacturing and labeling",
+      "mandatory": true
+    },
+    {
+      "key": "D1",
+      "label": "Design and manufacturing information",
+      "mandatory": false
+    },
+    {
+      "key": "D2",
+      "label": "Proposed labeling and instructions for use",
+      "mandatory": true
+    },
+    {
+      "key": "D3",
+      "label": "Reprocessing and reuse",
+      "mandatory": false
+    },
+    {
+      "key": "D4",
+      "label": "Sterilization",
+      "mandatory": false
+    },
+    {
+      "key": "D5",
+      "label": "Shelf life and packaging",
+      "mandatory": false
+    },
+    {
+      "key": "D6",
+      "label": "Benefits, risks and mitigation measures — risk management (ISO 14971), Special 510(k) design control activities",
+      "mandatory": false
+    },
+    {
+      "key": "E",
+      "label": "Performance and safety testing",
+      "mandatory": true
+    },
+    {
+      "key": "E1",
+      "label": "Biocompatibility",
+      "mandatory": true
+    },
+    {
+      "key": "E2",
+      "label": "Software and firmware",
+      "mandatory": false
+    },
+    {
+      "key": "E3",
+      "label": "Cybersecurity (FD&C Act section 524B, cyber devices)",
+      "mandatory": false
+    },
+    {
+      "key": "E4",
+      "label": "Electromagnetic compatibility, electrical, mechanical and thermal safety",
+      "mandatory": false
+    },
+    {
+      "key": "E5",
+      "label": "Bench performance testing",
+      "mandatory": true
+    },
+    {
+      "key": "E6",
+      "label": "Animal performance testing",
+      "mandatory": false
+    },
+    {
+      "key": "E7",
+      "label": "Clinical performance testing",
+      "mandatory": false
+    },
+    {
+      "key": "E8",
+      "label": "Human factors and usability",
+      "mandatory": false
+    },
+    {
+      "key": "F",
+      "label": "Quality management",
+      "mandatory": false
+    },
+    {
+      "key": "F1",
+      "label": "Quality management system information",
+      "mandatory": false
+    },
+    {
+      "key": "G",
+      "label": "References and additional information",
+      "mandatory": false
+    },
+    {
+      "key": "G1",
+      "label": "References and bibliography",
+      "mandatory": false
+    },
+    {
+      "key": "G2",
+      "label": "Additional information / amendment responses",
+      "mandatory": false
+    }
+  ],
+  "publishedGeneric": [
+    {
+      "key": "A",
+      "label": "Administrative",
+      "mandatory": true
+    },
+    {
+      "key": "A1",
+      "label": "Cover letter",
+      "mandatory": true
+    },
+    {
+      "key": "A2",
+      "label": "Submitter, applicant and correspondent information",
+      "mandatory": true
+    },
+    {
+      "key": "A3",
+      "label": "Pre-submission correspondence and previous communications",
+      "mandatory": false
+    },
+    {
+      "key": "A4",
+      "label": "Consensus standards and declarations of conformity",
+      "mandatory": false
+    },
+    {
+      "key": "A5",
+      "label": "510(k) summary or 510(k) statement (21 CFR 807.92 / 807.93)",
+      "mandatory": true
+    },
+    {
+      "key": "A6",
+      "label": "Truthful and accuracy statement (21 CFR 807.87(k))",
+      "mandatory": true
+    },
+    {
+      "key": "A7",
+      "label": "Class III summary and certification (21 CFR 807.94), where applicable",
+      "mandatory": false
+    },
+    {
+      "key": "A8",
+      "label": "Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on",
+      "mandatory": false
+    },
+    {
+      "key": "A9",
+      "label": "MDUFA user fee — Form FDA 3601 and payment",
+      "mandatory": true
+    },
+    {
+      "key": "B",
+      "label": "Device description",
+      "mandatory": true
+    },
+    {
+      "key": "B1",
+      "label": "Device description and principles of operation",
+      "mandatory": true
+    },
+    {
+      "key": "B2",
+      "label": "Indications for use statement",
+      "mandatory": true
+    },
+    {
+      "key": "B3",
+      "label": "Classification, product code and regulation",
+      "mandatory": true
+    },
+    {
+      "key": "C",
+      "label": "Substantial equivalence",
+      "mandatory": true
+    },
+    {
+      "key": "C1",
+      "label": "Predicate and reference devices",
+      "mandatory": true
+    },
+    {
+      "key": "C2",
+      "label": "Substantial equivalence discussion and comparison table",
+      "mandatory": true
+    },
+    {
+      "key": "D",
+      "label": "Design, manufacturing and labeling",
+      "mandatory": true
+    },
+    {
+      "key": "D1",
+      "label": "Design and manufacturing information",
+      "mandatory": false
+    },
+    {
+      "key": "D2",
+      "label": "Proposed labeling and instructions for use",
+      "mandatory": true
+    },
+    {
+      "key": "D3",
+      "label": "Reprocessing and reuse",
+      "mandatory": false
+    },
+    {
+      "key": "D4",
+      "label": "Sterilization",
+      "mandatory": false
+    },
+    {
+      "key": "D5",
+      "label": "Shelf life and packaging",
+      "mandatory": false
+    },
+    {
+      "key": "D6",
+      "label": "Benefits, risks and mitigation measures — risk management (ISO 14971), Special 510(k) design control activities",
+      "mandatory": false
+    },
+    {
+      "key": "E",
+      "label": "Performance and safety testing",
+      "mandatory": true
+    },
+    {
+      "key": "E1",
+      "label": "Biocompatibility",
+      "mandatory": true
+    },
+    {
+      "key": "E2",
+      "label": "Software and firmware",
+      "mandatory": false
+    },
+    {
+      "key": "E3",
+      "label": "Cybersecurity (FD&C Act section 524B, cyber devices)",
+      "mandatory": false
+    },
+    {
+      "key": "E4",
+      "label": "Electromagnetic compatibility, electrical, mechanical and thermal safety",
+      "mandatory": false
+    },
+    {
+      "key": "E5",
+      "label": "Bench performance testing",
+      "mandatory": true
+    },
+    {
+      "key": "E6",
+      "label": "Animal performance testing",
+      "mandatory": false
+    },
+    {
+      "key": "E7",
+      "label": "Clinical performance testing",
+      "mandatory": false
+    },
+    {
+      "key": "E8",
+      "label": "Human factors and usability",
+      "mandatory": false
+    },
+    {
+      "key": "F",
+      "label": "Quality management",
+      "mandatory": false
+    },
+    {
+      "key": "F1",
+      "label": "Quality management system information",
+      "mandatory": false
+    },
+    {
+      "key": "G",
+      "label": "References and additional information",
+      "mandatory": false
+    },
+    {
+      "key": "G1",
+      "label": "References and bibliography",
+      "mandatory": false
+    },
+    {
+      "key": "G2",
+      "label": "Additional information / amendment responses",
+      "mandatory": false
+    }
+  ],
+  "aliases": [
+    {
+      "id": "US_510K",
+      "blueprint": "us_510k_sections",
+      "segment": "medical_devices",
+      "sections": [
+        {
+          "code": "1",
+          "title": "Cover Letter",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "2",
+          "title": "Indications for Use",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "3",
+          "title": "Device Description",
+          "module": 1,
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4",
+          "title": "Substantial Equivalence",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "5",
+          "title": "Performance Testing",
+          "module": 1,
+          "required": true,
+          "contentType": "data"
+        },
+        {
+          "code": "6",
+          "title": "Biocompatibility",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "7",
+          "title": "Software Documentation",
+          "module": 1,
+          "required": false,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8",
+          "title": "Labeling",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "9",
+          "title": "Clinical Data",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "10",
+          "title": "Summary",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        }
+      ]
+    },
+    {
+      "id": "US_510K_MOD",
+      "blueprint": "us_510k_mod_sections",
+      "segment": "medical_devices",
+      "sections": [
+        {
+          "code": "1",
+          "title": "Cover Letter",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "2",
+          "title": "Indications for Use",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "3",
+          "title": "Device Description",
+          "module": 1,
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4",
+          "title": "Substantial Equivalence",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "5",
+          "title": "Performance Testing",
+          "module": 1,
+          "required": true,
+          "contentType": "data"
+        },
+        {
+          "code": "6",
+          "title": "Biocompatibility",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "7",
+          "title": "Software Documentation",
+          "module": 1,
+          "required": false,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8",
+          "title": "Labeling",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "9",
+          "title": "Clinical Data",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "10",
+          "title": "Summary",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        }
+      ]
+    },
+    {
+      "id": "US_CDX_510K",
+      "blueprint": "us_cdx_510k_sections",
+      "segment": "diagnostics_ivd",
+      "sections": [
+        {
+          "code": "1",
+          "title": "Cover Letter",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "2",
+          "title": "Indications for Use",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "3",
+          "title": "Device Description",
+          "module": 1,
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4",
+          "title": "Substantial Equivalence",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "5",
+          "title": "Performance Testing",
+          "module": 1,
+          "required": true,
+          "contentType": "data"
+        },
+        {
+          "code": "6",
+          "title": "Biocompatibility",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "7",
+          "title": "Software Documentation",
+          "module": 1,
+          "required": false,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8",
+          "title": "Labeling",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "9",
+          "title": "Clinical Data",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "10",
+          "title": "Summary",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        }
+      ]
+    },
+    {
+      "id": "UK_DEVICE_REG",
+      "blueprint": "uk_device_reg_sections",
+      "segment": "medical_devices",
+      "sections": [
+        {
+          "code": "1",
+          "title": "Cover Letter",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "2",
+          "title": "Indications for Use",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "3",
+          "title": "Device Description",
+          "module": 1,
+          "required": true,
+          "contentType": "mixed"
+        },
+        {
+          "code": "4",
+          "title": "Substantial Equivalence",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "5",
+          "title": "Performance Testing",
+          "module": 1,
+          "required": true,
+          "contentType": "data"
+        },
+        {
+          "code": "6",
+          "title": "Biocompatibility",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "7",
+          "title": "Software Documentation",
+          "module": 1,
+          "required": false,
+          "contentType": "mixed"
+        },
+        {
+          "code": "8",
+          "title": "Labeling",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        },
+        {
+          "code": "9",
+          "title": "Clinical Data",
+          "module": 1,
+          "required": false,
+          "contentType": "data"
+        },
+        {
+          "code": "10",
+          "title": "Summary",
+          "module": 1,
+          "required": true,
+          "contentType": "narrative"
+        }
+      ]
+    }
+  ]
+}

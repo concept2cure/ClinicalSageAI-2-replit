@@ -543,5 +543,6 @@ export function ProtocolDevForm({ kind, documentId, target, onCancel, onDone, on
       onError(e instanceof Error ? e.message : String(e));
     }
   };
-  return <C2CForm config={configFor(kind, target, reviewers)} onCancel={onCancel} onSubmit={submit} />;
+  return <C2CForm presentation={kind === 'start-protocol' ? 'inline' : 'drawer'}
+    config={configFor(kind, target, reviewers)} onCancel={onCancel} onSubmit={submit} />;
 }

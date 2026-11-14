@@ -1,0 +1,12 @@
+{
+  "sourceSha256": "2fd1d3b4be3d766171f404c54d7ca3645f2772c4db4399b129d84479ba5e04c3",
+  "testSha256": "360f5ea743d6c41d44437305c520fa2d4bc6ec057595ae5b580122e0c4bba6e7",
+  "tests": 11,
+  "failed": 5,
+  "passedControls": 6,
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "scope": "Real React native bubbling KeyboardEvent; no production source, Git, runtime, provider or real mutation."
+}

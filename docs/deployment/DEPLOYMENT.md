@@ -7,11 +7,12 @@ rows and existing release/model qualification gates remain unchanged.
 
 **Recommendation:** Railway can host beta application and supporting compute, using the existing production
 image. Retain AWS S3/KMS for governed documents, submission bundles, audit anchors and signing. A completely
-Railway-native replacement does **not** currently preserve the existing storage contract. The initial planning
-assumption is synthetic/de-identified data; the founder's intended beta data class remains unconfirmed.
-Confidential sponsor documents and patient data need their applicable contractual, residency and access
-controls before upload. Obtain Railway's actual BAA quote and executed agreement before PHI; the Pro minimum
-does not establish this entitlement.
+Railway-native replacement does **not** currently preserve the existing storage contract. The founder confirmed
+the beta data class on **2026-11-14: confidential sponsor documents without patient identifiers**. This replaces
+the earlier synthetic/de-identified planning assumption. Pro remains the proposed compute plan, subject to the
+sponsor's confidentiality, residency and vendor-contract requirements. Confidentiality alone does not make a
+BAA a prerequisite in this plan; actual PHI would require a separate scope/contract review and an executed BAA
+where applicable before upload. Confirm the uploaded corpus matches the agreed data boundary.
 
 The founder reports successful OpenAI-key drafting in Codespaces. That is user-attested functional evidence;
 it does not transfer credentials to Railway or establish formal model PQ, end-to-end Railway operation,
@@ -101,10 +102,27 @@ passwords expire after 12 hours. Provide a fresh scoped pull token and prove its
 rollbacks; retaining an image does not keep an expired pull credential valid. If no authorized renewal mechanism
 is available, use the verified source-build alternative. See [private registries](https://docs.railway.com/builds/private-registries).
 
-Before confidential/PHI traffic, settle data classes, region, provider placements, retention, DPA/BAA and support
-access. [Railway compliance](https://docs.railway.com/enterprise/compliance) describes shared responsibility
-and the BAA add-on with a paid spend threshold; obtain the actual quote. SOC2 certification does not qualify
-this application's regulated workflows.
+For the confirmed confidential sponsor beta, complete the following before sponsor documents are uploaded:
+
+- Establish appropriate confidentiality/processor terms, including a DPA where applicable, permitted vendor
+  support access and incident handling. Confirm the sponsor accepts Railway and the actual model providers.
+- Record allowed regions for compute, database, retained AWS stores, backups and provider processing; verify
+  the actual configuration meets those terms. Select retention/export/deletion periods consistent with the
+  project's immutable-record obligations, including backups and expired user access.
+- Restrict Railway/GitHub/AWS administration to named operators with MFA and least privilege. Keep beta
+  credentials/data separate from development; use existing application MFA, tenant boundaries and audited
+  client-vault access. A shared provider key is not tenant authorization.
+- Verify model-provider placement, retention and training-use terms for this sponsor's content. The successful
+  OpenAI-key drafting run proves functionality, not permission to disclose a sponsor's documents to a provider.
+- Test that logs, traces, error reports and support exports exclude document bodies, sensitive prompts and
+  secrets; retain necessary audit metadata under the project's access and retention policy.
+  Required database audit can contain SQL statements and sponsor data: restrict its collection, access and
+  durable retention rather than deleting required audit evidence to achieve routine-log redaction.
+
+[Railway compliance](https://docs.railway.com/enterprise/compliance) describes shared responsibility, DPA and
+the separate BAA add-on. Do not infer either an Enterprise requirement or blanket legal suitability solely from
+the label "confidential". SOC2 certification does not qualify this application's regulated workflows. The cost
+scenarios above remain unchanged; contractual/add-on needs can change the eventual quoted cost.
 
 ### 2. Build existing artifacts
 

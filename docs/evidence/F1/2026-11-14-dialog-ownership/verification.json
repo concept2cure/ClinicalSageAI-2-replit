@@ -1,0 +1,32 @@
+{
+  "tests": 26,
+  "passed": 26,
+  "failed": 0,
+  "suites": 2,
+  "focusRed": {
+    "failed": 4,
+    "passedControls": 11
+  },
+  "keyboardRed": {
+    "failed": 5,
+    "passedControls": 6
+  },
+  "lint": {
+    "errors": 0,
+    "baselineWarnings": 0,
+    "finalWarnings": 0
+  },
+  "sha256": {
+    "client/src/concept2cure/v2/useDialog.ts": "ed293f434143b7465267ff8fc3b636e7391e57305bf85345c5b742b805d90126",
+    "client/src/concept2cure/v2/__tests__/useDialogFocusTrap.test.tsx": "aa2fcf4729ad246452739f15ca55faaa3be6a8d7bc32652df095aa7fa39af647",
+    "client/src/concept2cure/v2/__tests__/useDialogKeyboardOwnership.test.tsx": "360f5ea743d6c41d44437305c520fa2d4bc6ec057595ae5b580122e0c4bba6e7"
+  },
+  "scope": "Existing hook and focus regression test only; keyboard test read-only; no Git/runtime/provider/fullcompiler/live mutations.",
+  "combined": {
+    "tests": 60,
+    "passed": 60,
+    "failed": 0,
+    "suites": 9,
+    "scope": "Both focused hook suites plus real risk/task dialog, C2CForm, collaboration intake and team-sharing consumers."
+  }
+}

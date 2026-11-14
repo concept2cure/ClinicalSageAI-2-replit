@@ -1,0 +1,31 @@
+{
+  "head": "dfb389f66a8ae38d4f8414d2cb969cf27e35c6c3",
+  "scope": "Verified selected-source code/fixtures unchanged; latest collaboration receipt/shell repair preserved by ordinary canonical merge.",
+  "files": {
+    ".typecheck-baseline.json": "7d6f1add0d541bda779e6ab26accb1d7d81d8132f0494536fc05503823f538bf",
+    "client/src/concept2cure/v2/__tests__/projectDocumentDisposition.test.tsx": "3d733a279efaeb59a1de32cae727454abf45b836bb2d2d721cb12677adf9b494",
+    "client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx": "6189221db843a39842c0b787e8eae360f1c9f0ad0f2ddf534e347213d9cb42db",
+    "client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx": "222df08a0243efddb3bdebf4a2a2b198bdb3c023e75196a984eb279d560b1308",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceReadScope.test.tsx": "d91ddc81e893b26b56c68e3e50feeb8cadde2b32c8b423a61d475b21c60b3bc1",
+    "client/src/concept2cure/v2/__tests__/projectHomeSourceSelection.test.tsx": "945b61b3821914e3c10ca57f2ab6d474c4d84c96c95b5256069509717007e1cf",
+    "client/src/concept2cure/v2/dataConnect.tsx": "cab6e1af7b7c52839392784955dbd9ea7a0e26bd97a416a737f8c19e37d205cc",
+    "client/src/concept2cure/v2/editor/SourceAssemblyDialog.tsx": "459a9ecd258b42cbdab494a3770747d65fa40df0ff07536bf0cc20edd19cf47e",
+    "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx": "1b61ebfc491bfa32e5bda1f72359c07ad92632a8006a95cebb26000ef30ce526",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "34c158d08d683ae1f3b93f5cffe70e548d1cccb759e56ecbc3ef37ff075a287f",
+    "client/src/concept2cure/v2/editor/useSourceAssemblyTarget.ts": "648b0b695c8e9b81dc54a3635d4aac7e7ab044b6a36eb4195cdcfe5e60198324",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "521f249f5d5f4904a4af5d798cba7033c2b5263231e833526b5e569ea25b70ab",
+    "client/src/concept2cure/v2/surfaces/projectSources.ts": "95a694949333ae15f1a9d899a8982602dd555efc03eb2ea2aceb385042e79a88",
+    "eslint.config.js": "a8e9501b18eae08423ee641348b49a8d3ccc36a10812133569c0ffdb720ef23e",
+    "package-lock.json": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd",
+    "package.json": "90d4529144eed799f1a8ce61f57701c8466c4ada2c6f161b5f8f2d209f2c4390",
+    "server/routes/c2c/__tests__/projects-sources-window.test.ts": "1f6117411ca7b832d6dcb57e901f35650380fe573653f2d631e7388629b0f68a",
+    "server/routes/c2c/projects.ts": "291e1be31376c7e237c4f366d5e812c99033ebfa386b084db4ebe926c7d9e3df",
+    "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "8ecd392c5cff398cb7dbeaa0a518d25bfe092d9f0183e1a539704427b1836a94",
+    "server/services/clinical-regulatory-evidence/data-room-search.ts": "3da0d1c452911a239d901d009784eb6e7f82c7764d9f760ad58e433474832748",
+    "server/services/clinical-regulatory-evidence/source-read-access.ts": "4846a43b8ec0c2b7abcc0a9c65d0ac3be510c091f9e9a61e5dbf8a22949df5c7",
+    "shared/data-room-processing-status.ts": "86396fc9a0bccac5f589586c67775f0008b896ca4b0a1eb7a56c5148d5f0aacf",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "2c16e463bc9098c7eb136c1959e4d1e9375139b3139b150c164f77471b782430",
+    "client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx": "383d1842898af8d15880e0c0294cb21b3e8ad9dbad322151ff765517a43ac67e"
+  }
+}

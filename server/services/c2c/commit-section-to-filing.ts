@@ -119,9 +119,12 @@ export type CommitSectionResult =
    *  (spine F1). */
   | { committed: true; documentId: string; sectionKey: string; partOf?: string; approvalWithdrawn?: true }
   /** Not written, and why — never a silent no-op. `outsideFiling` is present when
-   *  the document is of a kind that is never part of a filing, so a reader has
-   *  nothing to say about a filing (a Quality controlled document). */
-  | { committed: false; reason: string; outsideFiling?: 'controlled-document' };
+   *  there was no filing for the text to reach, which is a state of the document
+   *  and not a failed commit: a Quality controlled document is never part of a
+   *  filing, and a working copy bound to none (every template copy starts so) is
+   *  not in one yet. A reader then has no half-failure to report. Absent, the
+   *  document is bound and its text did not reach its filing. */
+  | { committed: false; reason: string; outsideFiling?: 'controlled-document' | 'unbound-working-copy' };
 
 /**
  * The one statement that writes an authored section's text into the filing.
@@ -283,6 +286,7 @@ export async function commitSectionToFiling(
     }
     return {
       committed: false,
+      outsideFiling: 'unbound-working-copy',
       reason: 'This document is not bound to a filing, so there is no governed section to update.',
     };
   }

@@ -50,7 +50,9 @@ const FOLLOWUPS = 'migrations/20261019b_filing_class_packs_v1_2_critic_followups
 const REGIONAL = 'migrations/20261020_regional_device_application_packs.sql';
 /** The first packs of the 17 US biotech filing classes (2026-10-29). */
 const US_BIOTECH = 'migrations/20261029_us_biotech_filing_class_packs.sql';
-const CLASS_FILES = [FILE, CORRECTIONS, FOLLOWUPS, REGIONAL, US_BIOTECH];
+/** Priority review, environmental assessment and the 15-day alert report at the FDA (2026-11-13). */
+const FDA_ONE_DOCUMENT = 'migrations/20261113_fda_priority_review_ea_icsr_class_packs.sql';
+const CLASS_FILES = [FILE, CORRECTIONS, FOLLOWUPS, REGIONAL, US_BIOTECH, FDA_ONE_DOCUMENT];
 
 /** The rule-pack files, in the order the applier runs them — never a hand-kept order. */
 const PACK_FILES = [
@@ -73,12 +75,14 @@ const PACK_FILES = [
   '20261019b_filing_class_packs_v1_2_critic_followups.sql',
   '20261020_regional_device_application_packs.sql',
   '20261029_us_biotech_filing_class_packs.sql',
+  // Three FDA filings that are one document each: priority review, EA, 15-day alert (2026-11-13).
+  '20261113_fda_priority_review_ea_icsr_class_packs.sql',
 ];
 /** The set in applier order; without the class files, or stopping before the corrections. */
 const inSetOrder = (withClasses: boolean | 'before-corrections') => {
   const files = (C2C_MIGRATION_FILES as string[]).filter((f) => PACK_FILES.some((b) => f.endsWith(`/${b}`)));
   expect(files, 'every rule-pack file is on the applier').toHaveLength(PACK_FILES.length);
-  if (withClasses === 'before-corrections') return files.filter((f) => !f.endsWith(CORRECTIONS) && !f.endsWith(FOLLOWUPS) && !f.endsWith(REGIONAL) && !f.endsWith(US_BIOTECH));
+  if (withClasses === 'before-corrections') return files.filter((f) => !f.endsWith(CORRECTIONS) && !f.endsWith(FOLLOWUPS) && !f.endsWith(REGIONAL) && !f.endsWith(US_BIOTECH) && !f.endsWith(FDA_ONE_DOCUMENT));
   return withClasses ? files : files.filter((f) => !CLASS_FILES.some((c) => f.endsWith(c)));
 };
 

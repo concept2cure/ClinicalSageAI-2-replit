@@ -1,0 +1,17 @@
+{
+  "tests": 15,
+  "failed": 4,
+  "passedControls": 11,
+  "initialRed": {
+    "tests": 13,
+    "failed": 3,
+    "passedControls": 10
+  },
+  "sourceSha256": "2fd1d3b4be3d766171f404c54d7ca3645f2772c4db4399b129d84479ba5e04c3",
+  "testSha256": "aa2fcf4729ad246452739f15ca55faaa3be6a8d7bc32652df095aa7fa39af647",
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "scope": "Existing hook and real React/jsdom focus behavior; no production source/Git/runtime changes."
+}

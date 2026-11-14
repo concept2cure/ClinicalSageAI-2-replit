@@ -22,6 +22,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import * as PG from './ProtocolGov';
 import { apiRequest, ApiRequestError } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
+import { surfaceLeaveRefusal } from '../navParams';
 import { str } from './projectionFormat';
 import { ACCRUAL_FORM, DOSE_FORM, MMRM_FORM, TITLES_FORM, drawerFor, type Drawer, type PlanningFormSpec, type Values } from './planningInputForms';
 import { EXTERNAL_FORM, MASTER_FORM, activityFields, activityRecorded, parseActivity } from './planningStructureForms';
@@ -154,6 +155,11 @@ function ActivityRows({ design, canWrite, onOpen }: { design: Obj; canWrite: boo
 export function PlanningInputsPanel({ studyId, canWrite, onError, onToast }: PlanningInputsPanelProps) {
   const { design, error, reload } = useDesign(studyId);
   const [open, setOpen] = useState<Open | null>(null);
+  const requestOpen = (next: Open) => {
+    const reason = surfaceLeaveRefusal();
+    if (reason) { onError?.(reason); return; }
+    setOpen(next);
+  };
 
   /** A write that failed: say what is known — refused (nothing written) or not completed (not known) — and re-read when the drawer is stale. */
   const failed = async (e: unknown, label: string) => {
@@ -213,14 +219,15 @@ export function PlanningInputsPanel({ studyId, canWrite, onError, onToast }: Pla
             <div key={spec.block} className="pd-kv">
               <span className="pd-kv-k">{spec.title}</span>
               <span className="pd-kv-v"><PG.StatusBadge status={current ? 'recorded' : 'not recorded'} /></span>
-              <EditButton verb={current ? 'Edit' : 'Record'} target={spec.title} canWrite={canWrite} onClick={() => setOpen(openBlock(spec, current, design))} />
+              <EditButton verb={current ? 'Edit' : 'Record'} target={spec.title} canWrite={canWrite} onClick={() => requestOpen(openBlock(spec, current, design))} />
             </div>
           );
         })}
       </div>
-      <ActivityRows design={design} canWrite={canWrite} onOpen={setOpen} />
+      <ActivityRows design={design} canWrite={canWrite} onOpen={requestOpen} />
       {open && canWrite && (
         <C2CForm
+          presentation="inline"
           key={open.kind === 'block' ? open.spec.block : `activity:${str(open.activity.id)}`}
           config={{
             eyebrow: 'Study design · planning inputs', title: labelOf(open), sub: [sub, open.drawer.note].filter(Boolean).join(' '),

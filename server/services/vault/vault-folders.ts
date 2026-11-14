@@ -112,13 +112,14 @@ export async function readProgramBinder(
   q: FolderQueryable,
   programType: string | null,
   primaryAgency: string | null,
+  productType?: string | null,
 ): Promise<BinderRead> {
   const klass = resolveDocumentClass(programType, primaryAgency);
   if (!klass) {
     return { binder: null, reason: `${describeUnmappedClass(programType, primaryAgency)} Its folders stop at the module level.` };
   }
   for (const agency of documentAgencyCandidates(klass.docType, klass.agency)) {
-    const pack = await findActiveRulePack(q, klass.docType, agency);
+    const pack = await findActiveRulePack(q, klass.docType, agency, productType);
     if (!pack) continue;
     const nodes = binderNodes(pack.required_sections);
     if (!nodes.length) continue;
@@ -265,12 +266,12 @@ export async function readProgramFolderIndex(
   programId: string,
   orgId: number,
   view: VaultViewId,
-  program?: { program_type?: unknown; primary_agency?: unknown },
+  program?: { program_type?: unknown; primary_agency?: unknown; product_type?: unknown },
 ): Promise<ProgramFolderIndex> {
   let row = program;
   if (!row) {
     const r = await q.query(
-      `SELECT program_type, primary_agency FROM regulatory_programs
+      `SELECT program_type, primary_agency, product_type FROM regulatory_programs
         WHERE id = $1::uuid AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
       [programId, orgId],
     );
@@ -287,7 +288,7 @@ export async function readProgramFolderIndex(
                        AND column_name = 'parent_key') AS folders`,
   )).rows[0] as { packs?: boolean; folders?: boolean } | undefined;
   const binder: BinderRead = stores?.packs
-    ? await readProgramBinder(q, text(row.program_type), text(row.primary_agency))
+    ? await readProgramBinder(q, text(row.program_type), text(row.primary_agency), text(row.product_type))
     : { binder: null, reason: 'The filing outlines (rule packs) are not provisioned in this environment, so the folders stop at the module level.' };
   const person = stores?.folders ? await listPersonFolders(q, programId, orgId) : [];
   return buildFolderIndex(view, binder, person);

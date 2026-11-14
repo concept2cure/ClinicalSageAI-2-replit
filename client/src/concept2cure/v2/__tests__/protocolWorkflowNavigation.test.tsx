@@ -197,12 +197,12 @@ describe('save outcomes and nested dialogs preserve the protocol work', () => {
     expect(screen.getByText(REFUSAL)).toBeTruthy();
   });
 
-  it('keeps a nested Create a study design dialog and its inputs when AnA requests a different section', async () => {
+  it('keeps the inline Create a study design form and its inputs when AnA requests a different section', async () => {
     mount();
     await editor();
     fireEvent.click(tab('Study design'));
     fireEvent.click(screen.getByRole('button', { name: 'Create a study design' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Create a study design' });
+    const dialog = await screen.findByRole('region', { name: 'Create a study design' });
     const title = within(dialog).getByLabelText(/Study design title/) as HTMLInputElement;
     fireEvent.change(title, { target: { value: 'Sponsor-reviewed draft design' } });
     const resolved = resolveSurfaceAction('protocol-dev.open-section', { section: '2' });
@@ -210,7 +210,7 @@ describe('save outcomes and nested dialogs preserve the protocol work', () => {
     let outcome: ReturnType<typeof applySurfaceAction> | undefined;
     act(() => { outcome = applySurfaceAction(resolved.directive, vi.fn()); });
     expect(outcome).toMatchObject({ status: 'failed', reason: expect.stringMatching(/dialog|finish|close/i) });
-    expect(screen.getByRole('dialog', { name: 'Create a study design' })).toBe(dialog);
+    expect(screen.getByRole('region', { name: 'Create a study design' })).toBe(dialog);
     expect(title.isConnected).toBe(true);
     expect(title.value).toBe('Sponsor-reviewed draft design');
     expect(tab('Study design').getAttribute('aria-selected')).toBe('true');

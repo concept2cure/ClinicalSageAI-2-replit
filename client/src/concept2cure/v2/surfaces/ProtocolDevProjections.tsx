@@ -25,6 +25,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { downloadText, safeFileName } from '../download';
 import { INDUSTRY_PROJECTIONS } from './ProtocolDevIndustryProjections';
 import { SourceImportDialog, openImportedDocument } from '../editor/SourceImportDialog';
+import { surfaceLeaveRefusal } from '../navParams';
 
 type Obj = Record<string, unknown>;
 const str = (v: unknown): string => (v == null ? '' : String(v));
@@ -296,6 +297,7 @@ function ScopedProjectionsPanel({ studyId, designTitle, programId, onNav }: Proj
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [handoffNotice, setHandoffNotice] = useState<string | null>(null);
   const request = useRef(0);
   useEffect(() => () => { request.current++; }, []);
 
@@ -320,6 +322,12 @@ function ScopedProjectionsPanel({ studyId, designTitle, programId, onNav }: Proj
     }
   };
 
+  const openInEditor = () => {
+    const refusal = surfaceLeaveRefusal();
+    setHandoffNotice(refusal);
+    if (!refusal) setImportOpen(true);
+  };
+
   return (
     <div style={{ marginTop: 16 }}>
       <h3 className="pd-pane-t" style={{ fontSize: 13 }}>Projections of this design</h3>
@@ -342,12 +350,13 @@ function ScopedProjectionsPanel({ studyId, designTitle, programId, onNav }: Proj
           <div className="pd-pane-h">
             <div><h3 className="pd-pane-t" style={{ fontSize: 13 }}>{open.label}</h3><div className="pd-pane-s">{open.of}</div></div>
             <div className="pde-actions">
-              <CrfEditorAction projectionId={open.id} programId={programId} hasNavigation={!!onNav} disabled={!payload || busy || !!error} onOpen={() => setImportOpen(true)} />
+              <CrfEditorAction projectionId={open.id} programId={programId} hasNavigation={!!onNav} disabled={!payload || busy || !!error} onOpen={openInEditor} />
               <PG.Btn icon="download" variant="outline" disabled={!payload} onClick={save}>Download (JSON)</PG.Btn>
             </div>
           </div>
           {busy && <div role="status" className="scaf-note">Projecting…</div>}
           {error && <div className="pde-refusal" role="alert">{error}</div>}
+          {handoffNotice && <p className="pde-flow-refusal" role="status">{handoffNotice}</p>}
           {open.id === 'crf' && !programId && <div className="pde-note">Select a target project to open these blank forms in the document editor.</div>}
           {payload && !error && <ProjectionBody view={open.normalize(payload)} />}
         </section>

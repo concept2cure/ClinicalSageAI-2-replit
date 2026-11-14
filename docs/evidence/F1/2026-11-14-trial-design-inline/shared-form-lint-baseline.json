@@ -1,0 +1,29 @@
+[
+  {
+    "filePath": "/workspace/Concept2cure-V2/client/src/concept2cure/v2/C2CForm.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "severity": 1,
+        "message": "Function 'C2CForm' has too many lines (184). Maximum allowed is 100.",
+        "line": 146,
+        "column": 8,
+        "messageId": "exceed",
+        "endLine": 146,
+        "endColumn": 24
+      },
+      {
+        "ruleId": "complexity",
+        "severity": 1,
+        "message": "Arrow function has a complexity of 26. Maximum allowed is 15.",
+        "line": 212,
+        "column": 41,
+        "messageId": "complex",
+        "endLine": 212,
+        "endColumn": 43
+      }
+    ]
+  }
+]

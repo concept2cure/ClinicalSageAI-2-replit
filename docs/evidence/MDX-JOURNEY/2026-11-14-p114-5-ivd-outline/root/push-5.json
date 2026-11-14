@@ -1,0 +1,16 @@
+{
+  "head": "2f9cccab34a846102a7829e248516c2ca7653569",
+  "finishedHead": "2f9cccab34a846102a7829e248516c2ca7653569",
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 217.386,
+  "declaredSourceFiles": 12517,
+  "sourceStable": true,
+  "sourceChanges": [],
+  "remoteHead": "f9656d88ec9e9476a6407afc84c6f43fd0207b4a"
+}

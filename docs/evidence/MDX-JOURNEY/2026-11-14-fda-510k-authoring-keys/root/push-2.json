@@ -1,0 +1,18 @@
+{
+  "head": "b9dc22a432da4f3a36fd0d3406b00d70b655b516",
+  "finishedHead": "b9dc22a432da4f3a36fd0d3406b00d70b655b516",
+  "command": [
+    "git",
+    "push",
+    "origin",
+    "concept2cure-v2"
+  ],
+  "exitCode": 1,
+  "elapsedSeconds": 219.163,
+  "sourceStable": true,
+  "sourceChanges": [],
+  "declaredSourceFiles": 13600,
+  "sourceSnapshotSha256": "78b917ed17238270ac28bb4b844a8f08f4f659556b02662adb5602d24fff8617",
+  "sourcePins": "push-2-source-pins.json.gz",
+  "remoteHead": "b724532d1714b7349bd223a6cb9099d29e48bd83"
+}

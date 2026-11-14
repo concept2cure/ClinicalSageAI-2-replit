@@ -342,7 +342,7 @@ function mount(replies: Reply[], canWrite = true) {
 const field = (dialog: HTMLElement, label: RegExp) => within(dialog).getByLabelText(label) as HTMLInputElement;
 async function fillDose(): Promise<HTMLElement> {
   fireEvent.click(await screen.findByRole('button', { name: 'Record Dose-escalation rules (BOIN)' }));
-  const dialog = screen.getByRole('dialog');
+  const dialog = screen.getByRole('region', { name: 'Dose-escalation rules (BOIN)' });
   for (const [label, value] of [[/^Target DLT rate/, '0.8'], [/^Cohort size/, '3'], [/^Maximum patients/, '30'], [/^Dose levels/, 'DL1\nDL2'], [/^Reason for change/, 'Record the escalation rules']] as const) {
     fireEvent.change(field(dialog, label), { target: { value } });
   }
@@ -362,13 +362,13 @@ describe('the planning-inputs panel', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('a refused write keeps the drawer open and reports the server\'s own details, framed as nothing written', async () => {
+  it('a refused write keeps the inline form open and reports the server\'s own details, framed as nothing written', async () => {
     const { calls, onError, onToast } = mount([designReply(PANEL_DESIGN), reply(400, { error: 'INVALID_PLANNING_INPUT', details: ['value.targetToxicity: the BOIN boundaries cannot be computed'] })]);
     submitDrawer(await fillDose());
     await waitFor(() => expect(onError).toHaveBeenCalled());
     expect(onError).toHaveBeenCalledWith('Dose-escalation rules (BOIN) was not recorded — The server refused these values: value.targetToxicity: the BOIN boundaries cannot be computed. Nothing was written.');
     expect(onToast).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Dose-escalation rules (BOIN)' })).toBeTruthy();
     expect(calls.map((c) => c.method)).toEqual(['GET', 'POST']);
   });
 
@@ -387,12 +387,12 @@ describe('the planning-inputs panel', () => {
     expect(calls.map((c) => c.method)).toEqual(['GET', 'POST', 'GET']);
   });
 
-  it('a block another author wrote in between is refused: the drawer closes and the design is re-read', async () => {
+  it('a block another author wrote in between is refused: the inline form closes and the design is re-read', async () => {
     const { calls, onError } = mount([designReply(PANEL_DESIGN), reply(409, { error: 'STALE_BLOCK', detail: 'This block changed after it was read.' }), designReply(PANEL_DESIGN)]);
     submitDrawer(await fillDose());
     await waitFor(() => expect(calls.length).toBe(3));
     expect(onError).toHaveBeenCalledWith('Dose-escalation rules (BOIN) was not recorded — This block changed after it was read. Nothing was written.');
-    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Dose-escalation rules (BOIN)' })).toBeNull();
   });
 
   it('a request that did not complete is not reported as nothing written; the design is re-read', async () => {
@@ -404,10 +404,10 @@ describe('the planning-inputs panel', () => {
     expect(message).not.toMatch(/Nothing was written/);
   });
 
-  it('an activity drawer posts for its own activity, with what it recorded as the precondition', async () => {
+  it('an inline activity form posts for its own activity, with what it recorded as the precondition', async () => {
     const { calls } = mount([designReply(PANEL_DESIGN), reply(200, {}), designReply(PANEL_DESIGN)]);
     fireEvent.click(await screen.findByRole('button', { name: 'Edit PK location and specimen' }));
-    const dialog = screen.getByRole('dialog');
+    const dialog = screen.getByRole('region', { name: 'PK — location and specimen' });
     expect(within(dialog).queryByLabelText(/^Activity/)).toBeNull();
     fireEvent.change(field(dialog, /^Reason for change/), { target: { value: 'Move the PK draw to site' } });
     fireEvent.change(field(dialog, /^Where it is performed/), { target: { value: 'site' } });

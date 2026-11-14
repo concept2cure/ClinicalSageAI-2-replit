@@ -1,0 +1,16 @@
+{
+  "scope": "Actual local app, fictional account and intercepted task/roster/error responses; no assignment or other mutation forwarded.",
+  "cases": [],
+  "pageErrors": [],
+  "fixtureDebug": {
+    "rosterReads": 2,
+    "panel": [
+      "Change assigneeAuto-assign taskRefresh assignmentClose assignmentAssignment records who does the work. Project access, document review assignments and electronic signing remain separate.Current assignee: Fictional current holderNew assigneeChoose an eligible colleagueFictional colleagueReason for assignmentSave assignment"
+    ]
+  },
+  "status": "failed",
+  "error": {
+    "name": "TimeoutError",
+    "message": "locator.selectOption: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('New assignee', { exact: true })\u001b[22m\n"
+  }
+}

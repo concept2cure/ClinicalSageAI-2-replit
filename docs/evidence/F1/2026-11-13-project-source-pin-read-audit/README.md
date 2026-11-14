@@ -152,3 +152,23 @@ production build exits **0** (Vite23.62s). All eleven selection source/test
 hashes remain unchanged. The final hook checks the complete merged tree again.
 The coordination record requests a publication slot without pausing any lane;
 normal merge/push continues. The private-profile policy choice stays pending.
+
+
+### Combined selection integration — 2026-11-14
+
+The subsequent [combined implementation packet](../2026-11-14-project-source-selection/README.md)
+reconciles this published repair with the independent continuation in the same
+existing owners. It adds a canonical-derived complete `selection` attestation,
+pending-store refusal, deliberate Clear selection recovery and a route access
+recheck after usage/grading. The existing abort/debounce, parent/digest and raw
+tenant/count guards and both regression sets remain. Consequently the final
+route now changes; the earlier route-unmodified statement above describes its
+original source revision, not this combined contract.
+
+Combined verification passes303 client and199 server cases (502 total), with
+full compiler0 and all89 normal gates passing at the recorded integration
+revisions. Actual local search/clear/exact-read/chooser/single-editor-start
+checks pass. Native publication status, exact revisions, retained ref races and
+authentication recovery are recorded in the linked packet. Earlier raw receipts
+remain unchanged. Deferred AnA dispatch and live-provider acceptance are not
+claimed by these checks.

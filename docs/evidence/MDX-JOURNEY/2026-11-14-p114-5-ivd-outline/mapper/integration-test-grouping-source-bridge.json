@@ -1,0 +1,15 @@
+{
+  "path": "server/services/pathway-engines/estar/__tests__/ivd-mapper-outline-completion.test.ts",
+  "rootIntegrationSource": "../integration/start.json",
+  "beforeSha256": "62cb7532c64792de668148dc7eed04242242352aaf2a39b29a0dee22e8710288",
+  "afterSha256": "a2b62a7f088c4078a5cc9d2eefc8bea1f97636874a3a9ad45eed90924fdd2227",
+  "onlyEdit": "Close outer describe before retained non-IVD tests; open a second describe around those unchanged tests.",
+  "exactBeforeRestoredByReversingOnlyDescribeBoundary": true,
+  "allTestBodiesAndAssertionsByteIdentical": true,
+  "finalWholeTestReport": "corrected-final-test-grouping-tests.json",
+  "finalResult": "corrected-final-test-grouping-result.json",
+  "passed": 13,
+  "failed": 0,
+  "pending": 0,
+  "finalSourceStable": true
+}

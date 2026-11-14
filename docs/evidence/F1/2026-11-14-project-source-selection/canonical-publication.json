@@ -1,0 +1,16 @@
+{
+  "verifiedAt": "2026-11-14T03:57:45.532967+00:00",
+  "sourceCommit": "fb1051afb653fd45f4b00020e809b6a5d7109b73",
+  "canonicalBranch": "concept2cure-v2",
+  "observedRemoteHead": "fb1051afb653fd45f4b00020e809b6a5d7109b73",
+  "sourceIsAncestorOfObservedRemoteHead": true,
+  "nativePushReceipt": "publication-attempt-13.json",
+  "nativePushExit": 0,
+  "fullTypecheckErrors": 0,
+  "typecheckBaseline": 0,
+  "normalLintJobGates": 89,
+  "normalLintJobRed": 0,
+  "namedSourceInputCount": 53,
+  "namedSourceDrift": [],
+  "scope": "Direct normal Git publication of the combined selected-source repair and preserved canonical integrations. Documentation-only closure follows. Existing local startup/browser receipts name the same source revision. No live model, scientific or all-filing qualification claimed."
+}

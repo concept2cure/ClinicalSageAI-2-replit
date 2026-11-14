@@ -155,6 +155,20 @@ export function isAccelerated(s: Record<string, unknown>): boolean {
   return ACCELERATED_CONDITION.test(String(s.storageCondition ?? ''));
 }
 
+/**
+ * A stress (forced-degradation) study: evidence of HOW the material degrades,
+ * not of how long it keeps (ICH Q1A(R2) §2.1.2, §2.2.2). The register writes
+ * `stress` for its "Stress — thermal, photostability or freeze-thaw"
+ * condition. Its results are outside their limits by design, so a section that
+ * pooled them with the long-term and accelerated studies reported every
+ * programme with a stress study as "stability NOT established".
+ */
+const SUPPORTING_TYPE = /stress|forced/i;
+
+export function isSupportingStabilityStudy(s: Record<string, unknown>): boolean {
+  return SUPPORTING_TYPE.test(String(s.studyType ?? ''));
+}
+
 export function isLongTerm(s: Record<string, unknown>): boolean {
   const type = String(s.studyType ?? '');
   if (ACCELERATED_TYPE.test(type) || INTERMEDIATE_TYPE.test(type)) return false;
@@ -643,4 +657,77 @@ function describeStudy(s: Record<string, unknown>): string {
 }
 
 /** Re-exported for the checker's finding assembly, which needs the stage shape. */
+/* ─── The recorded claim against ONE study's fitted estimate ─────────────────
+ *
+ * `checkQ1E` above judges the programme's claim against the PERIOD the
+ * long-term data cover (the extrapolation ceiling). It does not look at the
+ * regression. The Stability register does: each study's ICH Q1E fit says how
+ * long the one-sided 95% bound stays inside the specification. The register
+ * printed that estimate beside the study's recorded shelf life and said
+ * nothing about the two — walked on 2026-11-12, "21.9 mo, limited by Assay"
+ * stood next to "24 months retest" with no word that the recorded period is
+ * longer than this study's results support.
+ *
+ * This is that sentence, decided here so the browser states a verdict it was
+ * given rather than one it derived (RULE 2). It refuses nothing: a sponsor may
+ * support a longer period with other batches or a justification, and the
+ * signed close-out stays a person's decision. It says what the data on the
+ * record do and do not support, to the person about to rely on them.
+ */
+export type RecordedClaimVerdict = 'within-estimate' | 'exceeds-estimate' | 'not-comparable';
+
+export interface RecordedClaimJudgement {
+  /** The recorded shelf life / re-test period, as recorded. */
+  claim: string;
+  /** Its period in months, or null when the text states none. */
+  claimedMonths: number | null;
+  /** The study's fitted estimate in months, or null when none could be fitted. */
+  supportedMonths: number | null;
+  verdict: RecordedClaimVerdict;
+  /** One sentence for the register and the close-out form. */
+  sentence: string;
+}
+
+/**
+ * Judge a study's recorded shelf life against its own ICH Q1E estimate.
+ * Returns null when no shelf life is recorded: there is nothing to judge.
+ */
+export function judgeRecordedShelfLifeClaim(
+  recordedShelfLife: unknown,
+  estimate: { supportedShelfLife: number | null; limitingParameter: string | null },
+): RecordedClaimJudgement | null {
+  const claim = String(recordedShelfLife ?? '').trim();
+  if (!claim) return null;
+  const claimedMonths = monthsIn(claim);
+  const supportedMonths = estimate.supportedShelfLife;
+  if (claimedMonths === null) {
+    return {
+      claim, claimedMonths, supportedMonths, verdict: 'not-comparable',
+      sentence: `The recorded shelf life "${claim}" states no period in months or years, so it is not compared with the estimate.`,
+    };
+  }
+  if (supportedMonths === null) {
+    return {
+      claim, claimedMonths, supportedMonths, verdict: 'not-comparable',
+      /* Not "could not be estimated": the engine withholds an OVERALL figure
+         when any attribute cannot be fitted, even if others can (seen live: Assay
+         fitted at 18 months, Dissolution with two points). */
+      sentence: `No overall shelf life is estimated from this study's recorded results, so the recorded ${claimedMonths} months is not supported by a fit of this study. The estimate table says why, attribute by attribute.`,
+    };
+  }
+  const by = estimate.limitingParameter ? `, limited by ${estimate.limitingParameter}` : '';
+  if (claimedMonths > supportedMonths) {
+    return {
+      claim, claimedMonths, supportedMonths, verdict: 'exceeds-estimate',
+      sentence:
+        `The recorded ${claimedMonths} months is longer than the ${supportedMonths} months this study's recorded results support ` +
+        `(ICH Q1E${by}). A longer period rests on other supporting data or a justification, stated in the stability section.`,
+    };
+  }
+  return {
+    claim, claimedMonths, supportedMonths, verdict: 'within-estimate',
+    sentence: `The recorded ${claimedMonths} months is within the ${supportedMonths} months this study's recorded results support (ICH Q1E${by}).`,
+  };
+}
+
 export type { ProgramStage };

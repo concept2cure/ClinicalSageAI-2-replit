@@ -1,0 +1,14 @@
+{
+  "initialFailedReport": "intermediate-45-tests.json",
+  "initialPassed": 10,
+  "initialFailed": 4,
+  "defectsInProof": [
+    "Narrow caption filter missed real BenchTesting and AnimalTesting fields; false absence assertion failed against actual pinned form.",
+    "Audit writer stores payload_hash and canonical action payload, not new_values. Actual audit row attribution and chain checks passed."
+  ],
+  "correction": "Retain E5/E6 meanings as optional; new outline47 nodes; positive actual form questions replace false absence; inspect actual action payload and audit hash. Production audit unchanged.",
+  "pdfSha256": "df5e31dcbbe60e55b93c6006c4771c01df75a9d1c21e4b473605e20dfacce1e1",
+  "fieldsEnumerated": 1573,
+  "additionalReleaseReview": "Conditional biocompatibility could become ready without a recorded sponsor contact decision because downstream applicability is nonblocking/omitted. Final version preserves existing E1 required review and retains the FDA conditional question as structural evidence only.",
+  "jurisdictionCorrection": "Raw ancestor parsing in retained-binder/raw-form-inspection.json proves USA hides BenchTesting and shows AnimalTesting; Canada does the reverse. Retained E5 is an optional legacy platform heading, not a required FDA IVD slot. Actual form fields alone do not establish jurisdictional applicability."
+}
