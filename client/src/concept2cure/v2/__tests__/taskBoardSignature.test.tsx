@@ -65,7 +65,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function mount() {
+function renderBoard() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -73,10 +73,13 @@ function mount() {
     </QueryClientProvider>,
   );
 }
+/* The List is the first view now (D6.md §A.4 step 5; P-131). These cases are about the board's cards and
+   their controls, so they open the Board, one click away. */
+async function mount() { renderBoard(); fireEvent.click(await screen.findByRole('button', { name: 'Board' })); }
 
 describe('TaskBoard — approval-gated completion', () => {
   it('opens the shared signing dialog, and sends the password and meaning, never a PIN', async () => {
-    mount();
+    await mount();
     await screen.findByText('Approve the CSR synopsis');
     fireEvent.click(screen.getByRole('button', { name: 'Advance' }));
 

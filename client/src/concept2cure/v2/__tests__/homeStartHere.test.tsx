@@ -107,6 +107,18 @@ describe('Home, in the order a client reads it', () => {
     fireEvent.click(screen.getByRole('button', { name: /Open the tasks assigned to you/ }));
     expect(onNav).toHaveBeenCalledWith('tasks');
   });
+
+  /* P-131 item 1 (D6.md §A.7 item 1, acceptance 4): Home's list spans every project, so its link opens Tasks
+     on the person's work across every project, Mine pressed, as the rail does: not narrowed to whichever
+     project is open. */
+  it('your tasks opens Tasks on the person’s own work across every project', async () => {
+    render(<Home onNav={vi.fn()} onAsk={vi.fn()} segment="biopharma" />);
+    fireEvent.click(screen.getByRole('button', { name: /Open the tasks assigned to you/ }));
+    const filter = vi.fn((_params: Record<string, string>) => ({ ok: true as const }));
+    registerSurfaceActionHandlers('tasks', { 'tasking.filter': filter });
+    expect(filter).toHaveBeenCalledOnce();
+    expect(filter.mock.calls[0][0]).toEqual({ mine: 'true', project: 'all' });
+  });
 });
 
 describe('Ask AnA', () => {

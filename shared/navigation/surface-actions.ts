@@ -343,7 +343,7 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
     surfaceId: 'tasking',
     label: 'Filter the task board',
     description:
-      'On the task board, filter by project and/or module (both resolved against the live options on screen — pass the name as shown; "all" clears an axis), and/or toggle the My-tasks view. At least one param must be given. There is no status/priority/assignee filter on this board — status shows as the kanban columns.',
+      'On the task board, filter by project and/or module (both resolved against the live options on screen — pass the name as shown; "all" clears an axis), and/or choose whose work is shown: Mine, Everyone, or Needs an owner (open tasks that can be assigned and have no assignee). At least one param must be given. There is no status, priority or named-assignee filter on this board: status shows as the board\'s columns, and the list is already in the order of need.',
     params: [
       {
         name: 'project',
@@ -358,8 +358,8 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       {
         name: 'mine',
         required: false,
-        description: 'Show only the user\'s own tasks ("true") or everyone\'s ("false").',
-        enum: ['true', 'false'],
+        description: 'Whose work: the user\'s own tasks ("true", Mine), everyone\'s ("false", Everyone), or the open tasks with no owner ("unassigned", Needs an owner).',
+        enum: ['true', 'false', 'unassigned'],
       },
     ],
   },

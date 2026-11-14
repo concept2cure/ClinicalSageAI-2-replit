@@ -74,12 +74,7 @@ import { createScopedLogger } from '../utils/logger.js';
 import { requestDb, requestPgClient, type RequestDb } from '../db/requestDb';
 import { loadTaskHomePrograms, type TaskHomeProgram } from '../services/tasking/task-home-programs';
 import { loadTaskFilingHome, TaskFilingHomeError } from '../services/tasking/task-filing-home';
-import {
-  loadUnifiedWork,
-  type UnifiedWorkItem,
-  type UnifiedWorkSourceTable,
-  type UnifiedWorkStatus,
-} from '../services/unified-work/unified-work-view';
+import { loadUnifiedWork, sortByNeed, type UnifiedWorkItem, type UnifiedWorkSourceTable, type UnifiedWorkStatus } from '../services/unified-work/unified-work-view';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { unifiedTasks, taskDependencies } from '../../shared/schema';
 import { readTaskAssignmentOptions, readAssignableAccounts, assignmentFailure } from '../services/tasking/task-assignment';
@@ -386,7 +381,40 @@ function routeHomeOf(
 interface BoardReadMeta {
   partial: boolean;
   unreadSources: UnifiedWorkSourceTable[];
+  /**
+   * Open work that has no owner (P-131 item 6), across every store that records one. When `partial` is true it is a
+   * floor, as every count on a partial board is.
+   */
+  unassigned: number;
 }
+
+const OPEN_CARD = new Set(['pending', 'in-progress', 'review', 'blocked']);
+
+/**
+ * Open work, in a store that records an owner, with none recorded: what "needs an owner" means on the board. A
+ * tracked filing's store records no owner, so a filing never needs one here; finished work needs no one.
+ */
+export function needsOwner(card: Pick<TaskBoardItem, 'assignee' | 'status' | 'source'>): boolean {
+  return card.assignee === '' && OPEN_CARD.has(card.status) && card.source !== 'filing';
+}
+
+/**
+ * The board in the order of need (P-131 item 3; unified-work-view.ts sortByNeed): open work first, overdue, due
+ * within seven days, later, no date, by priority within each; finished work after it, in the same order.
+ */
+export const orderBoardByNeed = (cards: TaskBoardItem[], now: number = Date.now()): TaskBoardItem[] =>
+  sortByNeed(cards, c => ({ dueAt: c.dueDateIso, priority: c.priority, key: c.taskId }), now, c => !OPEN_CARD.has(c.status));
+
+/** The one narrowing the board read offers (P-131 item 6): `assignee=unassigned`. Null for any other value. */
+function boardNarrowing(option: unknown): ((cards: TaskBoardItem[]) => TaskBoardItem[]) | null {
+  if (option === undefined) return cards => cards;
+  return option === 'unassigned' ? cards => cards.filter(needsOwner) : null;
+}
+
+/** The other stores the cross-store view could not read. Its own read of unified_tasks is the board's store, read
+ *  separately, so only the others count here. */
+const unreadOtherStores = (sources: Record<UnifiedWorkSourceTable, { ran: boolean }>): UnifiedWorkSourceTable[] =>
+  (Object.entries(sources) as Array<[UnifiedWorkSourceTable, { ran: boolean }]>).flatMap(([table, o]) => (table !== 'unified_tasks' && !o.ran ? [table] : []));
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────
 
@@ -461,8 +489,10 @@ const HOME: Record<Exclude<UnifiedWorkItem['source'], 'board'>, 'project-home' |
 
 /**
  * Another store's work as a read-only board card. Fields that store does not
- * record are empty, never invented: no assignee id, no progress, no approval,
- * no dependency edges, no impact score.
+ * record are empty, never invented: no progress, no approval, no dependency
+ * edges, no impact score. The assignee is the owner that store records
+ * (project_tasks.assignee_id, c2c_project_work_items.owner_id), so "My tasks"
+ * includes it (P-131 item 6); '' when it records none, and always for a filing.
  */
 export function otherStoreCard(item: UnifiedWorkItem, program?: TaskHomeProgram): TaskBoardItem | null {
   if (item.source === 'board') return null;
@@ -476,7 +506,7 @@ export function otherStoreCard(item: UnifiedWorkItem, program?: TaskHomeProgram)
     taskType: '',
     status,
     priority: item.priority ?? '',
-    assignee: '',
+    assignee: item.ownerId != null ? String(item.ownerId) : '',
     assignedBy: null,
     progress: 0,
     impactScore: null,
@@ -667,8 +697,9 @@ export default function createTaskBoardRoutes(): Router {
 
   /**
    * GET /api/task-management/board
-   * The org-wide unifiedTasks board in the TB_TASKS display shape.
-   * Response: { success: true, data: TaskBoardItem[], total: number }
+   * The org-wide unifiedTasks board in the TB_TASKS display shape, in the order of need.
+   * `?assignee=unassigned` narrows it to the open work that has no owner.
+   * Response: { success: true, data: TaskBoardItem[], total: number, meta: BoardReadMeta }
    */
   router.get('/board', async (req: Request, res: Response) => {
     // Org id is derived from the verified JWT (never client-supplied headers).
@@ -677,6 +708,8 @@ export default function createTaskBoardRoutes(): Router {
     if (!Number.isFinite(organizationId) || organizationId <= 0) {
       return res.status(400).json({ success: false, error: 'Organization context required' });
     }
+    const narrow = boardNarrowing(req.query.assignee);
+    if (!narrow) return res.status(400).json({ success: false, code: 'VALIDATION_ERROR', error: 'The board can be narrowed only to work that has no owner.' });
 
     try {
       const db = requestDb(req);
@@ -695,18 +728,14 @@ export default function createTaskBoardRoutes(): Router {
         unreadSources.push('unified_tasks');
       }
 
-      // Every other store, through the one cross-store view. Its own read of
-      // unified_tasks is the board's store above, so only the others count here.
+      // Every other store, through the one cross-store view.
       const view = await loadUnifiedWork({ organizationId, includeCompleted: true }, db);
-      for (const [table, outcome] of Object.entries(view.sources) as Array<[UnifiedWorkSourceTable, { ran: boolean }]>) {
-        if (table !== 'unified_tasks' && !outcome.ran) unreadSources.push(table);
-      }
+      unreadSources.push(...unreadOtherStores(view.sources));
       const projectIds = view.items.flatMap((item) => item.source !== 'board' && item.projectId != null ? [item.projectId] : []);
-      const programs = projectIds.length
-        ? await loadTaskHomePrograms(requestPgClient(req), organizationId, projectIds)
-        : new Map<number, TaskHomeProgram>();
-      const cards = [...tasks, ...otherStoreCards(view.items, mirroredProjectTaskIds, programs)];
-      const meta: BoardReadMeta = { partial: unreadSources.length > 0, unreadSources };
+      const programs = projectIds.length ? await loadTaskHomePrograms(requestPgClient(req), organizationId, projectIds) : new Map<number, TaskHomeProgram>();
+      const all = orderBoardByNeed([...tasks, ...otherStoreCards(view.items, mirroredProjectTaskIds, programs)]);
+      const cards = narrow(all);
+      const meta: BoardReadMeta = { partial: unreadSources.length > 0, unreadSources, unassigned: all.filter(needsOwner).length };
       return res.json({ success: true, data: cards, total: cards.length, meta });
     } catch (error) {
       logger.error('task board error', {

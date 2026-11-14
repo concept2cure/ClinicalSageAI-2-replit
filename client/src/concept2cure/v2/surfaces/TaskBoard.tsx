@@ -19,7 +19,12 @@ import { canGovernedWrite } from '@shared/constants/permissions';
 import { esignSignerOf } from '../../_shared/components/EsignModal';
 import { TaskSignOffDialog } from '../editor/TaskSignOffDialog';
 import { describeSignatureMethod } from '@shared/part11/signature-method';
-import { AnswerLead } from '../AnswerLead';
+import { OpenWorkGroups, useOpenWorkReads } from '../OpenWork';
+import { TaskPageHeader } from './TaskPageHeader';
+import { TaskNeedList } from './TaskNeedList';
+import { greetingFor } from './taskGreeting';
+import { BLOCKING_FLAG, boardListRow, isOverdue } from './taskListRows';
+import { boardRows, needFactsForAna, taskPageLine, teamRows, whoFromParam, WHO_APPLIED, WHO_OPTIONS, type Who } from './taskPageModel';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { publishShellProject, useShellProject } from '../shellProject';
@@ -181,9 +186,8 @@ const STORE_LABEL: Record<string, string> = {
   estar_submissions: 'tracked filings',
 };
 
-/** The blocking flag's words, shared by the card, the table row and the
- *  Analytics count so the three cannot name it differently. */
-const BLOCKING_FLAG = 'Blocking the submission';
+/* The blocking flag's words (BLOCKING_FLAG) are taskListRows.ts's, shared by
+   the card, the List row and the Analytics count so they cannot differ. */
 
 /** Initials for an already-resolved display name. '?' when there is no name. */
 function tbAvatar(name: string): string {
@@ -191,16 +195,10 @@ function tbAvatar(name: string): string {
   return name.split(' ').filter(Boolean).map(s => s[0]).join('').slice(0, 2) || '?';
 }
 
-/**
- * Overdue is computed from the machine-readable `dueDateIso` (server column,
- * kept fresh by the taskDueSweep job) — never by parsing the humanised `due`
- * label. Completed/cancelled work is never overdue.
- */
-function isOverdue(t: TaskItem): boolean {
-  if (!t.dueDateIso || t.status === 'completed' || t.status === 'cancelled') return false;
-  const due = new Date(t.dueDateIso).getTime();
-  return Number.isFinite(due) && due < Date.now();
-}
+/* Overdue has one rule, my-work.ts's (taskListRows.ts `isOverdue`): from the
+   machine-readable `dueDateIso`, never the humanised label; completed and
+   cancelled work is never overdue, and neither is a review route member that
+   waits on an earlier step. */
 
 /**
  * Refusal copy shared by every write on this board. `apiRequest` THROWS for a
@@ -590,7 +588,9 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
      the permission the server derives from the same role set. */
   const canWrite = canGovernedWrite(user);
 
-  const [view, setView] = useState('board');
+  /* The List is the first view (D6.md §A.4 step 5); its id stays 'table', which
+     AnA's tasking.set-view and links already use. */
+  const [view, setView] = useState('table');
   /* The project filter starts on the open project. It read
      `window.C2C_TASK_FILTER`, which nothing in the product sets, so Tasks opened
      from a project showed every project's work (2026-10-31 client demo). The
@@ -615,7 +615,10 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   /* New task and Start workflow open on the filtered project, else the open
      one, else on "Choose a project". */
   const defaultProject = proj !== 'all' ? proj : openProject;
-  const [mine, setMine] = useState(false);
+  /* Whose work: Mine, Everyone, or Needs an owner (P-131; D6.md §A.7 item 2). The
+     rail opens on Mine through tasking.filter; opened any other way, Everyone. */
+  const [who, setWho] = useState<Who>('everyone');
+  const mine = who === 'mine';
   const [mod, setMod] = useState('all');
   const [sel, setSel] = useState<TaskItem | null>(null);
   // A task detail must close before the registered surface-leave guard will
@@ -653,15 +656,22 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
      Same class as the `NO_ROWS` defect in dataConnect.tsx — an unstable
      reference feeding an effect — and it is why `useLiveRows` returns one
      frozen empty array instead of a fresh literal. */
-  const list = useMemo(
-    () => tasks.filter(t =>
-      (proj === 'all' || t.project === proj) &&
-      (!mine || (myId !== '' && t.assignee === myId)) &&
-      (mod === 'all' || t.moduleType === mod) &&
-      t.status !== 'cancelled'
-    ),
-    [tasks, proj, mine, myId, mod],
+  /* One instant per read, so the order of need, and every memo built on it, is
+     stable between renders: it moves only when the board is read again. */
+  const readAt = useRef({ rows: tasks, at: Date.now() });
+  if (readAt.current.rows !== tasks) readAt.current = { rows: tasks, at: Date.now() };
+  const now = readAt.current.at;
+  /* In the order of need (taskOrderOfNeed.ts): the List, the board's columns and
+     the line all read this one order. */
+  const list = useMemo(() => boardRows(tasks, { proj, mod, who, myId }, now), [tasks, proj, who, myId, mod, now]);
+  /* Open work that needs an owner under the same project and module filters:
+     what "Needs an owner" lists, counted for the line and for AnA. */
+  const unowned = useMemo(
+    () => boardRows(tasks, { proj, mod, who: 'unowned', myId }, now), [tasks, proj, mod, myId, now],
   );
+  /* The person's own work, from the one component the top bar and Home read it
+     with (OpenWork.tsx; P-131 item 2). Not read a second way. */
+  const openWork = useOpenWorkReads(true, reloadKey);
   const byCol = (id: string) => list.filter(t => t.status === id);
   const byId = (id: string) => tasks.find(t => t.taskId === id);
 
@@ -669,7 +679,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
      Registered under this surface's OWN surfaceViews id ('tasks'); the bus
      alias-resolves the registry's 'tasking' surfaceId onto it, the same
      resolution nav() applies. Every handler drives the SAME state the human's
-     own controls drive (setView / setProj / setMod / setMine / setSel);
+     own controls drive (setView / setProj / setMod / setWho / setSel);
      programme and task names resolve against the REAL rows with honest
      misses, never guesses. Governed work (move/create/archive/sign/workflow)
      stays human-operated and untouched. */
@@ -712,7 +722,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     scope: taskActorScope(user), isCurrent, read: liveTasks, reloadKey,
     reload: () => setReloadKey(key => key + 1),
     guard: () => leaveGuard.current(),
-    select: task => { setProj('all'); setMod('all'); setMine(false); setSel(task); },
+    select: task => { setProj('all'); setMod('all'); setWho('everyone'); setSel(task); },
   });
   useSurfaceActionHandlers('tasks', {
     'tasking.set-view': (params) => {
@@ -739,7 +749,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
       const applied: string[] = [];
       let nextProject: string | undefined;
       let nextModule: string | undefined;
-      let nextMine: boolean | undefined;
+      let nextWho: Who | undefined;
       if (params.project) {
         const wanted = params.project.trim();
         if (wanted.toLowerCase() === 'all') {
@@ -779,14 +789,16 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         applied.push(match === 'all' ? 'all modules' : `module ${match}`);
       }
       if (params.mine) {
-        nextMine = params.mine === 'true';
-        applied.push(params.mine === 'true' ? 'my tasks only' : "everyone's tasks");
+        const whose = whoFromParam(params.mine);
+        if (!whose) return { ok: false, reason: `No view of whose work named "${params.mine}".` };
+        nextWho = whose;
+        applied.push(WHO_APPLIED[whose]);
       }
       if (applied.length === 0) return { ok: false, reason: 'No filter named.' };
       // Refusing any part of a combined directive leaves every filter as it was.
       if (nextProject !== undefined) setProj(nextProject);
       if (nextModule !== undefined) setMod(nextModule);
-      if (nextMine !== undefined) setMine(nextMine);
+      if (nextWho !== undefined) setWho(nextWho);
       return { ok: true, detail: `Filtered to ${applied.join(', ')}` };
     },
     'tasking.open-task': (params) => {
@@ -961,12 +973,9 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     const open = list.filter(t => t.status !== 'completed');
     const byMod: Record<string, number> = {};
     const byPri: Record<string, number> = {};
-    const byAsg: Record<string, { open: number; done: number }> = {};
     list.forEach(t => {
       byMod[t.moduleType] = (byMod[t.moduleType] || 0) + 1;
       byPri[t.priority] = (byPri[t.priority] || 0) + 1;
-      byAsg[t.assignee] = byAsg[t.assignee] || { open: 0, done: 0 };
-      if (t.status === 'completed') byAsg[t.assignee].done++; else byAsg[t.assignee].open++;
     });
     return {
       total: list.length, open: open.length,
@@ -979,7 +988,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
       crit: list.filter(t => t.criticalPath).length,
       reg: list.filter(t => t.regulatoryImpact).length,
       appr: list.filter(t => t.approvalRequired && t.approvalStatus === 'pending').length,
-      byMod, byPri, byAsg,
+      byMod, byPri,
     };
   }, [list]);
 
@@ -991,9 +1000,9 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     () => taskAnalyticsScope({
       shown: list.length,
       total: tasks.length,
-      filters: { project: proj, moduleType: mod, mineOnly: mine },
+      filters: { project: proj, moduleType: mod, mineOnly: mine, unownedOnly: who === 'unowned' },
     }),
-    [list.length, tasks.length, proj, mod, mine],
+    [list.length, tasks.length, proj, mod, mine, who],
   );
 
   /* What AnA can see of this screen. Until now she was told the user was on
@@ -1037,23 +1046,32 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         availableActions: ['Retry the task-board read'],
       };
     }
-    // `t.due` is server data, not a local invariant: a task row without it is a
-    // plausible response and must not crash the board. Same class as the
-    // ectd-compile defect — the guard has to cover the member, not the container.
-    const overdue = list.filter(t => t.status !== 'completed' && String(t.due ?? '').includes('overdue'));
+    // One overdue rule (taskListRows.ts `isOverdue`), the one the List and the
+    // line use: never the humanised label, which reads "today" for a time
+    // already past (P-131; D6.md §A.7 item 8).
+    const overdue = list.filter(t => isOverdue(t, now));
     const sel0 = sel;
+    const scope = who === 'mine' ? 'The tasks assigned to you' : who === 'unowned' ? 'Open tasks that need an owner' : 'Tasks for the organisation';
+    const need = needFactsForAna({
+      unowned: unreadStores.includes('unified_tasks') ? null : unowned,
+      myWork: { loading: openWork.myWork.loading, error: openWork.myWork.error, items: openWork.myWork.data?.items ?? [] },
+      now,
+    });
     return {
       summary:
-        `Tasks for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
+        `${scope}: ${stats.total} tasks, ${stats.open} open, ` +
         `${stats.blocked} blocked, ${stats.blocking} holding the submission, ` +
         `${overdue.length} overdue, ${stats.appr} awaiting approval.` +
         (boardIncomplete
           ? ` These counts are incomplete: ${unreadReason}.`
           : '') +
+        (need.needsAnOwner ? ` ${need.needsAnOwner.count} open ${need.needsAnOwner.count === 1 ? 'task needs' : 'tasks need'} an owner.` : '') +
         (sel0 ? ` The task "${sel0.title}" (${sel0.taskId}) is open in the detail panel.` : ''),
       facts: {
         view,
         mine,
+        whose: who,
+        ...need,
         partial: boardIncomplete,
         unreadStores,
         totals: {
@@ -1082,10 +1100,12 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         'Auto-assign an existing unfinished task from its detail, or retry a failed assignment',
         'Archive a task (requires a reason, written to the audit trail)',
         'Complete an approval-gated task (requires an electronic signature)',
-        'Filter the board by module, priority, assignee or search text',
+        'Filter by project or module, and show Mine, Everyone or the tasks that need an owner',
+        'Switch between the List, the Board, the Critical path and Analytics',
       ],
     };
-  }, [list, stats, sel, view, mine, liveTasks.loading, liveTasks.error, liveTasks.empty, boardIncomplete, unreadReason, unreadStores]);
+  }, [list, unowned, now, openWork.myWork.loading, openWork.myWork.error, openWork.myWork.data, stats, sel, view, mine, who,
+    liveTasks.loading, liveTasks.error, liveTasks.empty, boardIncomplete, unreadReason, unreadStores]);
   usePublishSurfaceContext('tasks', anaContext);
 
   /* The tasks a person marked critical-path (unified_tasks.critical_path), in
@@ -1126,55 +1146,42 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     (t.project ? projName(t.project) : null) ?? t.home?.programTitle
       ?? (t.project ? (projectOpts.loading ? '' : 'A project not in your list') : 'No project');
 
-  /* Answer-first lead -- computed from live task state */
-  const overdue = list.filter(isOverdue);
-  /* Who carries the most open work, among people: unassigned work ('') and
-     another store's cards (no assignee) are not a person. */
-  const workload = Object.entries(stats.byAsg || {}).filter(([k]) => k !== '')
-    .map(([k, v]) => ({ k, open: v.open })).sort((a, b) => b.open - a.open);
-  const heaviest = workload[0];
-  /* Busiest, balanced and rebalance are claims about a team. With one member
-     on the roster they are meaningless ("JM Smith is the busiest at 11 open
-     tasks — workload-balanced auto-assign can spread the next batch", over a
-     roster of one, 2026-10-31 client demo), and with an unread roster they are
-     unknown, so they are made only over more than one person. */
-  const team = roster.rows.length > 1;
-  const critOpen = critChain.filter(t => t.status !== 'completed');
+  /* Whether the critical path is blocked, for the line's link to the Critical
+     path view (A.4 step 3). Nothing is said about a path nobody designated. */
   const critBlocked = critChain.find(t => t.blocked);
-  /* Has anything actually been DESIGNATED critical-path?
-     `unified_tasks.critical_path` is a real column that defaults FALSE, and no
-     write path in the repo ever sets it true — not the three insert sites, not
-     the workflow-template instantiation the "clear" branch itself offers as its
-     call to action. So `critChain` is permanently empty, and the headline
-     asserted "The critical path is clear — nothing open is blocking the
-     milestone" in AnA's voice over every board, with a forward commitment ("I
-     will flag the moment anything threatens") that no watcher implements —
-     while the Blocked column on the same screen showed a non-zero count.
-
-     An empty designation is not a cleared path. Nothing designated means the
-     question has not been asked. */
-  const critDesignated = list.some(t => t.criticalPath);
-  const milestone = critChain[critChain.length - 1];
+  const ownUnread = unreadStores.includes('unified_tasks');
+  const openById = (taskId: string) => {
+    const found = tasks.find((t) => t.taskId === taskId);
+    if (found) setSel(found);
+    else setActionErr('That task is not on the board as it was last read. Retry the task board to see it.');
+  };
+  const line = taskPageLine({
+    who, rows: list, unowned, now, blockedAt: critBlocked?.title ?? null,
+    projectName: proj !== 'all' ? projName(proj) : null,
+    reads: {
+      board: { loading: liveTasks.loading, failed: Boolean(liveTasks.error) || (liveTasks.empty && boardIncomplete), ownUnread },
+      myWork: { loading: openWork.myWork.loading, failed: Boolean(openWork.myWork.error) },
+      approvals: { loading: openWork.approvals.loading, failed: Boolean(openWork.approvals.error) },
+      signOffs: openWork.approvalRows.length,
+    },
+    open: openById, showUnowned: () => setWho('unowned'), showPath: () => setView('path'),
+  });
+  const listRow = (t: TaskItem) => boardListRow(t, {
+    owner: t.readOnly ? '' : nameOf(t.assignee), project: proj === 'all' ? taskProject(t) : null,
+    onOpen: () => setSel(t), now,
+  });
 
   return (
-    <div className="page-inner tb">
-      <div className="ph">
-        <div>
-          <div className="ph-eyebrow">Project — collaboration</div>
-          <h1 className="ph-title">{getSurfaceMeta('tasks').label}</h1>
-          <div className="ph-sub">Every task across your projects: the work planned here, and the work that comes from the project schedule, agency correspondence and tracked filings, each labelled with where it came from. Filter to a project below.</div>
-        </div>
-        {canWrite ? (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
-            <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
-          </div>
-        ) : (
-          <div className="ph-sub" role="note" data-testid="tb-view-only">
-            {I.lock} View only. Creating and changing tasks needs an editor role in this organization.
-          </div>
-        )}
-      </div>
+    <div className="page-inner tb" data-work-area="tasks">
+      <TaskPageHeader
+        title={getSurfaceMeta('tasks').label}
+        greeting={greetingFor(user)}
+        line={line}
+        canWrite={canWrite}
+        onStartWorkflow={() => setWf(true)}
+        onNewTask={() => setCreating(true)}
+        onAsk={onAsk}
+      />
 
       {targetMessage && (
         <div className={targetMessage.error ? 'tb-alert' : 'scaf-note'} role={targetMessage.error ? 'alert' : 'status'}>
@@ -1226,43 +1233,6 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         />
       ) : (
       <>
-      <AnswerLead
-        tone={critBlocked || overdue.length ? 'urgent' : 'calm'}
-        eyebrow="What is on the critical path — and what needs you first"
-        headline={critBlocked
-          ? <>Your path to {milestone ? <b>"{milestone.title}"</b> : 'the milestone'} is <b>blocked</b> at "{critBlocked.title}".</>
-          : critOpen.length
-            ? <>{critOpen.length} {critOpen.length === 1 ? 'task stands' : 'tasks stand'} between you and <b>{milestone ? '"' + milestone.title + '"' : 'the milestone'}</b>{overdue.length ? <>, and <b>{overdue.length} {overdue.length === 1 ? 'task is' : 'tasks are'} overdue</b></> : ''}.</>
-            : critDesignated
-              ? <>The critical path is clear — nothing open is blocking the milestone right now.</>
-              : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
-        body={critBlocked
-          ? <>{critBlocked.blockedReason || 'It is blocked'} — nothing downstream on the path can move until it clears. {team && heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can give new work to whoever has the fewest.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{/* "Workload is balanced across the team." used to fire whenever `heaviest`
-    was undefined — i.e. the filter matched zero tasks. Absence of workload
-    data was presented as a measured balance. Balance is claimed only when
-    there is assigned open work to be balanced, across more than one person. */}
-{!team ? null : heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} has the most open work, {heaviest.open} tasks; auto-assign gives new work to whoever has the fewest.</> : heaviest && heaviest.open > 0 ? <>Workload is balanced across the team.</> : <>No open work is assigned on this board, so there is no workload to balance.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
-        reassure={
-          critBlocked || overdue.length
-            ? (team ? 'I will help you unblock the path and rebalance the team, one step at a time.' : 'I will help you unblock the path, one step at a time.')
-            : critDesignated
-              ? 'I will flag the moment anything threatens the milestone.'
-              /* No "You are on track" over an undesignated board, and no promise
-                 to watch a path that does not exist. */
-              : undefined
-        }
-        action={canWrite ? {
-          label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : critDesignated ? 'Start a workflow from a template' : 'Mark the tasks that gate the milestone',
-          onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
-          alt: list.some((t) => !t.readOnly && t.status !== 'completed') ? { label: 'Assign a saved task', onClick: () => {
-            const candidate = list.find((t) => !t.readOnly && t.status !== 'completed');
-            if (candidate) setSel(candidate);
-          } } : undefined,
-        } : { label: 'See the critical path', onClick: () => setView('path') }}
-        secondary="Or work the board, critical path, and analytics below."
-      />
-
       {boardIncomplete && (
         <div className="ph-sub" role="status" data-testid="tb-partial">
           {I.alertTriangle} Not every task store could be read{unreadStores.length ? `: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')}` : ''}. The columns and counts show only what was read.
@@ -1270,33 +1240,25 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         </div>
       )}
 
-      {/* Where the tasks on the board come from: only the places that hold one. */}
-      {list.length > 0 && (
-        <div className="tb-src">
-          <span className="tb-src-h">Where these tasks come from</span>
-          {Object.keys(TB_SRC).filter(k => list.some(t => t.source === k)).map(k => (
-            <span key={k} className="tb-src-chip" data-src={k} title={TB_SRC[k].t}>
-              <b>{TB_SRC[k].t}</b> {list.filter(t => t.source === k).length}
-            </span>
-          ))}
-        </div>
-      )}
-
       {/* Filters + views */}
       <div className="tb-bar">
         <div className="tb-filters">
-          <select id="tb-filter-project" aria-label="Filter by project" className="tb-sel" value={proj} onChange={e => setProj(e.target.value)}>
+          <div className="seg" role="group" aria-label="Whose work">
+            {WHO_OPTIONS.map(([w, l]) => (
+              <button key={w} type="button" className="seg-b" aria-pressed={who === w} onClick={() => setWho(w)}>{l}</button>
+            ))}
+          </div>
+          <select id="tb-filter-project" aria-label="Filter by project" className="c2c-input" value={proj} onChange={e => setProj(e.target.value)}>
             <option value="all">All projects</option>
             {projectOpts.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
           </select>
-          <select id="tb-filter-module" aria-label="Filter by module" className="tb-sel" value={mod} onChange={e => setMod(e.target.value)}>
+          <select id="tb-filter-module" aria-label="Filter by module" className="c2c-input" value={mod} onChange={e => setMod(e.target.value)}>
             {modules.map(m => <option key={m} value={m}>{m === 'all' ? 'All modules' : m}</option>)}
           </select>
-          <button className={`tb-chip${mine ? ' on' : ''}`} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
         </div>
-        <div className="seg">
-          {([['board', 'Board'], ['path', 'Critical path'], ['analytics', 'Analytics'], ['table', 'Table']] as const).map(([v, l]) => (
-            <button key={v} className={`seg-b${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{l}</button>
+        <div className="seg" role="group" aria-label="View">
+          {([['table', 'List'], ['board', 'Board'], ['path', 'Critical path'], ['analytics', 'Analytics']] as const).map(([v, l]) => (
+            <button key={v} type="button" className="seg-b" aria-pressed={view === v} onClick={() => setView(v)}>{l}</button>
           ))}
         </div>
       </div>
@@ -1440,33 +1402,45 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
             </div>
             <div className="tb-an-card">
               <div className="tb-an-h">Team productivity</div>
-              {Object.keys(stats.byAsg).map(k => (
-                <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(nameOf(k))}</span>{nameOf(k)}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
+              {/* Work with no owner is named, and other stores' work is on its own
+                  row: neither is a person (D6.md §A.7 item 7). */}
+              {teamRows(list, nameOf).map(r => (
+                <div key={r.key} className="tb-an-row"><span className="tb-an-k">{r.person && <span className="tb-av sm">{tbAvatar(r.label)}</span>}{r.label}</span><div className="tb-an-split"><span className="tb-an-open">{r.open} open</span><span className="tb-an-done">{r.done} done</span></div></div>
               ))}
               <div className="tb-an-foot">Auto-assign on a saved task gives it to the member with the fewest open tasks; the per-module default shown here does not.</div>
+            </div>
+            {/* Where the work comes from (D6.md §A.4 step 4): the counts the band
+                above the board used to show, here with the rest of the figures. Each
+                row in the List carries its source in its title, and the drawer says it. */}
+            <div className="tb-an-card">
+              <div className="tb-an-h">By source</div>
+              {Object.keys(TB_SRC).filter(k => list.some(t => t.source === k)).map(k => (
+                <div key={k} className="tb-an-row"><span className="tb-an-k">{TB_SRC[k].t}</span><span className="tb-an-n">{list.filter(t => t.source === k).length}</span></div>
+              ))}
+              {list.length === 0 && <div className="tb-an-foot">No tasks under these filters.</div>}
             </div>
             <AutomationCard />
           </div>
         </div>
       )}
 
+      {/* The List (D6.md §A.4 step 5, as amended by §A.7): the open tasks grouped
+          by when, each group in the order of need; finished work under Done. In
+          Mine the approvals and reviews waiting on the person follow, from the
+          component the top bar and Home use; the assigned tasks are this list, so
+          they are not listed twice. */}
       {view === 'table' && (
-        <div className="ctable tb-table">
-          {/* Project, not Task ID: the server's id ("TASK-1761…-3f2a") told a
-              reader nothing, and which project a row is for told them most. */}
-          <div className="ct-head" style={{ gridTemplateColumns: '160px 1.7fr 120px 96px 90px 90px 84px' }}><div>Project</div><div>Title</div><div>Module</div><div>Status</div><div>Priority</div><div>Owner</div><div>Due</div></div>
-          {list.map(t => (
-            <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '160px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
-              <div className="ct-strong" style={{ fontSize: 11 }}>{taskProject(t)}</div>
-              <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}{t.blocking && !t.blocked && <span className="tb-flag blk inline" title={BLOCKING_FLAG}>{I.alertTriangle}</span>}</div>
-              <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
-              <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
-              <div><span className={`tb-pri pri-${t.priority}`}>{t.priority}</span></div>
-              <div style={{ fontSize: 11 }}>{nameOf(t.assignee)}</div>
-              <div style={{ fontSize: 11, color: isOverdue(t) ? 'var(--error)' : 'var(--text-400)' }}>{t.due}</div>
-            </button>
-          ))}
-        </div>
+        <TaskNeedList rows={list.filter(t => t.status !== 'completed').map(listRow)}
+          done={list.filter(t => t.status === 'completed').map(listRow)} now={now}>
+          {mine && (
+            <div className="tb-open-work">
+              <OpenWorkGroups workLoading={openWork.myWork.loading} workError={openWork.myWork.error}
+                assigned={openWork.assigned} queue={openWork.queue.data} queueError={openWork.queue.error}
+                approvalRows={openWork.approvalRows} approvalsError={openWork.approvals.error}
+                go={onNav} openTask={openById} assignedListed={false} />
+            </div>
+          )}
+        </TaskNeedList>
       )}
 
       {/* Honest engineering reality.
@@ -1493,7 +1467,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           tour: it named five tables and a source file, always rendered, to
           every user. The governance claims are the valuable part and are kept;
           the identifiers are not. */}
-      <details className="tb-gaps">
+      <details className="pj-more">
         <summary>What is enforced, and what is not yet</summary>
         {/* Rewritten 2026-10-31 for the person relying on it: it named routers,
             a state machine, a mirror and a dispatcher. The claims are the same

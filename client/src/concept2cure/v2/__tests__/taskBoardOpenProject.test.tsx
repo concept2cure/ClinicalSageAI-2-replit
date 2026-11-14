@@ -33,6 +33,7 @@ import { __resetSurfaceActionBus, applySurfaceAction, registeredSurfaceId } from
 import { clearNavParams } from '../navParams';
 import { clearEditorTarget } from '../editorTarget';
 import { clearShellProject } from '../shellProject';
+import { RAIL_CORE } from '../registryModel';
 
 const P31 = '31313131-3131-4131-8131-313131313131';
 const P32 = '32323232-3232-4232-8232-323232323232';
@@ -119,6 +120,22 @@ describe('Tasks opens on the open project', () => {
     const dialog = await screen.findByRole('dialog', { name: 'New task' });
     await within(dialog).findByRole('option', { name: 'BX-204 Oncology IND' });
     expect((within(dialog).getByLabelText('Project') as HTMLSelectElement).value).toBe('31');
+  });
+
+  /* P-131 item 1 (D6.md §A.7 acceptance 7). The rail's Tasks opens on the person's own work across every
+     project, with Mine pressed, even with a project open: the open-project filter above is for Tasks opened
+     without a choice, and the rail now makes one. */
+  it('opened from the rail with a project open, shows the person’s work across every project with Mine pressed', async () => {
+    Object.assign(window, { C2C_PROJECT: { id: P31 } });
+    const rail = RAIL_CORE.find((s) => s.id === 'tasking') as { applies: { actionId: string; params: Record<string, string> } };
+    const resolved = resolveSurfaceAction(rail.applies.actionId, rail.applies.params);
+    if (!resolved.ok) throw new Error(resolved.error);
+    await mount();
+    act(() => { applySurfaceAction(resolved.directive, vi.fn()); });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mine' }).getAttribute('aria-pressed')).toBe('true'));
+    await waitFor(() => expect(filter()).toBe('all'));
+    expect(await screen.findByRole('button', { name: `Open ${T31.title}` })).toBeTruthy();
+    expect(card(T32.title)).toBeTruthy();
   });
 
   it('never overwrites a project the person chose before the list settled', async () => {
