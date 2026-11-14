@@ -1,0 +1,17 @@
+[
+  {
+    "path": "client/src/concept2cure/v2/__tests__/useDialogFocusTrap.test.tsx",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "client/src/concept2cure/v2/__tests__/useDialogKeyboardOwnership.test.tsx",
+    "errors": 0,
+    "warnings": 0
+  },
+  {
+    "path": "client/src/concept2cure/v2/useDialog.ts",
+    "errors": 0,
+    "warnings": 0
+  }
+]
