@@ -10,10 +10,15 @@
   "lintErrors": 0,
   "lintWarnings": 9,
   "lintWarningCountsUnchanged": true,
-  "build": "pending",
-  "compiler": "pending",
+  "build": "passed",
+  "compiler": "passed",
   "publication": "pending",
   "humanAcceptance": "not_executed",
   "agencyAcceptance": "not_established",
-  "nativePostgreSQL": "not_executed"
+  "nativePostgreSQL": "not_executed",
+  "buildReport": "root/build.json",
+  "qualifiedRuntimeHead": "e44ec6e1866df879cda300fabafdcf2aaa98c2e8",
+  "compilerErrors": 0,
+  "compilerBaseline": 0,
+  "compilerReport": "root/typecheck.json"
 }

@@ -16,4 +16,13 @@ Latest unique automated qualification: **829 passed across 31 files; zero failed
 
 The combined runtime inputs stayed unchanged. One test-only describe grouping changed during that run; its exact reversible bridge and a fresh whole 13-case file replace that row. Test bodies and assertions are byte-identical. Original RED and intermediate candidate receipts are retained. The 45-node/no-branch inventory and unchecked BIO candidate are explicitly superseded by raw XFA/script inspection and the final required-review contract. The initial selection RED contains eight genuine selector failures and one invalid fixture view (`mdx` instead of `ivd`), corrected before the successful cohort.
 
-Build, full compiler and normal canonical publication are pending. No screen or styling changes were made. No human, agency, deployment or native PostgreSQL claim is made. No device transmission is promised.
+Production build passed on the merged canonical tree (`root/build.json`): all 12,506 declared source inputs stayed unchanged. The full canonical compiler passed with zero errors against baseline zero (`root/typecheck.json`, 303.517 seconds); the same 12,506 inputs stayed unchanged. Normal canonical publication is pending. No screen or styling changes were made. No human, agency, deployment or native PostgreSQL claim is made. No device transmission is promised.
+
+## Human acceptance still to execute
+
+1. In a provisioned test environment, create a US IVD 510(k) project and open its existing editor and Vault outline. Confirm the FDA headings, E9 analytical performance and E1 biocompatibility review; confirm no EU Article 56/Annex XIII instructions are presented as this US template.
+2. Leave analytical evidence or the biocompatibility assessment absent. Verify content stays incomplete. Record substantive, source-linked review content through the existing governed authoring/review flow; assess each conditional study against the actual device and current FDA instructions.
+3. Open a non-IVD 510(k) and an existing project from before this change. Confirm their retained documents, content, recorded versions and editor targets. This change supplies no automatic upgrade of those documents.
+4. Walk the existing official eSTAR generation, human form review and retained signed-filing record. This outline is not evidence of completed form validation or FDA receipt; portal upload remains a human action under P-114 item 6.
+
+These steps are pending, not counted among the automated checks. This continuation completes existing backend/content owners and tests; it does not qualify the whole product for human use.
