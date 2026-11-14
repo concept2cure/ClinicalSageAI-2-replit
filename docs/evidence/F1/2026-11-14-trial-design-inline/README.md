@@ -1,6 +1,6 @@
 # Trial design inline placement repair
 
-Plan F1 / W1 / D2. Initial canonical revision `7579b804a`. This packet follows the founder's explicit rejection of a side popup for Trial Design. Implementation and checks are pending; no completed verification is claimed here.
+Plan F1 / W1 / D2. Initial canonical revision `7579b804a`. This packet follows the founder's explicit rejection of a side popup for Trial Design. TypeScript source is frozen at `6fdbe30a1`, with the final mobile CSS refinement at `d3a107c55`; compiler and publication are still pending at this checkpoint.
 
 ## What already exists
 
@@ -10,6 +10,32 @@ Searches included the current and unreachable form/inline/docked/drawer owners, 
 
 The existing synthetic project, draft protocol `1` and bound draft design `sd_75ad27f0add14a04a478139e78ee4c22` provide runtime verification without more persisted records. Runtime checks are read/open/cancel only; no provider, signing, release or filing operation is authorized by this packet.
 
+Before edits, direct selector search corrected the shared CSS owner to `styles/journey-v2.css`. Review also identified existing `ProtocolDevWorkspace.tsx` header form/register/finalize/export/import openers and `ProtocolDevProjections.tsx` CRF editor-handoff opener that need their existing pending-work guard before admitting another interaction. A disjoint guard worker owns only these callbacks/tests. Inline forms also register the existing surface leave guard because ceremony registration alone does not protect direct navigation.
+
 ## Acceptance contract
 
 Use the same shared form inline in the main project workflow for protocol initiation/filing and Study design create/bind/unbind/planning. No backdrop, side placement, dialog role or focus trap. Keep labels, validation, all fields, status/errors, busy safeguards, explicit cancel, native writer receipts/retries, session/project continuation and pending-work navigation protection. Verify existing untouched shared-form consumers retain their behavior. Review actual desktop/mobile placement and persisted readback, then publish normally on `concept2cure-v2` with all checks.
+
+## Change and focused verification
+
+`af6096f22` extends the existing shared renderer with explicit inline placement. It keeps one field/validation implementation, adds the existing surface navigation guard and safe focus handoff, and retains full-width fields and explicit Cancel without a modal wrapper. Unchanged consumers keep their established presentation. `2dfae14d7` supplies the scoped, flat inline layout in the canonical stylesheet.
+
+`6fdbe30a1` adopts it in the existing project initiation/filing and Study design create/bind/unbind/planning paths. The selected form appears immediately after the pane heading, with recorded design context retained below. Existing launch/design card wrappers become normal sections. Guarded actions preserve an active edit rather than replacing it, and cancellation clears the corresponding refusal. Native writer payloads, partial-save binding retry, unknown-outcome recovery and clinical project/session continuation are unchanged.
+
+`a6f8a159c` preserves pending work before competing protocol header/register/signature/export/editor actions and CRF editor handoff. The signature transfer within an admitted native ceremony is unchanged. This repair does not claim that every older drawer throughout the product has been removed.
+
+Genuine focused baselines are retained: shared inline behavior 6 failures/2 controls; full-width placement 1 failure/7 controls; ten protocol placement failures; six competing-action failures plus the separate direct-signing failure. Initial green runs exposed two new test locator mistakes, one cover-title expectation and old modal-role fixtures; those are retained separately rather than presented as product failures. Existing fixture reconciliation changes only the role/name assertions affected by inline placement, preserving payload/refusal/retry assertions.
+
+Shared form checks pass 30/30 across five suites, guard/CRF checks pass 10/10, protocol/planning checks pass 144/144 across seven suites, and the final placement-focused rerun passes 10/10. These groups overlap and are not summed. Root's exact frozen-source integration passes **258/258 across 20 suites**, covering shared form/dialog behavior, placement, guards, clinical initiation, governed writes/retries, planning/CAS, selection, shell/Live Drive navigation and D0 CSS. D0 shared-definition/phone-layout checks also pass 29/29 again after the final mobile CSS refinement; CSS selector shadowing reports zero new shadows. Scoped lint has zero errors and no warning growth (the shared form retains its two existing warnings; the twelve protocol source/test files and guard slice have zero warnings).
+
+Independent final source review at `6fdbe30a1` finds no blocker across the shared form, six caller owners, CSS and competing-action guards. Eleven product source hashes are in `source-sha256.txt`.
+
+## Runtime baseline
+
+The fresh actual UI baseline at published `7579b804a` opens/cancels existing protocol-start, unbind and planning drawers with fixed scrims and modal semantics. Source hashes are stable across that run. Existing project, protocol and resolved bound design return successfully before and after; no native write occurs. Screenshots and full synthetic readback are retained under `browser/`.
+
+Actual-record green checks pass six desktop/mobile open/type/refusal/cancel/reopen cases with no dialog/scrim and normal Tab navigation. Scope/tab/competing-editor attempts preserve typed input, cancellation discards it explicitly, and all three mobile forms fit at x16 through x374 on a 390px viewport. No native mutation or page error occurs; the same draft protocol/design binding is preserved.
+
+The separate clean final run passes ten open/cancel cases with stable source hashes: six actual bound-record protocol/unbind/planning cases and four **controlled browser GET-only unbound projections** for create/bind on desktop/mobile. The latter do not alter persisted records or mock any writer. All native reads remain successful and the same real resolved binding remains intact, with zero native/blocked mutations and zero page errors. `inline-final-clean.json.gz` distinguishes these modes explicitly. The backend revision is recorded as `7579b804a` while Vite serves the tested source at `6fdbe30a1`; this pre-publication evidence is not a claim of a restarted published backend. Clean unbind appears near the Study heading (desktop y81/mobile y190). Root visually inspected the controlled create desktop/mobile captures and identified the squeezed phone heading, corrected in `d3a107c55`; the affected mobile-only follow-up is recorded separately.
+
+Actual and controlled screenshots are named separately. The behavioral captures retain deliberate unsaved text/refusal states; the clean captures precede those interactions. The clean planning mobile image shows upper context rather than the actual form, so its behavioral screenshot is the placement evidence. No provider request, signing, release, filing or extra persisted trial record occurs.
