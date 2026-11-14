@@ -34,11 +34,16 @@ vi.mock('../../../db', () => ({
   pool: {
     query: async (text: string, params: unknown[] = []) => {
       h.calls.push({ text: text.replace(/\s+/g, ' ').trim(), params });
+      if (/SELECT ou\.role FROM organization_users ou/.test(text) && params[0] === 11 && params[1] === 7 &&
+          params[2] === 'active' && JSON.stringify(params[3]) === '["active"]') return { rowCount: 1, rows: [{ role: 'admin' }] };
       if (/FROM organization_gateway_accounts/.test(text)) return { rowCount: 0, rows: [] };
       return /INSERT INTO submission_transmittals/.test(text) ? { rowCount: 1, rows: [{ id: 41 }] } : { rowCount: 1, rows: [] };
     },
   },
 }));
+// This metadata fixture supplies a durable account-use receipt, not a bypass
+// of the real standing check or repeated gateway-account reads above.
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: async () => ({ persisted: true, chained: true }) }));
 
 import { getGateway, refusedBeforeWire } from '../index';
 import { FdaEsgGateway } from '../fda-esg';

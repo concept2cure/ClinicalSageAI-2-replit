@@ -26,11 +26,16 @@ const h = vi.hoisted(() => ({
 }));
 // The guard keeps the bytes it sends (sent-package-archive.ts); in memory here.
 vi.mock('../../storage', async () => (await import('./sent-package-storage-stub')).storageModule);
+// PDF/A cases use a recorded account-use receipt; production still resolves
+// the fixture actor's current role and unchanged account before/after it.
+vi.mock('../../audit/audit-write-outcome', () => ({ recordAuditRow: async () => ({ persisted: true, chained: true }) }));
 
 vi.mock('../../../db', () => ({
   db: {},
   pool: {
-    query: async (text: string) => {
+    query: async (text: string, params: unknown[] = []) => {
+      if (/SELECT ou\.role FROM organization_users ou/.test(text) && params[0] === 11 && params[1] === 7 &&
+          params[2] === 'active' && JSON.stringify(params[3]) === '["active"]') return { rowCount: 1, rows: [{ role: 'admin' }] };
       if (/settings->'submission'->'requirePdfA'/.test(text)) {
         if (h.settingsReadFails) throw new Error('connection terminated');
         if (h.noRow) return { rowCount: 0, rows: [] };
