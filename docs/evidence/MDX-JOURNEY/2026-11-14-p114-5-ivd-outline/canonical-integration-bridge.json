@@ -227,5 +227,11 @@
     "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
     "server/services/clinical-regulatory-evidence/data-room-search.ts"
   ],
-  "scope": "Incoming changes retain their canonical qualification; scoped IVD qualification pins remain unchanged. Production build and full compiler cover the merged tree."
+  "scope": "Incoming changes retain their canonical qualification; scoped IVD qualification pins remain unchanged. Production build and full compiler cover the merged tree.",
+  "finalIntegratedRemote": "70230fcb08096b08f9548b39b1a9483c06881e38",
+  "finalMergedHead": "200ca11c1f06f947aba3bcea488a022d064f15c7",
+  "finalDeclaredQualificationPinsUnchanged": true,
+  "clientChangesAfterFullBuild": [],
+  "latestServerBuild": "root/server-build.json",
+  "coordinationConflictResolution": "Both dated scope entries retained; no production source conflict"
 }

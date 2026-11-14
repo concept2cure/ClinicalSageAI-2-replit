@@ -1,12 +1,12 @@
 {
   "artifacts": {
     "README.md": {
-      "bytes": 4302,
-      "sha256": "f93049f52977f6126b29544c44c6b0356157fee8ac0d60801b0db69eeb38a3f5"
+      "bytes": 4590,
+      "sha256": "a7eca04036f04f2ba79c1f2d9d5cf65fc811f434232a878fabca0b87db6969bd"
     },
     "canonical-integration-bridge.json": {
-      "bytes": 10368,
-      "sha256": "cc10156e00dc9a4d1de9014664549003b5f6c3b2826ef95baedf624cbeca242a"
+      "bytes": 10745,
+      "sha256": "4436391f26ebc68d3143b82d95b79e002ce2cbe1427e52b0cad2fff21e125026"
     },
     "component-manifest-validation.json": {
       "bytes": 111,
@@ -601,8 +601,20 @@
       "sha256": "a9246ce6a0ba151dc90794429db89e62f85b316e31673f2a4831ba508bec43a9"
     },
     "root/runner.py": {
-      "bytes": 2906,
-      "sha256": "c189c0cafd9a2394bf5b188a1bf44fedd1cfaeff165214ec7eb6d51bee67a45a"
+      "bytes": 3040,
+      "sha256": "dd15e2a1d9944beafe8369c37cdff29f3d53f1cbd0d924b3932864413a3b3b40"
+    },
+    "root/server-build-start.json": {
+      "bytes": 1653453,
+      "sha256": "8e19e3001cafd75e8c53b8e61889e968c6ae6ccf8f82e2ffce4fcd68dc361ae4"
+    },
+    "root/server-build.json": {
+      "bytes": 305,
+      "sha256": "c2c93f4b1f8399b4865d3725f104e89145f78b5cbea16191a7eb33ca759da8b4"
+    },
+    "root/server-build.log.gz": {
+      "bytes": 161,
+      "sha256": "8cfeabcfff4b9f76d25642b7d39187e02d91c3e2ce1f6b52a98a2b8b4d92e1e6"
     },
     "root/typecheck-start.json": {
       "bytes": 1653465,
@@ -625,5 +637,5 @@
       "sha256": "e6281358ff2efb7f0713cee1ac3d1b5999b8c58f2a9e787fa3d0460ca5be7c00"
     }
   },
-  "count": 156
+  "count": 159
 }
