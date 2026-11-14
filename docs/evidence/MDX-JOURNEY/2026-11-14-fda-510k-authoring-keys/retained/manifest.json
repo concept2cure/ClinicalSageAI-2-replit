@@ -1,0 +1,51 @@
+{
+  "entries": [
+    {
+      "path": "README.md",
+      "bytes": 5168,
+      "sha256": "da2df6e185a556b506cae75ea9ea8983d7956431cee387453b2a1e2f5d0a21de"
+    },
+    {
+      "path": "cli-option-rejected.log",
+      "bytes": 972,
+      "sha256": "9264bc6a2295bc76b957450fc3ff3519a75427968902920c01c1a0a95d7da369"
+    },
+    {
+      "path": "independent-review.json",
+      "bytes": 2118,
+      "sha256": "3e1ba83b0e9b537dfef671dcde2421736a5cb5b41677baffcedf7b0120403b3a"
+    },
+    {
+      "path": "lint.json",
+      "bytes": 299,
+      "sha256": "f93e46088a9e3004fc7d8d9ad827984b8f1810d3a42f3bd90a35dae3e0315a98"
+    },
+    {
+      "path": "old-us-510k-builtin.json",
+      "bytes": 10955,
+      "sha256": "590c2f3bf6fbf9ef3d58e5f533ee6cd114a25718de1325f7db8c7615dcce8adb"
+    },
+    {
+      "path": "qualification-test.log",
+      "bytes": 2581,
+      "sha256": "abd61e7085510279ef30d13fcdf3312a9806d17b22fb2f75d7ee3974d77d59a9"
+    },
+    {
+      "path": "run-summary.json",
+      "bytes": 973,
+      "sha256": "e8c74d7ec74285b4e5c9168bec5399278c1fe7a4e970fcff989754793d52b73b"
+    },
+    {
+      "path": "source-pins-final.json",
+      "bytes": 1992,
+      "sha256": "15b8aa1fe1039b87eeffea5aba7fa9319864267e3fda6f6e3d802127891c834c"
+    },
+    {
+      "path": "source-pins-prequalification.json",
+      "bytes": 1448,
+      "sha256": "047f51df472384205e2969736fb87f16037d032c911fb52b41b3bef7ad67e673"
+    }
+  ],
+  "entryCount": 9,
+  "selfExcluded": true
+}

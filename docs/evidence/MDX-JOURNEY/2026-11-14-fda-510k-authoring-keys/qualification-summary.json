@@ -1,0 +1,26 @@
+{
+  "status": "engineering_component_qualified_publication_pending",
+  "sourceBase": "c6d7aaddf8c61b98d6e82fe4fa5126a34452e804",
+  "passed": 142,
+  "distinctFiles": 10,
+  "failed": 0,
+  "pending": 0,
+  "testReport": "green/tests.json",
+  "sourceStable": true,
+  "declaredPins": 47,
+  "lintErrors": 0,
+  "lintWarnings": 2,
+  "lintWarningCountsUnchanged": true,
+  "review": "retained/independent-review.json",
+  "compiler": "pending",
+  "build": "pending",
+  "publication": "pending",
+  "humanAcceptance": "not_executed",
+  "nativePostgreSQL": "not_executed",
+  "agencyAcceptance": "not_established",
+  "remainingGaps": [
+    "Static template recommendation has no recorded product context",
+    "Retained numeric drafts require deliberate governed remediation",
+    "Durable section evidence attachment linking remains in the prior packet backlog"
+  ]
+}

@@ -815,7 +815,7 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   us_505b2_sections: { id: 'us_505b2_sections', name: '505(b)(2) Sections', sections: CTD_SECTIONS },
 
   // US Device Applications
-  us_510k_sections: { id: 'us_510k_sections', name: '510(k) Sections', sections: DEVICE_SECTIONS },
+  us_510k_sections: { id: 'us_510k_sections', name: '510(k) Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_510k_sections },
   us_pma_sections: { id: 'us_pma_sections', name: 'PMA Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_sections },
   us_de_novo_sections: { id: 'us_de_novo_sections', name: 'De Novo Sections', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_de_novo_sections },
 
@@ -890,10 +890,10 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   // ── Medical devices & IVDs ──────────────────────────────────────────────────
   // Device market submissions (510(k)/PMA/De Novo family + national licences)
   us_hde_sections: { id: 'us_hde_sections', name: 'Humanitarian Device Exemption (HDE)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_hde_sections },
-  us_510k_mod_sections: { id: 'us_510k_mod_sections', name: '510(k) for Device Modification', sections: DEVICE_SECTIONS },
+  us_510k_mod_sections: { id: 'us_510k_mod_sections', name: '510(k) for Device Modification', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_510k_mod_sections },
   us_pma_supp_sections: { id: 'us_pma_supp_sections', name: 'PMA Supplement', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_pma_supp_sections },
   us_cdx_pma_sections: { id: 'us_cdx_pma_sections', name: 'Companion Diagnostic PMA', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_cdx_pma_sections },
-  us_cdx_510k_sections: { id: 'us_cdx_510k_sections', name: 'Companion Diagnostic 510(k) Expansion', sections: DEVICE_SECTIONS },
+  us_cdx_510k_sections: { id: 'us_cdx_510k_sections', name: 'Companion Diagnostic 510(k) Expansion', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.us_cdx_510k_sections },
   ca_mdl_sections: { id: 'ca_mdl_sections', name: 'Canada Medical Device Licence (SOR/98-282)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.ca_mdl_sections },
   jp_shonin_sections: { id: 'jp_shonin_sections', name: 'Japan Device Approval (Shonin, Class III/IV)', sections: DEVICE_AUTHORING_SECTION_CORRECTIONS.jp_shonin_sections },
   uk_device_reg_sections: { id: 'uk_device_reg_sections', name: 'UK Device Registration (MHRA / UKCA)', sections: DEVICE_SECTIONS },
