@@ -56,7 +56,45 @@ dependency, provider, model, screen, route, table or deployment is authorized by
   provisioning, private dependencies, ECR token renewal and first real SMTP login as pending operator proofs.
   No Railway deploy, paid provision, DNS/IAM change, provider call, new release workflow or qualification claim.
 
-Report-reference, integration and publication results follow after the source freeze.
+### Executed report-reference results
+
+The actual registered worker now reaches its parent through the existing recorded team context, carrying
+only its verified report event receipt and SHA256. The parent uses that received reference in the real
+registered `update_plan.worker_dispositions` handler to record **rework** against the exact immutable report.
+The regression never computes a report hash outside the model context to feed the parent. Provider transport
+is scripted; coordination, source SQL, worker execution, assessment and audit use the actual implementation.
+This proves assessment reachability, not provider qualification or automatic terminal-worker restart.
+
+- Pre-edit actual-parent RED: **1 intended failure /7 skipped**, missing report references in the received
+  context. Corrected exact-baseline replay against explicit `3692f44ad`'s four production modules: **2 intended
+  failures /71 skipped**, covering both normal parent flow and coordinator report projection. Logs:
+  `/workspace/scratch/anna-report-reference-red.log` and `anna-report-reference-exact-original-red.log`.
+  Nine earlier controls also failed before the projection. The first GREEN attempt exposed a test-only reused
+  assignment/report intent; giving the report its own intent fixed that premise. That collision is not counted
+  as evidence of the production defect.
+- Final **90/90 across three existing suites**, receipt `/workspace/scratch/anna-report-reference-green.log`:
+  latest report/revision rather than later disposition, completed/incomplete/cancelled outcomes, stale report
+  refusal, malformed/mismatched/hash-tampered metadata, durable replay/current-source admission and private
+  metadata stripping. No raw report/brief/source/reason is added to parent context; existing model/source,
+  privacy, human-governance, lifecycle and quota gates remain intact.
+- Scoped lint: **zero errors, no warning growth** (four pre-existing registration/complexity warnings in the
+  existing workflow module). Independent read-only review found no material source, privacy, assessment,
+  interface or import-cycle regression. Frozen seven-file hashes are retained at
+  `/workspace/scratch/anna-report-reference-frozen.sha256`; all worker processes are closed.
+
+Normal canonical merge retains separately published project source-selection/read-currentness and collaboration
+receipt repairs from `08044016b`; independent review found no source-scope conflict. UI selection is a preliminary
+handoff; existing server admission remains authoritative. Incoming browser receipts remain controlled client
+evidence, not actual backend delivery. Root owns adjacent integration, normal publication/full compiler and
+final exact-version Codespace verification; only executed receipts will establish those results.
+
+Adjacent integration is **261/261 across seven existing suites** on the normally merged source, receipt
+`/workspace/scratch/nov14-report-railway-adjacent-green.log`: turn-plan/private context, sub-agent/toolset,
+stream hosting, real project-scope admission, exact project-source reads and current native catalog records.
+All test processes exited; the seven frozen implementation hashes still match. The initial CLI invocation
+rejected an unsupported `--minWorkers` option before tests started; the actual run uses the existing Vitest4
+single-worker configuration. Source/test bytes remain frozen for normal pre-push gates and the sole full
+TypeScript compiler. No test or compiler bypass is used.
 
 ## 2026-11-13 continued F1 — peer lifecycle and gateway account-use custody
 

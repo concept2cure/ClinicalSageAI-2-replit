@@ -334,7 +334,7 @@ class RunCoordinator implements RunCoordinationHost {
       // Raw expansion stays held until all model-derived transcript/record readers have an owner wall.
       messages.push({ ...message, held: true as const });
     }
-    return { workers: board.workers, messages };
+    return { workers: board.workers, reports: board.reports, messages };
   }
   async modelContexts(handle?:WorkerCoordinationHandle){
     const recipient=handle?this.worker(handle):'anna';

@@ -2000,3 +2000,11 @@ These narrow holds end at publication or **2026-11-15 00:00 UTC**, whichever com
 No new production file, dependency, table, screen, route, tool, model or infrastructure is introduced. Agents do
 not mutate Git/runtime/compiler state. Interface contracts above are approved; root releases each implementation
 after this inventory and the matching evidence entry are written.
+
+**Implementation freeze:** hosted policy passes75/75 after30 genuine RED failures; verified report-reference
+reachability passes90/90 after actual-parent and corrected exact-baseline RED. Scoped lint has zero errors/no
+warning growth. Independent review closes both source slices and the costed deployment assessment. Worker
+test/lint processes are closed and source/test holds transfer to root for integration; no further worker edits.
+Canonical08044016b is merged normally without source-scope overlap. Root retains Git, adjacent integration,
+sole normal pre-push compiler, publication and owned Codespace verification. All holds release on successful
+canonical publication. Railway acceptance, paid provision, clinical qualification and AWS launch remain unclaimed.
