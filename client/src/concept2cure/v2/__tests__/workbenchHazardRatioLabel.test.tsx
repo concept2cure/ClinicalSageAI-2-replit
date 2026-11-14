@@ -152,3 +152,46 @@ describe('the assessment states what the engine computed', () => {
     expect(screen.getByText(/event.rate/i)).toBeTruthy();
   });
 });
+
+/* S12 biotech sweep, finding 69 (2026-11-09): the defensibility form always sent controlRate,
+   treatmentRate and effectSize, whichever endpoint was selected, so rates typed while the endpoint was
+   binary went along with a continuous assessment (and an effect size typed for a continuous endpoint went
+   along with a binary one). The request carries the fields the form shows for that endpoint, no others. */
+describe('the assessment request carries only the fields shown for its endpoint', () => {
+  const field = (name: RegExp) =>
+    Array.from(document.querySelectorAll('label')).find((l) => name.test(l.textContent ?? ''))!.querySelector('input, select') as HTMLInputElement;
+  const lastBody = () => apiRequest.mock.calls.filter((c) => c[1] === ASSESS).at(-1)?.[2] as Record<string, unknown>;
+  const assess = async () => {
+    fireEvent.click(screen.getByRole('button', { name: /assess/i }));
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === ASSESS)).toBe(true));
+  };
+
+  it('rates typed for a binary endpoint are not sent with a continuous one', async () => {
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.change(field(/Endpoint type/i), { target: { value: 'binary' } });
+    fireEvent.change(field(/^Control rate/), { target: { value: '0.08' } });
+    fireEvent.change(field(/^Treatment rate/), { target: { value: '0.55' } });
+    fireEvent.change(field(/Endpoint type/i), { target: { value: 'continuous' } });
+    fireEvent.change(field(/Effect size \(standardized\)/), { target: { value: '0.5' } });
+    await assess();
+    const body = lastBody();
+    expect(body.endpointType).toBe('continuous');
+    expect(body.effectSize).toBe(0.5);
+    expect(body).not.toHaveProperty('controlRate', 0.08);
+    expect(body).not.toHaveProperty('treatmentRate', 0.55);
+    expect(body.controlRate).toBeUndefined();
+    expect(body.treatmentRate).toBeUndefined();
+  });
+
+  it('an effect size typed for a continuous endpoint is not sent with a binary one', async () => {
+    render(<BiostatWorkbench {...props()} />);
+    fireEvent.change(field(/Effect size \(standardized\)/), { target: { value: '0.5' } });
+    fireEvent.change(field(/Endpoint type/i), { target: { value: 'binary' } });
+    fireEvent.change(field(/^Control rate/), { target: { value: '0.08' } });
+    fireEvent.change(field(/^Treatment rate/), { target: { value: '0.3' } });
+    await assess();
+    const body = lastBody();
+    expect(body).toMatchObject({ endpointType: 'binary', controlRate: 0.08, treatmentRate: 0.3 });
+    expect(body.effectSize).toBeUndefined();
+  });
+});

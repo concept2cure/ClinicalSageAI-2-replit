@@ -495,3 +495,79 @@ describe('Biostatistics — study design bridge, cross-links', () => {
     expect(onNav.mock.calls.map((c) => c[0])).toEqual(['protocol-dev', 'tasks', 'submission-center']);
   });
 });
+
+/* S12 biotech sweep, finding 61 (2026-11-09): selecting a design the engine cannot size yet (its
+   assessment answers adapter.input = null) left the previous design's sizing — or, when it was the first
+   design loaded, the oncology worked example rated "Adequate" — on screen as the selected design's
+   document, and asked the engine for a document over that stale input. A design that is not sized is
+   said to be not sized, with what it lacks, and nothing is computed or offered for the editor in its
+   name. */
+describe('Biostatistics — a design the engine cannot size yet', () => {
+  const posts = (url: string) => apiRequest.mock.calls.filter((c) => c[0] === 'POST' && c[1] === url).length;
+  const docPane = () => document.querySelector('section.bs-doc') as HTMLElement;
+  const settle = () => new Promise((r) => setTimeout(r, 400));
+
+  it('chosen after a sized design, it shows what it lacks and none of that design’s figures, and asks the engine nothing', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    await waitFor(() => expect(docPane().querySelector('.bs-doc-render')).toBeTruthy());
+    const compute0 = posts('/api/ana-biostats/compute');
+    const document0 = posts('/api/ana-biostats/document');
+
+    fireEvent.click(designRow('BX-204 OS study'));
+    await waitFor(() => expect(within(docPane()).getByText(/BX-204 OS study is not sized yet/)).toBeTruthy());
+    expect(within(docPane()).getByText(/needs an expected event rate/)).toBeTruthy();
+    expect(docPane().querySelector('.bs-doc-render')).toBeNull();
+    expect(document.querySelector('.bs-mini')).toBeNull();
+
+    await settle();
+    expect(posts('/api/ana-biostats/compute')).toBe(compute0);
+    expect(posts('/api/ana-biostats/document')).toBe(document0);
+    expect(screen.queryByText(/Worked example/)).toBeNull();
+    expect((screen.getByRole('button', { name: /Open in editor/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('button', { name: 'Save as a working document' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('loaded first, it is not covered by a worked example rated by the engine', async () => {
+    route();
+    stashNavParamsForTarget('biostatistics', { studyId: 'STUDY-2' });
+    mount();
+    await waitFor(() => expect(within(docPane()).getByText(/BX-204 OS study is not sized yet/)).toBeTruthy());
+    await settle();
+    expect(posts('/api/ana-biostats/compute')).toBe(0);
+    expect(posts('/api/ana-biostats/document')).toBe(0);
+    expect(screen.queryByText(/Worked example/)).toBeNull();
+    expect(document.querySelector('.bs-mini')).toBeNull();
+  });
+
+  it('its inputs are not offered as its own: the fields are inert until a worked example or a sized design is chosen', async () => {
+    route();
+    stashNavParamsForTarget('biostatistics', { studyId: 'STUDY-2' });
+    mount();
+    await waitFor(() => expect(within(docPane()).getByText(/BX-204 OS study is not sized yet/)).toBeTruthy());
+    // Disabled through its fieldset: the input's own property stays false, `:disabled` is what a person meets.
+    expect(alphaField().matches(':disabled')).toBe(true);
+    expect(screen.getByText(/these inputs are not its own/i)).toBeTruthy();
+
+    const compute0 = posts('/api/ana-biostats/compute');
+    fireEvent.click(screen.getAllByRole('button', { name: /Pivotal OS \(survival\)/ })[0]);
+    await waitFor(() => expect(posts('/api/ana-biostats/compute')).toBeGreaterThan(compute0));
+    expect(alphaField().matches(':disabled')).toBe(false);
+    expect(await screen.findByText(/Worked example — Pivotal OS \(survival\), not your study/)).toBeTruthy();
+    expect(within(docPane()).queryByText(/is not sized yet/)).toBeNull();
+  });
+
+  it('choosing the sized design again sizes it', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    fireEvent.click(designRow('BX-204 OS study'));
+    await waitFor(() => expect(within(docPane()).getByText(/BX-204 OS study is not sized yet/)).toBeTruthy());
+    const compute0 = posts('/api/ana-biostats/compute');
+    fireEvent.click(designRow('BX-204 pivotal in T2D'));
+    await waitFor(() => expect(posts('/api/ana-biostats/compute')).toBeGreaterThan(compute0));
+    await waitFor(() => expect(docPane().querySelector('.bs-doc-render')).toBeTruthy());
+    expect(alphaField().matches(':disabled')).toBe(false);
+  });
+});

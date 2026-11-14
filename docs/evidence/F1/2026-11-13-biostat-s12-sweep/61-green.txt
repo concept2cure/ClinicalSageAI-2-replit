@@ -1,0 +1,7 @@
+# Finding 61, green.
+ ✓ biostatBridge.test.tsx > Biostatistics — a design the engine cannot size yet > chosen after a sized design, it shows what it lacks and none of that design’s figures, and asks the engine nothing
+ ✓ biostatBridge.test.tsx > Biostatistics — a design the engine cannot size yet > loaded first, it is not covered by a worked example rated by the engine
+ ✓ biostatBridge.test.tsx > Biostatistics — a design the engine cannot size yet > its inputs are not offered as its own: the fields are inert until a worked example or a sized design is chosen
+ ✓ biostatBridge.test.tsx > Biostatistics — a design the engine cannot size yet > choosing the sized design again sizes it
+ Test Files  1 passed (1)
+      Tests  4 passed | 17 skipped (21)

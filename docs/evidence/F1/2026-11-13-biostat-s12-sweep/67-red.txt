@@ -1,0 +1,14 @@
+# Finding 67, red: the new cases against engineResultHtml.ts and BiostatWorkbench.tsx on trunk (6853cb4ce9).
+ × workbenchNestedTables.test.tsx > the group-sequential result > renders the per-look rows as a table, not as JSON in a cell
+ × workbenchNestedTables.test.tsx > the group-sequential result > prints the engine’s figures without binary noise
+ × workbenchNestedTables.test.tsx > the group-sequential result > keeps acronyms and Type I whole in its labels
+ × engine-result-filing.test.ts > engineResultCellText — a number as the engine meant it > drops binary noise
+ ✓ engine-result-filing.test.ts > engineResultCellText — a number as the engine meant it > keeps every digit of a value stated to fifteen significant digits, and whole numbers as they are
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected '0.025000000000000005' to be '0.025' // Object.is equality
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected 'Statistical defensibilityReviewer-ris…' not to match /0\.025000000000000005|0\.975000000000…/
+AssertionError: expected 'Statistical defensibilityReviewer-ris…' not to match /Type IError/
+ Test Files  2 failed (2)
+      Tests  4 failed | 1 passed | 12 skipped (17)
+(The two body-text assertions printed the page text, which shows "Type IError0.025" and a "Per Look" cell beginning [{"look":1,"informationFraction":0.5,"efficacyBoundary":2.962707240193933,…}].)
