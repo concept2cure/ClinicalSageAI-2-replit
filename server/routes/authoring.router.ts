@@ -4360,6 +4360,8 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         client,
       );
 
+      // The count beside the section, as the save and the revert answer it (S12 sweep, finding 14).
+      saved.rows[0] = await withRevisionCount(client, saved.rows[0], String(sectionId), tenantId);
       transaction.commitAttempted = true;
       await client.query('COMMIT');
       transaction.began = false;

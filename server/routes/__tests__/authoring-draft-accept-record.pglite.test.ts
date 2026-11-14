@@ -248,6 +248,11 @@ describe('the accept is one transaction', () => {
 
     const res = await accept(sectionId, { draftId, content: EDITED });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    // The count beside the section, as the save and the revert answer it (S12 sweep, finding 14): the accept mints one.
+    const revisions = ((await (h.pool as { query: (t: string, p: unknown[]) => Promise<{ rows: Array<{ n: number }> }> })
+      .query('SELECT count(*)::int AS n FROM doc_revisions WHERE section_id = $1', [sectionId])).rows[0].n);
+    expect(revisions).toBeGreaterThan(0);
+    expect(res.body.section.revision_count).toBe(revisions);
     // commitSectionToFiling ran for real and said, honestly, that this
     // database has no filing store — the governed-filing write is not
     // exercised here (see header).
