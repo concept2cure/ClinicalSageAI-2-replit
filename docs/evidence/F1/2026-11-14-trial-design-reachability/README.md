@@ -45,3 +45,5 @@ For a medicinal clinical project, the existing entry is **Project knowledge → 
 ## Compiler and integration
 
 Current canonical IVD/CI changes through `13568639d` are preserved by normal merge. Full Node22 TypeScript at `83f45b24837f0df7b383ddd6e068698b0d62827b` exits zero with **zero errors against baseline zero**. All nine reviewed/browser-tested UI/test hashes still match. `typecheck-green.txt` and `compiler-verification.json` record the exact command/revision/result. Publication uses the normal direct canonical push with all hooks enabled; the Codespaces update is a pull/restart, with no new migration or provider configuration for this repair.
+
+Two normal publication attempts pass all 89 CI gates and the whole-program compiler (zero errors/baseline zero), then lose canonical ref races to newer source-selection work and its documentation closeout. Those changes are merged normally; the nine reviewed files remain unchanged. The coordination record requests an unallocated 04:25–04:40 UTC window under rule 6, without claiming any other lane paused. Ordinary publication retry continues; no source, baseline, gate or credential workaround is introduced.
