@@ -125,8 +125,8 @@ describe('unverified Quality ownership leaves the previous task untouched', () =
     expect(statements()).toContain('ROLLBACK');
   });
 
-  it('preserves the existing path for organization-scoped Quality records', async () => {
-    expect(await replaceSourceTask(input({ sourceEntityType: 'qms_internal_audit', sourceEntityId: 'audit:12' }))).toBe('scheduled');
+  it('preserves the existing generic path for non-audit Quality sources', async () => {
+    expect(await replaceSourceTask(input({ sourceEntityType: 'qms_supplier_audit', sourceEntityId: 'qms-supplier-audit:12' }))).toBe('scheduled');
     expect(H.queries).toEqual([]); expect(H.admit).not.toHaveBeenCalled();
     expect(H.create).toHaveBeenCalledWith(expect.objectContaining({ projectId: 999 }));
   });

@@ -1,0 +1,450 @@
+
+ RUN  v4.1.7 /workspace/Concept2cure-V2
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts
+{
+  "timestamp": "2026-11-13T23:59:22.125Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > schedules the native lead in organization scope with a locked current writer and an atomic audit row 25ms
+   → expected [] to deeply equal [ { task_id: 'written-1', …(1) } ]
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > keeps an unchanged task identity, progress and manual assignee without audit churn 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > uses the acting editor only when the current native audit has no lead 10ms
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > compares canonical payloads independently of key insertion order and Date serialization 8ms
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is in_progress 11ms
+   → expected [] to deeply equal [ { task_id: 'existing', …(1) } ]
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is closed 11ms
+   → expected [] to deeply equal [ { task_id: 'existing', …(1) } ]
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is cancelled 10ms
+   → expected [] to deeply equal [ { task_id: 'existing', …(1) } ]
+ ✓ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > withdraws the task when the current planned audit has no date 7ms
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became in_progress 10ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became closed 10ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became cancelled 9ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old in_progress close arrives last 10ms
+   → expected 'closed' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old cancelled close arrives last 8ms
+   → expected 'closed' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row date claim before closing any task 9ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row number claim before closing any task 8ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row scope claim before closing any task 10ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row lead claim before closing any task 10ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses stale dates even when there is no existing task to protect 10ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses a false completed outcome for the current cancelled audit 9ms
+   → expected 'closed' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > replaces same-date task text after a confirmed number change 6ms
+   → expected 'unchanged' to be 'scheduled' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > replaces same-date task text after a confirmed scope change 7ms
+   → expected 'unchanged' to be 'scheduled' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > uses the canonical date comparison even if a delayed caller asks to keep everything 8ms
+   → expected 'unchanged' to be 'scheduled' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:04 7ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:0 7ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:-4 6ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:2147483648 6ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:4:extra 7ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key audit:4 6ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses prefix reconciliation instead of treating it as an audited native key 7ms
+   → expected false to be true // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired project payload 7ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired metadata payload 6ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired description payload 6ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired due time payload 8ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 5 9ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 99 7ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+stderr | server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create failure
+{
+  "timestamp": "2026-11-13T23:59:26.808Z",
+  "level": "warn",
+  "message": "[source-task] The tasks could not all be written; the governed act stands",
+  "context": {
+    "organizationId": 7,
+    "sourceEntityType": "qms_internal_audit",
+    "match": {
+      "exact": "qms-internal-audit:4"
+    },
+    "err": "Task writer unavailable"
+  }
+}
+
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive actor 7ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive organization 7ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on removed membership 8ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on viewer actor 7ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on ambiguous membership 8ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on unknown native state 6ms
+   → expected 'unchanged' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > checks the current actor even for a close-only request with no open task 6ms
+   → expected 'closed' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create failure 11ms
+   → expected [ { task_id: 'existing', …(7) } ] to deeply equal [ { task_id: 'existing', …(7) } ]
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after transition audit failure 8ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create audit failure 8ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+ × server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after status CAS failure 8ms
+   → expected 'scheduled' to be 'failed' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 42 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > schedules the native lead in organization scope with a locked current writer and an atomic audit row
+AssertionError: expected [] to deeply equal [ { task_id: 'written-1', …(1) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "command": "task.create",
+-     "task_id": "written-1",
+-   },
+- ]
++ []
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:94:28
+     92|     expect(await replaceSourceTask(input())).toBe('scheduled');
+     93|     expect(await tasks()).toMatchObject([{ task_id: 'written-1',status…
+     94|     expect(await audits()).toEqual([{ task_id: 'written-1',command: 't…
+       |                            ^
+     95|     expect(h.trace.some(query => query.text.includes('organization_use…
+     96|     expect(h.trace.some(query => query.text.includes('qms_internal_aud…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is in_progress
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is closed
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current internal-audit task scheduling > closes the task when the current audit is cancelled
+AssertionError: expected [] to deeply equal [ { task_id: 'existing', …(1) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "command": "task.transition",
+-     "task_id": "existing",
+-   },
+- ]
++ []
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:119:28
+    117|     expect(await replaceSourceTask(input({ status }))).toBe('closed');
+    118|     expect(await tasks()).toMatchObject([{ task_id: 'existing',status:…
+    119|     expect(await audits()).toEqual([{ task_id: 'existing',command: 'ta…
+       |                            ^
+    120|   });
+    121|   it('withdraws the task when the current planned audit has no date', …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became in_progress
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became closed
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older planned snapshot after the current audit became cancelled
+AssertionError: expected 'scheduled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:135:44
+    133|     await pg.query('UPDATE unified_tasks SET status=$1',[status === 'c…
+    134|     const before = await tasks();
+    135|     expect(await replaceSourceTask(stale)).toBe('failed');
+       |                                            ^
+    136|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+    137|     expect(h.create).not.toHaveBeenCalled(); expect(h.transition).not.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old in_progress close arrives last
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > preserves a replanned task when an old cancelled close arrives last
+AssertionError: expected 'closed' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "closed"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:144:44
+    142|     await seedOpen({ planned_date: '2026-12-04' });
+    143|     const before = await tasks();
+    144|     expect(await replaceSourceTask(stale)).toBe('failed');
+       |                                            ^
+    145|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+    146|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row date claim before closing any task
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row number claim before closing any task
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row scope claim before closing any task
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses an older current-row lead claim before closing any task
+AssertionError: expected 'unchanged' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "unchanged"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:155:44
+    153|     const stale = input(); await seedOpen(); await pg.exec(change);
+    154|     const before = await tasks();
+    155|     expect(await replaceSourceTask(stale)).toBe('failed');
+       |                                            ^
+    156|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+    157|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses stale dates even when there is no existing task to protect
+AssertionError: expected 'scheduled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:160:46
+    158|   it('refuses stale dates even when there is no existing task to prote…
+    159|     await pg.exec("UPDATE qms_internal_audits SET planned_date='2026-1…
+    160|     expect(await replaceSourceTask(input())).toBe('failed'); expect(aw…
+       |                                              ^
+    161|   });
+    162|   it('refuses a false completed outcome for the current cancelled audi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > delayed internal-audit plans cannot replace current native work > refuses a false completed outcome for the current cancelled audit
+AssertionError: expected 'closed' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "closed"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:164:98
+    162|   it('refuses a false completed outcome for the current cancelled audi…
+    163|     await seedOpen(); await pg.exec("UPDATE qms_internal_audits SET st…
+    164|     expect(await replaceSourceTask({ ...input({ status: 'cancelled' })…
+       |                                                                                                  ^
+    165|     expect(await tasks()).toMatchObject([{ status: 'in_progress' }]);
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > replaces same-date task text after a confirmed number change
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > replaces same-date task text after a confirmed scope change
+AssertionError: expected 'unchanged' to be 'scheduled' // Object.is equality
+
+Expected: "scheduled"
+Received: "unchanged"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:174:53
+    172|     const changed = field === 'number' ? { audit_number: value } : { s…
+    173|     await pg.query(field === 'number' ? 'UPDATE qms_internal_audits SE…
+    174|     expect(await replaceSourceTask(input(changed))).toBe('scheduled');
+       |                                                     ^
+    175|     expect(await tasks()).toMatchObject([{ task_id: 'existing',status:…
+    176|       title: internalAuditTaskPlan({ ...native,...changed },12).next!.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > uses the canonical date comparison even if a delayed caller asks to keep everything
+AssertionError: expected 'unchanged' to be 'scheduled' // Object.is equality
+
+Expected: "scheduled"
+Received: "unchanged"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:181:100
+    179|   it('uses the canonical date comparison even if a delayed caller asks…
+    180|     await seedOpen(); await pg.exec("UPDATE qms_internal_audits SET pl…
+    181|     expect(await replaceSourceTask({ ...input({ planned_date: '2026-12…
+       |                                                                                                    ^
+    182|     expect(await tasks()).toMatchObject([{ status: 'cancelled' },{ met…
+    183|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:04
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:0
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:-4
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:2147483648
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key qms-internal-audit:4:extra
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses malformed source key audit:4
+AssertionError: expected 'scheduled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:186:73
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses prefix reconciliation instead of treating it as an audited native key
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:192:177
+    190|     const request = input();
+    191|     expect((await reconcileSourceTasks({ organizationId: 7,actorId: 12…
+    192|       match: { prefix: 'qms-internal-audit:' },desired: new Map([[requ…
+       |                                                                                                                                                                                 ^
+    193|     expect(await tasks()).toEqual([]);
+    194|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired project payload
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired metadata payload
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired description payload
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > native audit task text and source identity > refuses a noncanonical desired due time payload
+AssertionError: expected 'scheduled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:201:46
+    199|       ...(mismatch === 'description' ? {description: 'Invented current…
+    200|       ...(mismatch === 'due time' ? {dueDate: new Date('2026-12-01T12:…
+    201|     expect(await replaceSourceTask(request)).toBe('failed'); expect(aw…
+       |                                              ^
+    202|   });
+    203| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 5
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > refuses foreign or missing native audit 99
+AssertionError: expected 'scheduled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:207:52
+    205| describe('current audit and actor admission before task writes', () =>…
+    206|   it.each([5,99])('refuses foreign or missing native audit %s', async …
+    207|     expect(await replaceSourceTask(input({ id }))).toBe('failed');
+       |                                                    ^
+    208|     expect(await tasks()).toEqual([]); expect(await audits()).toEqual(…
+    209|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive actor
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on inactive organization
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on removed membership
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on viewer actor
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on ambiguous membership
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > preserves existing work on unknown native state
+AssertionError: expected 'unchanged' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "unchanged"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:219:46
+    217|   ])('preserves existing work on %s', async (_label, change) => {
+    218|     await seedOpen(); const before = await tasks(); await pg.exec(chan…
+    219|     expect(await replaceSourceTask(input())).toBe('failed');
+       |                                              ^
+    220|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+    221|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > current audit and actor admission before task writes > checks the current actor even for a close-only request with no open task
+AssertionError: expected 'closed' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "closed"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:224:66
+    222|   it('checks the current actor even for a close-only request with no o…
+    223|     await pg.exec("UPDATE qms_internal_audits SET status='closed' WHER…
+    224|     expect(await replaceSourceTask(input({ status: 'closed' }))).toBe(…
+       |                                                                  ^
+    225|     expect(await tasks()).toEqual([]);
+    226|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create failure
+AssertionError: expected [ { task_id: 'existing', …(7) } ] to deeply equal [ { task_id: 'existing', …(7) } ]
+
+- Expected
++ Received
+
+@@ -7,10 +7,10 @@
+        "auditId": 4,
+        "due": "2026-12-01",
+        "remindDaysBefore": 14,
+      },
+      "project_id": null,
+-     "status": "in_progress",
++     "status": "cancelled",
+      "task_id": "existing",
+      "title": "Internal audit IA-2026-04 is planned for 2026-12-01",
+    },
+  ]
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:246:27
+    244|     }
+    245|     expect(await replaceSourceTask(input({ planned_date: '2026-12-04' …
+    246|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+       |                           ^
+    247|     expect((await pg.query('SELECT planned_date::date::text AS due FRO…
+    248|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/42]⎯
+
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after transition audit failure
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after create audit failure
+ FAIL  server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts > internal-audit task replacement is atomic > preserves tasks and audit rows after status CAS failure
+AssertionError: expected 'scheduled' to be 'failed' // Object.is equality
+
+Expected: "failed"
+Received: "scheduled"
+
+ ❯ server/services/tasking/__tests__/source-task-internal-audit.pglite.test.ts:245:76
+    243|       });
+    244|     }
+    245|     expect(await replaceSourceTask(input({ planned_date: '2026-12-04' …
+       |                                                                            ^
+    246|     expect(await tasks()).toEqual(before); expect(await audits()).toEq…
+    247|     expect((await pg.query('SELECT planned_date::date::text AS due FRO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/42]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  42 failed | 4 passed (46)
+   Start at  23:59:19
+   Duration  7.36s (transform 1.50s, setup 144ms, import 2.63s, tests 4.14s, environment 0ms)
+
