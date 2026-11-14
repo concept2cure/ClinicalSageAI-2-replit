@@ -633,6 +633,18 @@
   .c2c-v2 .de-f .de-btn.primary { flex: 1 1 auto; }
 }
 /* toast */
+/* The same governed fields in the project's main flow. No side chrome or
+   independent scrolling surface: the work area owns width and scrolling. */
+.c2c-v2 .de.de-inline { position: static; width: 100%; max-width: 100%; height: auto; min-height: 0; margin: 20px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; animation: none; }
+.c2c-v2 .de-inline .de-h { padding: 16px 0 12px; }
+.c2c-v2 .de-inline .de-body { flex: none; overflow: visible; padding: 16px 0; }
+.c2c-v2 .de-inline .de-f { justify-content: flex-start; padding: 12px 0; }
+.c2c-v2 .de-inline .de-gov { border: 0; border-radius: 0; background: transparent; padding: 0; }
+.c2c-v2 .de-inline .de-h-t, .c2c-v2 .de-inline .de-h-s, .c2c-v2 .de-inline .de-desc { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .c2c-v2 .de-inline .de-btn { min-height: 44px; max-width: 100%; height: auto; white-space: normal; }
+  .c2c-v2 .de-inline .de-f { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
 .c2c-v2 :is(.de-toast, .cl-toast) {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 130;
   display: flex; align-items: center; gap: 8px; max-width: min(560px, calc(100vw - 32px));
