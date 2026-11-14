@@ -387,3 +387,15 @@ The local checkout, prior actual receipts and owned Docker verifier survived.
 Remote `bc8fd9190` contains only documentation/coordination changes since the
 last merged source and is preserved by ordinary merge. Normal authenticated
 publication must run the existing hook again.
+
+
+`recovered-source-start.json` successfully runs standard startup in36.96s at
+`21ec04579`; `recovered-source-runtime.json` records that exact served commit,
+schema ready, capability registry seeded and only local `ana: no_provider`.
+`publication-attempt-10.json` verifies the recovered merged program with full
+compiler0/baseline0 and all89 normal lint gates0red, no input/runner drift. Git
+then rejects the reference advance to `f9656d88e`. Independent review confirms
+the incoming TaskAssignmentControls/taskAssignmentRequest changes keep their
+existing interfaces and are disjoint from ProjectHome, source admission and
+editor callbacks. The normal merge preserves those changes and their evidence.
+No successful publication is inferred from this passing hook.
