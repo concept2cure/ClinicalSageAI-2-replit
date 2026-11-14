@@ -51,8 +51,12 @@ beforeEach(async () => {
   documents = () => ok({ success: true, documents: [documentRow] });
   apiRequest.mockReset().mockImplementation(async (_method: string, path: string) => {
     if (path.startsWith('/api/authoring/docs?')) return documents();
-    if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources`)) return ok({ success: true, projectId: PROGRAM, sources,
-      total: sources.length, currentTotal: sources.length, page: { limit: 50, offset: 0 }, window: { shown: sources.length, truncated: false } });
+    if (path.startsWith(`/api/c2c/projects/${PROGRAM}/sources`)) {
+      const ids = new URL(path, 'https://fixture.test').searchParams.get('sourceIds')?.split(',').map(Number);
+      const selected = ids ? sources.filter(row => ids.includes(row.id)) : sources;
+      return ok({ success: true, projectId: PROGRAM, sources: selected.map(row => ({ ...row, projectId: PROGRAM })),
+        total: selected.length, currentTotal: selected.length, page: { limit: 50, offset: 0 }, window: { shown: selected.length, truncated: false } });
+    }
     if (path === `/api/c2c/projects/${PROGRAM}`) return ok({ id: PROGRAM, name: 'Original project', code: 'P191' });
     return ok({ success: true, data: { tree: [] } });
   });
@@ -92,7 +96,7 @@ describe('source-first entry in the existing Data Room rail', () => {
     fireEvent.click(screen.getByLabelText('Use Second selected source as context'));
     fireEvent.click(within(screen.getByTestId('data-room-build-selected')).getByRole('button', { name: 'Build in editor' }));
     await chooseDocument();
-    const dialog = within(screen.getByTestId('source-assembly-dialog'));
+    const dialog = within(await screen.findByTestId('source-assembly-dialog'));
     expect(dialog.getByText(/Second selected source/)).toBeTruthy();
     expect(dialog.queryByText(new RegExp(source.title))).toBeNull();
     expect(mutations()).toHaveLength(0);

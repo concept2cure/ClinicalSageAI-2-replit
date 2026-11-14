@@ -1822,6 +1822,53 @@ Publication request, Codex project-management/intelligence repair, 2026-11-13 23
 
 Publication request, Codex Codespaces/Copilot handoff, 2026-11-13 23:36 UTC: two canonical ref races followed all 89 normal lint gates passing. Under rule 6, this continuation requests a 15-minute publication window (23:36–23:51 UTC) from the coordinating session. No callable cross-session channel reaches that session here, and no other lane is claimed paused. The ordinary merge/push path continues. Latest native Quality source is preserved at merge `f774de54a`; its 40 focused cases, clean lint and real CSR browser pass. Earlier compiler, source and browser receipts remain named; no hosted/live-provider/clinical release claim.
 
+### Codex fix-all continuation — 2026-11-13 23:58 UTC
+
+The founder asked to fix all remaining findings after publication `5a552f142`.
+This F1/W1 continuation reserves only the existing Data Room selection owners below,
+until publication or 2026-11-14 02:00 UTC, whichever comes first. Other lanes are not
+paused. The pre-edit inventory and exact-ID/all-or-nothing completion contract are
+in `docs/evidence/F1/2026-11-13-project-source-pin-read-audit/README.md`.
+
+| Holder | Existing files and scope |
+|---|---|
+| Server worker | `server/routes/c2c/projects.ts` existing sources GET only, `server/services/clinical-regulatory-evidence/data-room-search.ts` exact-ID query parsing/projection only, and existing source-route/search tests; canonical source admission is reused, no new reader or route |
+| Client worker | `client/src/concept2cure/v2/surfaces/ProjectHome.tsx` existing Data Room selection/actions only, `surfaces/projectSources.ts`, and existing Data Room/source-read/ownership/disposition tests; no other ProjectHome feature |
+| Root | This record, existing audit/evidence, isolated synthetic database reproduction, integration/Git and sole whole-program compiler/build |
+
+The separate private-profile offboarding finding is being reproduced against the
+existing isolated UTF8 PostgreSQL fixture database with `app_service` and enforced
+RLS. The founder has been asked to choose the export/erasure treatment explicitly
+left open at lines 721–730; no disclosure, erasure-policy, private-profile RLS,
+plan/ledger, purge door or test-acceptance change is authorized by this reservation.
+No provider call, new screen/service/table/tool/dependency or filing/PQ claim.
+
+**Fix-all selection completion, 2026-11-14:** source and tests are frozen at
+`b40217a60`, preserved after canonical merge `ff42399a7` through `985559c5b`.
+Server128/128 and client155/155 pass; no skips, lint errors or warning growth.
+Independent client lifecycle review closes all findings. The complete merged
+production build exits0, and the bounded unpublished-source secret scan has
+zero findings/errors. Workers are closed; root retains only integration/Git,
+the normal compiler/push gates and exact remote verification. These selection
+holds release on publication. The three isolated offboarding failures remain
+explicitly pending the founder's profile export/disposal choice; no profile
+RLS, export, purge, plan, gate or assertion was changed to hide them.
+
+Publication request, project selection continuation, 2026-11-14 01:51 UTC:
+two normal retries passed all 89 gates and the full compiler with 0 errors,
+then lost ref races to 3692f44ad and cd407d470. Under rule 6, a 15-minute publication
+slot is requested for 02:10–02:25 UTC (at least 15 minutes ahead) if the coordinating session
+can allocate it. No callable cross-session channel reaches that session here;
+no other lane is claimed paused. Ordinary fetch/merge/push continues without
+force or skipped hooks. This continuation's frozen selection-file reservation
+extends only through 02:30 UTC or publication, whichever comes first, for Git
+integration; no additional implementation scope is taken. The request ends
+on successful publication.
+
+**Codex collaboration receipt follow-up, 2026-11-14 (F1 W1/D2; ends at publication):** holds only existing CollabLauncher.tsx Collaborate message/optional-task acknowledgement handling and focused receipt tests, plus its own design/evidence. Existing QuickTask/lifecycle/account fixes and S12 mapping are preserved; TaskBoard/TaskTray/CommunicationCenter and other held screens stay untouched. Two audits are test/read-only; one source owner follows retained RED proofs. Root owns runtime/integration/Git. User reports AnA working in their Codespace; no provider setup or live message is in scope.
+
+**Collaboration receipt follow-up completion:** source frozen with97/97 focused/adjacent tests and23/23 shell/accessibility checks. Genuine message RED15fail/10controls and optional-task RED8fail/12controls, plus controlled running-UI RED/GREEN, are retained. Partial message/task outcomes now use actual persisted identities without inventing rows or automatically resending a confirmed message. The existing shellChromeTruth auth mock retains real exports; the same6 fixture failures reproduce at canonical baseline before its repair. Zero lint errors or warning growth; independent review has no blocker. This continuation's launcher/test/design/evidence holds release with canonical publication. Root retains ordinary Git integration and owned local runtime only. User confirms AnA working in their Codespace; provider setup is untouched.
+
 ### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
 
 The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical
