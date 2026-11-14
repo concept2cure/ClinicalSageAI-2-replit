@@ -152,14 +152,13 @@ const PATHWAY_BY_ID: Record<string, string> = {
   ca_nds: 'ctd', uk_ma: 'ctd', uk_irp: 'ctd', au_cat1: 'ctd', au_cat2: 'ctd', kr_ma_new: 'ctd',
   ca_ands: 'anda', kr_ma_generic: 'anda',
   au_biosimilar: 'biosimilar',
-  /* Stated at today's value, each awaiting its own answer, so the wizard's
-     default can go with no exception (agreed with the project-page session,
-     2026-11-12). None of the four is an NDA:
-       - us_supac is a change category whose level decides the supplement it files
-         as; whether it stays a creatable filing is with the founder;
-       - us_priority_review, us_ea and us_icsr_15day each get their own document
-         class in the change that seeds its pack. Remove each line with that change. */
-  us_supac: 'ctd', us_priority_review: 'ctd', us_ea: 'ctd', us_icsr_15day: 'ctd',
+  /* Stated at its old value, awaiting its answer, so it stayed creatable when the
+     wizard's NDA default went (790501d69, 2026-11-13). SUPAC is
+     not an NDA: it is a change category whose level decides the supplement it
+     files as. Whether it stays a creatable filing is with the founder.
+     us_priority_review, us_ea and us_icsr_15day stood here for a day; each is now
+     its own document class (filing-document-classes.ts, 2026-11-13). */
+  us_supac: 'ctd',
   us_dmf: 'dmf', us_anda: 'anda', us_505b2: '505b2', us_351k: 'biosimilar',
   ich_csr: 'csr', ich_clin_overview: 'ctd',
   us_513g: 'device', us_qsub: 'device', us_breakthrough_device: 'device', us_rfd: 'device',
