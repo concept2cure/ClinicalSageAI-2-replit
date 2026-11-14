@@ -12,9 +12,9 @@
   "lintWarnings": 2,
   "lintWarningCountsUnchanged": true,
   "review": "retained/independent-review.json",
-  "compiler": "pending_corrected_test_declarations",
-  "build": "pending",
-  "publication": "pending",
+  "compiler": "passed_on_preintegration_tree",
+  "build": "passed_on_preintegration_tree",
+  "publication": "pending_after_concurrent_source_selection_update",
   "humanAcceptance": "not_executed",
   "nativePostgreSQL": "not_executed",
   "agencyAcceptance": "not_established",
@@ -25,5 +25,11 @@
   ],
   "testMatrix": "current-test-matrix.json",
   "sourceBridge": "type-correction/bridge.json",
-  "compilerFailureReport": "root/typecheck.json"
+  "compilerFailureReport": "root/typecheck.json",
+  "compilerErrors": 0,
+  "compilerReport": "root/typecheck-fixed.json",
+  "buildReport": "root/build.json",
+  "mandatoryPushCompiler": "passed",
+  "ciLintGatesPassed": 89,
+  "mandatoryPushReport": "root/push-1.log.gz"
 }
