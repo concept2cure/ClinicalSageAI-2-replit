@@ -1832,6 +1832,8 @@ F1 / W1 / D2, baseline `5a552f142`. Complete the published source-pin audit: sel
 
 2026-11-14 source-selection compatibility follow-up: root also reserves only `v2/__tests__/projectHomeDocuments.test.tsx` three existing automatic-AnA positive fixtures (real synthetic session, exact response and asynchronous assertions), retaining the automatic-ten/newest/no-editor checks. No source/test change is made during the first push's full compiler. The compatibility RED cases and subsequent checks stay in the same evidence packet. Ends at publication or03:00UTC. A read-only downstream AnA audit records separate static follow-up candidates; it changes no production owner or qualification status.
 
+Publication request, Codex source-selection repair, 2026-11-14 01:52 UTC: two canonical remote-ref races followed full compiler0/baseline0 and all89 normal lint gates passing. Under rule6, a15-minute publication window is requested for02:07–02:22UTC if the coordinating session can allocate it. No callable cross-session channel reaches that session here, and no other lane is claimed paused. Ordinary fetch/merge/retry continues with no force, hook bypass or baseline change. Source `01b65c048` preserves current CSR, collaboration and internal-audit task work; the accepted selection source/config/fixtures remain unchanged. This request ends on successful publication.
+
 ### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
 
 The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical

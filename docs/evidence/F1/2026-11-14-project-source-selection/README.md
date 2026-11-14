@@ -201,4 +201,14 @@ first remote-ref race, distinct from the earlier compiler rejection. The next
 ordinary merge preserves the newly published internal-audit task repair; no
 forced update, hook bypass or baseline change is used.
 
+`publication-attempt-3.json` records the next merged source `01b65c048`: full
+compiler0/baseline0 and all89 lint gates pass again, but another normal ref race
+occurs when the canonical collaboration-receipt repair reaches `cd407d470`.
+The two source trees retain their own receipts; the selected-source inputs have
+no drift. The coordination entry requests a15-minute publication window under
+rule6, with no callable cross-session channel and no claimed pause of another
+lane. Ordinary merging/pushing continues. The incoming native audit's raw log
+EOF whitespace is preserved byte-for-byte; source/coordination whitespace checks
+pass rather than rewriting another owner's recorded outputs.
+
 Canonical publication remains pending until its native receipt is recorded.
