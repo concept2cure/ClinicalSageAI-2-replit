@@ -347,6 +347,26 @@ describe('T2 — an org viewer may read tasks but not write them', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
   });
+  /* P-131 item 3: `priority` is text, so desc(priority) sorted it alphabetically (medium, low, high, critical) and only
+     as a tie-break on the date. The read now comes in the order of need (unified-work-view.ts compareByNeed). */
+  it('returns the module\'s tasks in the order of need, not by alphabetical priority', async () => {
+    const day = 86_400_000;
+    const at = (d: number) => new Date(Date.now() + d * day).toISOString();
+    h.selects = [[
+      { taskId: 'T-LATER-CRIT', priority: 'critical', dueDate: at(40) },
+      { taskId: 'T-WEEK-MED', priority: 'medium', dueDate: at(2) },
+      { taskId: 'T-WEEK-CRIT', priority: 'critical', dueDate: at(5) },
+      { taskId: 'T-OVER-LOW', priority: 'low', dueDate: at(-3) },
+      { taskId: 'T-NODATE-HIGH', priority: 'high', dueDate: null },
+      { taskId: 'T-WEEK-HIGH', priority: 'high', dueDate: at(1) },
+    ]];
+    const res = await request(makeApp('viewer')).get(`${BASE}/tasks/by-module/IND`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.map((t: { taskId: string }) => t.taskId)).toEqual([
+      'T-OVER-LOW', 'T-WEEK-CRIT', 'T-WEEK-HIGH', 'T-WEEK-MED', 'T-LATER-CRIT', 'T-NODATE-HIGH',
+    ]);
+    expect(res.body.count).toBe(6);
+  });
 });
 
 describe('T4 — archiving demands the reason the UI promises to record', () => {

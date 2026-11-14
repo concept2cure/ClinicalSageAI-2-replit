@@ -7,10 +7,16 @@
  * undefined, i.e. the filter matched zero tasks: absence of workload data
  * presented as a measured balance. Revert-proven: fails with the fall-through
  * restored.
+ *
+ * 2026-11-13 (P-131; D6.md §A.4 step 3): the lead is gone. Its workload outcome
+ * lives in Analytics' Team productivity card, people first, the one carrying the
+ * most open work at the top, and in AnA's "Who is carrying the most work?". The
+ * page itself makes no balance claim at all, so the cases below assert that, and
+ * that the card names the person with the most open work.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -57,8 +63,10 @@ afterEach(() => cleanup());
 describe('TaskBoard — workload honesty', () => {
   it('does not call a board with no open assigned work a balanced team', async () => {
     render(<TaskBoard {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof TaskBoard>)} />);
-    await waitFor(() => expect(text()).toMatch(/No open work is assigned on this board/));
+    await screen.findByRole('button', { name: 'Open Close out CSR appendix' });
     expect(text()).not.toMatch(/Workload is balanced across the team/);
+    fireEvent.click(screen.getByRole('button', { name: 'Analytics' }));
+    expect(text()).not.toMatch(/balanced/i);
   });
 
   /* 2026-10-31 client demo: "JM Smith is the busiest at 11 open tasks —
@@ -75,6 +83,11 @@ describe('TaskBoard — workload honesty', () => {
   it('names who has the most open work when the roster has more than one person', async () => {
     board = OPEN(4);
     render(<TaskBoard {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof TaskBoard>)} />);
-    await waitFor(() => expect(text()).toMatch(/Rae Okafor has the most open work, 4 tasks/));
+    await waitFor(() => expect(text()).toMatch(/Open task 3/));
+    fireEvent.click(screen.getByRole('button', { name: 'Analytics' }));
+    const card = screen.getByText('Team productivity').closest('.tb-an-card') as HTMLElement;
+    const first = card.querySelector('.tb-an-row') as HTMLElement;
+    expect(within(first).getByText('Rae Okafor')).toBeTruthy();
+    expect(first.textContent).toMatch(/4 open/);
   });
 });

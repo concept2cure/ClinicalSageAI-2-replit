@@ -34,6 +34,8 @@ export interface TaskBoardFilters {
   moduleType: string;
   /** "Assigned to me" is on. */
   mineOnly: boolean;
+  /** "Needs an owner" is on: open work with no assignee only. */
+  unownedOnly?: boolean;
 }
 
 export interface TaskAnalyticsCoverage {
@@ -50,6 +52,7 @@ function activeFilters(f: TaskBoardFilters): string[] {
   if (f.project !== 'all') named.push(`project “${f.project}”`);
   if (f.moduleType !== 'all') named.push(`module “${f.moduleType}”`);
   if (f.mineOnly) named.push('assigned to you');
+  if (f.unownedOnly) named.push('open work with no owner');
   return named;
 }
 

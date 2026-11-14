@@ -14,7 +14,9 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
 import { extractTableDdl } from '../../../tests/golden-journeys/harness';
+import { getTableConfig } from 'drizzle-orm/pg-core';
 import type { RequestDb } from '../../db/requestDb';
+import { projectTasks, c2cProjectWorkItems } from '../../../shared/schema';
 
 const h = vi.hoisted(() => ({ db: null as unknown, notices: [] as Array<{ taskId: string; title: string }> }));
 vi.mock('../../db', () => ({ get db() { return h.db; } }));
@@ -54,6 +56,14 @@ beforeAll(async () => {
     INSERT INTO unified_tasks (task_id, organization_id, module_type, title, status, assignee_id, due_date, created_by_id) VALUES
       ('T-BLOCKED', 1, 'IND', 'Blocked ordinary work', 'blocked', 3, now() - interval '1 day', 4);
   `);
+  // readMyWork also reads the work other stores record as the person's (P-131 item 6); empty here.
+  for (const table of [projectTasks, c2cProjectWorkItems]) {
+    const config = getTableConfig(table);
+    await pg.exec(`CREATE TABLE ${config.name} (id serial PRIMARY KEY)`);
+    for (const column of config.columns) if (column.name !== 'id') {
+      await pg.exec(`ALTER TABLE ${config.name} ADD COLUMN "${column.name}" ${column.getSQLType()}`);
+    }
+  }
   h.db = drizzle(pg);
 }, 60_000);
 afterAll(async () => pg?.close());

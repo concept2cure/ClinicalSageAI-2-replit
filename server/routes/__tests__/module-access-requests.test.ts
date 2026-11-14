@@ -104,6 +104,7 @@ const ORG_NAMES: Record<number, string> = { 7: 'Northwind Bio', 8: 'Trellis Ther
 
 let rows: FakeRow[] = [];
 let nextId = 1;
+const notices = { rows: [] as Array<Record<string, unknown>>, fail: false };
 const NOW = '2026-03-01T09:30:00.000Z';
 
 function joined(r: FakeRow) {
@@ -206,6 +207,15 @@ function handle(text: string, params: any[] = []): { rows: any[] } {
     return { rows: [{ id: r.id }] };
   }
 
+  /* The notice to the workspace's administrators (notification-service
+     createNotification). Kept, so a test can say who was told and what. */
+  if (sql.startsWith('INSERT INTO mdx_notifications')) {
+    if (notices.fail) throw new Error('notification store unreachable');
+    const [organization_id, recipient_user_id, recipient_role, category, severity, title, body, resource_type, resource_id, action_url] = params;
+    notices.rows.push({ organization_id, recipient_user_id, recipient_role, category, severity, title, body, resource_type, resource_id, action_url });
+    return { rows: [{ id: notices.rows.length }] };
+  }
+
   /* Nothing in this route may reach module_subscriptions directly: the grant
      goes through the canonical writer, which is mocked. A statement arriving
      here would be a second grant path, and the throw below is what says so. */
@@ -266,6 +276,8 @@ function appWith(user: TestUser | null) {
 beforeEach(() => {
   rows = [];
   nextId = 1;
+  notices.rows = [];
+  notices.fail = false;
   grantSvc.writeModuleGrant.mockReset();
   grantSvc.writeModuleGrant.mockResolvedValue({
     organization_id: 7,
@@ -362,6 +374,59 @@ describe('POST / — a member records a request', () => {
       .send({ moduleId: 'pv-cockpit', note: 'x'.repeat(2001) });
     expect(res.status).toBe(400);
     expect(rows).toHaveLength(0);
+  });
+});
+
+/* An ask an administrator must answer tells them it is there (P-131 item 5).
+   It went into the queue and nothing told anyone: the administrator found it
+   only by opening Access requests. The notice goes to the workspace's
+   administrators by role, through the one notification writer; no task is
+   invented for it. */
+describe('POST / — the workspace administrators are told', () => {
+  it('a new ask sends one notice to the administrators of the caller workspace', async () => {
+    const res = await request(appWith(MEMBER))
+      .post('/api/module-access-requests')
+      .send({ moduleId: 'pv-cockpit', note: 'Needed for the March filing.' });
+    expect(res.status).toBe(201);
+    expect(res.body.administratorsNotified).toBe(true);
+    expect(notices.rows).toHaveLength(1);
+    expect(notices.rows[0]).toMatchObject({
+      organization_id: 7, recipient_user_id: null, recipient_role: 'admin', category: 'admin', severity: 'info',
+    });
+    expect(notices.rows[0].title).toBe('Access requested for PV cockpit');
+    expect(notices.rows[0].body).toBe('A Member asked for PV cockpit. Answer it in Access requests.');
+    // A reader's words only: no module key, no table, no status.
+    expect(`${notices.rows[0].title} ${notices.rows[0].body}`).not.toMatch(/pv-cockpit|module_access|open\b/);
+  });
+
+  it('a repeated ask does not tell them a second time, and says so', async () => {
+    const app = appWith(MEMBER);
+    await request(app).post('/api/module-access-requests').send({ moduleId: 'pv-cockpit' });
+    const again = await request(app).post('/api/module-access-requests').send({ moduleId: 'pv-cockpit' });
+    expect(again.body.alreadyOpen).toBe(true);
+    expect(again.body.administratorsNotified).toBeNull();
+    expect(notices.rows).toHaveLength(1);
+  });
+
+  it('a notice that did not land leaves the ask recorded, and says the notice was not sent', async () => {
+    notices.fail = true;
+    const res = await request(appWith(MEMBER)).post('/api/module-access-requests').send({ moduleId: 'pv-cockpit' });
+    expect(res.status).toBe(201);
+    expect(res.body.request.status).toBe('open');
+    expect(rows).toHaveLength(1);
+    expect(res.body.administratorsNotified).toBe(false);
+    expect(JSON.stringify(res.body)).not.toContain('unreachable');
+  });
+
+  it('control: a refused ask tells nobody', async () => {
+    const res = await request(appWith(MEMBER)).post('/api/module-access-requests').send({ moduleId: 'not-a-module' });
+    expect(res.status).toBe(404);
+    expect(notices.rows).toHaveLength(0);
+  });
+
+  it('names the requester by email when the account has no name', async () => {
+    await request(appWith({ ...MEMBER, name: undefined })).post('/api/module-access-requests').send({ moduleId: 'risk' });
+    expect(notices.rows[0].body).toBe('member@example.test asked for Risk management. Answer it in Access requests.');
   });
 });
 

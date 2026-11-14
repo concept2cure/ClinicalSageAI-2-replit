@@ -330,26 +330,64 @@ async function rescheduleInTx(req: Request, q: RequestSqlClient, input: Reschedu
   return result;
 }
 
-/** One due-date change on its own transaction; an unconfirmed commit is said as unknown, never as done. */
-export async function rescheduleTask(req: Request, input: RescheduleInput): Promise<TaskRescheduleResult> {
+/** One governed change on its own transaction: committed with its ledger row, or rolled back; an unconfirmed commit
+ *  is said as unknown, never as done and never as not done. */
+async function inOwnTransaction<T>(req: Request, unconfirmed: string, change: (q: RequestSqlClient) => Promise<T>): Promise<T> {
   const q = requestPgClient(req);
   const client = await requestConnectable(req).connect();
   let began = false; let committing = false;
   try {
     await client.query('BEGIN'); began = true;
-    const result = await rescheduleInTx(req, q, input);
+    const result = await change(q);
     committing = true; await client.query('COMMIT'); committing = false; began = false;
-    notifyRescheduled(result);
     return result;
   } catch (error) {
     let uncertain = !began || committing;
     if (began && !committing) { try { await client.query('ROLLBACK'); } catch { uncertain = true; } }
     if (uncertain) {
-      try { await q.discard?.(error instanceof Error ? error : new Error('Task reschedule unconfirmed')); } catch { /* Retain unknown outcome. */ }
+      try { await q.discard?.(error instanceof Error ? error : new Error(unconfirmed)); } catch { /* Retain unknown outcome. */ }
       throw new TaskAssignmentUnknown();
     }
     throw error;
   } finally { client.release(); }
+}
+
+/** One due-date change on its own transaction; an unconfirmed commit is said as unknown, never as done. */
+export async function rescheduleTask(req: Request, input: RescheduleInput): Promise<TaskRescheduleResult> {
+  const result = await inOwnTransaction(req, 'Task reschedule unconfirmed', q => rescheduleInTx(req, q, input));
+  notifyRescheduled(result);
+  return result;
+}
+
+// ─── A task returned to unassigned (P-131 item 6, R4) ───────────────────────
+//
+// The same admission as a reassignment (a governed writer, the project open for writing, an unfinished task, never a
+// review route's member, which its route reassigns), a compare-and-set on the assignment the caller saw, and a
+// `task.assign` ledger row recording the assignee as none, with the stated reason, on the same transaction.
+
+export const unassignSchema = assignmentExpectedSchema.extend({ action: z.literal('unassign'), reason: z.string().trim().min(3).max(1000) }).strict();
+export type UnassignInput = { taskId: string; expectedAssigneeId: number | null; expectedVersion: string; reason: string };
+export interface TaskUnassignResult { taskId: string; previousAssigneeId: number; assigneeId: null; assignmentVersion: string }
+
+async function unassignInTx(req: Request, q: RequestSqlClient, input: UnassignInput): Promise<TaskUnassignResult> {
+  const ctx = await admission(req, q, input.taskId, true);
+  expected(ctx, { ...input, method: 'named' });
+  const previous = numberOrNull(ctx.task.assignee_id);
+  if (previous === null) throw new TaskAssignmentError(409, 'ASSIGNMENT_UNCHANGED', 'The task has no owner already. Nothing was changed.');
+  // The reminder markers are cleared with the owner they reminded, as a reassignment clears them.
+  const updated = await q.query(`/* task-unassign:update */ UPDATE unified_tasks SET assignee_id=NULL,assignee_name=NULL,assigned_by=NULL,assigned_at=NULL,last_modified_by=$1,updated_at=now(),metadata=CASE WHEN metadata IS NULL THEN NULL ELSE ((metadata::jsonb - 'dueSoonNotifiedAt') - 'overdueNotifiedAt')::json END WHERE id=$2 AND organization_id=$3 AND assignee_id=$4 AND deleted_at IS NULL AND status IN ('pending','in-progress','review','blocked') RETURNING *,xmin::text AS row_version,updated_at::text AS exact_updated_at`,
+    [ctx.actor.userId, ctx.task.id, ctx.organizationId, previous]);
+  if (updated.rows.length !== 1) throw stale();
+  await auditTaskActionInTx(q, { orgId: ctx.organizationId, userId: ctx.actor.userId, command: 'task.assign', taskId: input.taskId,
+    payload: { previousAssigneeId: previous, assigneeId: null, method: 'unassign',
+      previousAssignedBy: ctx.task.assigned_by ?? null, previousAssignedAt: ctx.task.assigned_at ?? null },
+    reason: input.reason, summary: 'Task returned to unassigned' });
+  return { taskId: input.taskId, previousAssigneeId: previous, assigneeId: null, assignmentVersion: version(updated.rows[0]) };
+}
+
+/** One return to unassigned on its own transaction; an unconfirmed commit is said as unknown, never as done. */
+export async function unassignTask(req: Request, input: UnassignInput): Promise<TaskUnassignResult> {
+  return inOwnTransaction(req, 'Task unassignment unconfirmed', q => unassignInTx(req, q, input));
 }
 
 export function assignmentFailure(res: Response, error: unknown) {

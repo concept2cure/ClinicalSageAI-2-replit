@@ -28,6 +28,7 @@ import { AppMentionMenu, useAppMentions } from '../appMentions';
 import type { OnboardingWelcome } from '../onboardingWelcome';
 import { HomeProjects, HomeTasks, type HomeProgram } from './HomeSections';
 import { HomeSetup } from './HomeSetup';
+import { greetingFor } from './taskGreeting';
 import { useLiveRows } from '../dataConnect';
 import { openNewProject } from '../surfaceActions';
 
@@ -123,13 +124,8 @@ export function Home({
      document the user attached is the one the conversation opens on. */
   const upload = useChatUpload();
 
-  /* Time-aware greeting — the only warmth in the product, once. */
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  /* A first name, as Claude greets. An account that has only an email gets
-     the part before the @, never the whole address across the page. */
-  const named = user?.firstName || user?.displayName || '';
-  const userName = (named.includes('@') ? named.split('@')[0] : named) || 'there';
+  /* Time-aware greeting, by the one rule Home and Tasks share (taskGreeting.ts; P-131 item 4). */
+  const greeting = greetingFor(user);
   const engine = ANA_MODES.find((m) => m.id === mode) ?? ANA_MODES[0];
   const engineMenuId = React.useId();
   const engineBtnRef = React.useRef<HTMLButtonElement>(null);
@@ -177,7 +173,7 @@ export function Home({
         <div className="landing-greet">
           <span className="landing-mark">✻</span>
           <h1>
-            {greeting}, {userName}
+            {greeting}
           </h1>
         </div>
         {/* Claude's front door: the greeting, then the composer. Where the

@@ -229,4 +229,22 @@ describe('routes/c2c/tasks — assessment', () => {
     expect(res.body.data.summary).toMatchObject({ total: 0, completionRate: null });
     expect(res.body.data.risks).toContain('No tasks defined — generate milestones for this submission type');
   });
+
+  /* The routes here write 'in_progress' (the create and update schemas); the assessment counted only 'in-progress', so
+     a project with work under way was told its workflow "may be stalled". Both spellings are counted now, through the
+     cross-store view's own normalizer (unified-work-view.ts normalizeTaskStatus). */
+  it.each(['in_progress', 'in-progress', 'review'])('counts a task in %s as in progress and does not call the workflow stalled', async (status) => {
+    results = [[{ id: 1234, name: 'P' }], [{ id: 1, status }, { id: 2, status: 'todo' }]];
+    const res = await request(app()).post('/api/concept2cure/projects/1234/tasks/assess').send({});
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    expect(res.body.data.summary).toMatchObject({ total: 2, inProgress: 1, completed: 0 });
+    expect(res.body.data.risks).not.toContain('No tasks in progress — workflow may be stalled');
+  });
+
+  it('still says the workflow may be stalled when nothing is under way (control)', async () => {
+    results = [[{ id: 1234, name: 'P' }], [{ id: 1, status: 'todo' }, { id: 2, status: 'done' }]];
+    const res = await request(app()).post('/api/concept2cure/projects/1234/tasks/assess').send({});
+    expect(res.body.data.summary).toMatchObject({ total: 2, inProgress: 0, completed: 1 });
+    expect(res.body.data.risks).toContain('No tasks in progress — workflow may be stalled');
+  });
 });

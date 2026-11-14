@@ -47,12 +47,15 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-const mount = () =>
+const renderBoard = () =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <TaskBoard {...({ onAsk: () => {} } as unknown as React.ComponentProps<typeof TaskBoard>)} />
     </QueryClientProvider>,
   );
+/* The List is the first view now (D6.md §A.4 step 5; P-131). These cases are about the board's cards and
+   their controls, so they open the Board, one click away. */
+const mount = async () => { renderBoard(); fireEvent.click(await screen.findByRole('button', { name: 'Board' })); };
 
 async function openDetail() {
   fireEvent.click(await screen.findByRole('button', { name: `Open ${TASK.title}` }));
@@ -62,7 +65,7 @@ async function openDetail() {
 describe('TaskBoard — write controls follow the session permission', () => {
   it('offers a viewer no task write, and says why', async () => {
     auth.user = { id: 'u-9', permissions: [] };
-    mount();
+    await mount();
     await screen.findByRole('button', { name: `Open ${TASK.title}` });
     expect(screen.queryByRole('button', { name: /New task/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /Start workflow/ })).toBeNull();
@@ -78,7 +81,7 @@ describe('TaskBoard — write controls follow the session permission', () => {
 
   it('offers a writer every control', async () => {
     auth.user = { id: 'u-1', permissions: ['governed:write'] };
-    mount();
+    await mount();
     expect(await screen.findByRole('button', { name: /New task/ })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Start workflow/ })).toBeTruthy();
     expect(screen.getAllByRole('button', { name: 'Advance' }).length).toBeGreaterThan(0);
@@ -90,7 +93,7 @@ describe('TaskBoard — write controls follow the session permission', () => {
 
   it('keeps the controls when the session says nothing about permissions — the server still decides', async () => {
     auth.user = { id: 'u-1' };
-    mount();
+    await mount();
     expect(await screen.findByRole('button', { name: /New task/ })).toBeTruthy();
     expect(screen.queryByTestId('tb-view-only')).toBeNull();
   });
