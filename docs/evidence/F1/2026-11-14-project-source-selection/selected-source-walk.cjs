@@ -4,7 +4,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const mode = process.argv[2];
 if (!['baseline', 'repaired'].includes(mode)) throw Error('Choose baseline or repaired');
-const result = { mode, startedAt: new Date().toISOString(), sourceReads: [], presenceRequests: [], blockedPosts: [], pageErrors: [], passed: false };
+const outputPrefix = process.env.C2C_SELECTION_OUTPUT_PREFIX || '';
+if (!/^[a-zA-Z0-9_-]{0,48}$/.test(outputPrefix)) throw Error('Invalid evidence prefix');
+const publicPath = file => path.join(__dirname, outputPrefix + file);
+const result = { mode, outputPrefix, startedAt: new Date().toISOString(), sourceReads: [], presenceRequests: [], blockedPosts: [], pageErrors: [], passed: false };
 const check = (ok, message) => { if (!ok) throw Error(message); };
 (async () => {
   const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -71,7 +74,7 @@ const check = (ok, message) => { if (!ok) throw Error(message); };
     await page.getByRole('checkbox', { name: `Use ${second} as context`, exact: true }).first().waitFor();
     await page.getByRole('checkbox', { name: `Use ${second} as context`, exact: true }).first().check();
     result.draftLabel = await page.getByRole('button', { name: /Draft with \d+ pinned source/ }).innerText();
-    await page.screenshot({ path: path.join(__dirname, `${mode}-selected-sources.png`) });
+    await page.screenshot({ path: publicPath(`${mode}-selected-sources.png`) });
     check(result.draftLabel.includes('2 pinned sources'), 'Search discarded the off-page checked source');
     if (mode === 'repaired') {
       await page.getByRole('button', { name: 'Clear selection', exact: true }).click();
@@ -99,12 +102,12 @@ const check = (ok, message) => { if (!ok) throw Error(message); };
       const exact = result.sourceReads.find(read => read.selection);
       check(exact?.sources.length === 2 && exact.selection.scope === 'verified-accessible-sources', 'Complete exact attestation is missing');
       check(exact.sources.every(source => result.dialogText.includes(`SHA-256 ${source.checksum}`)), 'Checked source checksums were not carried into the chooser');
-      await page.screenshot({ path: path.join(__dirname, 'repaired-existing-chooser.png') });
+      await page.screenshot({ path: publicPath('repaired-existing-chooser.png') });
       await dialog.getByRole('button', { name: 'New document', exact: true }).click();
       await page.getByText('This start uses 2 selected sources.', { exact: false }).waitFor();
       result.editorText = (await page.locator('main').innerText()).slice(0, 16000);
       check(result.editorText.includes('This start uses 2 selected sources.'), 'Existing document start lost the selected-source intent');
-      await page.screenshot({ path: path.join(__dirname, 'repaired-single-editor-start.png') });
+      await page.screenshot({ path: publicPath('repaired-single-editor-start.png') });
     }
     check(result.pageErrors.length === 0, 'Browser page errors occurred');
     check(result.blockedPosts.length === 0, 'Unexpected attempted mutation');
@@ -113,7 +116,7 @@ const check = (ok, message) => { if (!ok) throw Error(message); };
     result.failure = error.message;
     process.exitCode = 1;
   } finally {
-    fs.writeFileSync(path.join(__dirname, `${mode}-browser-observation.json`), JSON.stringify(result, null, 2) + '\n');
+    fs.writeFileSync(publicPath(`${mode}-browser-observation.json`), JSON.stringify(result, null, 2) + '\n');
     console.info(JSON.stringify({ mode, passed: result.passed, failure: result.failure, draftLabel: result.draftLabel, sourceReads: result.sourceReads.length }));
     await browser.close();
   }

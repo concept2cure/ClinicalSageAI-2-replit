@@ -248,5 +248,26 @@ assertions retained, to preserve its existing code-line ceiling.
 native exit0 and no named-input/runner drift. Both scoped lint runs have zero
 errors and retain the existing6 client /3 server warnings; the pure owners and
 test files add none. Independent review finds no blocker. `integrated-inputs.json`
-pins the combined source. Browser/startup, compiler and publication of this
-combined implementation are pending their own receipts.
+pins the combined source. Source merge is `b07f1d791`.
+
+`integrated-start.json` passes normal startup in37.1s; `integrated-runtime.json`
+confirms the exact served merged commit, schema ready and capabilities seeded,
+with only the existing local `ana: no_provider` readiness failure. The browser
+runner's optional validated output prefix separates this run's observations
+from earlier source versions. With `C2C_SELECTION_OUTPUT_PREFIX=integrated-`,
+`integrated-browser.json` and `integrated-repaired-browser-observation.json`
+pass the real search/clear/reselect/exact-admission/unchanged-chooser/New document
+flow at that commit. Both recorded digests and complete admission reach the
+existing editor; no page errors or document/model write attempts occur.
+`integrated-lint-comparison.json` also confirms the four owners retain their
+original warning counts. No live provider or broader regulatory qualification
+is claimed. The combined normal compiler and canonical publication remain
+pending their native receipt.
+
+`publication-attempt-5.json` verifies that exact combined source: full compiler
+errors0/baseline0 and all89 normal lint gates pass at `b07f1d791`, with no drift.
+Git then refuses another canonical advancement (`d44d5313d`), so the combined
+source is verified but not yet published by this attempt. The incoming changes
+are disjoint worker-report references, hosted-environment policy and deviation
+task currentness; they must be preserved by an ordinary merge. This continuation
+does not deploy, provision paid hosting or configure providers.
