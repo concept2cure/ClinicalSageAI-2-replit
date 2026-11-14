@@ -1816,6 +1816,78 @@ Publication request, Codex project-management/intelligence repair, 2026-11-13 23
 
 Publication request, Codex Codespaces/Copilot handoff, 2026-11-13 23:36 UTC: two canonical ref races followed all 89 normal lint gates passing. Under rule 6, this continuation requests a 15-minute publication window (23:36–23:51 UTC) from the coordinating session. No callable cross-session channel reaches that session here, and no other lane is claimed paused. The ordinary merge/push path continues. Latest native Quality source is preserved at merge `f774de54a`; its 40 focused cases, clean lint and real CSR browser pass. Earlier compiler, source and browser receipts remain named; no hosted/live-provider/clinical release claim.
 
+### Codex continuation — peer lifecycle and gateway-use audit, 2026-11-13
+
+The founder asked to continue after published `917486637`. This **F1 / W1 / D2** repair starts from canonical
+`841c41466`. Holds below end at publication or **2026-11-14 02:00 UTC**, whichever comes first; no other owner is
+paused and no plan/ledger or qualification status changes.
+
+#### What already exists
+
+`ana/turn-plan.ts` already owns the active-worker predicate and locked, idempotent peer-message append. Its
+metadata-only path omits recipient lifecycle admission; private text preparation checks it before later awaits.
+Extend that same locked append, preserving existing sender/private-source/limit/replay behavior. The existing
+`ana/__tests__/run-coordination-dispositions.test.ts` supplies the real PGlite fixture. Retired agent monitors and
+the deleted run-control registry supply no replacement admission boundary.
+
+Peer review follow-up, named before edits: the same agent may snapshot message input primitives, basis rows and
+model metadata before any preparation/append await, preserving one intent/capture/event identity even if an
+internal caller mutates its input object. Existing production parsed callers provide fresh objects; no external
+exploit is claimed. This remains inside `turn-plan.ts`'s message method and its existing coordinator regression
+home; the existing `turn-plan-and-context.test.ts` is also reserved for a private-text race/snapshot control if its
+fixture supports one without changing production source or policy elsewhere.
+
+The two reserved coordinator test homes may relocate the existing lost-COMMIT/idempotence case unchanged
+between them, using the same canonical fixture and preserving every assertion, to keep the added private
+preparation/recipient-stop control readable within both existing code-line ceilings. No new fixture or file.
+
+`submission-gateways/gateway-accounts.ts` and `index.ts` already bind encrypted account authority across archive,
+but lack the roadmap's per-use credential event and fresh initiating-person check there. Reuse unchanged
+`part11/signing-authority-gate.ts` policy and `audit/audit-write-outcome.ts`; record actual account ID/last-change
+and retained package references, not an invented grant/revision or private fingerprint. Capture the existing
+server-generated authorization actor before awaits, matching the request actor; do not describe that plain typed
+structure as private signature proof. The existing `gateway-accounts.test.ts` is the primary regression home.
+The AnA evidence README records the full pre-edit contract, searches and limits. RIM's held FDA/ceremony/filing
+files and comment-only index work remain untouched; the index hold below is its account-use functional callsite.
+
+| Holder | Existing files and exact scope |
+|---|---|
+| Peer lifecycle agent | `server/services/ana/turn-plan.ts` recipient admission in the locked message append only; existing `server/services/ana/__tests__/run-coordination-dispositions.test.ts` |
+| Gateway custody agent | `server/services/submission-gateways/gateway-accounts.ts` account-use identity/audit checkpoint; `index.ts` functional request snapshot and existing account-use callsite only; existing `__tests__/gateway-accounts.test.ts`; any additional existing compatibility fixture named before edits |
+| Root | This inventory/coordination entry, existing `docs/evidence/ANA-AGENTS/2026-09-27/README.md`, integration, Git and the sole full compiler |
+
+No new source file, table, route, model, provider, dependency or human-authorization policy is introduced. This
+proves bounded message admission and pre-adapter credential use; final FDA wire freshness and broader acceptance
+retain their existing owners and evidence gates. Implementation agents make no Git/runtime/compiler changes.
+
+Gateway compatibility regression homes named before edits: existing `submission-gateways/__tests__/`
+`transmit-authorization.test.ts`, `refused-before-wire.test.ts`, `transmit-guard-reports-checks.test.ts`,
+`transmit-records-what-was-sent.test.ts`, `transmit-leaf-security.test.ts`, `sent-package-kept.test.ts`,
+`pre-transmit-check.test.ts` and `fda-esg-client-account.test.ts`. Only explicit valid-current-signer and durable
+audit fixture outcomes may be reconciled where the tightened checkpoint actually reaches them; production
+exemptions or mocking away account freshness are not allowed. Primary PGlite custody tests must keep the real
+current-signing policy, account store and chained audit. The gateway owner allocates these disjoint fixtures to
+a helper after its interface is stable; root remains the sole Git/compiler owner.
+
+Further existing gateway regression homes named before any compatibility edit: `pdfa-requirement.test.ts`,
+`sent-record-rederive.test.ts`, `gateway-qualification.test.ts`, `health-canada-gateway.test.ts`,
+`pmda-gateway-unverified.test.ts`, and `governed-transmit-signature.test.ts`,
+`governed-transmit-pretransmit-record.test.ts`, `governed-transmit-leaf-manifest.test.ts`,
+`governed-transmit-independence.test.ts`, `governed-transmit-unapproved.test.ts` in the same existing test folder.
+Only reproduced fixture incompatibilities from the stricter checkpoint may be reconciled; signing, independence,
+package, qualification and before-wire refusal assertions remain. The gateway owner runs the integrated suites
+after source freeze and assigns any failing disjoint fixture to the compatibility helper.
+
+**Implementation completion:** all assigned source and test workers are frozen and closed. Final peer suites
+pass98/98, with eight lifecycle RED cases, three snapshot RED cases and the private prepare/stop race RED under
+an exact-source one-predicate removal. Final gateway integration passes205/205 across19 suites, including the
+primary39 actual account/member/chained-audit cases. Nine existing compatibility fixtures are reconciled without
+weakening refusal/freshness/qualification assertions; the deterministic PDF round-trip fixture's original host
+dependency is reproduced against original source. No lint errors or warning growth; independent review closes
+all findings. Existing evidence above records exact scope and limits. Root retains normal integration/Git and
+the sole full compiler; the rehearsal agent is runtime/scratch-only. **All source, test and evidence holds in this
+continuation release with canonical publication of this completion.** No other lane is paused or declared accepted.
+
 
 ### Codex CSR medical-writing repair continuation, 2026-11-13 (F1 / W1 / D2)
 
