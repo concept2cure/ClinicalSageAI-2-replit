@@ -365,3 +365,25 @@ loading/error/filter and unbound-working-copy save-message repairs leave
 source selection, target/creation callbacks and filing safeguards intact. They
 are preserved by ordinary merge. The next run records targeted editor integration
 before normal publication; no source implementation is reopened.
+
+
+The normal merge `99bcd9020` preserves the published editor loading/read-retry/
+filter and unbound-save-message repairs with the frozen502-case selection
+inputs unchanged. `editor-merge-focused.json` passes all74 cases across six
+affected editor handoff, document-start, save-label and filing-note/commit
+suites, native exit0 and no named source/runner drift. Those74 include earlier
+handoff coverage; they are not claimed as74 additional distinct regression
+cases. `editor-merge-publication-inputs.json` also pins the incoming production
+owners and focused fixtures. The next authenticated normal push runs all its
+existing gates against this merged tree.
+
+
+`publication-attempt-9-interrupted.json` distinguishes an execution-environment
+replacement from a completed native push: the full compiler was still active
+when its process was lost. There is no native exit, completed output or upload
+receipt for that attempt; no pass is inferred. Recovery at03:18UTC confirms all
+32 named implementation/config/test inputs still match their frozen manifest.
+The local checkout, prior actual receipts and owned Docker verifier survived.
+Remote `bc8fd9190` contains only documentation/coordination changes since the
+last merged source and is preserved by ordinary merge. Normal authenticated
+publication must run the existing hook again.
