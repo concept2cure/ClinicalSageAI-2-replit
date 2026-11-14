@@ -1,6 +1,6 @@
-# S4 · P-132 walked: a saved personal rule no longer stops AnA (2026-11-14)
+# S4 · P-133 walked: a saved personal rule no longer stops AnA (2026-11-14)
 
-Owner: `session_01KZK3jgtmQBgNepqLjXjS3k` (P-105). Decision: P-132 (`docs/LAUNCH_DEFINITION_OF_DONE.md`). The failure
+Owner: `session_01KZK3jgtmQBgNepqLjXjS3k` (P-105). Decision: P-133 (`docs/LAUNCH_DEFINITION_OF_DONE.md`). The failure
 it fixes was walked on 2026-11-12: `../2026-11-12-personal-rule-stops-turns/`. Code: `db806dfea8`.
 
 The same walk, on the same local app (real server, PostgreSQL with RLS on, real browser; the provider is a local

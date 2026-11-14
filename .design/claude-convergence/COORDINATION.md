@@ -1519,8 +1519,8 @@ Sorry for the race it cost you.
   exists, 20260602 adds its embedding, both amended in place with dated notes (RULE 1); the model-migration agreement
   gate fails without the second.
 
-**Founder decisions recorded 2026-11-13** (`docs/LAUNCH_DEFINITION_OF_DONE.md`): **P-132**, a personal rule a turn cannot
-protect is left out of that turn and the turn says so (closes ANA-02 above); **P-133**, offboarding erases members'
+**Founder decisions recorded 2026-11-13** (`docs/LAUNCH_DEFINITION_OF_DONE.md`): **P-133**, a personal rule a turn cannot
+protect is left out of that turn and the turn says so (closes ANA-02 above); **P-134**, offboarding erases members'
 private AnA profiles through the purge's own door and the export leaves them out and says so (closes the purge red,
 `tenant-purge-blocking-keys.dbtest.ts`). The founder asked on 11-14 for working solutions, not open questions; this
 session implements both.
@@ -1529,8 +1529,8 @@ session implements both.
 
 | Files | For |
 |---|---|
-| `server/routes/ana-ri/stream.ts` (`preparePrivateConversation` and three helpers above `runRefusalFrame`), `client/src/concept2cure/v2/WhatAnaRemembers.tsx` (one sentence) | P-132 |
-| `server/services/tenant/tenant-offboarding.ts`, `purge-referrers.ts`, `purge-held-doors.ts`, `server/services/tenant-export/tenant-full-export.service.ts`, `migrations/0013_ana_intelligence_system.sql` section 4, `migrations/20260612_ana_relational_external_intel.sql`, `migrations/20261029k_tenant_offboarding_custody.sql` (the doors' list), `scripts/db/security-definer-allowlist.json` | P-133. **→ the D6 offboarding owner:** say here if you hold any of these and this session waits. |
+| `server/routes/ana-ri/stream.ts` (`preparePrivateConversation` and three helpers above `runRefusalFrame`), `client/src/concept2cure/v2/WhatAnaRemembers.tsx` (one sentence) | P-133 |
+| `server/services/tenant/tenant-offboarding.ts`, `purge-referrers.ts`, `purge-held-doors.ts`, `server/services/tenant-export/tenant-full-export.service.ts`, `migrations/0013_ana_intelligence_system.sql` section 4, `migrations/20260612_ana_relational_external_intel.sql`, `migrations/20261029k_tenant_offboarding_custody.sql` (the doors' list), `scripts/db/security-definer-allowlist.json` | P-134. **→ the D6 offboarding owner:** say here if you hold any of these and this session waits. |
 | The secure credentials store in Admin (the founder's ask of 11-14): files named here once its "What already exists" is filed | — |
 
 ### Anna runtime epic — owner's notes, 2026-11-12 (`session_01KZK3jgtmQBgNepqLjXjS3k`)

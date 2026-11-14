@@ -312,7 +312,7 @@ const RUN_REFUSAL_COPY: Readonly<Record<'RUN_IN_PROGRESS' | 'RUN_LIMIT', string>
  * route does not hold a second import of the class for a test double to omit.
  */
 /**
- * P-132 (the founder, 2026-11-13): a person's private rules and saved profile reach a turn only when the protected
+ * P-133 (the founder, 2026-11-13): a person's private rules and saved profile reach a turn only when the protected
  * path can serve it. That path needs owner-private capture (the organization's own key, readCoordinationKey, the gate
  * markRunOwnerPrivate uses) and a model that may receive owner-private context: the gateway's Tier-3 wall
  * (decideInputTierPlacement) admits only a self-hosted model, and a policy refusal never falls back, so EVERY model
@@ -337,7 +337,7 @@ async function personalContextGap(gw: GatewayModels, organizationId: number, det
   }
 }
 
-/** What the conversation says when personal context was left out of a turn (P-132). Exported for its test. */
+/** What the conversation says when personal context was left out of a turn (P-133). Exported for its test. */
 export function personalContextNote(gap: PersonalContextGap, present: { rules: boolean; profile: boolean }): string {
   const subject = present.rules && present.profile
     ? "Your personal rules, saved profile and AnA's notes about you were not used for this answer"
@@ -349,12 +349,12 @@ export function personalContextNote(gap: PersonalContextGap, present: { rules: b
   return `${subject}: ${why}.${present.rules ? ' Rules that require your approval still apply.' : ''}`;
 }
 
-/** The private-rule and profile capsules a turn may carry, or none and the sentence that says why (P-132). */
+/** The private-rule and profile capsules a turn may carry, or none and the sentence that says why (P-133). */
 async function personalContextForTurn(
   issued: { rules: OwnerPrivateModelContextCapsule | null; profile: OwnerPrivateModelContextCapsule | null },
   privateHistory: boolean, gap: () => Promise<PersonalContextGap | null>,
 ): Promise<{ rules: OwnerPrivateModelContextCapsule | null; profile: OwnerPrivateModelContextCapsule | null; note: string | null }> {
-  // A conversation already private keeps its protection unchanged (P-132 item 6); nothing issued, nothing to decide.
+  // A conversation already private keeps its protection unchanged (P-133 item 6); nothing issued, nothing to decide.
   if (privateHistory || (!issued.rules && !issued.profile)) return { ...issued, note: null };
   const cause = await gap();
   if (!cause) return { ...issued, note: null };
@@ -1420,7 +1420,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       const persistenceFailed = false;
       let previousMsgs: Awaited<ReturnType<typeof getThreadMessages>> = [];
       let privateHistory = false;
-      /** The sentence saying this turn's personal context was left out (P-132), or null. */
+      /** The sentence saying this turn's personal context was left out (P-133), or null. */
       let personalContextNotice: string | null = null;
       const onOwnerPrivateCapture = () => { res.locals.ownerPrivateCapture = true; turnRecorder?.requireOwnerPrivateCapture(); };
       const preparePrivateConversation = async (currentThreadId: string) => {
@@ -1546,7 +1546,7 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       // The thread step has run: a page that closed before it is decided now —
       // detached when the run carries its conversation, stopped when not.
       settleThread();
-      // Once per turn, under the answer and on the record: the personal context left out, and why (P-132).
+      // Once per turn, under the answer and on the record: the personal context left out, and why (P-133).
       if (personalContextNotice && !res.writableEnded) {
         turnRecorder?.warn(personalContextNotice);
         writeFrame(`data: ${JSON.stringify({ type: 'warning', code: 'PERSONAL_CONTEXT_NOT_APPLIED', message: personalContextNotice })}\n\n`);

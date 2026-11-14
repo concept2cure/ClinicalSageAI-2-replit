@@ -1,5 +1,5 @@
 /**
- * P-132 (the founder, 2026-11-13): a person's private rules and saved profile reach a turn only when the protected
+ * P-133 (the founder, 2026-11-13): a person's private rules and saved profile reach a turn only when the protected
  * path can serve it — owner-private capture (the organization's own key) and a model that may receive owner-private
  * context (a self-hosted one; the gateway's Tier-3 wall). Otherwise the turn answers without them and says so once.
  *
@@ -89,7 +89,7 @@ beforeEach(() => {
   (h.gateway as { getModels: () => unknown[] }).getModels = () => FRONTIER;
 });
 
-describe('a personal rule the turn cannot protect is left out, and the turn says so (P-132)', () => {
+describe('a personal rule the turn cannot protect is left out, and the turn says so (P-133)', () => {
   it('on an outside model: AnA answers, nothing private is prepared or sent, and one note says why', async () => {
     const events = await turn();
     expect(errors(events)).toEqual([]);
