@@ -1650,7 +1650,34 @@ interface StabilityStudyApiRow {
   pullSchedule?: StabilityPullSchedule | null;
 }
 
-interface StabilityPullPoint { label: string; plannedDate: string | null; state: string; outstanding: string[]; reason?: string }
+interface StabilityPullForecast {
+  parameter: string; ok: boolean; detail?: string;
+  predicted?: number; interval?: { lower: number; upper: number }; verdict?: string; pointsUsed?: number; criterion?: string;
+}
+interface StabilityPullPoint { label: string; plannedDate: string | null; state: string; outstanding: string[]; reason?: string; forecast?: StabilityPullForecast[] }
+
+/* What the study's own results predict at the next pull, per test: the
+   server's regression figure and 95% prediction interval (stability-trending
+   `forecastTrend`), never a browser calculation. A test with no forecast says
+   why in the list's title. */
+/** The server's figure at two decimals: the engine keeps four, more than a result is reported to. */
+const pullFigure = (v?: number): string => (typeof v === 'number' ? String(Number(v.toFixed(2))) : '--');
+function StabilityPullForecastList({ forecast }: { forecast?: StabilityPullForecast[] }) {
+  const made = (forecast ?? []).filter((f) => f.ok && f.interval);
+  const refused = (forecast ?? []).filter((f) => !f.ok);
+  if (made.length === 0 && refused.length === 0) return null;
+  return (
+    <div className="sec-sub" data-testid="cmc-pull-forecast" title={refused.map((f) => `${f.parameter}: no forecast — ${f.detail}`).join('; ') || undefined}>
+      {made.length === 0 ? 'no forecast yet' : 'predicted: '}
+      {made.map((f, i) => (
+        <span key={f.parameter} data-tone={f.verdict === 'within' || f.verdict === 'no criterion' ? undefined : 'warn'}
+          title={`${f.pointsUsed} results fitted${f.criterion ? ` · criterion ${f.criterion}` : ' · no criterion recorded'} · ${f.verdict}`}>
+          {i > 0 ? '; ' : ''}{f.parameter} {pullFigure(f.predicted)} ({pullFigure(f.interval!.lower)} to {pullFigure(f.interval!.upper)}){f.verdict === 'within' || f.verdict === 'no criterion' ? '' : ` — ${f.verdict}`}
+        </span>
+      ))}
+    </div>
+  );
+}
 interface StabilityPullSchedule { next: StabilityPullPoint | null; overdue: number; incomplete?: number; reason?: string; points: StabilityPullPoint[] }
 
 /* Pull schedule in words, from the server's dates: the next pull and how many
@@ -1671,6 +1698,7 @@ function StabilityPullCell({ schedule }: { schedule?: StabilityPullSchedule | nu
     <td title={gaps ? `Outstanding — ${gaps}` : schedule.reason}>
       {next ? `${next.label} mo · ${next.plannedDate}` : schedule.reason ? 'no dates' : 'none to come'}
       {behind && <span data-tone="warn">{` · ${behind}`}</span>}
+      <StabilityPullForecastList forecast={next?.forecast} />
     </td>
   );
 }
