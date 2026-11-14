@@ -32,4 +32,8 @@ After repair, the focused SQL run passes **108/108 across two suites**. The fina
 
 Scoped ESLint over all three owned source/test files reports zero errors and warnings. Independent frozen-file review has no blocker and confirms all three hashes. The reserved `nativeTaskPlacement` body and whole `qms-record-tasks.ts` file match baseline bytes; `held-verification.json` states the extraction method and hashes. No warning/size baseline changed and no production file split was needed.
 
-The native/actor/task/ledger state uses PGlite SQL, with focused task-service and task-audit adapter seams and recorded advisory-lock invocation. This proves these SQL admission/CAS/rollback contracts, not the complete production chained audit seal or concurrent multi-connection behavior. No historical production-task cleanup, provider request or hosted-Codespace execution is claimed. Compiler and publication results follow once available.
+The native/actor/task/ledger state uses PGlite SQL, with focused task-service and task-audit adapter seams and recorded advisory-lock invocation. This proves these SQL admission/CAS/rollback contracts, not the complete production chained audit seal or concurrent multi-connection behavior. No historical production-task cleanup, provider request or hosted-Codespace execution is claimed.
+
+## Compiler integration
+
+Canonical Data Room selection and collaboration receipt changes through `3e85d1ac5` are preserved by normal merge. The full Node 22 TypeScript check at `bc96e47e97e60f3784a9443518508e28434543b1` exits zero with **zero errors against baseline zero**. The three reviewed source/test hashes still match. `typecheck-green.txt` and `compiler-verification.json` retain the command, revision and result. Publication uses the normal canonical push with hooks enabled. This repair adds no database migration or Codespaces configuration.
