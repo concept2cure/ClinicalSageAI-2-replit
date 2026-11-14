@@ -361,7 +361,7 @@ function PersonalRuleBody({ ledger, available, hasRead, busy, held, onOpen }: Pe
   if (!ledger) return <p className="amem-note">Your personal rules could not be read. This is not an empty ledger.</p>;
   const disabled = busy || !!held;
   return <><p className="amem-note">Your corrections and rule history are kept for you. {ledger.promptUse === 'protected_turns_only'
-      ? 'Personal instructions are limited to protected conversations. AnA pauses if privacy or model approval cannot be verified.'
+      ? 'AnA uses your personal rules only with an AI model that runs inside this deployment, in a conversation kept private to you. Otherwise she answers without them and says so in the conversation.'
       : 'Personal instructions are not yet loaded into model prompts.'} Approval rules use the recorded controls.</p>
     {ledger.rules.length === 0 && <p className="amem-empty">No personal rules recorded.</p>}
     {ledger.rules.map(rule => <PersonalRuleRow key={rule.ruleId} rule={rule} disabled={disabled} onOpen={onOpen} />)}

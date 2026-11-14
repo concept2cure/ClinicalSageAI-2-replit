@@ -53,7 +53,7 @@ export function withNoStandingRules(actual: typeof Gate): typeof Gate {
  * The same private rules on the model's side. Since `a2f9264a` the AnA stream
  * issues the acting member's private rules as owner-private model context
  * before it reads the conversation (`../../ana-context-router.ts`
- * `issuePrivateRuleModelContext`), and the turn stops when it cannot. A stub
+ * `issuePrivateRuleModelContext`), and leaves them out, saying so, when the protected path cannot serve the turn (P-132). A stub
  * `sqlClient` cannot verify the member, so a suite about something else
  * declares its member has no private rules:
  *

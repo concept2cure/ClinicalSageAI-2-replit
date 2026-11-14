@@ -326,8 +326,8 @@ describe('owner-private personal rule controls', () => {
   });
   it('describes protected-turn use as a restriction without claiming qualification or completed model use', async () => {
     servePersonal(async () => ({ ...personalLedger([PERSONAL]), promptUse: 'protected_turns_only' })); open();
-    expect(await screen.findByText(/Personal instructions are limited to protected conversations/)).toBeTruthy();
-    expect(screen.getByText(/AnA pauses if privacy or model approval cannot be verified/)).toBeTruthy();
+    expect(await screen.findByText(/AnA uses your personal rules only with an AI model that runs inside this deployment/)).toBeTruthy();
+    expect(screen.getByText(/Otherwise she answers without them and says so in the conversation/)).toBeTruthy();
     expect(screen.queryByText(/not yet loaded into model prompts/)).toBeNull();
   });
   it.each([personalLedger([{ ...PERSONAL, instructions: 'FOREIGN_PRIVATE_CANARY' }]), { ...personalLedger(), receipts: undefined }])('refuses foreign or malformed personal ledgers', async candidate => {

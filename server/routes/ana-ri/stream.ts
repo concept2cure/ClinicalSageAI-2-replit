@@ -237,7 +237,9 @@ import {
   type RunStandingEnded,
   issueOwnerPrivateHistoryModelContext,
   ownerPrivateReceiptForHistory,
+  readCoordinationKey,
 } from '../../services/ana/run-control.js';
+import { decideInputTierPlacement } from '../../services/ai-gateway/sensitive-placement-policy.js';
 import { RunStopped, runStopDetailOf, runStopReasonOf } from '../../services/ana/run-stopped.js';
 import { holdShutdownFor } from '../../services/ana/shutdown-hold.js';
 import { UnattendedClock } from '../../services/ana/unattended-clock.js';
@@ -309,6 +311,57 @@ const RUN_REFUSAL_COPY: Readonly<Record<'RUN_IN_PROGRESS' | 'RUN_LIMIT', string>
  * any other failure. Read by name and code rather than `instanceof`, so the
  * route does not hold a second import of the class for a test double to omit.
  */
+/**
+ * P-132 (the founder, 2026-11-13): a person's private rules and saved profile reach a turn only when the protected
+ * path can serve it. That path needs owner-private capture (the organization's own key, readCoordinationKey, the gate
+ * markRunOwnerPrivate uses) and a model that may receive owner-private context: the gateway's Tier-3 wall
+ * (decideInputTierPlacement) admits only a self-hosted model, and a policy refusal never falls back, so EVERY model
+ * the turn could be served by must pass. Otherwise the turn answers without them and says so. Errors other than "no
+ * key" are not "cannot protect": they still fail the turn, as before.
+ */
+type PersonalContextGap = 'model' | 'capture';
+type GatewayModels = { getModels?: () => Array<{ provider: string; enabled?: boolean }>;
+  getModelsForOrganization?: (organizationId: number) => Promise<Array<{ provider: string; enabled?: boolean }>> };
+async function personalContextGap(gw: GatewayModels, organizationId: number, deterministic: boolean,
+  q: Parameters<typeof readCoordinationKey>[0]): Promise<PersonalContextGap | null> {
+  const listed = typeof gw.getModelsForOrganization === 'function' ? await gw.getModelsForOrganization(organizationId)
+    : typeof gw.getModels === 'function' ? gw.getModels() : [];
+  const enabled = listed.filter(m => m.enabled !== false);
+  if (deterministic || enabled.length === 0 || !enabled.every(m => decideInputTierPlacement({ tiers: [3], provider: m.provider }).allowed)) return 'model';
+  try {
+    await readCoordinationKey(q, organizationId);
+    return null;
+  } catch (error) {
+    if (error instanceof Error && error.message === 'COORDINATION_TENANT_KEY_REQUIRED') return 'capture';
+    throw error;
+  }
+}
+
+/** What the conversation says when personal context was left out of a turn (P-132). Exported for its test. */
+export function personalContextNote(gap: PersonalContextGap, present: { rules: boolean; profile: boolean }): string {
+  const subject = present.rules && present.profile
+    ? "Your personal rules, saved profile and AnA's notes about you were not used for this answer"
+    : present.rules ? 'Your personal rules were not applied to this answer'
+      : "Your saved profile and AnA's notes about you were not used for this answer";
+  const why = gap === 'model'
+    ? 'they are sent only to an AI model that runs inside this deployment, and this answer could come from one outside it'
+    : "keeping them private needs your organization's own encryption key, and none is set up yet";
+  return `${subject}: ${why}.${present.rules ? ' Rules that require your approval still apply.' : ''}`;
+}
+
+/** The private-rule and profile capsules a turn may carry, or none and the sentence that says why (P-132). */
+async function personalContextForTurn(
+  issued: { rules: OwnerPrivateModelContextCapsule | null; profile: OwnerPrivateModelContextCapsule | null },
+  privateHistory: boolean, gap: () => Promise<PersonalContextGap | null>,
+): Promise<{ rules: OwnerPrivateModelContextCapsule | null; profile: OwnerPrivateModelContextCapsule | null; note: string | null }> {
+  // A conversation already private keeps its protection unchanged (P-132 item 6); nothing issued, nothing to decide.
+  if (privateHistory || (!issued.rules && !issued.profile)) return { ...issued, note: null };
+  const cause = await gap();
+  if (!cause) return { ...issued, note: null };
+  // Dropped before anything prepares them: not activated, not marked owner-private, never expanded or sent.
+  return { rules: null, profile: null, note: personalContextNote(cause, { rules: issued.rules !== null, profile: issued.profile !== null }) };
+}
+
 function runRefusalFrame(err: unknown): { type: 'error'; code: string; error: string; runId?: string } | null {
   const e = err as { name?: unknown; code?: unknown; runId?: unknown } | null;
   if (!e || e.name !== 'RunRefusedError') return null;
@@ -1367,6 +1420,8 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       const persistenceFailed = false;
       let previousMsgs: Awaited<ReturnType<typeof getThreadMessages>> = [];
       let privateHistory = false;
+      /** The sentence saying this turn's personal context was left out (P-132), or null. */
+      let personalContextNotice: string | null = null;
       const onOwnerPrivateCapture = () => { res.locals.ownerPrivateCapture = true; turnRecorder?.requireOwnerPrivateCapture(); };
       const preparePrivateConversation = async (currentThreadId: string) => {
         try {
@@ -1379,9 +1434,12 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
             programId: admittedProject.programId ?? undefined, runId, threadId: currentThreadId,
           };
           const historyCapsule = privateHistory ? await issueOwnerPrivateHistoryModelContext(requestConnectable(req), privateScope) : null;
-          const capsule = await issuePrivateRuleModelContext(requestConnectable(req), privateScope);
-          const legacyCapsule = await issueLegacyPrivateModelContext(requestConnectable(req), privateScope);
-          ownerPrivateContexts = [historyCapsule, capsule, legacyCapsule].filter((value): value is OwnerPrivateModelContextCapsule => value !== null);
+          const personal = await personalContextForTurn({
+            rules: await issuePrivateRuleModelContext(requestConnectable(req), privateScope),
+            profile: await issueLegacyPrivateModelContext(requestConnectable(req), privateScope),
+          }, privateHistory, () => personalContextGap(gw as GatewayModels, guardOrgId, deterministicMode, requestPgClient(req)));
+          personalContextNotice = personal.note;
+          ownerPrivateContexts = [historyCapsule, personal.rules, personal.profile].filter((value): value is OwnerPrivateModelContextCapsule => value !== null);
           if (ownerPrivateContexts.length) {
             onOwnerPrivateCapture();
             await prepareOwnerPrivateModelContexts(ownerPrivateContexts);
@@ -1488,6 +1546,11 @@ async function streamTurn(req: Request, res: Response, afterTurn: (work: Promise
       // The thread step has run: a page that closed before it is decided now —
       // detached when the run carries its conversation, stopped when not.
       settleThread();
+      // Once per turn, under the answer and on the record: the personal context left out, and why (P-132).
+      if (personalContextNotice && !res.writableEnded) {
+        turnRecorder?.warn(personalContextNotice);
+        writeFrame(`data: ${JSON.stringify({ type: 'warning', code: 'PERSONAL_CONTEXT_NOT_APPLIED', message: personalContextNotice })}\n\n`);
+      }
 
 
       // ── Intelligence answer fast-path ──────────────────────────────────
