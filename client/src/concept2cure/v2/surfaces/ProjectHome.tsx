@@ -626,7 +626,7 @@ function DataRoom({ pid, onNav, onAsk, session }: {
     };
     setCheck({ scope: renderedScope, pending: true }); setAssembly(null);
     window.C2C_SOURCE_PINS = [];
-    const reply = await liveGetOrNull<SourcesPage>(path, value => current() && selectedSourcesRead(value, pid, checked), headers, currentAttempt.controller.signal);
+    const reply = await liveGetOrNull<SourcesPage>(path, (value): value is SourcesPage => current() && selectedSourcesRead(value, pid, checked), headers, currentAttempt.controller.signal);
     if (!current()) return;
     currentAttempt.pending = false;
     const fresh = verifiedSelectedReply(reply, pid, checked);
