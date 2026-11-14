@@ -1,13 +1,13 @@
 {
-  "count": 61,
+  "count": 76,
   "artifacts": {
     "README.md": {
-      "bytes": 6130,
-      "sha256": "52b923e74156445333290f4b2006e1a1d30990f11a82ca535d9d1ef9b8fd6933"
+      "bytes": 7062,
+      "sha256": "d1d151f90c5adb0390cac611e15c031f2ef0cdc9e16bd62797c35660ca84d153"
     },
     "current-test-matrix.json": {
-      "bytes": 2703,
-      "sha256": "1d040279653662e71352d8d8815dfb98fa989a63cdf95e61ee6f57b3b29091e4"
+      "bytes": 2992,
+      "sha256": "15db4c377f7af3d066d411a182c264c7b173fcd358f901266e4da498920f04f4"
     },
     "green/README.md": {
       "bytes": 1377,
@@ -74,8 +74,8 @@
       "sha256": "801a096bdbf6b850e4d9edbfdf94acf1d67b55bcfb9ec995e155146dc8b0a7a1"
     },
     "qualification-summary.json": {
-      "bytes": 1300,
-      "sha256": "cbfbe01f17ed623a86ece781bfcc7936ef76ef3db258d1bc7f70bfe02c025686"
+      "bytes": 1398,
+      "sha256": "27e737625e93844b1fa69271bcde4235431ef4d34e8e489f0752e035d9a016cb"
     },
     "red/raw.log.gz": {
       "bytes": 150,
@@ -153,6 +153,22 @@
       "bytes": 1448,
       "sha256": "047f51df472384205e2969736fb87f16037d032c911fb52b41b3bef7ad67e673"
     },
+    "root/build-merged-source-pins.json.gz": {
+      "bytes": 692582,
+      "sha256": "24c7843d10d6704ab567b1d684048b0e3235f0f9a3ddb9ce6e02554fee8faad1"
+    },
+    "root/build-merged-start.json": {
+      "bytes": 384,
+      "sha256": "d1152eefaa636bafc2e93f906c0053f7803d51647b0b893ba869a73592c102cf"
+    },
+    "root/build-merged.json": {
+      "bytes": 443,
+      "sha256": "940576cc6c27e0a9ab254fcfeb2acf6dc2458e70f3af2b2061ec90217cbd22bb"
+    },
+    "root/build-merged.log.gz": {
+      "bytes": 5427,
+      "sha256": "714d2516b116c9f5a08c628b2895e9fd631f52eea15f519f4ff1d4f27ba970d9"
+    },
     "root/build-source-pins.json.gz": {
       "bytes": 692533,
       "sha256": "81bb5e6f7a31bd582485587af0c799cbdf982a73f8aa294206271b10efc824f2"
@@ -168,6 +184,30 @@
     "root/build.log.gz": {
       "bytes": 5424,
       "sha256": "d90860f25b9a1327dd12b30ebce3cea3757723ec2f821fa6be269d49ddf0fb60"
+    },
+    "root/integration-source-pins.json.gz": {
+      "bytes": 692582,
+      "sha256": "24c7843d10d6704ab567b1d684048b0e3235f0f9a3ddb9ce6e02554fee8faad1"
+    },
+    "root/integration-start.json": {
+      "bytes": 774,
+      "sha256": "aa21e1ad05c2efc419574cc10c12a3d350f46c9919eea7ad5984464f5dd717ce"
+    },
+    "root/integration-tests.json": {
+      "bytes": 16002,
+      "sha256": "c63c1ebd3e0357c166332a303e48b1d0bbae73609b1773eab1c57642d4b10fe0"
+    },
+    "root/integration.json": {
+      "bytes": 832,
+      "sha256": "45f0e6abe3a2021685f459c4ef01d73b4f2445da72e39de7416476bde9b5c673"
+    },
+    "root/integration.log.gz": {
+      "bytes": 149,
+      "sha256": "c26fad606230cd9f173bf3fa75cf18678c3df8024e2365adc84e4e7a7cceea67"
+    },
+    "root/protocol-update-preflight.json": {
+      "bytes": 282,
+      "sha256": "b2c622f15769860ccf1a5f86d2b367e1acfcae9b91c706d00ee8cfba74726053"
     },
     "root/push-1-source-pins.json.gz": {
       "bytes": 692533,
@@ -186,8 +226,8 @@
       "sha256": "0bcf5058ff5516d0682a99173ea211913c698bcbc8e733c58c7725e9cca2611e"
     },
     "root/runner.py.gz": {
-      "bytes": 1452,
-      "sha256": "dc93d2392e7d1b8984e5c664c0e75a7a0dc716f07c83a3a4a5f2413b98c99a92"
+      "bytes": 1703,
+      "sha256": "674ab094e94eac55549ee2a584d03ce6a95c1de4e85e482a841bf6fcbe33682a"
     },
     "root/typecheck-fixed-source-pins.json.gz": {
       "bytes": 692533,
@@ -202,6 +242,26 @@
       "sha256": "74b6e1c455c33fa95a3801c786221801bdc2374c2409df195bb5f0ae6f90d3e8"
     },
     "root/typecheck-fixed.log.gz": {
+      "bytes": 146,
+      "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
+    },
+    "root/typecheck-merged-runner.py.gz": {
+      "bytes": 1584,
+      "sha256": "ea81af1d3e7a31effdeeef319bebb4c24a4c743b0a7e593b209d14a03e6a80bd"
+    },
+    "root/typecheck-merged-source-pins.json.gz": {
+      "bytes": 692582,
+      "sha256": "24c7843d10d6704ab567b1d684048b0e3235f0f9a3ddb9ce6e02554fee8faad1"
+    },
+    "root/typecheck-merged-start.json": {
+      "bytes": 433,
+      "sha256": "e85758280c5dd9caa99e34d329942a1b754dcd1b79e2ca920bba08013bf8303c"
+    },
+    "root/typecheck-merged.json": {
+      "bytes": 491,
+      "sha256": "352fe7dc56b18f39e8da80d51ad784b4a4e8990830ea8b1b6bf7d2b3c70bf51c"
+    },
+    "root/typecheck-merged.log.gz": {
       "bytes": 146,
       "sha256": "1bb23e30630e9cdcd23f4b4da9ee82b8fcf49a85e50ed180733c8cc70f04feb5"
     },

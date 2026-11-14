@@ -1,8 +1,8 @@
 {
   "status": "engineering_component_qualified_publication_pending",
   "sourceBase": "c6d7aaddf8c61b98d6e82fe4fa5126a34452e804",
-  "passed": 142,
-  "distinctFiles": 10,
+  "passed": 173,
+  "distinctFiles": 11,
   "failed": 0,
   "pending": 0,
   "testReport": "green/tests.json",
@@ -12,9 +12,9 @@
   "lintWarnings": 2,
   "lintWarningCountsUnchanged": true,
   "review": "retained/independent-review.json",
-  "compiler": "passed_on_preintegration_tree",
-  "build": "passed_on_preintegration_tree",
-  "publication": "pending_after_concurrent_source_selection_update",
+  "compiler": "passed_on_source_selection_merge",
+  "build": "passed_on_source_selection_merge",
+  "publication": "pending_after_protocol_workspace_update",
   "humanAcceptance": "not_executed",
   "nativePostgreSQL": "not_executed",
   "agencyAcceptance": "not_established",
@@ -27,9 +27,11 @@
   "sourceBridge": "type-correction/bridge.json",
   "compilerFailureReport": "root/typecheck.json",
   "compilerErrors": 0,
-  "compilerReport": "root/typecheck-fixed.json",
-  "buildReport": "root/build.json",
+  "compilerReport": "root/typecheck-merged.json",
+  "buildReport": "root/build-merged.json",
   "mandatoryPushCompiler": "passed",
   "ciLintGatesPassed": 89,
-  "mandatoryPushReport": "root/push-1.log.gz"
+  "mandatoryPushReport": "root/push-1.log.gz",
+  "mergedIntegrationPassed": 38,
+  "mergedIntegrationReport": "root/integration-tests.json"
 }
